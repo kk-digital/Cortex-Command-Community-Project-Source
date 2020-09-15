@@ -30,7 +30,8 @@ sources += files('AllegroBitmap.cpp',
 'GUITab.cpp',
 'GUITextBox.cpp',
 'GUITextPanel.cpp',
-'GUIUtil.cpp')
+'GUIUtil.cpp',
+'SDLScreen.cpp')
 
 if build_machine.system() == 'windows'
   sources+=files('WinUtil.cpp')

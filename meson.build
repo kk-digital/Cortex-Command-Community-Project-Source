@@ -17,7 +17,8 @@ deps = [
   dependency('liblz4'),
   dependency('libpng'),
   dependency('boost'), #needed for luabind
-  dependency('x11')
+  dependency('x11'),
+  dependency('sdl2')
   ]
 
 compiler = meson.get_compiler('cpp')
