@@ -38,10 +38,10 @@ namespace RTE {
 		QueryPerformanceFrequency(&tempLInt);
 		m_TicksPerSecond = tempLInt.QuadPart;
 #elif __unix__
-    timespec my_TimeSpec;
-    clock_getres(CLOCK_MONOTONIC, &my_TimeSpec);
+		timespec my_TimeSpec;
+		clock_getres(CLOCK_MONOTONIC, &my_TimeSpec);
 
-    m_TicksPerSecond = ((1e9/my_TimeSpec.tv_nsec)/1000);
+		m_TicksPerSecond= ((1e9 / my_TimeSpec.tv_nsec) / 1000);
 #endif
 
 		// Reset the real time setting so that we can measure how much real time has passed till the next Update.
@@ -64,11 +64,11 @@ namespace RTE {
 		QueryPerformanceCounter(&tickReading);
 		long long ticks = tickReading.QuadPart;
 #elif __unix__
-    timespec my_TimeSpec;
-    clock_gettime(CLOCK_MONOTONIC, &my_TimeSpec);
-    // Get the nanoseconds value for right now and convert it to microseconds, since we don't
-    // honestly need anything more than that.
-    long long ticks = static_cast<int64_t>((my_TimeSpec.tv_sec*1000000)+(my_TimeSpec.tv_nsec/1000));
+		timespec my_TimeSpec;
+		clock_gettime(CLOCK_MONOTONIC, &my_TimeSpec);
+		// Get the nanoseconds value for right now and convert it to microseconds, since we don't
+		// honestly need anything more than that.
+		long long ticks = static_cast<int64_t>((my_TimeSpec.tv_sec * 1000000) + (my_TimeSpec.tv_nsec / 1000));
 #endif
 	  return (ticks * 1000000) / m_TicksPerSecond;
 	}
@@ -81,11 +81,11 @@ namespace RTE {
 		QueryPerformanceCounter(&tempLInt);
 		m_StartTime = tempLInt.QuadPart;
 #elif __unix__
-    timespec my_TimeSpec;
-    clock_gettime(CLOCK_MONOTONIC, &my_TimeSpec);
-    // Get the nanoseconds value for right now and convert it to microseconds, since we don't
-    // honestly need anything more than that.
-    m_StartTime = static_cast<int64_t>((my_TimeSpec.tv_sec*1000000)+(my_TimeSpec.tv_nsec/1000));
+		timespec my_TimeSpec;
+		clock_gettime(CLOCK_MONOTONIC, &my_TimeSpec);
+		// Get the nanoseconds value for right now and convert it to microseconds, since we don't
+		// honestly need anything more than that.
+		m_StartTime = static_cast<int64_t>((my_TimeSpec.tv_sec * 1000000) + (my_TimeSpec.tv_nsec / 1000));
 #endif
 
 		m_RealTimeTicks = 0;
@@ -118,7 +118,7 @@ namespace RTE {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void TimerMan::Update() {
-    long long prevTime = m_RealTimeTicks;
+		long long prevTime = m_RealTimeTicks;
 #ifdef _WIN32
 		LARGE_INTEGER tickReading;
 
@@ -127,13 +127,13 @@ namespace RTE {
 
 		m_RealTimeTicks = tickReading.QuadPart - m_StartTime;
 #elif __unix__
-    std::uint64_t curTime;
-    timespec my_TimeSpec;
-    clock_gettime(CLOCK_MONOTONIC, &my_TimeSpec);
-    curTime = static_cast<long long>((my_TimeSpec.tv_sec*1000000)+(my_TimeSpec.tv_nsec / 1000));
-    m_RealTimeTicks = curTime - m_StartTime;
+		std::uint64_t curTime;
+		timespec my_TimeSpec;
+		clock_gettime(CLOCK_MONOTONIC, &my_TimeSpec);
+		curTime= static_cast<long long>((my_TimeSpec.tv_sec * 1000000) + (my_TimeSpec.tv_nsec / 1000));
+		m_RealTimeTicks = curTime - m_StartTime;
 #endif
-		// Figure the increase in real time 
+		// Figure the increase in real time
 		unsigned long long timeIncrease = m_RealTimeTicks - prevTime;
 		// Cap it if too long (as when the app went out of focus)
 		if (timeIncrease > m_RealToSimCap) { timeIncrease = m_RealToSimCap; }
