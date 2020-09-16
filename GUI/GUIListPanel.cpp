@@ -228,7 +228,7 @@ void GUIListPanel::AddItem(string Name, string rightText, GUIBitmap *pBitmap, co
     // Calculate the largest width
     if (m_Font) {
         int FWidth = m_Font->CalculateWidth(Name);
-        m_LargestWidth = MAX(m_LargestWidth, FWidth);
+        m_LargestWidth = std::max(m_LargestWidth, FWidth);
     }
 
     // Adjust the scrollbars
@@ -383,7 +383,7 @@ void GUIListPanel::BuildDrawBitmap(void)
             }
 
             int textHeight = m_Font->CalculateHeight(I->m_Name, mainTextWidth);
-            int itemHeight = MAX(bitmapHeight + 4, textHeight + 2);
+            int itemHeight = std::max(bitmapHeight + 4, textHeight + 2);
             int textX = thirdWidth + 6 - x;
             int textY = y + (itemHeight / 2) + 1;
             int bitmapY = y + (itemHeight / 2) - (bitmapHeight / 2) + 1;
@@ -938,7 +938,7 @@ void GUIListPanel::AdjustScrollbars(void)
         // Subtract the frame size
         int Page = Height - 4;
         int Max = itemStackHeight/* - Page*/;
-        Max = MAX(Max, 0);
+        Max = std::max(Max, 0);
 
         // Setup the vertical scrollbar
         m_VertScroll->SetPageSize(Page);
@@ -1043,7 +1043,7 @@ void GUIListPanel::OnKeyPress(int KeyCode, int Modifier)
     m_SelectedList.clear();
 
     // Clamp the value
-    m_LastSelected = MAX(m_LastSelected, 0);
+    m_LastSelected = std::max(m_LastSelected, 0);
     m_LastSelected = MIN(m_LastSelected, m_Items.size()-1);
 
 
@@ -1324,7 +1324,7 @@ int GUIListPanel::GetItemHeight(Item *pItem)
             }
 
             int textHeight = m_Font->CalculateHeight(pItem->m_Name, mainTextWidth);
-            height = pItem->m_Height = MAX(bitmapHeight + 4, textHeight + 2);
+            height = pItem->m_Height = std::max(bitmapHeight + 4, textHeight + 2);
         }
         // Non-fancy drawing mode all have same height.
         else
