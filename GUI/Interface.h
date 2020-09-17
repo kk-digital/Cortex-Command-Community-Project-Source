@@ -111,7 +111,7 @@ namespace RTE {
 		/// <summary>
 		/// Draw a section of this bitmap onto another bitmap
 		/// </summary>
-		/// <param name="pDestBitmap>Destination Bitmap.</param>
+		/// <param name="pDestBitmap">Destination Bitmap.</param>
 		/// <param name="X">Position on X axis.</param>
 		/// <param name="Y">Position on Y axis.</param>
 		/// <param name="Rect">Size of bitmap we are drawing.</param>
@@ -120,7 +120,7 @@ namespace RTE {
 		/// <summary>
 		/// Draw a section of this bitmap onto another bitmap ignoring color-keyed pixels.
 		/// </summary>
-		/// <param name="pDestBitmap>Destination Bitmap.</param>
+		/// <param name="pDestBitmap">Destination Bitmap.</param>
 		/// <param name="X">Position on X axis.</param>
 		/// <param name="Y">Position on Y axis.</param>
 		/// <param name="Rect">Size of this bitmap.</param>
@@ -129,7 +129,7 @@ namespace RTE {
 		/// <summary>
 		/// Draw this bitmap scaled onto another bitmap ignoring color-keyed pixels.
 		/// </summary>
-		/// <param name="pDestBitmap>Destination Bitmap.</param>
+		/// <param name="pDestBitmap">Destination Bitmap.</param>
 		/// <param name="X">Position on X axis.</param>
 		/// <param name="Y">Position on Y axis.</param>
 		/// <param name="width">Width of this bitmap.</param>
