@@ -145,7 +145,7 @@ void GUITextPanel::Draw(GUIScreen *Screen)
     int hSpacer = m_HeightMargin;
 
     // Clamp the cursor
-    m_CursorX = MAX(m_CursorX, 0);
+    m_CursorX = std::max(m_CursorX, 0);
     
     // Setup the clipping
     Screen->GetBitmap()->SetClipRect(GetRect());
@@ -166,8 +166,8 @@ void GUITextPanel::Draw(GUIScreen *Screen)
         Screen->GetBitmap()->DrawRectangle(m_X+wSpacer + m_SelectionX, m_Y + hSpacer + 2, m_SelectionWidth, FontHeight - 3, m_SelectedColorIndex, true);
         // Draw text with selection regions in different colour
         m_Font->SetColor(m_FontSelectColor);
-        int Start = MIN(m_StartSelection, m_EndSelection);
-        int End = MAX(m_StartSelection, m_EndSelection);
+        int Start = std::min(m_StartSelection, m_EndSelection);
+        int End = std::max(m_StartSelection, m_EndSelection);
         
         // Selection
         if (m_StartIndex > Start)
@@ -193,6 +193,8 @@ void GUITextPanel::Draw(GUIScreen *Screen)
 // Description:     Called when a key is pressed (OnDown & repeating).
 
 void GUITextPanel::OnKeyPress(int KeyCode, int Modifier) {
+
+  // TODO: Convert Allegro keycodes to SDL (may also solve the below)
 
 	// TODO: Figure out what the "performance bitching" is.
 	// Condition here to stop the compiler bitching about performance
@@ -475,7 +477,7 @@ void GUITextPanel::UpdateText(bool Typing, bool DoIncrement)
         m_StartIndex = m_CursorIndex-Increment;
 
     // Clamp it
-    m_StartIndex = MAX(m_StartIndex, 0);
+    m_StartIndex = std::max(m_StartIndex, 0);
     
     // If the cursor is greater than the length of text panel, adjust the start index
     string Sub = m_Text.substr(m_StartIndex,m_CursorIndex-m_StartIndex);
@@ -485,7 +487,7 @@ void GUITextPanel::UpdateText(bool Typing, bool DoIncrement)
     }
 
     // Clamp it
-    m_StartIndex = MIN(m_StartIndex, m_Text.size()-1);
+    m_StartIndex = std::min(m_StartIndex, m_Text.size()-1);
 
     // Adjust the cursor position
     m_CursorX = m_Font->CalculateWidth(m_Text.substr(m_StartIndex, m_CursorIndex-m_StartIndex));
@@ -521,11 +523,11 @@ void GUITextPanel::DoSelection(int Start, int End)
     }
 
     // Update the selection coords
-    int StartSel = MIN(m_StartSelection, m_EndSelection);
-    int EndSel = MAX(m_StartSelection, m_EndSelection);
+    int StartSel = std::min(m_StartSelection, m_EndSelection);
+    int EndSel = std::max(m_StartSelection, m_EndSelection);
 
     m_SelectionX = StartSel - m_StartIndex;
-    m_SelectionX = MAX(m_SelectionX, 0);
+    m_SelectionX = std::max(m_SelectionX, 0);
     int temp = m_SelectionX;
 
     m_SelectionWidth = (EndSel - m_StartIndex) - m_SelectionX;
@@ -533,8 +535,8 @@ void GUITextPanel::DoSelection(int Start, int End)
     m_SelectionX = m_Font->CalculateWidth(m_Text.substr(m_StartIndex, m_SelectionX));
     m_SelectionWidth = m_Font->CalculateWidth(m_Text.substr(m_StartIndex+temp, m_SelectionWidth));
 
-    m_SelectionX = MAX(m_SelectionX, 0);
-    m_SelectionWidth = MIN(m_SelectionWidth, m_Width);
+    m_SelectionX = std::max(m_SelectionX, 0);
+    m_SelectionWidth = std::min(m_SelectionWidth, m_Width);
 }
 
 
@@ -548,8 +550,8 @@ void GUITextPanel::RemoveSelectionText(void)
     if (!m_GotSelection)
         return;
 
-    int Start = MIN(m_StartSelection, m_EndSelection);
-    int End = MAX(m_StartSelection, m_EndSelection);
+    int Start = std::min(m_StartSelection, m_EndSelection);
+    int End = std::max(m_StartSelection, m_EndSelection);
 
     if (Start == End)
         return;
@@ -594,8 +596,8 @@ string GUITextPanel::GetSelectionText(void)
     if (!m_GotSelection)
         return "";
 
-    int Start = MIN(m_StartSelection, m_EndSelection);
-    int End = MAX(m_StartSelection, m_EndSelection);
+    int Start = std::min(m_StartSelection, m_EndSelection);
+    int End = std::max(m_StartSelection, m_EndSelection);
 
     if (Start == End)
         return "";
