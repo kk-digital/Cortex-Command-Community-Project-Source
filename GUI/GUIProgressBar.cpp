@@ -100,8 +100,7 @@ void GUIProgressBar::Create(GUIProperties *Props)
     Props->GetValue("Value", &m_Value);
 
     // Clamp the value
-    m_Value = std::max(m_Value, m_Minimum);
-    m_Value = std::min(m_Value, m_Maximum);
+    m_Value = std::clamp(m_Value, m_Minimum, m_Maximum);
 }
 
 
@@ -355,12 +354,10 @@ void GUIProgressBar::StoreProperties(void)
 void GUIProgressBar::SetValue(int Value)
 {
     int OldValue = m_Value;
-    m_Value = Value;
 
     // Clamp the value
-    m_Value = std::min(m_Value, m_Maximum);
-    m_Value = std::max(m_Value, m_Minimum);
-    
+    m_Value = std::clamp(Value, m_Minimum, m_Maximum);
+
     // Changed?
     if (m_Value != OldValue)
         AddEvent(GUIEvent::Notification, Changed, 0);
@@ -436,6 +433,5 @@ void GUIProgressBar::ApplyProperties(GUIProperties *Props)
     m_Properties.GetValue("Value", &m_Value);
 
     // Clamp the value
-    m_Value = std::max(m_Value, m_Minimum);
-    m_Value = std::min(m_Value, m_Maximum);
+    m_Value = std::clamp(m_Value, m_Minimum, m_Maximum);
 }

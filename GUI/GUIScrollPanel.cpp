@@ -668,8 +668,7 @@ void GUIScrollPanel::OnMouseMove(int X, int Y, int Buttons, int Modifier)
         m_KnobPosition -= Delta;
 
         // Clamp the knob
-        m_KnobPosition = std::max(m_KnobPosition, 0);
-        m_KnobPosition = std::min(m_KnobPosition, MoveLength-m_KnobLength);
+        m_KnobPosition = std::clamp(m_KnobPosition, 0, MoveLength-m_KnobLength);
 
         // Calculate the value
         int Area = MoveLength - m_KnobLength;
@@ -679,8 +678,7 @@ void GUIScrollPanel::OnMouseMove(int X, int Y, int Buttons, int Modifier)
             m_Value = (float)MaxRange * p + m_Minimum;
 
             // Clamp the value
-            m_Value = std::max(m_Value, m_Minimum);
-            m_Value = std::min(m_Value, m_Maximum-m_PageSize);
+            m_Value = std::clamp(m_Value, m_Minimum, m_Maximum-m_PageSize);
 
             if (OldValue != m_Value)
                 SendSignal(ChangeValue, 0);
@@ -845,8 +843,7 @@ void GUIScrollPanel::CalculateKnob(void)
     }
 
     // Clamp the position
-    m_KnobPosition = std::max(m_KnobPosition, 0);
-    m_KnobPosition = std::min(m_KnobPosition, MoveLength-m_KnobLength);
+    m_KnobPosition = std::clamp(m_KnobPosition, 0, MoveLength-m_KnobLength);
 
 
 }
@@ -864,8 +861,7 @@ void GUIScrollPanel::AdjustValue(int Delta)
     m_Value += Delta;
 
     // Clamp the value
-    m_Value = std::max(m_Value, m_Minimum);
-    m_Value = std::min(m_Value, m_Maximum-m_PageSize);
+    m_Value = std::clamp(m_Value, m_Minimum, m_Maximum-m_PageSize);
 
     // Calculate the new knob position
     CalculateKnob();
