@@ -10,7 +10,7 @@ namespace RTE {
   public:
 		SDLBitmap();
 
-		SDLBitmap(SDL_Surface *pSurface);
+		SDLBitmap(SDL_Texture *pSurface);
 
 		~SDLBitmap();
 
@@ -47,14 +47,14 @@ namespace RTE {
 
 		std::string GetDataPath() override;
 
-		SDL_Surface *GetBitmap();
+		SDL_Texture *GetBitmap();
 
 		bool HasBitmap() override { return m_pSurface != 0; }
 
 	private:
 		ContentFile m_BitmapFile;
 
-		SDL_Surface *m_Surface;
+		SDL_Texture *m_Texture;
 		bool m_SelfCreated;
 	}
 } // namespace RTE
