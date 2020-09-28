@@ -184,12 +184,12 @@ namespace RTE {
 		/// Get the path to the datafile object in use by this GUIBitmap
 		/// </summary>
 		/// <returns> The Path to the datafile </returns>
-		std::string GetDataPath() override;
+		std::string GetDataPath() override {return m_TextureFile.GetDataPath();}
 
 		/// <summary>
 		/// Get the texture of the SDLTexture object
 		/// </summary>
-		SDL_Texture *GetBitmap();
+		SDL_Texture *GetBitmap() {return m_Texture;}
 
 		/// <summary>
 		/// Returns wether this SDLTexture has texture data.
@@ -207,6 +207,7 @@ namespace RTE {
 		void *m_Pixels;
 		int m_Pitch;
 
+		SDL_Rect m_ClipRect;
 		int m_Width;
 		int m_Height;
 	};
