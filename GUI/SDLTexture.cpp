@@ -5,12 +5,14 @@ namespace RTE {
 		m_TextureFile.Reset();
 		m_Texture = nullptr;
 		m_SelfCreated = false;
+		m_ClipRect = NULL;
 	}
 
 	SDLTexture::SDLTexture(SDL_Texture *pSurface) {
 		m_TextureFile.Reset();
 		m_Texture = pSurface;
 		m_SelfCreated = false;
+		m_ClipRect = NULL;
 	}
 
 	bool SDLTexture::Create(int width, int height, int depth) {
@@ -87,4 +89,24 @@ namespace RTE {
 		return true;
 	}
 
+	void SDLTexture::GetClipRect(GUIRect *rect) {
+		rect->left = m_ClipRect.x;
+		rect->top = m_ClipRect.y;
+		rect->right = m_ClipRect.x + m_ClipRect.w;
+		rect->bottom = m_ClipRect.y + m_ClipRect.h;
+	}
+
+	void SDLTexture::SetClipRect(GUIRect *rect) {
+		m_ClipRect.x = rect->left;
+		m_ClipRect.y = rect->top;
+		m_ClipRect.w = rect->right - rect->left;
+		m_ClipRect.h = rect->bottom - rect->top;
+	}
+
+	void SDLTexture::AddClipRect(GUIRect *rect) {
+		m_ClipRect.x = std::max(m_ClipRect.x, rect->left);
+		m_ClipRect.y = std::max(m_ClipRect.y, rect->top);
+		m_ClipRect.w = std::min(m_ClipRect.w, rect->right - rect->left);
+		m_ClipRect.h = std::min(m_ClipRect.h, rect->bottom - rect->top);
+	}
 } // namespace RTE
