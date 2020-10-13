@@ -107,7 +107,9 @@ namespace RTE {
 			g_FrameMan.ReadProperty(propName, reader);
 		} else if (propName == "ResolutionMultiplier") {
 			g_FrameMan.ReadProperty(propName, reader);
-		} else if (propName == "DisableMultiScreenResolutionValidation") {
+		} else if (propName == "Fullscreen"){
+			g_FrameMan.ReadProperty(propName, reader);
+	  } else if (propName == "DisableMultiScreenResolutionValidation") {
 			g_FrameMan.ReadProperty(propName, reader);
 		} else if (propName == "HSplitScreen") {
 			g_FrameMan.ReadProperty(propName, reader);
@@ -267,6 +269,8 @@ namespace RTE {
 		writer << g_FrameMan.GetNewResY();
 		writer.NewProperty("ResolutionMultiplier");
 		writer << g_FrameMan.ResolutionMultiplier();
+		writer.NewProperty("Fullscreen");
+		writer << g_FrameMan.IsFullscreen();
 		writer.NewProperty("DisableMultiScreenResolutionValidation");
 		writer << g_FrameMan.IsMultiScreenResolutionValidationDisabled();
 		writer.NewProperty("HSplitScreen");
@@ -494,6 +498,8 @@ namespace RTE {
 		writer << 540;
 		writer.NewProperty("ResolutionMultiplier");
 		writer << 1;
+		writer.NewProperty("Fullscreen");
+		writer << 0;
 		writer.NewProperty("DisableMultiScreenResolutionValidation");
 		writer << 0;
 		writer.NewProperty("SoundVolume");
