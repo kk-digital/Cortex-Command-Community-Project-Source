@@ -119,15 +119,55 @@ namespace RTE {
 		/// </param>
 		void SetNewResY(unsigned short newResY) { m_NewResY = newResY; }
 
+		/// <summary>
+		/// Indicates wether a new resolution has been set for the next time this FrameMan is created
+		/// </summary>
+		/// <returns>
+		/// Wether the new resolution set differs from the current one.
+		/// </returns>
+		bool IsNewResSet() const { return m_NewResX != m_ResX || m_NewResY != m_ResY; }
+
+		/// <summary>
+		/// Returns true if this resolution is supported
+		/// </summary>
+		/// <param name="width">
+		/// Resolution width.
+		/// </param>
+		/// <param name="height">
+		/// Resolution height
+		/// </param>
+		/// <returns>
+		/// True if the resolution is supported.
+		/// </returns>
+		bool IsValidResolution(unsigned short width, unsigned short height) const;
+
+		/// <summary>
+		/// Tells how many time the screen resolution is being multiplied
+		/// </summary>
+		/// <returns>
+		/// What multiple the screen resolution is run in (1 normal)
+		/// </returns>
+		unsigned short ResolutionMultiplier() const { return m_ResMultiplier; }
+
+		/// <summary>
+		/// Gets wether resolution validation in multi-monitor mode is disabled
+		/// </summary>
+		/// <returns>
+		/// Wether resolution validation is disabled for multi-monitor mode.
+		/// </returns>
+		bool IsMultiScreenResolutionValidationDisabled() const {return true;}
+
+		const std::string &GetClassName() const override { return c_ClassName; }
+
 	protected:
 		static const std::string
 		    c_ClassName; //!< The friendly-formatted type name of this object
 
-		SDL_Window *m_Win; //!< The game window
+		SDL_Window *m_Window; //!< The game window
 		SDL_Renderer *m_Renderer; //!< The renderer instance needed for drawing
 
 		SDL_Rect m_Resolution; //!< Screen area excluding things like start menus,
-		                                   //!< window decoration, etc.
+		                       //!< window decoration, etc.
 		static constexpr unsigned short m_BPP = 32; //!< Color Depth (bits per pixel)
 		unsigned short m_NumScreens; //!< Number of physical displays
 		unsigned short m_ScreenResX; //!< Horizontal resolution of the primary display
@@ -135,6 +175,7 @@ namespace RTE {
 
 		unsigned short m_ResX; //!< Game window width.
 		unsigned short m_ResY; //!< Game window height.
+		unsigned short m_ResMultiplier; //!< Resolution multiplier
 		unsigned short m_NewResX; //!< New game window height that will take effect
 		                          //!< next time the FrameMan is started.
 		unsigned short m_NewResY; //!< New game window width that will take effect
@@ -160,6 +201,22 @@ namespace RTE {
 		SDL_Palette m_Palette; // TODO: figure out if this works with Accelerated rendering
 
 	private:
+		/// <summary>
+		/// Check that a resolution will fit the screen(s) and fall back to a safe resolution
+		/// if the set resolution was to high.
+		/// </summary>
+		/// <param name="resX">
+		/// Game window horizontal resolution
+		/// </param>
+		/// <param name="resY">
+		/// Game window vertical resolution
+		/// </param>
+		/// <param name="reMultiplier">
+		/// Resolution multiplier
+		/// </param>
+		void ValidateResolution(unsigned short &resX, unsigned short &resY,
+		                        unsigned short &resMultiplier);
+
 		/// <summary>
 		/// Clears all the member variables of this FrameMan, effectively resetting the
 		/// memebers of this abstraction level only
