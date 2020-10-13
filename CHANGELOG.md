@@ -135,6 +135,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - Game window resolution can now be changed without restarting the game.
 
+- GUI sliders (like for music volume) can now be adjusted with the mouse scroll wheel.
+
+- Exposed PEmitter to lua. Bindings are identical to AEmitter's bindings, except that damage-related bindings don't exist for PEmitter.
+
 ### Changed
 
 - Codebase now uses the C++17 standard.
@@ -226,6 +230,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 	For setups with more than 3 screens `DisableMultiScreenResolutionValidation` must be set true.
 
 - Damage to actors from impulses is now relative to their max health instead of being on a scale from 0 to 100.
+
+- Scenes with a PresetName containing the strings "Test", "Editor" and "Tutorial" are no longer excluded from the scenarios screen and from the metagame.
 
 ### Fixed
 

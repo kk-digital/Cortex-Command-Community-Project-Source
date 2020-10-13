@@ -38,6 +38,7 @@ GUISlider::GUISlider(GUIManager *Manager, GUIControlManager *ControlManager)
     m_Minimum = 0;
     m_Value = 0;
     m_Maximum = 100;
+	m_ValueResolution = 1;
 }
 
 
@@ -117,10 +118,17 @@ void GUISlider::Create(GUIProperties *Props)
     Props->GetValue("Minimum", &m_Minimum);
     Props->GetValue("Maximum", &m_Maximum);
     Props->GetValue("Value", &m_Value);
+	if (!Props->GetValue("ValueResolution", &m_ValueResolution)) {
+		m_ValueResolution = std::max((m_Maximum - m_Minimum) / 100, 1);
+	}
 
+<<<<<<< HEAD
     // Clamp the value
     m_Value = std::max(m_Value, m_Minimum);
     m_Value = std::min(m_Value, m_Maximum);
+=======
+	m_Value = std::clamp(m_Value, m_Minimum, m_Maximum);
+>>>>>>> origin/development
 
     // Re-Calculate the knob info
     CalculateKnob();
@@ -356,9 +364,7 @@ void GUISlider::OnMouseDown(int X, int Y, int Buttons, int Modifier)
         Size = m_Height;
     }
 
-    // Clamp the knob position
-    m_KnobPosition = std::max(m_KnobPosition, 0);
-    m_KnobPosition = std::min(m_KnobPosition, Size-m_KnobSize);
+	m_KnobPosition = std::clamp(m_KnobPosition, m_EndThickness, Size - m_KnobSize - m_EndThickness);
 
     // Calculate the new value
     int Area = Size-m_KnobSize;
@@ -368,13 +374,7 @@ void GUISlider::OnMouseDown(int X, int Y, int Buttons, int Modifier)
         m_Value = (float)MaxRange * p + m_Minimum;
     }
 
-    // Clamp the value
-    m_Value = std::max(m_Value, m_Minimum);
-    m_Value = std::min(m_Value, m_Maximum);
-
-    // Clamp the knob position again for the graphics
-    m_KnobPosition = std::max(m_KnobPosition, m_EndThickness);
-    m_KnobPosition = std::min(m_KnobPosition, Size-m_KnobSize-m_EndThickness);
+	m_Value = std::clamp(m_Value, m_Minimum, m_Maximum);
 
     // If the value has changed, add the "Changed" notification
     if (m_Value != m_OldValue)
@@ -456,6 +456,23 @@ void GUISlider::OnMouseMove(int X, int Y, int Buttons, int Modifier)
         m_OldValue = m_Value;
     }
 }
+
+
+void GUISlider::OnMouseWheelChange(int x, int y, int modifier, int mouseWheelChange) {
+	m_OldValue = m_Value;
+
+	if (mouseWheelChange < 0) {
+		m_Value = std::max(m_Value - m_ValueResolution, m_Minimum);
+	} else {
+		m_Value = std::min(m_Value + m_ValueResolution, m_Maximum);
+	}
+	
+	if (m_Value != m_OldValue) {
+		CalculateKnob();
+		AddEvent(GUIEvent::Notification, Changed, 0);
+	}
+}
+
 /*
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -511,37 +528,18 @@ GUIPanel *GUISlider::GetPanel(void)
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Calculates the knob position and size.
 
-void GUISlider::CalculateKnob(void)
-{
-    m_KnobPosition = 0;
-    m_KnobSize = 0;
+void GUISlider::CalculateKnob(void) {
+	if (!m_KnobImage) {
+		return;
+	}
 
-    // Knob image not loaded yet
-    if (!m_KnobImage)
-        return;
-
-    if (m_Orientation == Horizontal) {
-        // Horizontal
-        m_KnobSize = m_KnobImage->GetWidth();
-        
-        if (m_Maximum-m_Minimum > 0) {
-            float V = (float)(m_Value-m_Minimum) / (float)(m_Maximum-m_Minimum);
-            m_KnobPosition = (float)(m_Width-m_KnobSize)*V;
-        }
-
-    } else {
-        // Vertical
-        m_KnobSize = m_KnobImage->GetHeight();
-        
-        if (m_Maximum-m_Minimum > 0) {
-            float V = (float)(m_Value-m_Minimum) / (float)(m_Maximum-m_Minimum);
-            m_KnobPosition = (float)(m_Height-m_KnobSize)*V;
-        }
-    }
-
-    // Clamp the knob position again for the graphics
-    m_KnobPosition = std::max(m_KnobPosition, m_EndThickness);
-    m_KnobPosition = std::min(m_KnobPosition, (m_Orientation == Horizontal ? m_Width : m_Height) - m_KnobSize - m_EndThickness);
+	if (m_Maximum > m_Minimum) {
+		const bool horizontalOrientation = (m_Orientation == Horizontal);
+		m_KnobSize = (horizontalOrientation) ? m_KnobImage->GetWidth() : m_KnobImage->GetHeight();
+		const int size = (horizontalOrientation) ? m_Width : m_Height;
+		const float valueRatio = static_cast<float>(m_Value - m_Minimum) / static_cast<float>(m_Maximum - m_Minimum);
+		m_KnobPosition = m_EndThickness + static_cast<int>(static_cast<float>(size - m_KnobSize - (m_EndThickness * 2)) * valueRatio);
+	}
 }
 
 
@@ -640,10 +638,13 @@ int GUISlider::GetTickDirection(void)
 
 void GUISlider::SetMinimum(int Minimum)
 {
-    m_Minimum = Minimum;
+	if (Minimum != m_Minimum) {
+		m_Minimum = Minimum;
+		m_Value = std::max(m_Value, m_Minimum);
 
-    // Re-Calculate the knob info
-    CalculateKnob();
+		// Re-Calculate the knob info
+		CalculateKnob();
+	}
 }
 
 
@@ -665,10 +666,13 @@ int GUISlider::GetMinimum(void)
 
 void GUISlider::SetMaximum(int Maximum)
 {
-    m_Maximum = Maximum;
+	if (Maximum != m_Maximum) {
+		m_Maximum = Maximum;
+		m_Value = std::min(m_Value, m_Maximum);
 
-    // Re-Calculate the knob info
-    CalculateKnob();
+		// Re-Calculate the knob info
+		CalculateKnob();
+	}
 }
 
 
@@ -692,17 +696,12 @@ void GUISlider::SetValue(int Value)
 {
     int OldValue = m_Value;
 
-    m_Value = Value;
+	m_Value = std::clamp(Value, m_Minimum, m_Maximum);
 
-    // Clamp it
-    m_Value = std::max(m_Value, m_Minimum);
-    m_Value = std::min(m_Value, m_Maximum);
-    
-    if (m_Value != OldValue)
-        AddEvent(GUIEvent::Notification, Changed, 0);
-
-    // Re-Calculate the knob info
-    CalculateKnob();
+	if (m_Value != OldValue) {
+		CalculateKnob();
+		AddEvent(GUIEvent::Notification, Changed, 0);
+	}
 }
 
 
@@ -765,4 +764,10 @@ void GUISlider::ApplyProperties(GUIProperties *Props)
     m_Value = std::min(m_Value, m_Maximum);
 
     BuildBitmap();
+}
+
+void GUISlider::SetValueResolution(int valueRes) {
+	if (valueRes >= 1 && valueRes <= m_Maximum - m_Minimum) {
+		m_ValueResolution = valueRes;
+	}
 }
