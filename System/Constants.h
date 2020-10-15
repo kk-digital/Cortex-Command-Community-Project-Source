@@ -9,8 +9,9 @@ namespace RTE {
 	typedef int MID; //!< Distinctive type definition for Material IDs.
 #pragma endregion
 
-#pragma region Game Version
+#pragma region Game Info
 	static constexpr char *c_GameVersion = "Pre-Release 3";
+	static constexpr char *c_WindowTitle = "Cortex Command Community Project";
 #pragma endregion
 
 #pragma region Filesystem Constants
