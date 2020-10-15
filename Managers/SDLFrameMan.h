@@ -120,7 +120,8 @@ namespace RTE {
 		void SetNewResY(unsigned short newResY) { m_NewResY = newResY; }
 
 		/// <summary>
-		/// Indicates wether a new resolution has been set for the next time this FrameMan is created
+		/// Indicates wether a new resolution has been set for the next time this FrameMan is
+		/// created
 		/// </summary>
 		/// <returns>
 		/// Wether the new resolution set differs from the current one.
@@ -155,7 +156,286 @@ namespace RTE {
 		/// <returns>
 		/// Wether resolution validation is disabled for multi-monitor mode.
 		/// </returns>
-		bool IsMultiScreenResolutionValidationDisabled() const {return true;}
+		bool IsMultiScreenResolutionValidationDisabled() const { return true; }
+
+		/// <summary>
+		/// Setss and switches to a new windowed mode resolution multiplier.
+		/// </summary>
+		/// <param name="multiplier">
+		/// The multiplier to switch to.
+		/// </param>
+		/// <returns>
+		/// Error code, anything other than 0 is an error.
+		/// </returns>
+		int SwitchResolutionMultiplier(unsigned char multiplier = 1);
+
+		/// <summary>
+		/// Gets wether the gmae window is in fullscreen mode or not.
+		/// </summary>
+		/// <returns>
+		/// True if the game window is in fullscreen.
+		/// </returns>
+		bool IsFullscreen() const { return m_Fullscreen; }
+
+		/// <summary>
+		/// Gets wether the window is in upscaled fullscreen mode.
+		/// </summary>
+		/// <returns>
+		/// True if in fullscreen and multiplier greater than 1.
+		/// </returns>
+		bool IsUpscaledFullscreen() const { return m_Fullscreen && (m_ResMultiplier > 1); }
+
+		/// <summary>
+		/// Switches the game window into fullscreen or upscaled fullscreen mode.
+		/// <summary>
+		/// <param name = "upscaled">
+		/// Wether to switch to upscaled mode or not.
+		/// </param>
+		/// <param name="endActivity">
+		/// Wether the current Activity should be ended before performing the switch.
+		/// </param>
+		void SwitchToFulscreen(bool upscaled, bool endActivity = false);
+
+		/// <summary>
+		/// Gets wether the game resolution was changed.
+		/// </summary>
+		/// <returns>
+		/// Wether the game window resolution was changed
+		/// </returns>
+		bool ResolutionChanged() const { return m_ResChanged; }
+
+		/// <summary>
+		/// Sets wether the game resolution was changed. Used to reset the flag after the
+		/// change is complete. This is called from ReinitMainMenu() and should not be called
+		/// anywhere else.
+		/// </summary>
+		/// <param name="resolutionChanged">
+		/// Wether the resolution changed or not.
+		/// </param>
+		void SetResolutionChanged(bool resolutionChanged) {
+			m_ResChanged = resolutionChanged;
+		}
+
+		/// <summary>
+		/// Switches the game resolution to the specified dimensions.
+		/// <summary>
+		/// <param name = "newResX">
+		/// New width to set the window to.
+		/// </param>
+		/// <param name="newResY">
+		/// New height to set the window to.
+		/// </param>
+		/// <param name="newMultiplier">
+		/// New Resolution multiplier to set window to.
+		/// </param>
+		/// <param name="endActivity">
+		/// Wether the current Activity should be ended before performing the switch.
+		/// </param>
+		/// <returns>
+		/// Error code, anything other than 0 i an error.
+		/// </returns>
+		int SwitchResolution(unsigned short newResX, unsigned short newResY,
+		                     unsigned short newMultiplier = 1, bool endActivity = false);
+
+		/// <summary>
+		/// Gets wether the screen is split horizontally across the screen, i.e. as two
+		/// splitscreens one above another.
+		/// </summary>
+		/// <returns>
+		/// Wehter or not screen has horizontal split
+		/// </returns>
+		bool GetHSplit() const { return m_HSplit; }
+
+		/// <summary>
+		/// Sets wether the screen is split horizontally across the screen, i.e. as two
+		/// splitscreens one obove the other.
+		/// </summary>
+		/// <param name="hSplit">
+		/// Wether or not to have a horizontal split.
+		/// </param>
+		void SetHSplit(bool hSplit) { m_HSplit = hSplit; }
+
+		/// <summary>
+		/// Gets wether the screen is split vertically, i.e. as two splitscreens side by side.
+		/// </summary>
+		/// <returns>
+		/// Wether the screen is split vertically
+		/// </returns>
+		bool GetVSplit() const { return m_VSplit; }
+
+		/// <summary>
+		/// Sets wether the screen is split vertically, i.e. as two splitscreens side by side.
+		/// </summary>
+		/// <param name="">
+		/// Wether or not to have a vertical split.
+		/// </param>
+		void SetVSplit(bool vSplit) { m_VSplit = vSplit; }
+
+		/// <summary>
+		/// Sets new values for the split screen configuration
+		/// </summary>
+		/// <param name="hSplit">
+		/// Wether the new setting should be horizontally split
+		/// </param>
+		/// <param name="vSplit">
+		/// Wether the new setting should be vertically split
+		/// </param>
+		void ResetSplitScreens(bool hSplit = false, bool vSplit = false);
+
+		/// <summary>
+		/// The number of currently active screens, counting all splits
+		/// </summary>
+		/// <returns>
+		/// The number of currently active screens.
+		/// </returns>
+		unsigned short GetScreenCount() const {
+			return m_HSplit || m_VSplit ? (m_HSplit && m_VSplit ? 4 : 2) : 1;
+		}
+
+		// TODO: Are there backbuffers???
+		/// <summary>
+		/// Gets the width of the individual player screens.
+		/// </summary>
+		/// <returns>
+		/// The width of the player screens.
+		/// </returns>
+		unsigned short GetPlayerScreenWidth() const { return GetPlayerFrameBufferWidth(-1); }
+
+		/// <summary>
+		/// Gets the height of the individual player screens.
+		/// </summary>
+		/// <returns>
+		/// The height of the player screens.
+		/// </returns>
+		unsigned short GetPlayerScreenHeight() const {
+			return GetPlayerFrameBufferHeight(-1);
+		}
+
+		/// <summary>
+		/// Gets the width of the specified player screen.
+		/// <summary>
+		/// <param name = "whichPlayer">
+		/// Player screen to get width for.
+		/// </param>
+		/// <returns>
+		/// The width of the specified player screen.
+		/// </returns>
+		unsigned short GetPlayerFrameBufferWidth(short whichPlayer) const;
+
+		/// <summary>
+		/// Gets the width of the specified player screen.
+		/// <summary>
+		/// <param name = "whichPlayer">
+		/// Player screen to get width for (only used for multiplayer parts)
+		/// </param>
+		/// <returns>
+		/// The height of the specified player screen
+		/// </returns>
+		unsigned short GetPlayerFrameBufferHeight(short whichPlayer) const;
+
+		/// <summary>
+		/// Gets the small font from the GUI engine's current skin. Ownership is NOT
+		/// transferred!
+		/// </summary>
+		/// <returns>
+		/// A pointer to the requested font, or 0 if no small font was found.
+		/// </returns>
+		GUIFont *GetSmallFont() { return GetFont(true); }
+
+		/// <summary>
+		/// Gets the large font from the GUI engine's current skin. Ownership is NOT
+		/// transferred!
+		/// </summary>
+		/// <returns>
+		/// A pointer to the requested font, or 0 if no small font was found.
+		/// </returns>
+		GUIFont *GetLargeFont() { return GetFont(false); }
+
+		/// <summary>
+		/// Calculates the width of a text string using the given font size.
+		/// <summary>
+		/// <param name = "text">
+		/// Text string.
+		/// </param>
+		/// <param name="isSmall">
+		/// Wether to use small or large font.
+		/// </param>
+		/// <returns>
+		/// Width of the text string
+		/// </returns>
+		unsigned short CalculateTextWidth(const std::string &text, vool isSmall);
+
+		/// <summary>
+		/// Calculates the height of a text string using the given font size.
+		/// <summary>
+		/// <param name = "text">
+		/// Text string
+		/// </param>
+		/// <param name="maxWidth">
+		/// Maximum width of the text string
+		/// </param>
+		/// <param name="isSmall">
+		/// Wether to use small or large font.
+		/// </param>
+		/// <returns>
+		/// Height of the text string.
+		/// </returns>
+		unsigned short CalculateTextHeight(const std::string &text, unsigned short maxWidth,
+		                                   bool isSmall);
+
+		/// <summary>
+		/// Gets the message to display on tp of each player's screen.
+		/// <summary>
+		/// <param name = "whichScreen">
+		/// Which player screen to get message from.
+		/// </param>
+		/// <returns>
+		/// Current message shown to player.
+		/// </returns>
+		std::string GetScreenText(short whichScreen = 0) const {
+			return (whichScreen >= 0 && whichScreen < c_MaxScreenCount) ? "" : "";
+		} // TODO: add fonts and screen text handling
+
+		/// <summary>
+		/// Sets the message to be displayed on top of each player's screen
+		/// </summary>
+		/// <param name="message">
+		/// An std::string that specifies what should be displayed.
+		/// </param>
+		/// <param name="displayDuration">
+		/// The duration, in ms to force this message to display. No other message can be
+		/// displayed before this expires. ClearScreenText overrides it though.
+		/// </param>
+		void SetScreenText(const std::string &message, short whichScreen = 0,
+		                   unsigned short blinkInterval = 0, short displayDuration = -1,
+		                   bool centered = false);
+
+		/// <summary>
+		/// Clears the message displayed on top of each player's screen.
+		/// </summary>
+		/// <param name="whichScreen">
+		/// Which screen message to clear.
+		/// </param>
+		void ClearScreenText(short whichScreen = 0);
+
+		/// <summary>
+		/// Flashes any of the players' screen with the pecified color for this frame
+		/// </summary>
+		/// <param name="screen">
+		/// Which screen to flash.
+		/// </param>
+		/// <param name="color">
+		/// What color to flash it. -1 means no color or flash
+		/// </param>
+		/// <param name="periodMS">
+		/// How long a period to fill th eframe with color. If0, a single-frame flash will
+		/// happen.
+		/// </param>
+		void FlashScreen(short screen, int colro, float periodMS = 0);
+
+		int SaveScreenToBMP(const char *nameBase) {return SaveBitmap(ScreenDump, nameBase); }
+
+		int SaveWorldToBMP(const char *nameBase) {return SaveBitmap(WorldDump, nameBase); }
 
 		const std::string &GetClassName() const override { return c_ClassName; }
 
