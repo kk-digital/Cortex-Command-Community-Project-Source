@@ -1,19 +1,6 @@
 #ifndef _RTETIMERMAN_
 #define _RTETIMERMAN_
 
-// TODO: Figure out where we can include these without imploding the whole game and keeping QPC working and having no method/macro conflicts.
-#include "allegro.h"
-
-#ifdef _WIN32
-#include "winalleg.h"
-#endif
-
-// Windows.h defines these and they conflict with our methods so we need to undefine them manually.
-#undef GetClassName
-#undef PlaySound
-// minwindef.h defines these and they conflict with the std methods so we need to undefine them manually.
-#undef min
-#undef max
 
 #include "Singleton.h"
 
@@ -65,7 +52,7 @@ namespace RTE {
 		/// Gets the current time stamp in microseconds unrelated to TimerMan updates. Can be used to measure time intervals during a single frame update.
 		/// </summary>
 		/// <returns>Current time stamp in microseconds.</returns>
-		long long GetAbsoluteTime() const;
+		unsigned long long GetAbsoluteTime() const;
 
 		/// <summary>
 		/// Enables or disables the averaging of time measurements done each Update(). These help smooth out and prevent choppy animation.
@@ -150,7 +137,7 @@ namespace RTE {
 		/// Gets the number of ticks per second (the resolution of the timer).
 		/// </summary>
 		/// <returns>The number of ticks per second.</returns>
-		long long GetTicksPerSecond() const { return m_TicksPerSecond; }
+		unsigned long long GetTicksPerSecond() const { return m_TicksPerSecond; }
 
 		/// <summary>
 		/// Gets the number of ticks per second. Lua can't handle int64 (or long long apparently) so we'll expose this specialized function.
@@ -162,19 +149,19 @@ namespace RTE {
 		/// Gets a current global real time measured in ticks from the start of the simulation up to the last Update of this TimerMan. Use TickFrequency to determine how many ticks go in a second.
 		/// </summary>
 		/// <returns>The number of ticks passed since the simulation started.</returns>
-		long long GetRealTickCount() const { return m_RealTimeTicks; }
+		unsigned long long GetRealTickCount() const { return m_RealTimeTicks; }
 
 		/// <summary>
 		/// Gets a current global simulation time measured in ticks from the start of the simulation up to the last Update of this TimerMan. Use TickFrequency to determine how many ticks go in a second.
 		/// </summary>
 		/// <returns>The number of ticks passed since the simulation started.</returns>
-		long long GetSimTickCount() const { return m_SimTimeTicks; }
+		unsigned long long GetSimTickCount() const { return m_SimTimeTicks; }
 
 		/// <summary>
 		/// Gets a current global simulation time measured in ms ticks from the start of the simulation up to the last UpdateSim of this TimerMan.
 		/// </summary>
 		/// <returns>The number of ms passed since the simulation started.</returns>
-		long long GetSimTimeMS() const { return (m_SimTimeTicks / m_TicksPerSecond) * 0.001F; }
+		unsigned long long GetSimTimeMS() const { return (m_SimTimeTicks / m_TicksPerSecond) * 0.001F; }
 
 		/// <summary>
 		/// Gets the current number of ticks that the simulation should be updating with.
@@ -244,15 +231,15 @@ namespace RTE {
 
 		static const std::string c_ClassName; //!< A string with the friendly-formatted type name of this object.
 
-		long long m_StartTime; //!< The point in real time when the simulation (re)started.
-		long long m_TicksPerSecond; //!< The frequency of ticks each second, ie the resolution of the timer.	
-		long long m_RealTimeTicks; //!< The number of actual time ticks counted so far.
-		long long m_RealToSimCap; //!< The cap of number of ticks that the real time can add to the accumulator each update.
-		long long m_SimTimeTicks; //!< The number of simulation time ticks counted so far.
-		long long m_SimUpdateCount; //!< The number of whole simulation updates have been made since reset.
-		long long m_SimAccumulator; //!< Simulation time accumulator keeps track of how much actual time has passed and is chunked into whole DeltaTime:s upon UpdateSim.
+		unsigned long long m_StartTime; //!< The point in real time when the simulation (re)started.
+		unsigned long long m_TicksPerSecond; //!< The frequency of ticks each second, ie the resolution of the timer.
+		unsigned long long m_RealTimeTicks; //!< The number of actual time ticks counted so far.
+		unsigned long long m_RealToSimCap; //!< The cap of number of ticks that the real time can add to the accumulator each update.
+		unsigned long long m_SimTimeTicks; //!< The number of simulation time ticks counted so far.
+		unsigned long long m_SimUpdateCount; //!< The number of whole simulation updates have been made since reset.
+		unsigned long long m_SimAccumulator; //!< Simulation time accumulator keeps track of how much actual time has passed and is chunked into whole DeltaTime:s upon UpdateSim.
 
-		long long m_DeltaTime; //!< The fixed delta time chunk of the simulation update.	
+		unsigned long long m_DeltaTime; //!< The fixed delta time chunk of the simulation update.
 		float m_DeltaTimeS; //!< The simulation update step size, in seconds.
 		std::deque<float> m_DeltaBuffer; //!< Buffer for measuring the most recent real time differences, used for averaging out the readings.
 
