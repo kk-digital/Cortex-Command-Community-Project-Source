@@ -1,8 +1,6 @@
 #ifndef _RTEERROR_
 #define _RTEERROR_
 
-#include "allegro.h"
-#include "loadpng.h"
 
 #ifdef _WIN32
 #define DebuggerBreak __debugbreak();
