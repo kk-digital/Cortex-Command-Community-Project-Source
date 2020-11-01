@@ -1,12 +1,26 @@
 #include "SDLFrameMan.h"
-#include "SDLTexture.h"
-#include "SDLScreen.h"
-#include "Constants.h"
+#include "PostProcessMan.h"
+#include "PrimitiveMan.h"
+#include "PerformanceMan.h"
+#include "ActivityMan.h"
+#include "ConsoleMan.h"
+#include "SettingsMan.h"
+#include "UInputMan.h"
+
+#include "Entities/SLTerrain.h"
+#include "Entities/Scene.h"
+
+#include "GUI/SDLTexture.h"
+#include "GUI/SDLScreen.h"
+#include "System/Constants.h"
+
+#include "System/RTEError.h"
 
 namespace RTE {
 	const std::string FrameMan::c_ClassName = "FrameMan";
+
 	void FrameMan::Clear() {
-		m_Win = NULL;
+		m_Window = NULL;
 		m_Renderer = NULL;
 
 		m_NumScreens = SDL_GetNumVideoDisplays();
@@ -42,21 +56,35 @@ namespace RTE {
 		    c_WindowTitle, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, m_ResX, m_ResY,
 		    SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL | SDL_WINDOW_INPUT_FOCUS);
 
+		SetFullscreen(m_Fullscreen);
+
+		RTEAssert(m_Window != NULL, "Could not create Window because: " + SDL_GetError());
+
 		m_Renderer = SDL_CreateRenderer(m_Window, -1, SDL_RENDERER_ACCELERATED);
+		RTEAssert(m_Renderer != NULL, "Could not create Renderer because: " + SDL_GetError());
+
+		// Set integer scaling so we don't get artifacts by rendering subpixels.
+		SDL_RenderSetIntegerScale(m_Renderer, SDL_TRUE);
+
+		// Upscale the resolution to the set multiplier.
+		SDL_RenderSetScale(m_Renderer, m_ResMultiplier, m_ResMultiplier);
+
+		SDL_SetRenderDrawColor(m_Renderer, 0, 0, 0, 255);
+		SDL_RenderClear(m_Renderer);
 
 		return 0;
 	}
 
-	int FrameMan::ReadProperty(std::string propName, Reader &reader){
-		if (propName == "ResolutionX"){
+	int FrameMan::ReadProperty(std::string propName, Reader &reader) {
+		if (propName == "ResolutionX") {
 			reader >> m_ResX;
 			m_NewResX = m_ResX;
-		} else if (propName == "ResolutionY"){
+		} else if (propName == "ResolutionY") {
 			reader >> m_ResY;
 			m_NewResY = m_ResY;
-		} else if (propName == "ResolutionMultiplier"){
+		} else if (propName == "ResolutionMultiplier") {
 			reader >> m_ResMultiplier;
-		} else if (propName == "Fullscreen"){
+		} else if (propName == "Fullscreen") {
 			reader >> m_Fullscreen;
 		} else if (propName == "HSplitScreen") {
 			reader >> m_HSplitOverride;
@@ -89,7 +117,7 @@ namespace RTE {
 		return 0;
 	}
 
-	void FrameMan::Destroy(){
+	void FrameMan::Destroy() {
 		SDL_DestroyRenderer(m_Renderer);
 		SDL_DestroyWindow(m_Window);
 
@@ -100,15 +128,22 @@ namespace RTE {
 		Clear();
 	}
 
-	void Update(){
+	void FrameMan::Update() {
+		g_PerformanceMan.Update();
 
+		g_PrimitiveMan.ClearPrimitivesList();
 	}
 
-	void Draw(){
-
+	void FrameMan::Draw() {
+		g_PostProcessMan.ClearScenePostEffects();
+		// Reset the frame timer so we can measure how much time it takes until the next frame is drawn
+		g_PerformanceMan.ResetFrameTimer();
 	}
 
-	void Destroy(){
 
+
+	void FrameMan::SetFullscreen(bool fullscreen, bool endActivity) {
+		SDL_SetWindowFullscreen(m_Window, fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
 	}
+
 } // namespace RTE
