@@ -4,7 +4,6 @@
 #include "GUI/Interface.h"
 #include "ContentFile.h"
 #include <SDL2/SDL.h>
-#include "RTEError.h"
 
 namespace RTE {
 	class SDLTexture : public GUIBitmap {

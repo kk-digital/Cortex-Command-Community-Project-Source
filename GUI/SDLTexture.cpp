@@ -1,4 +1,5 @@
 #include "SDLTexture.h"
+#include "System/RTEError.h"
 
 namespace RTE {
 	SDLTexture::SDLTexture() {
