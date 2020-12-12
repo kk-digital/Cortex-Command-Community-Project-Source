@@ -457,9 +457,9 @@ namespace RTE {
 		unsigned short m_ResY; //!< Game window height.
 		unsigned short m_ResMultiplier; //!< Resolution multiplier
 		unsigned short m_NewResX; //!< New game window height that will take effect
-		                          //!< next time the FrameMan is started.
+		                          //!< next time this FrameMan is started.
 		unsigned short m_NewResY; //!< New game window width that will take effect
-		                          //!< next time the FrameMan is started.
+		                          //!< next time this FrameMan is started.
 		unsigned short m_NewResMultiplier; //!< New multiplier that will take effect
 		                                   //!< the next time FrameMan is started
 		bool m_ResChanged; //!< Wether the resolution was changed through the
@@ -504,8 +504,7 @@ namespace RTE {
 		void Clear();
 
 		// Disallow the use of some implicit methods.
-		FrameMan(const FrameMan &reference) {}
-		FrameMan &operator=(const FrameMan &rhs) {}
-	};
+		FrameMan(const FrameMan &reference) = delete;
+		FrameMan &operator=(const FrameMan &rhs) = delete;
 } // namespace RTE
 #endif /* _SDLFRAMEMAN_ */

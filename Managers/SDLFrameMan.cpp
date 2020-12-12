@@ -53,15 +53,17 @@ namespace RTE {
 	int FrameMan::Create() {
 		ValidateResolution(m_ResX, m_ResY, m_ResMultiplier);
 		m_Window = SDL_CreateWindow(
-		    c_WindowTitle, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, m_ResX, m_ResY,
-		    SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL | SDL_WINDOW_INPUT_FOCUS);
+		    c_WindowTitle, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, m_ResX,
+		    m_ResY, SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL | SDL_WINDOW_INPUT_FOCUS);
 
 		SetFullscreen(m_Fullscreen);
 
-		RTEAssert(m_Window != NULL, "Could not create Window because: " + SDL_GetError());
+		RTEAssert(m_Window != NULL,
+		          "Could not create Window because: " + SDL_GetError());
 
 		m_Renderer = SDL_CreateRenderer(m_Window, -1, SDL_RENDERER_ACCELERATED);
-		RTEAssert(m_Renderer != NULL, "Could not create Renderer because: " + SDL_GetError());
+		RTEAssert(m_Renderer != NULL,
+		          "Could not create Renderer because: " + SDL_GetError());
 
 		// Set integer scaling so we don't get artifacts by rendering subpixels.
 		SDL_RenderSetIntegerScale(m_Renderer, SDL_TRUE);
@@ -135,15 +137,29 @@ namespace RTE {
 	}
 
 	void FrameMan::Draw() {
+		int screenCount = 1;
 		g_PostProcessMan.ClearScenePostEffects();
-		// Reset the frame timer so we can measure how much time it takes until the next frame is drawn
+
+		list<PostEffect> screenRelativeEffects;
+		list<Box> screenRelativeGlowBoxes;
+
+		const Activity *pActivity = g_ActivityMan.GetActivity();
+
+		for (int playerScreen = 0; playerScreen < screenCount; ++playerScreen) {
+			screenRelativeEffects.clear();
+			screenRelativeGlowBoxes.clear();
+
+			SDLTexture drawScreen; // TODO: make player screens
+		}
+
+		// Reset the frame timer so we can measure how much time it takes until the
+		// next frame is drawn
 		g_PerformanceMan.ResetFrameTimer();
 	}
 
-
-
 	void FrameMan::SetFullscreen(bool fullscreen, bool endActivity) {
-		SDL_SetWindowFullscreen(m_Window, fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
+		SDL_SetWindowFullscreen(m_Window,
+		                        fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
 	}
 
 } // namespace RTE
