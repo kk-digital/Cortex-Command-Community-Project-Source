@@ -1084,7 +1084,7 @@ void MOSRotating::GibThis(Vector impactImpulse, float internalBlast, MovableObje
 
 bool MOSRotating::MoveOutOfTerrain(unsigned char strongerThan)
 {
-    return m_pAtomGroup->ResolveTerrainIntersection(m_Pos, m_Rotation, strongerThan);
+    return m_pAtomGroup->ResolveTerrainIntersection(m_Pos, strongerThan);
 }
 
 
@@ -1497,7 +1497,7 @@ void MOSRotating::PostTravel()
 void MOSRotating::Update()
 {
 
-#if defined DEBUG_BUILD || defined MIN_DEBUG_BUILD
+#ifndef RELEASE_BUILD
 	RTEAssert(m_MOID == g_NoMOID || (m_MOID >= 0 && m_MOID < g_MovableMan.GetMOIDCount()), "MOID out of bounds!");
 #endif
 

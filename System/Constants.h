@@ -23,6 +23,8 @@ namespace RTE {
 	static constexpr float c_MPP = 1.0F / c_PPM; //!< Meters per Pixel constant.
 	static constexpr float c_PPL = 1000.0F / ((100.0F / c_PPM) * (100.0F / c_PPM) * (100.0F / c_PPM)); //!< Pixels per Liter constant.
 	static constexpr float c_LPP = 1.0F / c_PPL; //!< Liters per Pixel constant.
+
+	static constexpr int c_DefaultAtomGroupResolution = 5; //!< The global default AtomGroup resolution setting.
 #pragma endregion
 
 #pragma region Graphics Constants
@@ -71,6 +73,8 @@ namespace RTE {
 #pragma endregion
 
 #pragma region Audio Constants
+	static constexpr std::array<const char*, 3> c_SupportedAudioFormats = { ".wav", ".ogg", ".flac" };
+
 	static constexpr unsigned short c_MaxSoftwareChannels = 128;
 	static constexpr unsigned short c_MaxVirtualChannels = 1024;
 	static constexpr unsigned short c_MaxPlayingSoundsPerContainer = 128;
