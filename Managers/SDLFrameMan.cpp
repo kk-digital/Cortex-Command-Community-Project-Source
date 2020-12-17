@@ -1,14 +1,15 @@
 #include "SDLFrameMan.h"
+
 #include "PostProcessMan.h"
 #include "PrimitiveMan.h"
 #include "PerformanceMan.h"
-#include "ActivityMan.h"
-#include "ConsoleMan.h"
-#include "SettingsMan.h"
-#include "UInputMan.h"
+// #include "ActivityMan.h"
+// #include "ConsoleMan.h"
+// #include "SettingsMan.h"
+// #include "UInputMan.h"
 
-#include "Entities/SLTerrain.h"
-#include "Entities/Scene.h"
+// #include "Entities/SLTerrain.h"
+// #include "Entities/Scene.h"
 
 #include "GUI/SDLTexture.h"
 #include "GUI/SDLScreen.h"
@@ -58,12 +59,12 @@ namespace RTE {
 
 		SetFullscreen(m_Fullscreen);
 
-		RTEAssert(m_Window != NULL,
-		          "Could not create Window because: " + SDL_GetError());
+		RTEAssert(m_Window != NULL, "Could not create Window because: " +
+		                                std::string(SDL_GetError()));
 
 		m_Renderer = SDL_CreateRenderer(m_Window, -1, SDL_RENDERER_ACCELERATED);
-		RTEAssert(m_Renderer != NULL,
-		          "Could not create Renderer because: " + SDL_GetError());
+		RTEAssert(m_Renderer != NULL, "Could not create Renderer because: " +
+		                                  std::string(SDL_GetError()));
 
 		// Set integer scaling so we don't get artifacts by rendering subpixels.
 		SDL_RenderSetIntegerScale(m_Renderer, SDL_TRUE);
@@ -122,10 +123,6 @@ namespace RTE {
 	void FrameMan::Destroy() {
 		SDL_DestroyRenderer(m_Renderer);
 		SDL_DestroyWindow(m_Window);
-
-		delete m_GUIScreen;
-		delete m_LargeFont;
-		delete m_SmallFont;
 
 		Clear();
 	}
