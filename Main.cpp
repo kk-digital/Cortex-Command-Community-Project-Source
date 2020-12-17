@@ -21,7 +21,7 @@
 // #include "System.h"
 
 // #include "MetaMan.h"
-#include "FrameMan.h"
+#include "SDLFrameMan.h"
 // #include "SettingsMan.h"
 // #include "ConsoleMan.h"
 // #include "PresetMan.h"
