@@ -1,3 +1,7 @@
+#include <SDL2/SDL.h>
+
+#include "Managers/SDLFrameMan.h"
+
 #include "RTEError.h"
 #include "Constants.h"
 
@@ -5,11 +9,13 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	extern void ShowMessageBox(std::string message) { allegro_message(message.c_str()); }
+	extern void ShowMessageBox(std::string message) { SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "RTE Aborted! (x_x)", message.c_str(), g_FrameMan.GetWindow()); }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	extern bool RTEAbortFunc(const char *description, const char *file, int line) {
+    // TODO: Implement for SDL
+    /*
 		// Save out the screen bitmap, after making a copy of it, faster sometimes
 		if (screen) {
 			BITMAP *abortScreenBuffer = create_bitmap(screen->w, screen->h);
@@ -36,6 +42,7 @@ namespace RTE {
 		allegro_message(message);
 #endif
 		// True so that the debugbreak code is run and the debugger goes there.
+    */
 		return true;
 	}
 
