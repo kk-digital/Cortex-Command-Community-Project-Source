@@ -32,7 +32,8 @@ sources += files(
 # 'GUITextBox.cpp',
 # 'GUITextPanel.cpp',
 # 'GUIUtil.cpp',
-# 'SDLScreen.cpp'
+# 'SDLScreen.cpp',
+'SDLTexture.cpp',
 )
 #
 # if build_machine.system() == 'windows'
