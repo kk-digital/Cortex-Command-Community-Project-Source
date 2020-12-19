@@ -1,6 +1,7 @@
 #ifndef _RTESDLBITMAP_
 #define _RTESDLBITMAP_
 
+#include "GUI/GUIRect.h"
 #include "GUI/Interface.h"
 #include "ContentFile.h"
 #include <SDL2/SDL.h>
@@ -54,7 +55,7 @@ namespace RTE {
 		/// <param name="x">x position on the target</param>
 		/// <param name="y">y position on the target</param>
 		/// <param name="pRect">Destination size</param>
-		void Draw(GUIBitmap *pDestBitmap, int x, int y, GUIRect *pRect);
+		void Draw(GUIBitmap *pDestBitmap, int x, int y, GUIRect *pRect) override;
 
 		/// <summary>
 		/// Draw the Bitmap with transparency (SDL doesn't distinguish this anymore)
@@ -63,7 +64,7 @@ namespace RTE {
 		/// <param name="x">x position on the target</param>
 		/// <param name="y">y position on the target</parma>
 		/// <param name="pRect">Destination size</param>
-		void DrawTrans(GUIBitmap *pDestBitmap, int x, int y, GUIRect *pRect);
+		void DrawTrans(GUIBitmap *pDestBitmap, int x, int y, GUIRect *pRect) override;
 
 		/// <summary>
 		/// Draw transparent Bitmap with Scaling
