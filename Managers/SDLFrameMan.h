@@ -199,7 +199,7 @@ namespace RTE {
 		/// Wether the current Activity should be ended before performing the
 		/// switch.
 		/// </param>
-		void SwitchToFulscreen(bool upscaled, bool endActivity = false);
+		void SwitchToFullscreen(bool upscaled, bool endActivity = false);
 
 		/// <summary>
 		/// Set fullscreen mode according to <paramref name="fullscreen">
@@ -374,6 +374,14 @@ namespace RTE {
 		/// </returns>
 		GUIFont *GetLargeFont() { return GetFont(false); }
 
+		SDL_Renderer *GetRenderer() { return m_Renderer; }
+
+		SDL_Window *GetWindow() { return m_Window; }
+
+		Uint32 GetPixelFormat() {
+			return SDL_GetWindowPixelFormat(m_Window);
+		}
+
 		/// <summary>
 		/// Calculates the width of a text string using the given font size.
 		/// <summary>
@@ -458,13 +466,9 @@ namespace RTE {
 		/// </param>
 		void FlashScreen(short screen, int colro, float periodMS = 0);
 
-		int SaveScreenToBMP(const char *nameBase) {
-			return 0;
-		}
+		int SaveScreenToBMP(const char *nameBase) { return 0; }
 
-		int SaveWorldToBMP(const char *nameBase) {
-			return 0;
-		}
+		int SaveWorldToBMP(const char *nameBase) { return 0; }
 
 		const std::string &GetClassName() const override { return c_ClassName; }
 
@@ -528,7 +532,7 @@ namespace RTE {
 		void ValidateResolution(unsigned short &resX, unsigned short &resY,
 		                        unsigned short &resMultiplier);
 
-    GUIFont * GetFont(bool isSmall);
+		GUIFont *GetFont(bool isSmall);
 
 		/// <summary>
 		/// Clears all the member variables of this FrameMan, effectively
