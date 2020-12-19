@@ -1,4 +1,6 @@
 #include "SDLTexture.h"
+#include "GUI.h"
+#include "Managers/SDLFrameMan.h"
 #include "System/RTEError.h"
 
 namespace RTE {
@@ -6,14 +8,20 @@ namespace RTE {
 		m_TextureFile.Reset();
 		m_Texture = nullptr;
 		m_SelfCreated = false;
-		m_ClipRect = NULL;
+		m_ClipRect.x = 0;
+		m_ClipRect.y = 0;
+		m_ClipRect.w = 0;
+		m_ClipRect.h = 0;
 	}
 
-	SDLTexture::SDLTexture(SDL_Texture *pSurface) {
+	SDLTexture::SDLTexture(SDL_Texture *pTexture) {
 		m_TextureFile.Reset();
-		m_Texture = pSurface;
+		m_Texture = pTexture;
 		m_SelfCreated = false;
-		m_ClipRect = NULL;
+		m_ClipRect.x = 0;
+		m_ClipRect.y = 0;
+		m_ClipRect.w = 0;
+		m_ClipRect.h = 0;
 	}
 
 	bool SDLTexture::Create(int width, int height, int depth) {
@@ -21,7 +29,7 @@ namespace RTE {
 
 		m_TextureFile.Reset();
 		m_Texture =
-		    SDL_CreateTexture(g_FrameMan.GetRenderer(), g_FrameMan.GetPixelformat(),
+		    SDL_CreateTexture(g_FrameMan.GetRenderer(), g_FrameMan.GetPixelFormat(),
 		                      SDL_TEXTUREACCESS_STREAMING, width, height);
 		if (m_Texture == NULL) {
 			return false;
@@ -34,7 +42,7 @@ namespace RTE {
 
 		m_TextureFile.Create(filename.c_str());
 
-		m_Texture = m_TextureFile.GetAsTexture();
+		// m_Texture = m_TextureFile.GetAsTexture();
 		RTEAssert(m_Texture, "Could not load bitmap from file into SDLTexture!");
 
 		return true;
@@ -74,15 +82,14 @@ namespace RTE {
 
 	bool SDLTexture::LockTexture(SDL_Rect *rect) {
 		RTEAssert(SDL_LockTexture(m_Texture, rect, &m_Pixels, &m_Pitch) == 0,
-		          "Failed to lock Texture with error: " + SDL_GetError());
+		          "Failed to lock Texture with error: " +
+		              std::string(SDL_GetError()));
 
 		return true;
 	}
 
 	bool SDLTexture::UnlockTexture() {
-		RTEAssert(SDL_UnlockTexture(m_Texture) == 0,
-		          "Failed to unlock Texture with error: " + SDL_GetError());
-
+		SDL_UnlockTexture(m_Texture);
 		m_Pixels = nullptr;
 
 		m_Pitch = 0;
@@ -105,9 +112,11 @@ namespace RTE {
 	}
 
 	void SDLTexture::AddClipRect(GUIRect *rect) {
-		m_ClipRect.x = std::max(m_ClipRect.x, rect->left);
-		m_ClipRect.y = std::max(m_ClipRect.y, rect->top);
-		m_ClipRect.w = std::min(m_ClipRect.w, rect->right - rect->left);
-		m_ClipRect.h = std::min(m_ClipRect.h, rect->bottom - rect->top);
+		m_ClipRect.x = std::max(m_ClipRect.x, static_cast<int>(rect->left));
+		m_ClipRect.y = std::max(m_ClipRect.y, static_cast<int>(rect->top));
+		m_ClipRect.w =
+		    std::min(m_ClipRect.w, static_cast<int>(rect->right - rect->left));
+		m_ClipRect.h =
+		    std::min(m_ClipRect.h, static_cast<int>(rect->bottom - rect->top));
 	}
 } // namespace RTE
