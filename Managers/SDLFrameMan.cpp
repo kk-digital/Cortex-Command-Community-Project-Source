@@ -11,10 +11,11 @@
 // #include "Entities/SLTerrain.h"
 // #include "Entities/Scene.h"
 
+#include "GUI/GUI.h"
 #include "GUI/SDLTexture.h"
 #include "GUI/SDLScreen.h"
-#include "System/Constants.h"
 
+#include "System/Constants.h"
 #include "System/RTEError.h"
 
 namespace RTE {
