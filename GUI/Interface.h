@@ -4,6 +4,7 @@
 // Header file for abstract classes used by the GUI library.
 
 //#include "GUI.h"
+#include "GUI/GUIRect.h"
 
 namespace RTE {
 
