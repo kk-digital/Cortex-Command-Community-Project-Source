@@ -55,7 +55,10 @@ namespace RTE {
 		m_Texture = nullptr;
 	}
 
-	void SDLTexture::Draw(GUIBitmap *pDestBitmap, int x, int y, GUIRect *pRect) {}
+	void SDLTexture::Draw(int x, int y, GUIRect *pRect) {
+
+		SDL_RenderCopy(g_FrameMan.GetRenderer(), m_Texture, m_ClipRect, )
+	}
 
 	void SDLTexture::DrawTrans(GUIBitmap *pDestBitmap, int x, int y,
 	                           GUIRect *pRect) {}
