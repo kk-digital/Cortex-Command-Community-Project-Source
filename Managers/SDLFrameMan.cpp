@@ -147,7 +147,7 @@ namespace RTE {
 			screenRelativeEffects.clear();
 			screenRelativeGlowBoxes.clear();
 
-			SDLTexture drawScreen; // TODO: make player screens
+
 		}
 
 		// Reset the frame timer so we can measure how much time it takes until the

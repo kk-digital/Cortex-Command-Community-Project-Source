@@ -378,9 +378,7 @@ namespace RTE {
 
 		SDL_Window *GetWindow() { return m_Window; }
 
-		Uint32 GetPixelFormat() {
-			return SDL_GetWindowPixelFormat(m_Window);
-		}
+		Uint32 GetPixelFormat() { return SDL_GetWindowPixelFormat(m_Window.ptr); }
 
 		/// <summary>
 		/// Calculates the width of a text string using the given font size.
@@ -438,7 +436,7 @@ namespace RTE {
 		/// can be displayed before this expires. ClearScreenText overrides it
 		/// though.
 		/// </param>
-		void SetScreenText(const std::string &message, short whichScreen = 0,
+		void SetScreenText(std::string message, short whichScreen = 0,
 		                   unsigned short blinkInterval = 0,
 		                   short displayDuration = -1, bool centered = false);
 
@@ -466,18 +464,19 @@ namespace RTE {
 		/// </param>
 		void FlashScreen(short screen, int colro, float periodMS = 0);
 
-		int SaveScreenToBMP(const char *nameBase) { return 0; }
+		int SaveScreenToBMP(std::string nameBase) { return 0; }
 
-		int SaveWorldToBMP(const char *nameBase) { return 0; }
+		int SaveWorldToBMP(std::string nameBase) { return 0; }
 
 		const std::string &GetClassName() const override { return c_ClassName; }
 
 	private:
-		static const std::string
-		    c_ClassName; //!< The friendly-formatted type name of this object
-
-		SDL_Window *m_Window; //!< The game window
-		SDL_Renderer *m_Renderer; //!< The renderer instance needed for drawing
+		//!< The friendly-formatted type name of this object
+		static const std::string c_ClassName;
+		//!< The game window
+		SDL_Window *m_Window;
+		//!< The renderer instance needed for drawing
+		SDL_Renderer *m_Renderer;
 
 		SDL_Rect m_Resolution; //!< Screen area excluding things like start menus,
 		                       //!< window decoration, etc.
@@ -513,12 +512,12 @@ namespace RTE {
 		                       //!< in settings
 
 		ContentFile m_PaletteFile; //!< File of the screen palette
-		SDL_Palette m_Palette; // TODO: figure out if this works with Accelerated
-		                       // rendering
+		SDL_Palette m_Palette; // TODO: figure out if this works with
+		                       // Accelerated rendering
 
 		/// <summary>
-		/// Check that a resolution will fit the screen(s) and fall back to a safe
-		/// resolution if the set resolution was to high.
+		/// Check that a resolution will fit the screen(s) and fall back to a
+		/// safe resolution if the set resolution was to high.
 		/// </summary>
 		/// <param name="resX">
 		/// Game window horizontal resolution
