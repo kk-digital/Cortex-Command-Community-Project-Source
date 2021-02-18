@@ -17,6 +17,7 @@ namespace RTE {
 
 	public:
 
+		SerializableClassNameGetter
 		SerializableOverrideMethods
 
 #pragma region Creation
@@ -95,7 +96,7 @@ namespace RTE {
 
 		/// <summary>
 		/// Sets the DataPath combined with the file and line it's being created from. This is used in cases we can't get the file and line from Serializable::Create(&reader).
-		/// For example when creating a ContentFile for the sound during the readSound lambda in SoundContainer::ReadSound.
+		/// For example when creating a ContentFile for the sound during the readSound lambda in SoundContainer::ReadAndGetSound.
 		/// </summary>
 		/// <param name="newPosition">The file and line that are currently being read.</param>
 		void SetFormattedReaderPosition(const std::string &newPosition);
@@ -139,21 +140,10 @@ namespace RTE {
 		/// <param name="abortGameForInvalidSound">Whether to abort the game if the sound couldn't be added, or just show a console error. Default true.</param>
 		/// <param name="asyncLoading">Whether to enable FMOD asynchronous loading or not. Should be disabled for loading audio files with Lua AddSound.
 		/// <returns>Pointer to the FSOUND_SAMPLE loaded from disk.</returns>
-		FMOD::Sound * GetAsSample(bool abortGameForInvalidSound = true, bool asyncLoading = true);
-
-#pragma endregion
-
-#pragma region Class Info
-		/// <summary>
-		/// Gets the class name of this Entity.
-		/// </summary>
-		/// <returns>A string with the friendly-formatted type name of this object.</returns>
-		const std::string & GetClassName() const override { return c_ClassName; }
+		FMOD::Sound * GetAsSound(bool abortGameForInvalidSound = true, bool asyncLoading = true);
 #pragma endregion
 
 	protected:
-
-		static const std::string c_ClassName; //!< A string with the friendly-formatted type name of this object.
 
 		/// <summary>
 		/// Enumeration for loading BITMAPs by bit depth. NOTE: This can't be lower down because s_LoadedBitmaps relies on this definition.
@@ -175,6 +165,8 @@ namespace RTE {
 
 	private:
 
+		static const std::string c_ClassName; //!< A string with the friendly-formatted type name of this object.
+
 #pragma region Data Handling
 		/// <summary>
 		/// Loads and transfers the data represented by this ContentFile object as an Allegro BITMAP. Ownership of the BITMAP IS transferred!
@@ -189,9 +181,9 @@ namespace RTE {
 		/// Loads and transfers the data represented by this ContentFile object as an FMOD FSOUND_SAMPLE. Ownership of the FSOUND_SAMPLE is NOT transferred!
 		/// </summary>
 		/// <param name="abortGameForInvalidSound">Whether to abort the game if the sound couldn't be added, or just show a console error. Default true.</param>
-		/// <param name="asyncLoading">Whether to enable FMOD asynchronous loading or not. Should be disabled for loading audio files with Lua AddSound.
+		/// <param name="asyncLoading">Whether to enable FMOD asynchronous loading or not. Should be disabled for loading audio files with Lua AddSound.</param>
 		/// <returns>Pointer to the FSOUND_SAMPLE loaded from disk.</returns>
-		FMOD::Sound * LoadAndReleaseSample(bool abortGameForInvalidSound = true, bool asyncLoading = true);
+		FMOD::Sound * LoadAndReleaseSound(bool abortGameForInvalidSound = true, bool asyncLoading = true);
 #pragma endregion
 
 		/// <summary>

@@ -9,13 +9,9 @@ namespace RTE {
 	typedef int MID; //!< Distinctive type definition for Material IDs.
 #pragma endregion
 
-#pragma region Game Info
-	static constexpr char *c_GameVersion = "Pre-Release 3";
+#pragma region Game Version
+	static constexpr char *c_GameVersion = "Pre-Release 3.0";
 	static constexpr char *c_WindowTitle = "Cortex Command Community Project";
-#pragma endregion
-
-#pragma region Filesystem Constants
-	static constexpr char *c_ScreenshotDirectory = { "_Screenshots" };
 #pragma endregion
 
 #pragma region Physics Constants
@@ -58,8 +54,8 @@ namespace RTE {
 	#define c_GUIColorDarkBlue makecol(12, 20, 39)
 	#define c_GUIColorGray makecol(232, 232, 248)
 
-	#define c_PlayerSlotColorDefault makecol(161, 109, 20) 
-	#define c_PlayerSlotColorHovered makecol(203, 130, 56) 
+	#define c_PlayerSlotColorDefault makecol(161, 109, 20)
+	#define c_PlayerSlotColorHovered makecol(203, 130, 56)
 	#define c_PlayerSlotColorDisabled makecol(104, 67, 15)
 #pragma endregion
 
@@ -83,7 +79,7 @@ namespace RTE {
 	static constexpr unsigned short c_MinimumDistanceForPanning = 50; //!< The minimum distance before which sound panning should not occur. Not relevant for immobile sounds or in splitscreen.
 	*/
 	static constexpr unsigned short c_DefaultAttenuationStartDistance = 100; //!< The default start distance for attenuating sounds. Individual sounds can have different values for this.
-	static constexpr unsigned int c_SoundMaxAudibleDistance = 100000; //!< The maximum distance at which any sound can possibly be heard, after which point it will have 0 volume. Arbitrary default suggested by FMOD.
+	static constexpr unsigned int c_SoundMaxAudibleDistance = 10000; //!< The maximum distance at which any sound can possibly be heard, after which point it will have 0 volume. Arbitrary default suggested by FMOD.
 #pragma endregion
 
 #pragma region Network Constants
@@ -192,7 +188,7 @@ namespace RTE {
 	enum JoyDirections { JOYDIR_ONE = 0, JOYDIR_TWO };
 
 	/// <summary>
-	/// Enumeration for joystick dead zone types. 
+	/// Enumeration for joystick dead zone types.
 	/// Square deadzone cuts-off any input from every axis separately. For example if x-axis has less than 20% input and y-axis has more, x-axis input is ignored.
 	/// Circle uses a round zone to capture stick position on both axis then cut-off if this position is inside the round dead zone.
 	/// </summary>

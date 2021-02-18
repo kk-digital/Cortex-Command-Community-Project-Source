@@ -54,7 +54,7 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	int ContentFile::ReadProperty(std::string propName, Reader &reader) {
+	int ContentFile::ReadProperty(const std::string_view &propName, Reader &reader) {
 		if (propName == "FilePath" || propName == "Path") {
 			SetDataPath(reader.ReadPropValue());
 		} else {
@@ -68,10 +68,8 @@ namespace RTE {
 	int ContentFile::Save(Writer &writer) const {
 		Serializable::Save(writer);
 
-		if (!m_DataPath.empty()) {
-			writer.NewProperty("FilePath");
-			writer << m_DataPath;
-		}
+		if (!m_DataPath.empty()) { writer.NewPropertyWithValue("FilePath", m_DataPath); }
+
 		return 0;
 	}
 
@@ -82,12 +80,10 @@ namespace RTE {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void ContentFile::SetDataPath(const std::string &newDataPath) {
-		m_DataPath = newDataPath;
-		CorrectBackslashesInPaths(m_DataPath);
-
+		m_DataPath = CorrectBackslashesInPath(newDataPath);
 		m_DataPathExtension = std::filesystem::path(m_DataPath).extension().string();
 
-		RTEAssert(!m_DataPathExtension.empty(), "Failed to find file extension when trying to find file with path and name:\n\n" + m_DataPath + "\n" + GetFormattedReaderPosition());
+		RTEAssert(!m_DataPathExtension.empty(), "Failed to find file extension when trying to find file with path and name:\n" + m_DataPath + "\n" + GetFormattedReaderPosition());
 
 		m_DataPathWithoutExtension = m_DataPath.substr(0, m_DataPath.length() - m_DataPathExtension.length());
 		s_PathHashes[GetHash()] = m_DataPath;
@@ -194,18 +190,17 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	FMOD::Sound * ContentFile::GetAsSample(bool abortGameForInvalidSound, bool asyncLoading) {
+	FMOD::Sound * ContentFile::GetAsSound(bool abortGameForInvalidSound, bool asyncLoading) {
 		if (m_DataPath.empty() || !g_AudioMan.IsAudioEnabled()) {
 			return nullptr;
 		}
 		FMOD::Sound *returnSample = nullptr;
 
-		// Check if the file has already been read and loaded from the disk and, if so, use that data.
 		std::unordered_map<std::string, FMOD::Sound *>::iterator foundSound = s_LoadedSamples.find(m_DataPath);
 		if (foundSound != s_LoadedSamples.end()) {
 			returnSample = (*foundSound).second;
 		} else {
-			returnSample = LoadAndReleaseSample(abortGameForInvalidSound, asyncLoading); //NOTE: This takes ownership of the sample file
+			returnSample = LoadAndReleaseSound(abortGameForInvalidSound, asyncLoading); //NOTE: This takes ownership of the sample file
 
 			// Insert the Sound object into the map, PASSING OVER OWNERSHIP OF THE LOADED FILE
 			s_LoadedSamples.insert({ m_DataPath, returnSample });
@@ -215,7 +210,7 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	FMOD::Sound * ContentFile::LoadAndReleaseSample(bool abortGameForInvalidSound, bool asyncLoading) {
+	FMOD::Sound * ContentFile::LoadAndReleaseSound(bool abortGameForInvalidSound, bool asyncLoading) {
 		if (m_DataPath.empty() || !g_AudioMan.IsAudioEnabled()) {
 			return nullptr;
 		}
@@ -237,13 +232,19 @@ namespace RTE {
 				return nullptr;
 			}
 		}
+		if (std::filesystem::file_size(m_DataPath) == 0) {
+			const std::string errorMessage = "Failed to create sound because because the file was empty. The path and name were: ";
+			RTEAssert(!abortGameForInvalidSound, errorMessage + "\n\n" + m_DataPathAndReaderPosition);
+			g_ConsoleMan.PrintString("ERROR: " + errorMessage + m_DataPath);
+			return nullptr;
+		}
 		FMOD::Sound *returnSample = nullptr;
 
 		FMOD_MODE fmodFlags = FMOD_CREATESAMPLE | FMOD_3D | (asyncLoading ? FMOD_NONBLOCKING : FMOD_DEFAULT);
 		FMOD_RESULT result = g_AudioMan.GetAudioSystem()->createSound(m_DataPath.c_str(), fmodFlags, nullptr, &returnSample);
 
 		if (result != FMOD_OK) {
-			const std::string errorMessage = "Failed to create sound because of FMOD error: " + std::string(FMOD_ErrorString(result)) + "\nThe path and name were: ";
+			const std::string errorMessage = "Failed to create sound because of FMOD error:\n" + std::string(FMOD_ErrorString(result)) + "\nThe path and name were: ";
 			RTEAssert(!abortGameForInvalidSound, errorMessage + "\n\n" + m_DataPathAndReaderPosition);
 			g_ConsoleMan.PrintString("ERROR: " + errorMessage + m_DataPath);
 			return returnSample;

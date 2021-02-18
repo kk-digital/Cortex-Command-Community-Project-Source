@@ -103,17 +103,15 @@ struct IntRect
 // Parent(s):       Singleton, Serializable.
 // Class history:   12/25/2001 SceneMan created.
 
-class SceneMan:
-    public Singleton<SceneMan>,
-    public Serializable
-{
-
+class SceneMan : public Singleton<SceneMan>, public Serializable {
+	friend class SettingsMan;
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Public member variable, method and friend function declarations
 
 public:
 
+	SerializableClassNameGetter
 	SerializableOverrideMethods
 
 
@@ -277,16 +275,6 @@ public:
 // Return value:    None.
 
     void Destroy();
-
-
-//////////////////////////////////////////////////////////////////////////////////////////
-// Method:  GetClassName
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Gets the class name of this Entity.
-// Arguments:       None.
-// Return value:    A string with the friendly-formatted type name of this object.
-
-	const std::string & GetClassName() const override { return m_ClassName; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -689,7 +677,7 @@ public:
 // Arguments:       Which screen to get the target for.
 // Return value:    Current target vector in *scene coordinates*.
 
-    Vector GetScrollTarget(int screen = 0) const { return m_ScrollTarget[screen]; }
+    const Vector & GetScrollTarget(int screen = 0) const { return m_ScrollTarget[screen]; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -1680,8 +1668,6 @@ public:
 
 protected:
 
-    // Member variables
-    static const std::string m_ClassName;
 
     // Default Scene name to load if nothing else is specified
     std::string m_DefaultSceneName;
@@ -1764,6 +1750,8 @@ protected:
 // Private member variable and method declarations
 
 private:
+
+	static const std::string c_ClassName; //!< A string with the friendly-formatted type name of this object.
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          Clear

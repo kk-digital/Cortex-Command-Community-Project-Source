@@ -25,8 +25,6 @@ extern bool g_InActivity;
 
 namespace RTE {
 
-	const std::string NetworkServer::c_ClassName = "NetworkServer";
-
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void NetworkServer::BackgroundSendThreadFunction(NetworkServer *server, short player) {
@@ -57,6 +55,9 @@ namespace RTE {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void NetworkServer::Clear() {
+		m_SleepWhenIdle = false;
+		m_SimSleepWhenIdle = false;
+
 		for (short i = 0; i < c_MaxClients; i++) {
 			m_BackBuffer8[i] = 0;
 			m_BackBufferGUI8[i] = 0;
@@ -140,13 +141,14 @@ namespace RTE {
 		m_TransmitAsBoxes = true;
 		m_BoxWidth = 32;
 		m_BoxHeight = 44;
+		m_UseNATService = false;
 		m_NatServerConnected = false;
 		m_LastPackedReceived.Reset();
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	int NetworkServer::Create() {
+	int NetworkServer::Initialize() {
 		m_IsInServerMode = false;
 		m_ServerPort = "";
 		m_Server = RakNet::RakPeerInterface::GetInstance();
@@ -160,16 +162,6 @@ namespace RTE {
 			m_LZ4CompressionState[i] = malloc(LZ4_sizeofStateHC());
 			m_LZ4FastCompressionState[i] = malloc(LZ4_sizeofState());
 		}
-
-		m_UseHighCompression = g_SettingsMan.GetServerUseHighCompression();
-		m_UseFastCompression = g_SettingsMan.GetServerUseFastCompression();
-		m_HighCompressionLevel = g_SettingsMan.GetServerHighCompressionLevel();
-		m_FastAccelerationFactor = g_SettingsMan.GetServerFastAccelerationFactor();
-		m_UseInterlacing = g_SettingsMan.GetServerUseInterlacing();
-		m_EncodingFps = g_SettingsMan.GetServerEncodingFps();
-		m_TransmitAsBoxes = g_SettingsMan.GetServerTransmitAsBoxes();
-		m_BoxWidth = g_SettingsMan.GetServerBoxWidth();
-		m_BoxHeight = g_SettingsMan.GetServerBoxHeight();
 
 		return 0;
 	}
@@ -213,6 +205,20 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+	void NetworkServer::SetServerPort(const std::string &newPort) {
+		bool useDefault = false;
+		for (const char &stringChar : newPort) {
+			if (!std::isdigit(stringChar)) {
+				g_ConsoleMan.PrintString("ERROR: Invalid port passed into \"-server\" argument, using default (8000) instead!");
+				useDefault = true;
+				break;
+			}
+		}
+		m_ServerPort = useDefault ? "8000" : newPort;
+	}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 	void NetworkServer::Start() {
 		RakNet::SocketDescriptor socketDescriptors[1];
 		socketDescriptors[0].port = atoi(m_ServerPort.c_str());
@@ -228,7 +234,7 @@ namespace RTE {
 			g_ConsoleMan.PrintString("SERVER: STARTED!");
 		}
 
-		if (g_SettingsMan.GetUseNATService()) {
+		if (m_UseNATService) {
 			g_ConsoleMan.PrintString("SERVER: Connecting to NAT service");
 
 			std::string serverName;
@@ -566,54 +572,48 @@ namespace RTE {
 		}
 
 		MsgSoundEvents *msg = (MsgSoundEvents *)m_PixelLineBuffer[player];
-		AudioMan::NetworkSoundData *sndDataPtr = (AudioMan::NetworkSoundData *)((char *)msg + sizeof(MsgSoundEvents));
-
+		AudioMan::NetworkSoundData *soundDataPointer = (AudioMan::NetworkSoundData *)((char *)msg + sizeof(MsgSoundEvents));
 		msg->Id = ID_SRV_SOUND_EVENTS;
 		msg->FrameNumber = m_FrameNumbers[player];
 		msg->SoundEventsCount = 0;
 
 		for (const AudioMan::NetworkSoundData &soundEvent : events) {
-			sndDataPtr->State = soundEvent.State;
-			std::copy(std::begin(soundEvent.Channels), std::end(soundEvent.Channels), sndDataPtr->Channels);
-			std::copy(std::begin(soundEvent.SoundFileHashes), std::end(soundEvent.SoundFileHashes), sndDataPtr->SoundFileHashes);
-			sndDataPtr->Position[0] = soundEvent.Position[0];
-			sndDataPtr->Position[1] = soundEvent.Position[1];
-			sndDataPtr->Loops = soundEvent.Loops;
-			sndDataPtr->Pitch = soundEvent.Pitch;
-			sndDataPtr->AffectedByGlobalPitch = soundEvent.AffectedByGlobalPitch;
-			sndDataPtr->AttenuationStartDistance = soundEvent.AttenuationStartDistance;
-			sndDataPtr->Immobile = soundEvent.Immobile;
-			sndDataPtr->FadeOutTime = soundEvent.FadeOutTime;
+			if (sizeof(MsgSoundEvents) + (msg->SoundEventsCount * sizeof(AudioMan::NetworkSoundData)) <= c_MaxPixelLineBufferSize) {
+				soundDataPointer->State = soundEvent.State;
+				soundDataPointer->SoundFileHash = soundEvent.SoundFileHash;
+				soundDataPointer->Channel = soundEvent.Channel;
+				soundDataPointer->Immobile = soundEvent.Immobile;
+				soundDataPointer->AttenuationStartDistance = soundEvent.AttenuationStartDistance;
+				soundDataPointer->Loops = soundEvent.Loops;
+				soundDataPointer->Priority = soundEvent.Priority;
+				soundDataPointer->AffectedByGlobalPitch = soundEvent.AffectedByGlobalPitch;
+				soundDataPointer->Position[0] = soundEvent.Position[0];
+				soundDataPointer->Position[1] = soundEvent.Position[1];
+				soundDataPointer->Volume = soundEvent.Volume;
+				soundDataPointer->Pitch = soundEvent.Pitch;
+				soundDataPointer->FadeOutTime = soundEvent.FadeOutTime;
 
-			msg->SoundEventsCount++;
-			sndDataPtr++;
-
-			//If one more sound would overflow the container, send sounds now then reset to continue
-			if ((msg->SoundEventsCount * sizeof(AudioMan::NetworkSoundData)) >= (c_MaxPixelLineBufferSize - sizeof(AudioMan::NetworkSoundData) - sizeof(MsgSoundEvents))) {
-				int payloadSize = sizeof(MsgSoundEvents) + sizeof(AudioMan::NetworkSoundData) * msg->SoundEventsCount;
+				msg->SoundEventsCount++;
+				soundDataPointer++;
+			} else {
+				int payloadSize = sizeof(MsgSoundEvents) + (msg->SoundEventsCount * sizeof(AudioMan::NetworkSoundData));
 				m_Server->Send((const char *)msg, payloadSize, MEDIUM_PRIORITY, RELIABLE_ORDERED, 0, m_ClientConnections[player].ClientId, false);
-				msg->SoundEventsCount = 0;
-				sndDataPtr = (AudioMan::NetworkSoundData *)((char *)msg + sizeof(MsgSoundEvents));
 
 				m_SoundDataSentCurrent[player][STAT_CURRENT] += payloadSize;
 				m_SoundDataSentTotal[player] += payloadSize;
-
 				m_DataSentTotal[player] += payloadSize;
+
+				soundDataPointer = (AudioMan::NetworkSoundData *)((char *)msg + sizeof(MsgSoundEvents));
+				msg->SoundEventsCount = 0;
 			}
 		}
 
 		if (msg->SoundEventsCount > 0) {
-			//int header = sizeof(MsgSoundEvents);
-			//int data = sizeof(AudioMan::NetworkSoundData);
-			//int total = header + data * msg->SoundEventsCount;
-			//int sz = sizeof(size_t);
-
-			int payloadSize = sizeof(MsgSoundEvents) + sizeof(AudioMan::NetworkSoundData) * msg->SoundEventsCount;
+			int payloadSize = sizeof(MsgSoundEvents) + (msg->SoundEventsCount * sizeof(AudioMan::NetworkSoundData));
 			m_Server->Send((const char *)msg, payloadSize, MEDIUM_PRIORITY, RELIABLE_ORDERED, 0, m_ClientConnections[player].ClientId, false);
 
 			m_SoundDataSentCurrent[player][STAT_CURRENT] += payloadSize;
 			m_SoundDataSentTotal[player] += payloadSize;
-
 			m_DataSentTotal[player] += payloadSize;
 		}
 	}
@@ -629,27 +629,27 @@ namespace RTE {
 		}
 
 		MsgMusicEvents *msg = (MsgMusicEvents *)m_PixelLineBuffer[player];
-		AudioMan::NetworkMusicData *musDataPtr = (AudioMan::NetworkMusicData *)((char *)msg + sizeof(MsgMusicEvents));
+		AudioMan::NetworkMusicData *musicDataPointer = (AudioMan::NetworkMusicData *)((char *)msg + sizeof(MsgMusicEvents));
 
 		msg->Id = ID_SRV_MUSIC_EVENTS;
 		msg->FrameNumber = m_FrameNumbers[player];
 		msg->MusicEventsCount = 0;
 
 		for (const AudioMan::NetworkMusicData &musicEvent : events) {
-			musDataPtr->State = musicEvent.State;
-			musDataPtr->Loops = musicEvent.Loops;
-			musDataPtr->Pitch = musicEvent.Pitch;
-			musDataPtr->Position = musicEvent.Position;
-			strncpy(musDataPtr->Path, musicEvent.Path, 255);
+			musicDataPointer->State = musicEvent.State;
+			musicDataPointer->LoopsOrSilence = musicEvent.LoopsOrSilence;
+			musicDataPointer->Pitch = musicEvent.Pitch;
+			musicDataPointer->Position = musicEvent.Position;
+			strncpy(musicDataPointer->Path, musicEvent.Path, 255);
 
 			msg->MusicEventsCount++;
-			musDataPtr++;
+			musicDataPointer++;
 
 			if (msg->MusicEventsCount >= 4) {
 				int payloadSize = sizeof(MsgMusicEvents) + sizeof(AudioMan::NetworkMusicData) * msg->MusicEventsCount;
 				m_Server->Send((const char *)msg, payloadSize, MEDIUM_PRIORITY, RELIABLE_ORDERED, 0, m_ClientConnections[player].ClientId, false);
 				msg->MusicEventsCount = 0;
-				musDataPtr = (AudioMan::NetworkMusicData *)((char *)msg + sizeof(MsgMusicEvents));
+				musicDataPointer = (AudioMan::NetworkMusicData *)((char *)msg + sizeof(MsgMusicEvents));
 
 				m_SoundDataSentCurrent[player][STAT_CURRENT] += payloadSize;
 				m_SoundDataSentTotal[player] += payloadSize;
@@ -660,11 +660,6 @@ namespace RTE {
 		}
 
 		if (msg->MusicEventsCount > 0) {
-			//int header = sizeof(MsgMusicEvents);
-			//int data = sizeof(AudioMan::NetworkMusicData);
-			//int total = header + data * msg->MusicEventsCount;
-			//int sz = sizeof(size_t);
-
 			int payloadSize = sizeof(MsgMusicEvents) + sizeof(AudioMan::NetworkMusicData) * msg->MusicEventsCount;
 			m_Server->Send((const char *)msg, payloadSize, MEDIUM_PRIORITY, RELIABLE_ORDERED, 0, m_ClientConnections[player].ClientId, false);
 
@@ -1727,7 +1722,7 @@ namespace RTE {
 			}
 		}
 
-		if (g_SettingsMan.GetServerSleepWhenIdle() && m_LastPackedReceived.IsPastRealMS(10000)) {
+		if (m_SleepWhenIdle && m_LastPackedReceived.IsPastRealMS(10000)) {
 			short playersConnected = 0;
 			for (short player = 0; player < c_MaxClients; player++)
 				if (IsPlayerConnected(player)) {
