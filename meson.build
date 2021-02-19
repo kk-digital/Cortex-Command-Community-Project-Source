@@ -77,7 +77,8 @@ subdir('Managers')
 subdir('Menus')
 subdir('System')
 subdir('Resources')
-# sources += files('Main.cpp')
+# sources += files('Main.cpp') #TODO:fix
+sources += files('test.cpp')
 
 #### External Libraries ####
 subdir('external')
