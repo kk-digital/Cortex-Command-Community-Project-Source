@@ -1,3 +1,8 @@
+#include <SDL2/SDL_render.h>
+#include <SDL2/SDL_surface.h>
+#include <SDL2/SDL_image.h>
+
+
 #include "ContentFile.h"
 #include "AudioMan.h"
 #include "PresetMan.h"
