@@ -77,13 +77,14 @@ subdir('Managers')
 subdir('Menus')
 subdir('System')
 subdir('Resources')
+# sources += files('Main.cpp')
 
 #### External Libraries ####
 subdir('external')
 
 #### Target Definitions ####
 executable(
-  elfname, ['Main.cpp', sources], include_directories:[source_inc_dirs, external_inc_dirs], cpp_pch:pch, # Sources options
+  elfname, [sources], include_directories:[source_inc_dirs, external_inc_dirs], cpp_pch:pch, # Sources options
   link_with:[luabind, raknet], objects:[fmod_so], dependencies:deps,                                     # Link options
   cpp_args:[extra_args, preprocessor_flags], link_args:link_args, build_rpath:build_rpath,               # Compiler setup
   name_suffix:suffix,   # Executable name options
