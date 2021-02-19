@@ -13,7 +13,7 @@ sources += files(
 # 'PathFinder.cpp',
 # 'Primitive.cpp',
 'RTEError.cpp',
-'RTETools.cpp',
+# 'RTETools.cpp',
 # 'Reader.cpp',
 # 'StandardIncludes.cpp',
 # 'System.cpp',
