@@ -7,6 +7,7 @@
 *.vs
 *.APS
 
+.#*
 compile_commands.json
 /.ccls-cache
 
