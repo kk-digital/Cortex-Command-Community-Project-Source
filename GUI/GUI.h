@@ -20,7 +20,6 @@ inline void SetRect(GUIRect *rect, int left, int top, int right, int bottom) { r
 
 #include "RTETools.h"
 
-#include "GUI/GUIRect.h"
 #include "GUI/Interface.h"
 #include "GUI/GUIProperties.h"
 #include "GUI/GUIInput.h"

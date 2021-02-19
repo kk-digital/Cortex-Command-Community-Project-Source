@@ -3,9 +3,8 @@
 
 // Header file for abstract classes used by the GUI library.
 
-//#include "GUI.h"
-#include "GUI/GUIRect.h"
 
+struct GUIRect;
 namespace RTE {
 
 #pragma region GUIBitmap
