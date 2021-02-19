@@ -1,10 +1,9 @@
 #ifndef _SDLFRAMEMAN_
 #define _SDLFRAMEMAN_
 
-#include "ContentFile.h"
-#include "Timer.h"
-#include "Box.h"
-#include "SDL2/SDL.h"
+#include "System/Singleton.h"
+#include "System/Box.h"
+#include <SDL2/SDL.h>
 
 #define g_FrameMan FrameMan::Instance()
 
@@ -17,10 +16,10 @@ namespace RTE {
 	/// The Singleton manager over the composition and display of frames.
 	/// </summary>
 
-	class FrameMan : public Singleton<FrameMan>, public Serializable {
+	class FrameMan : public Singleton<FrameMan> {
+		friend class SettingsMan;
 
 	public:
-		SerializableOverrideMethods
 
 		/// <summary>
 		/// Constructor method used to instantiate a FrameMan object in system
@@ -38,24 +37,18 @@ namespace RTE {
 		/// An error return value signaling success or any particular failure.
 		/// Values below 0 indicate an error signal.
 		/// </returns>
-		int Create() override;
+		int Initialize();
 
 		/// <summary>
 		/// Destructor method used to clean up a FrameMan object before deletion
 		/// from system memory
 		/// </summary>
-		virtual ~FrameMan();
+		~FrameMan();
 
 		/// <summary>
 		/// Destroys and resets (through Clear()) the FrameMan object.
 		/// </summary>
 		void Destroy();
-
-		/// <summary>
-		/// Resets the entire FrameMan, including its inherited memembers, to their
-		/// default settings or values.
-		/// </summary>
-		void Reset() override { Clear(); }
 
 		/// <summary>
 		/// Updates the state of this FrameMan. Supposed to be done every frame.
@@ -378,7 +371,7 @@ namespace RTE {
 
 		SDL_Window *GetWindow() { return m_Window; }
 
-		Uint32 GetPixelFormat() { return SDL_GetWindowPixelFormat(m_Window.ptr); }
+		Uint32 GetPixelFormat() { return SDL_GetWindowPixelFormat(m_Window); }
 
 		/// <summary>
 		/// Calculates the width of a text string using the given font size.
@@ -468,11 +461,8 @@ namespace RTE {
 
 		int SaveWorldToBMP(std::string nameBase) { return 0; }
 
-		const std::string &GetClassName() const override { return c_ClassName; }
 
 	private:
-		//!< The friendly-formatted type name of this object
-		static const std::string c_ClassName;
 		//!< The game window
 		SDL_Window *m_Window;
 		//!< The renderer instance needed for drawing
@@ -480,8 +470,7 @@ namespace RTE {
 
 		SDL_Rect m_Resolution; //!< Screen area excluding things like start menus,
 		                       //!< window decoration, etc.
-		static constexpr unsigned short m_BPP =
-		    32; //!< Color Depth (bits per pixel)
+		static constexpr unsigned short m_BPP = 32; //!< Color Depth (bits per pixel)
 		unsigned short m_NumScreens; //!< Number of physical displays
 		unsigned short
 		    m_ScreenResX; //!< Horizontal resolution of the primary display
@@ -510,10 +499,6 @@ namespace RTE {
 		                       //!< in settings
 		bool m_VSplitOverride; //!< Wether the screen is set to split vertically
 		                       //!< in settings
-
-		ContentFile m_PaletteFile; //!< File of the screen palette
-		SDL_Palette m_Palette; // TODO: figure out if this works with
-		                       // Accelerated rendering
 
 		/// <summary>
 		/// Check that a resolution will fit the screen(s) and fall back to a

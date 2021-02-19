@@ -1,5 +1,8 @@
 #include "SDLFrameMan.h"
 
+#include "ContentFile.h"
+#include "Timer.h"
+#include "Box.h"
 #include "PostProcessMan.h"
 #include "PrimitiveMan.h"
 #include "PerformanceMan.h"
@@ -13,17 +16,16 @@
 
 #include "GUI/GUI.h"
 #include "GUI/SDLTexture.h"
-#include "GUI/SDLScreen.h"
+//#include "GUI/SDLScreen.h"
 
 #include "System/Constants.h"
 #include "System/RTEError.h"
 
 namespace RTE {
-	const std::string FrameMan::c_ClassName = "FrameMan";
 
 	void FrameMan::Clear() {
-		m_Window = NULL;
-		m_Renderer = NULL;
+		m_Window = nullptr;
+		m_Renderer = nullptr;
 
 		m_NumScreens = SDL_GetNumVideoDisplays();
 		SDL_GetDisplayBounds(0, &m_Resolution);
@@ -46,13 +48,9 @@ namespace RTE {
 		m_HSplitOverride = false;
 		m_VSplitOverride = false;
 
-		m_PaletteFile.Reset();
 	}
 
-	void FrameMan::ValidateResolution(unsigned short &resX, unsigned short &resY,
-	                                  unsigned short &resMultiplier) {}
-
-	int FrameMan::Create() {
+	int FrameMan::Initialize() {
 		ValidateResolution(m_ResX, m_ResY, m_ResMultiplier);
 		m_Window = SDL_CreateWindow(
 		    c_WindowTitle, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, m_ResX,
@@ -79,48 +77,6 @@ namespace RTE {
 		return 0;
 	}
 
-	int FrameMan::ReadProperty(std::string propName, Reader &reader) {
-		if (propName == "ResolutionX") {
-			reader >> m_ResX;
-			m_NewResX = m_ResX;
-		} else if (propName == "ResolutionY") {
-			reader >> m_ResY;
-			m_NewResY = m_ResY;
-		} else if (propName == "ResolutionMultiplier") {
-			reader >> m_ResMultiplier;
-		} else if (propName == "Fullscreen") {
-			reader >> m_Fullscreen;
-		} else if (propName == "HSplitScreen") {
-			reader >> m_HSplitOverride;
-		} else if (propName == "VSplitScreen") {
-			reader >> m_VSplitOverride;
-		} else if (propName == "PalleteFile") {
-			reader >> m_PaletteFile;
-		} else {
-			return Serializable::ReadProperty(propName, reader);
-		}
-		return 0;
-	}
-
-	int FrameMan::Save(Writer &writer) const {
-		Serializable::Save(writer);
-
-		writer.NewProperty("ResolutionX");
-		writer << m_ResX;
-		writer.NewProperty("ResolutionY");
-		writer << m_ResY;
-		writer.NewProperty("ResolutionMultiplier");
-		writer << m_ResMultiplier;
-		writer.NewProperty("HSplitScreen");
-		writer << m_HSplitOverride;
-		writer.NewProperty("VSplitScreen");
-		writer << m_VSplitOverride;
-		writer.NewProperty("PaletteFile");
-		writer << m_PaletteFile;
-
-		return 0;
-	}
-
 	void FrameMan::Destroy() {
 		SDL_DestroyRenderer(m_Renderer);
 		SDL_DestroyWindow(m_Window);
@@ -129,12 +85,13 @@ namespace RTE {
 	}
 
 	void FrameMan::Update() {
-		g_PerformanceMan.Update();
+		// g_PerformanceMan.Update();
 
-		g_PrimitiveMan.ClearPrimitivesList();
+		// g_PrimitiveMan.ClearPrimitivesList();
 	}
 
 	void FrameMan::Draw() {
+		/*
 		int screenCount = 1;
 		g_PostProcessMan.ClearScenePostEffects();
 
@@ -153,6 +110,7 @@ namespace RTE {
 		// Reset the frame timer so we can measure how much time it takes until the
 		// next frame is drawn
 		g_PerformanceMan.ResetFrameTimer();
+		*/
 	}
 
 	void FrameMan::SetFullscreen(bool fullscreen, bool endActivity) {
