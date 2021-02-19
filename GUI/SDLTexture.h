@@ -217,8 +217,11 @@ namespace RTE {
 		bool m_SelfCreated;
 
 		// Direct pixel access variables
-		//! Pixel Array
-		void *m_Pixels;
+		//! Write only access to the Pixels
+		void *m_Pixels_wo;
+		//! Read only Pixel array for GetPixel access
+		void *m_Pixels_ro;
+		//! Size of one row of pixels in memory
 		int m_Pitch;
 
 		SDL_Rect m_ClipRect;
