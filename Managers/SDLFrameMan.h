@@ -9,7 +9,7 @@
 
 namespace RTE {
 	class SDLScreen;
-	class SDLBitmap;
+	class SDLTexture;
 	class GUIFont;
 
 	/// <summary>
