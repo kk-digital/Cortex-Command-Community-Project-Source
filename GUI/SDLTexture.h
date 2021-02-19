@@ -17,7 +17,8 @@ namespace RTE {
 		/// <summary>
 		/// Constructor to instantiate a SDLBitmap from an existing SDL_Texture
 		/// </summary>
-		/// <param name="pTexture">Pointer to a texture to instantiate from </param>
+		/// <param name="pTexture">Pointer to a texture to instantiate from
+		/// </param>
 		SDLTexture(SDL_Texture *pSurface);
 
 		/// <summary>
@@ -48,6 +49,8 @@ namespace RTE {
 		/// </summary>
 		void Destroy() override;
 
+		void Draw(int x, int y, GUIRect &pRect);
+
 		/// <summary>
 		/// Draw the SDLBitmap to the destination bitmap
 		/// </summary>
@@ -55,16 +58,23 @@ namespace RTE {
 		/// <param name="x">x position on the target</param>
 		/// <param name="y">y position on the target</param>
 		/// <param name="pRect">Destination size</param>
-		void Draw(GUIBitmap *pDestBitmap, int x, int y, GUIRect *pRect);
+		void Draw(GUIBitmap &pDestBitmap, int x, int y,
+		          GUIRect &pRect) override {
+			Draw(x, y, pRect);
+		};
 
 		/// <summary>
-		/// Draw the Bitmap with transparency (SDL doesn't distinguish this anymore)
+		/// Draw the Bitmap with transparency (SDL doesn't distinguish this
+		/// anymore)
 		/// </summary>
 		/// <param name="pDestBitmap">pointer to the Destination Bitmap</param>
 		/// <param name="x">x position on the target</param>
 		/// <param name="y">y position on the target</parma>
 		/// <param name="pRect">Destination size</param>
-		void DrawTrans(GUIBitmap *pDestBitmap, int x, int y, GUIRect *pRect);
+		void DrawTrans(GUIBitmap &pDestBitmap, int x, int y,
+		               GUIRect &pRect) override {
+			Draw(x, y, pRect);
+		};
 
 		/// <summary>
 		/// Draw transparent Bitmap with Scaling
@@ -74,7 +84,7 @@ namespace RTE {
 		/// <param name="y">y position on the target</param>
 		/// <param name="width">width to scale to</param>
 		/// <param name="height">height to scale to</param>
-		void DrawTransScaled(GUIBitmap *pDestBitmap, int x, int y, int width,
+		void DrawTransScaled(GUIBitmap &pDestBitmap, int x, int y, int width,
 		                     int height) override;
 
 		/// <summary>
@@ -84,7 +94,8 @@ namespace RTE {
 		/// <param name="y1">y coordinate of first point</param>
 		/// <param name="x2">x coordinate of second point</param>
 		/// <param name="y2">y coordinate of second point</param>
-		void DrawLine(int x1, int y1, int x2, int y2, unsigned long color) override;
+		void DrawLine(int x1, int y1, int x2, int y2,
+		              unsigned long color) override;
 
 		/// <summary>
 		/// Draw a rectangle in the bitmap
@@ -94,8 +105,8 @@ namespace RTE {
 		/// <param name="width">width of rectangle</param>
 		/// <param name="height">height of rectangle</param>
 		/// <parma name="color">color of the rectangle
-		void DrawRectangle(int x, int y, int width, int height, unsigned long color,
-		                   bool filled) override;
+		void DrawRectangle(int x, int y, int width, int height,
+		                   unsigned long color, bool filled) override;
 
 		/// <summary>
 		/// Get the color of the pixel at coordinates (x,y).
@@ -119,7 +130,7 @@ namespace RTE {
 		/// Lock the texture for direct pixel access
 		/// </summary>
 		/// <returns> true if the texture was locked successfully</returns>
-		bool LockTexture() { return LockTexture(NULL); }
+		bool LockTexture() { return LockTexture(nullptr); }
 
 		/// <summary>
 		/// Lock the texture in the specified rectangle
@@ -165,31 +176,33 @@ namespace RTE {
 		/// Get the clipping rectangle
 		/// </summary>
 		/// <param name="rect">Pointer to a rectangle to store the data</param>
-		void GetClipRect(GUIRect *rect) override;
+		void GetClipRect(GUIRect &rect) override;
 
 		/// <summary>
 		/// Set the clipping rectangle
 		/// </summary>
 		/// <param name="rect">The rectangle to clip to</param>
-		void SetClipRect(GUIRect *rect) override;
+		void SetClipRect(GUIRect &rect) override;
 
 		/// <summary>
-		/// Set the clipping rectangle as the intersection of the current clipping
-		/// rectangle and the given rectangle
+		/// Set the clipping rectangle as the intersection of the current
+		/// clipping rectangle and the given rectangle
 		/// </summary>
 		/// <param name="rect"> pointer to the rectangle to intersect</param>
-		void AddClipRect(GUIRect *rect) override;
+		void AddClipRect(GUIRect &rect) override;
 
 		/// <summary>
 		/// Get the path to the datafile object in use by this GUIBitmap
 		/// </summary>
 		/// <returns> The Path to the datafile </returns>
-		std::string GetDataPath() override {return m_TextureFile.GetDataPath();}
+		std::string GetDataPath() override {
+			return m_TextureFile.GetDataPath();
+		}
 
 		/// <summary>
 		/// Get the texture of the SDLTexture object
 		/// </summary>
-		SDL_Texture *GetBitmap() {return m_Texture;}
+		SDL_Texture *GetBitmap() { return m_Texture; }
 
 		/// <summary>
 		/// Returns wether this SDLTexture has texture data.
@@ -204,12 +217,15 @@ namespace RTE {
 		bool m_SelfCreated;
 
 		// Direct pixel access variables
+		//! Pixel Array
 		void *m_Pixels;
 		int m_Pitch;
 
 		SDL_Rect m_ClipRect;
 		int m_Width;
 		int m_Height;
+
+	public:
 	};
 } // namespace RTE
 

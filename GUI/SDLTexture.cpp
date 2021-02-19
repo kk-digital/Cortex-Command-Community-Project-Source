@@ -28,9 +28,9 @@ namespace RTE {
 		m_SelfCreated = true;
 
 		m_TextureFile.Reset();
-		m_Texture =
-		    SDL_CreateTexture(g_FrameMan.GetRenderer(), g_FrameMan.GetPixelFormat(),
-		                      SDL_TEXTUREACCESS_STREAMING, width, height);
+		m_Texture = SDL_CreateTexture(
+		    g_FrameMan.GetRenderer(), g_FrameMan.GetPixelFormat(),
+		    SDL_TEXTUREACCESS_STREAMING, width, height);
 		if (m_Texture == NULL) {
 			return false;
 		}
@@ -43,7 +43,8 @@ namespace RTE {
 		m_TextureFile.Create(filename.c_str());
 
 		// m_Texture = m_TextureFile.GetAsTexture();
-		RTEAssert(m_Texture, "Could not load bitmap from file into SDLTexture!");
+		RTEAssert(m_Texture,
+		          "Could not load bitmap from file into SDLTexture!");
 
 		return true;
 	}
@@ -55,15 +56,13 @@ namespace RTE {
 		m_Texture = nullptr;
 	}
 
-	void SDLTexture::Draw(int x, int y, GUIRect *pRect) {
-
-		SDL_RenderCopy(g_FrameMan.GetRenderer(), m_Texture, m_ClipRect, )
+	void SDLTexture::Draw(int x, int y, GUIRect &pRect) {
+		SDL_Rect destRect{pRect.x, pRect.y, m_ClipRect.w, m_ClipRect.h};
+		SDL_RenderCopy(g_FrameMan.GetRenderer(), m_Texture, &m_ClipRect,
+		               &destRect);
 	}
 
-	void SDLTexture::DrawTrans(GUIBitmap *pDestBitmap, int x, int y,
-	                           GUIRect *pRect) {}
-
-	void SDLTexture::DrawTransScaled(GUIBitmap *pDestBitmap, int x, int y,
+	void SDLTexture::DrawTransScaled(GUIBitmap &pDestBitmap, int x, int y,
 	                                 int width, int height) {}
 
 	void SDLTexture::DrawLine(int x1, int y1, int x2, int y2,
@@ -100,26 +99,26 @@ namespace RTE {
 		return true;
 	}
 
-	void SDLTexture::GetClipRect(GUIRect *rect) {
-		rect->left = m_ClipRect.x;
-		rect->top = m_ClipRect.y;
-		rect->right = m_ClipRect.x + m_ClipRect.w;
-		rect->bottom = m_ClipRect.y + m_ClipRect.h;
+	void SDLTexture::GetClipRect(GUIRect &rect) {
+		rect.x = m_ClipRect.x;
+		rect.y = m_ClipRect.y;
+		rect.w = m_ClipRect.x + m_ClipRect.w;
+		rect.h = m_ClipRect.y + m_ClipRect.h;
 	}
 
-	void SDLTexture::SetClipRect(GUIRect *rect) {
-		m_ClipRect.x = rect->left;
-		m_ClipRect.y = rect->top;
-		m_ClipRect.w = rect->right - rect->left;
-		m_ClipRect.h = rect->bottom - rect->top;
+	void SDLTexture::SetClipRect(GUIRect &rect) {
+		m_ClipRect.x = rect.x;
+		m_ClipRect.y = rect.y;
+		m_ClipRect.w = rect.w;
+		m_ClipRect.h = rect.h;
 	}
 
-	void SDLTexture::AddClipRect(GUIRect *rect) {
-		m_ClipRect.x = std::max(m_ClipRect.x, static_cast<int>(rect->left));
-		m_ClipRect.y = std::max(m_ClipRect.y, static_cast<int>(rect->top));
+	void SDLTexture::AddClipRect(GUIRect &rect) {
+		m_ClipRect.x = std::max(m_ClipRect.x, rect.x);
+		m_ClipRect.y = std::max(m_ClipRect.y, rect.y);
 		m_ClipRect.w =
-		    std::min(m_ClipRect.w, static_cast<int>(rect->right - rect->left));
+		    std::min(m_ClipRect.w, rect.w);
 		m_ClipRect.h =
-		    std::min(m_ClipRect.h, static_cast<int>(rect->bottom - rect->top));
+		    std::min(m_ClipRect.h, rect.h);
 	}
 } // namespace RTE
