@@ -5,7 +5,7 @@
 
 namespace RTE {
 	class SDLScreen : public GUIScreen {
-  public:
+	  public:
 		/// <summary>
 		/// Constructor method used to instantiate a ScreenInterface object.
 		/// </summary>
@@ -13,9 +13,10 @@ namespace RTE {
 		SDLScreen(SDL_Surface *pBackBuffer);
 
 		/// <summary>
-		/// Destructor method used to clean up a SDLScreen object before deletion.
+		/// Destructor method used to clean up a SDLScreen object before
+		/// deletion.
 		/// </summary>
-		~SDLScreen() override { Destroy(); }
+		virtual ~SDLScreen() { Destroy(); }
 
 		/// <summary>
 		/// Destroys and resets this SDLScreen object
@@ -38,12 +39,13 @@ namespace RTE {
 		/// <summary>
 		/// Draws a bitmap onto the back buffer
 		/// </summary>
-		void DrawBitmap(GUIBitmap *pGUIBitmap, int x, int y, GUIRect *pRect);
+		void DrawBitmap(GUIBitmap *pGUIBitmap, int x, int y,
+		                GUIRect *pRect) override;
 
 		/// <summary>
 		/// Gets the Surface representing the Screen
 		/// </summary>
-		GUIBitmap *GetBitmap();
+		GUIBitmap *GetBitmap() override;
 
 		/// <summary>
 		/// Converts an 8-bit palette index to a valid pixel format.
@@ -56,9 +58,10 @@ namespace RTE {
 		/// Optional parameter to specify the target color depth, defaults to
 		/// the current video color depth
 		/// </param>
-		unsigned long ConvertColor(unsigned long color, int targetDepth= 0) override;
+		unsigned long ConvertColor(unsigned long color,
+		                           int targetDepth = 0) override;
 
-	private:
+	  private:
 		SDLBitmap *m_pBackBitmap;
 	};
 } // namespace RTE
