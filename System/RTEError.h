@@ -5,7 +5,7 @@
 #ifdef _WIN32
 #define DebuggerBreak __debugbreak();
 #else
-#define DebuggerBreak ;
+#define DebuggerBreak  std::exit(EXIT_FAILURE);
 #endif
 
 #ifndef RELEASE_BUILD
@@ -29,7 +29,7 @@ namespace RTE {
 	/// <param name="file">The source file from which abort was called.</param>
 	/// <param name="line">The line abort was called from in the source file.</param>
 	/// <returns>Always returns true to trigger AbortAction.</returns>
-	extern bool RTEAbortFunc(const std::string &description, const std::string &file, int line);
+	extern bool RTEAbortFunc(const std::string &description, const char * file, int line);
 
 	#define RTEAbort(description) {											\
 		if (RTEAbortFunc(description, __FILE__, __LINE__)) { AbortAction }	\

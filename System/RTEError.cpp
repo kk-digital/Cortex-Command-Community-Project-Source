@@ -1,18 +1,16 @@
 #include <SDL2/SDL.h>
 
-#include "Managers/SDLFrameMan.h"
-
 #include "RTEError.h"
 
 namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	extern void ShowMessageBox(const std::string &message) { SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "RTE Aborted! (x_x)", message.c_str(), g_FrameMan.GetWindow()); }
+	extern void ShowMessageBox(const std::string &message) { SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "RTE Aborted! (x_x)", message.c_str(), NULL); }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	extern bool RTEAbortFunc(const char *description, const char *file, int line) {
+	extern bool RTEAbortFunc(const std::string &description, const char *file, int line) {
     // TODO: Implement for SDL
     /*
 		// Save out the screen bitmap, after making a copy of it, faster sometimes
@@ -46,7 +44,7 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	bool RTEAssertFunc(bool expression, const char *description, const char *file, int line, bool &alwaysIgnore) {
+	extern bool RTEAssertFunc(bool expression, const char *description, const char *file, int line, bool &alwaysIgnore) {
 		if (!expression) {
 			// TODO: Make this display a box in the game asking whether to ignore or abort. For now, always abort.
 			RTEAbortFunc(description, __FILE__, __LINE__);
