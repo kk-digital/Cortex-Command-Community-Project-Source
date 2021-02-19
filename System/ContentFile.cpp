@@ -1,7 +1,7 @@
 #include <SDL2/SDL_render.h>
 #include <SDL2/SDL_surface.h>
 #include <SDL2/SDL_image.h>
-
+#include "Managers/SDLFrameMan.h" //Needed to get SDL_Renderer
 
 #include "ContentFile.h"
 #include "AudioMan.h"
@@ -12,7 +12,7 @@ namespace RTE {
 
 	const std::string ContentFile::c_ClassName = "ContentFile";
 
-	std::array<std::unordered_map<std::string, BITMAP *>, ContentFile::BitDepths::BitDepthCount> ContentFile::s_LoadedBitmaps;
+	std::unordered_map<std::string, SDL_Texture *> ContentFile::s_LoadedTextures;
 	std::unordered_map<std::string, FMOD::Sound *> ContentFile::s_LoadedSamples;
 	std::unordered_map<size_t, std::string> ContentFile::s_PathHashes;
 
@@ -51,8 +51,8 @@ namespace RTE {
 
 	void ContentFile::FreeAllLoaded() {
 		for (int depth = BitDepths::Eight; depth < BitDepths::BitDepthCount; ++depth) {
-			for (const std::pair<std::string, BITMAP *> &bitmap : s_LoadedBitmaps.at(depth)) {
-				destroy_bitmap(bitmap.second);
+			for (const std::pair<std::string, SDL_Texture *> &texture : s_LoadedTextures) {
+				SDL_DestroyTexture(texture.second);
 			}
 		}
 	}
@@ -104,48 +104,67 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	BITMAP * ContentFile::GetAsBitmap(int conversionMode, bool storeBitmap, const std::string &dataPathToSpecificFrame) {
+	SDL_Texture *
+	ContentFile::GetAsTexture(bool storeTexture,
+	                         const std::string &dataPathToSpecificFrame) {
 		if (m_DataPath.empty()) {
 			return nullptr;
 		}
-		BITMAP *returnBitmap = nullptr;
-		const int bitDepth = (conversionMode == COLORCONV_8_TO_32) ? BitDepths::ThirtyTwo : BitDepths::Eight;
-		std::string dataPathToLoad = dataPathToSpecificFrame.empty() ? m_DataPath : dataPathToSpecificFrame;
+		std::string dataPathToLoad = dataPathToSpecificFrame.empty()
+		                                 ? m_DataPath
+		                                 : dataPathToSpecificFrame;
 		SetFormattedReaderPosition(GetFormattedReaderPosition());
-
-		// Check if the file has already been read and loaded from the disk and, if so, use that data.
-		std::unordered_map<std::string, BITMAP *>::iterator foundBitmap = s_LoadedBitmaps.at(bitDepth).find(dataPathToLoad);
-		if (foundBitmap != s_LoadedBitmaps.at(bitDepth).end()) {
-			returnBitmap = (*foundBitmap).second;
+		SDL_Texture *returnTexture{nullptr};
+		// Check if the file has already been read and loaded from the disk and,
+		// if so, use that data.
+		auto it_foundTexture = s_LoadedTextures.find(dataPathToLoad);
+		if (it_foundTexture != s_LoadedTextures.end()) {
+			returnTexture = (*it_foundTexture).second;
 		} else {
 			if (!std::filesystem::exists(dataPathToLoad)) {
-				const std::string dataPathWithoutExtension = dataPathToLoad.substr(0, dataPathToLoad.length() - m_DataPathExtension.length());
-				const std::string altFileExtension = (m_DataPathExtension == ".png") ? ".bmp" : ".png";
+				const std::string dataPathWithoutExtension =
+				    dataPathToLoad.substr(0, dataPathToLoad.length() -
+				                                 m_DataPathExtension.length());
+				const std::string altFileExtension =
+				    (m_DataPathExtension == ".png") ? ".bmp" : ".png";
 
-				if (std::filesystem::exists(dataPathWithoutExtension + altFileExtension)) {
-					g_ConsoleMan.AddLoadWarningLogEntry(m_DataPath, m_FormattedReaderPosition, altFileExtension);
+				if (std::filesystem::exists(dataPathWithoutExtension +
+				                            altFileExtension)) {
+					g_ConsoleMan.AddLoadWarningLogEntry(
+					    m_DataPath, m_FormattedReaderPosition,
+					    altFileExtension);
 					SetDataPath(m_DataPathWithoutExtension + altFileExtension);
-					dataPathToLoad = dataPathWithoutExtension + altFileExtension;
+					dataPathToLoad =
+					    dataPathWithoutExtension + altFileExtension;
 				} else {
-					RTEAbort("Failed to find image file with following path and name:\n\n" + m_DataPath + " or " + altFileExtension + "\n" + m_FormattedReaderPosition);
+					RTEAbort(
+					    "Failed to find image file with following path and name:\n\n" +
+					    m_DataPath + " or " + altFileExtension + "\n" +
+					    m_FormattedReaderPosition);
 				}
 			}
-			returnBitmap = LoadAndReleaseBitmap(conversionMode, dataPathToLoad); // NOTE: This takes ownership of the bitmap file
+			returnTexture = LoadAndReleaseTexture(
+			    dataPathToLoad); // NOTE: This takes ownership
+			                     // of the bitmap file
 
-			// Insert the bitmap into the map, PASSING OVER OWNERSHIP OF THE LOADED DATAFILE
-			if (storeBitmap) { s_LoadedBitmaps.at(bitDepth).insert({ dataPathToLoad, returnBitmap }); }
+			// Insert the bitmap into the map, PASSING OVER OWNERSHIP OF THE
+			// LOADED DATAFILE
+			if (storeTexture) {
+				s_LoadedTextures.insert(
+				    {dataPathToLoad, returnTexture});
+			}
 		}
-		return returnBitmap;
+		return returnTexture;
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	BITMAP ** ContentFile::GetAsAnimation(int frameCount, int conversionMode) {
+SDL_Texture ** ContentFile::GetAsAnimation(int frameCount) {
 		if (m_DataPath.empty()) {
 			return nullptr;
 		}
 		// Create the array of as many BITMAP pointers as requested frames
-		BITMAP **returnBitmaps = new BITMAP *[frameCount];
+		SDL_Texture **returnTextures = new SDL_Texture *[frameCount];
 		SetFormattedReaderPosition(GetFormattedReaderPosition());
 
 		// Don't try to append numbers if there's only one frame
@@ -161,36 +180,40 @@ namespace RTE {
 					SetDataPath(m_DataPathWithoutExtension + "000" + altFileExtension);
 				}
 			}
-			returnBitmaps[0] = GetAsBitmap(conversionMode);
-			return returnBitmaps;
+			returnTextures[0] = GetAsTexture();
+			return returnTextures;
 		}
 		char framePath[1024];
 		for (int frameNum = 0; frameNum < frameCount; frameNum++) {
 			std::snprintf(framePath, sizeof(framePath), "%s%03i%s", m_DataPathWithoutExtension.c_str(), frameNum, m_DataPathExtension.c_str());
-			returnBitmaps[frameNum] = GetAsBitmap(conversionMode, true, framePath);
+			returnTextures[frameNum] = GetAsTexture(true, framePath);
 		}
-		return returnBitmaps;
+		return returnTextures;
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	BITMAP * ContentFile::LoadAndReleaseBitmap(int conversionMode, const std::string &dataPathToSpecificFrame) {
+	SDL_Texture * ContentFile::LoadAndReleaseTexture(const std::string &dataPathToSpecificFrame) {
 		if (m_DataPath.empty()) {
 			return nullptr;
 		}
 		const std::string dataPathToLoad = dataPathToSpecificFrame.empty() ? m_DataPath : dataPathToSpecificFrame;
 		SetFormattedReaderPosition(GetFormattedReaderPosition());
 
-		BITMAP *returnBitmap = nullptr;
+		SDL_Texture *returnTexture = nullptr;
+		SDL_Surface *tempSurface = nullptr;
 
-		PALETTE currentPalette;
-		get_palette(currentPalette);
+		tempSurface = IMG_Load(dataPathToLoad.c_str());
 
-		set_color_conversion((conversionMode == 0) ? COLORCONV_MOST : conversionMode);
-		returnBitmap = load_bitmap(dataPathToLoad.c_str(), currentPalette);
-		RTEAssert(returnBitmap, "Failed to load image file with following path and name:\n\n" + m_DataPathAndReaderPosition + "\nThe file may be corrupt, incorrectly converted or saved with unsupported parameters.");
+		RTEAssert(tempSurface, "Failed to load image file with following path and name:\n\n" + m_DataPathAndReaderPosition + "\nThe file may be corrupt, incorrectly converted or saved with unsupported parameters.\n"+IMG_GetError());
 
-		return returnBitmap;
+		returnTexture = SDL_CreateTextureFromSurface(g_FrameMan.GetRenderer(),  tempSurface);
+
+		SDL_FreeSurface(tempSurface);
+
+		RTEAssert(returnTexture, "Failed to create Texture from "+m_DataPathAndReaderPosition+"\n SDL Error: "+ SDL_GetError());
+
+		return returnTexture;
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
