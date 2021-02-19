@@ -24,6 +24,10 @@ namespace RTE {
 		m_ClipRect.h = 0;
 	}
 
+	SDLTexture::~SDLTexture(){
+		Destroy();
+	}
+
 	bool SDLTexture::Create(int width, int height, int depth) {
 		m_SelfCreated = true;
 
@@ -42,6 +46,7 @@ namespace RTE {
 
 		m_TextureFile.Create(filename.c_str());
 
+		//TODO: Implement in ContentFile
 		// m_Texture = m_TextureFile.GetAsTexture();
 		RTEAssert(m_Texture,
 		          "Could not load bitmap from file into SDLTexture!");

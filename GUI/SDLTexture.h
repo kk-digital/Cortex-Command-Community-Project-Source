@@ -24,7 +24,7 @@ namespace RTE {
 		/// <summary>
 		/// Destructor method to clean up the SDLBitmap object
 		/// </summary>
-		~SDLTexture();
+		virtual ~SDLTexture();
 
 		/// <summary>
 		/// Create a new texture from a fileName
@@ -61,7 +61,7 @@ namespace RTE {
 		void Draw(GUIBitmap &pDestBitmap, int x, int y,
 		          GUIRect &pRect) override {
 			Draw(x, y, pRect);
-		};
+		}
 
 		/// <summary>
 		/// Draw the Bitmap with transparency (SDL doesn't distinguish this
@@ -74,7 +74,7 @@ namespace RTE {
 		void DrawTrans(GUIBitmap &pDestBitmap, int x, int y,
 		               GUIRect &pRect) override {
 			Draw(x, y, pRect);
-		};
+		}
 
 		/// <summary>
 		/// Draw transparent Bitmap with Scaling
@@ -170,7 +170,7 @@ namespace RTE {
 		/// <summary>
 		/// Get the color depth of the texture (deprecated)
 		/// </summary>
-		int GetColorDepth() override;
+		int GetColorDepth() override {return 0;};
 
 		/// <summary>
 		/// Get the clipping rectangle
@@ -190,14 +190,14 @@ namespace RTE {
 		/// </summary>
 		/// <param name="rect"> pointer to the rectangle to intersect</param>
 		void AddClipRect(GUIRect &rect) override;
-
+		/*
 		/// <summary>
 		/// Get the path to the datafile object in use by this GUIBitmap
 		/// </summary>
 		/// <returns> The Path to the datafile </returns>
 		std::string GetDataPath() override {
-			return m_TextureFile.GetDataPath();
-		}
+		    return m_TextureFile.GetDataPath();
+		}*/
 
 		/// <summary>
 		/// Get the texture of the SDLTexture object
