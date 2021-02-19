@@ -1,10 +1,11 @@
-project('CCOSS-community', ['cpp','c'], default_options:['cpp_std=c++17', 'buildtype=release'], version:'0.1.0-Pre-3.1', meson_version:'>=0.49')
+project('CCOSS-community', ['cpp','c'], default_options:['cpp_std=c++17', 'buildtype=debug'], version:'0.1.0-Pre-3.1', meson_version:'>=0.49')
 
 #### Build environment Setup ####
 
 deps = [
-  dependency('allegro'),
-  dependency('loadpng'),
+  dependency('sdl2'),
+  dependency('SDL2_image'),
+  dependency('SDL2_gfx'),
   dependency('flac'),
   dependency('luajit'),
   dependency('minizip'),
@@ -39,7 +40,7 @@ if compiler.get_argument_syntax()== 'gcc' # used for gcc compatible compilers
   if buildtype_debug
 
     elfname += '_debug' # add _debug suffix for debug builds
-    extra_args = ['-fpermissive', '-Wno-unknown-pragmas'] # Disable #pragma region complaints
+    extra_args = ['-Wall', '-Wextra', '-Wno-unknown-pragmas'] # Disable #pragma region complaints
 
     if not get_option('full_debug')
       preprocessor_flags += ['-DDEBUG_RELEASE_BUILD'] # enable some debug features
