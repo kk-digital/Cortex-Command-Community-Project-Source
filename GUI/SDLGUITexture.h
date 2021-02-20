@@ -7,24 +7,29 @@
 
 struct GUIRect;
 namespace RTE {
-	class SDLTexture : public GUIBitmap {
+	class SDLGUITexture : public GUIBitmap {
 	public:
 		/// <summary>
-		/// Constructor method to instantiate a SDLBitmap
+		/// Constructor method to instantiate a SDLTexture
 		/// </summary>
-		SDLTexture();
+		SDLGUITexture();
 
 		/// <summary>
-		/// Constructor to instantiate a SDLBitmap from an existing SDL_Texture
+		/// Constructor to instantiate a SDLTexture from an existing SDL_Texture
 		/// </summary>
-		/// <param name="pTexture">Pointer to a texture to instantiate from
+		/// <param name="pTexture">
+		/// Pointer to a texture to instantiate from
 		/// </param>
-		SDLTexture(SDL_Texture *pSurface);
+		/// <param name="needPixelAccess">
+		/// Texture requests pixel access, this allows GetPixel and SetPixel to
+		/// be called safely
+		/// </param>
+		SDLGUITexture(SDL_Texture *pTexture, bool needPixelAccess = false);
 
 		/// <summary>
 		/// Destructor method to clean up the SDLBitmap object
 		/// </summary>
-		virtual ~SDLTexture();
+		virtual ~SDLGUITexture();
 
 		/// <summary>
 		/// Create a new texture from a fileName
@@ -145,11 +150,6 @@ namespace RTE {
 		bool UnlockTexture();
 
 		/// <summary>
-		/// Get the pointer to the pixels array
-		/// </summary>
-		void *GetPixels() { return m_Pixels; }
-
-		/// <summary>
 		/// Get the length of a row of pixels in memory
 		/// </summary>
 		/// <returns>integer representing length of a row</returns>
@@ -170,7 +170,7 @@ namespace RTE {
 		/// <summary>
 		/// Get the color depth of the texture (deprecated)
 		/// </summary>
-		int GetColorDepth() override {return 0;};
+		int GetColorDepth() override { return 0; };
 
 		/// <summary>
 		/// Get the clipping rectangle
@@ -183,6 +183,8 @@ namespace RTE {
 		/// </summary>
 		/// <param name="rect">The rectangle to clip to</param>
 		void SetClipRect(GUIRect &rect) override;
+
+		void ResetClipRect() override;
 
 		/// <summary>
 		/// Set the clipping rectangle as the intersection of the current
@@ -215,6 +217,9 @@ namespace RTE {
 
 		SDL_Texture *m_Texture;
 		bool m_SelfCreated;
+
+		//! Not owned alway copied from FrameMan on creation
+		SDL_Renderer* g_Renderer;
 
 		// Direct pixel access variables
 		//! Write only access to the Pixels
