@@ -15,8 +15,8 @@ struct GUIRect { int x; int y; int w; int h;};
 /// <param name="y">Position of top left corner on Y axis.</param>
 /// <param name="width">Width of the Rectangle<./param>
 /// <param name="height">Height of the Rectangle.</param>
-inline void SetRect(GUIRect &rect, int x, int y, int width, int height){
-	rect.x = x; rect.y = y; rect.w = width; rect.h = height;
+inline void SetRect(GUIRect *rect, int x, int y, int width, int height){
+	rect->x = x; rect->y = y; rect->w = width; rect->h = height;
 }
 #pragma endregion
 
@@ -35,5 +35,11 @@ inline void SetRect(GUIRect &rect, int x, int y, int width, int height){
 #include "GUI/GUIControlFactory.h"
 #include "GUI/GUIControlManager.h"
 #include "GUI/GUISound.h"
+
+// TODO: find better way to do this probably through RTETools
+#if defined(__linux__)
+#include <strings.h>
+#define stricmp strcasecmp
+#endif
 
 #endif
