@@ -2,8 +2,9 @@
 #define _RTESDLBITMAP_
 
 #include "GUI/Interface.h"
-#include "ContentFile.h"
-#include <SDL2/SDL.h>
+#include "System/ContentFile.h"
+#include <SDL2/SDL_render.h>
+#include <SDL2/SDL_rect.h>
 
 struct GUIRect;
 namespace RTE {
@@ -54,7 +55,7 @@ namespace RTE {
 		/// </summary>
 		void Destroy() override;
 
-		void Draw(int x, int y, GUIRect &pRect);
+		void Draw(int x, int y, GUIRect *pRect);
 
 		/// <summary>
 		/// Draw the SDLBitmap to the destination bitmap
@@ -63,8 +64,8 @@ namespace RTE {
 		/// <param name="x">x position on the target</param>
 		/// <param name="y">y position on the target</param>
 		/// <param name="pRect">Destination size</param>
-		void Draw(GUIBitmap &pDestBitmap, int x, int y,
-		          GUIRect &pRect) override {
+		void Draw(GUIBitmap *pDestBitmap, int x, int y,
+		          GUIRect *pRect) override {
 			Draw(x, y, pRect);
 		}
 
@@ -76,8 +77,8 @@ namespace RTE {
 		/// <param name="x">x position on the target</param>
 		/// <param name="y">y position on the target</parma>
 		/// <param name="pRect">Destination size</param>
-		void DrawTrans(GUIBitmap &pDestBitmap, int x, int y,
-		               GUIRect &pRect) override {
+		void DrawTrans(GUIBitmap *pDestBitmap, int x, int y,
+		               GUIRect *pRect) override {
 			Draw(x, y, pRect);
 		}
 
@@ -89,7 +90,7 @@ namespace RTE {
 		/// <param name="y">y position on the target</param>
 		/// <param name="width">width to scale to</param>
 		/// <param name="height">height to scale to</param>
-		void DrawTransScaled(GUIBitmap &pDestBitmap, int x, int y, int width,
+		void DrawTransScaled(GUIBitmap *pDestBitmap, int x, int y, int width,
 		                     int height) override;
 
 		/// <summary>
@@ -176,13 +177,13 @@ namespace RTE {
 		/// Get the clipping rectangle
 		/// </summary>
 		/// <param name="rect">Pointer to a rectangle to store the data</param>
-		void GetClipRect(GUIRect &rect) override;
+		void GetClipRect(GUIRect *rect) override;
 
 		/// <summary>
 		/// Set the clipping rectangle
 		/// </summary>
 		/// <param name="rect">The rectangle to clip to</param>
-		void SetClipRect(GUIRect &rect) override;
+		void SetClipRect(GUIRect *rect) override;
 
 		void ResetClipRect() override;
 
@@ -191,7 +192,7 @@ namespace RTE {
 		/// clipping rectangle and the given rectangle
 		/// </summary>
 		/// <param name="rect"> pointer to the rectangle to intersect</param>
-		void AddClipRect(GUIRect &rect) override;
+		void AddClipRect(GUIRect *rect) override;
 		/*
 		/// <summary>
 		/// Get the path to the datafile object in use by this GUIBitmap
