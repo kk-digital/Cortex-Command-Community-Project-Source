@@ -122,13 +122,8 @@ void GUISlider::Create(GUIProperties *Props)
 		m_ValueResolution = std::max((m_Maximum - m_Minimum) / 100, 1);
 	}
 
-<<<<<<< HEAD
     // Clamp the value
-    m_Value = std::max(m_Value, m_Minimum);
-    m_Value = std::min(m_Value, m_Maximum);
-=======
 	m_Value = std::clamp(m_Value, m_Minimum, m_Maximum);
->>>>>>> origin/development
 
     // Re-Calculate the knob info
     CalculateKnob();

@@ -14,10 +14,6 @@
 #include "GUI.h"
 #include "GUICollectionBox.h"
 
-#if defined(__linux__)
-#include <strings.h>
-using stricmp=strcasecmp;
-#endif
 
 using namespace RTE;
 
@@ -72,8 +68,8 @@ void GUICollectionBox::Create(const std::string Name, int X, int Y, int Width, i
         m_Height = Height;
 
     // Make sure the box isn't too small
-    m_Width = MAX(m_Width, m_MinWidth);
-    m_Height = MAX(m_Height, m_MinHeight);
+    m_Width = std::max(m_Width, m_MinWidth);
+    m_Height = std::max(m_Height, m_MinHeight);
 }
 
 
@@ -98,8 +94,8 @@ void GUICollectionBox::Create(GUIProperties *Props)
     GUIPanel::LoadProperties(Props);
 
     // Make sure the box isn't too small
-    m_Width = MAX(m_Width, m_MinWidth);
-    m_Height = MAX(m_Height, m_MinHeight);
+    m_Width = std::max(m_Width, m_MinWidth);
+    m_Height = std::max(m_Height, m_MinHeight);
 
     // Get the values
     Props->GetValue("DrawBackground", &m_DrawBackground);

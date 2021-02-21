@@ -1043,8 +1043,7 @@ void GUIListPanel::OnKeyPress(int KeyCode, int Modifier)
     m_SelectedList.clear();
 
     // Clamp the value
-    m_LastSelected = std::max(m_LastSelected, 0);
-    m_LastSelected = MIN(m_LastSelected, m_Items.size()-1);
+    m_LastSelected = std::clamp(m_LastSelected, 0, m_Items.size()-1);
 
 
     // Select the new item

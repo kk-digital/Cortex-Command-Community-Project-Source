@@ -150,19 +150,19 @@ void GUITab::BuildBitmap(void)
 
     // Base checkbox
     m_Skin->GetValue("Tab", "Base", Values, 4);
-    SetRect(&m_ImageRects[0], Values[0], Values[1], Values[0]+Values[2], Values[1]+Values[3]);
+    SetRect(&m_ImageRects[0], Values[0], Values[1], Values[2], Values[3]);
 
     // Mouse over checkbox
     m_Skin->GetValue("Tab", "MouseOver", Values, 4);
-    SetRect(&m_ImageRects[1], Values[0], Values[1], Values[0]+Values[2], Values[1]+Values[3]);
+    SetRect(&m_ImageRects[1], Values[0], Values[1], Values[2], Values[3]);
 
     // Selected
     m_Skin->GetValue("Tab", "Selected", Values, 4);
-    SetRect(&m_ImageRects[2], Values[0], Values[1], Values[0]+Values[2], Values[1]+Values[3]);
+    SetRect(&m_ImageRects[2], Values[0], Values[1], Values[2], Values[3]);
 
     // Greyed out tab (for disabled mode)
     m_Skin->GetValue("Tab", "Disabled", Values, 4);
-    SetRect(&m_ImageRects[3], Values[0], Values[1], Values[0]+Values[2], Values[1]+Values[3]);
+    SetRect(&m_ImageRects[3], Values[0], Values[1], Values[2], Values[3]);
 }
 
 
@@ -181,7 +181,7 @@ void GUITab::Draw(GUIScreen *Screen)
 
     // Calculate the y position of the base
     // Make it centred vertically
-    int YPos = m_Height/2 - (m_ImageRects[0].bottom - m_ImageRects[0].top)/2 + m_Y;
+    int YPos = m_Height/2 - (m_ImageRects[0].w)/2 + m_Y;
 
     // Draw the base
     m_Image->DrawTrans(Screen->GetBitmap(), m_X, YPos, &m_ImageRects[0]);

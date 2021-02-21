@@ -62,8 +62,8 @@ void GUICheckbox::Create(const std::string Name, int X, int Y, int Width, int He
         m_Height = Height;
 
     // Make sure the button isn't too small
-    m_Width = MAX(m_Width, m_MinWidth);
-    m_Height = MAX(m_Height, m_MinHeight);
+    m_Width = std::max(m_Width, m_MinWidth);
+    m_Height = std::max(m_Height, m_MinHeight);
 }
 
 
@@ -88,8 +88,8 @@ void GUICheckbox::Create(GUIProperties *Props)
     GUIPanel::LoadProperties(Props);
 
     // Make sure the button isn't too small
-    m_Width = MAX(m_Width, m_MinWidth);
-    m_Height = MAX(m_Height, m_MinHeight);
+    m_Width = std::max(m_Width, m_MinWidth);
+    m_Height = std::max(m_Height, m_MinHeight);
 
 
     // Grab the check value
@@ -195,7 +195,7 @@ void GUICheckbox::Draw(GUIScreen *Screen)
 
     // Calculate the y position of the base
     // Make it centred vertically
-    int YPos = m_Height/2 - (m_ImageRects[0].bottom - m_ImageRects[0].top)/2 + m_Y;
+    int YPos = m_Height/2 - (m_ImageRects[0].h)/2 + m_Y;
 
     // Draw the base
     if (m_Mouseover)
@@ -225,7 +225,7 @@ void GUICheckbox::Draw(GUIScreen *Screen)
         m_Font->SetColor(m_FontColor);
         m_Font->SetKerning(m_FontKerning);
         m_Font->Draw(Screen->GetBitmap(),
-                     m_X + (m_ImageRects[0].right - m_ImageRects[0].left) + 2,
+                     m_X + (m_ImageRects[0].w) + 2,
 //                     m_Y + m_Height/2-m_Font->CalculateHeight(Text)+2,
                      m_Y + (m_Height / 2) - (m_Font->GetFontHeight() / 2) - 1,
                      Text,
@@ -332,8 +332,8 @@ void GUICheckbox::Move(int X, int Y)
 void GUICheckbox::Resize(int Width, int Height)
 {
     // Make sure the control isn't too small
-    Width = MAX(Width, m_MinWidth);
-    Height = MAX(Height, m_MinHeight);
+    Width = std::max(Width, m_MinWidth);
+    Height = std::max(Height, m_MinHeight);
 
     SetSize(Width, Height);
 

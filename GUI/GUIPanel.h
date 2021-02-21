@@ -50,7 +50,7 @@ public:
         MODI_SHIFT = 0x01,
         MODI_CTRL = 0x02,
         MODI_ALT = 0x04,
-		MODI_COMMAND = 0x08		
+		MODI_COMMAND = 0x08
     } MouseModifiers;
 
     // Z Change

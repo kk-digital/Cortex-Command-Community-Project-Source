@@ -214,8 +214,8 @@ void GUIManager::Update(void)
             if (m_DoubleClickButtons == GUIPanel::MOUSE_NONE) {
                 SetRect(&m_DoubleClickRect, MouseX-m_DoubleClickSize,
                                             MouseY-m_DoubleClickSize,
-                                            MouseX+m_DoubleClickSize,
-                                            MouseY+m_DoubleClickSize);
+                                            2*m_DoubleClickSize,
+                                            2*m_DoubleClickSize);
             }
 
             // OnMouseDown event
@@ -478,8 +478,8 @@ bool GUIManager::MouseInRect(GUIRect *Rect, int X, int Y)
     if (!Rect)
         return false;
 
-    if (X >= Rect->left && X <= Rect->right &&
-       Y >= Rect->top && Y <= Rect->bottom)
+    if (X >= Rect->x && X <= Rect->x + Rect->w &&
+       Y >= Rect->y && Y <= Rect->y - Rect->h)
        return true;
 
     return false;

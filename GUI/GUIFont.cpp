@@ -111,7 +111,7 @@ bool GUIFont::Load(GUIScreen *Screen, const std::string Filename)
             {
                 unsigned long Pixel = m_Font->GetPixel(i, j);
                 if (Pixel != Red && Pixel != BackG)
-                    Height = MAX(Height, j - y);
+                    Height = std::max(Height, j - y);
             }
         }
         
@@ -181,7 +181,7 @@ void GUIFont::Draw(GUIBitmap *Bitmap, int X, int Y, const std::string Text, unsi
         int CharWidth = m_Characters[c].m_Width;
         int offX = m_Characters[c].m_Offset;
         int offY = ((c-32)/16) * m_FontHeight;
-        SetRect(&Rect, offX, offY, offX+CharWidth, offY+m_FontHeight);
+        SetRect(&Rect, offX, offY, CharWidth, m_FontHeight);
 
         // Draw the shadow
         if (Shadow && FSC)
