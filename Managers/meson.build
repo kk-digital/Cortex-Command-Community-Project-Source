@@ -3,8 +3,7 @@ sources += files(
 # 'ActivityMan.cpp',
 # 'AudioMan.cpp',
 # 'ConsoleMan.cpp',
-# 'FrameMan.cpp',
-'SDLFrameMan.cpp',
+'FrameMan.cpp',
 # 'LuaMan.cpp',
 # 'MetaMan.cpp',
 # 'MovableMan.cpp',
@@ -14,9 +13,8 @@ sources += files(
 # 'PostProcessMan.cpp',
 # 'PresetMan.cpp',
 # 'PrimitiveMan.cpp',
-# 'SceneMan.cpp',
+'SceneMan.cpp',
 # 'SettingsMan.cpp',
-# 'ThreadMan.cpp',
 # 'TimerMan.cpp',
 # 'UInputMan.cpp'
 )
