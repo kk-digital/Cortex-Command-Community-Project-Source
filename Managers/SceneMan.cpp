@@ -10,6 +10,10 @@
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Inclusions of header files
+
+#include <SDL2/SDL_render.h>
+#include <SDL2/SDL_rect.h>
+
 #include "NetworkServer.h"
 
 #include "SceneMan.h"
@@ -51,16 +55,16 @@ const std::string SceneMan::c_ClassName = "SceneMan";
 
 bool IntRect::IntersectionCut(const IntRect &rhs)
 {
-    if (Intersects(rhs))
-    {
-        m_Left = MAX(m_Left, rhs.m_Left);
-        m_Right = MIN(m_Right, rhs.m_Right);
-        m_Top = MAX(m_Top, rhs.m_Top);
-        m_Bottom = MIN(m_Bottom, rhs.m_Bottom);
-        return true;
-    }
+	if (Intersects(rhs))
+	{
+		m_Left = MAX(m_Left, rhs.m_Left);
+		m_Right = MIN(m_Right, rhs.m_Right);
+		m_Top = MAX(m_Top, rhs.m_Top);
+		m_Bottom = MIN(m_Bottom, rhs.m_Bottom);
+		return true;
+	}
 
-    return false;
+	return false;
 }
 
 
@@ -72,44 +76,44 @@ bool IntRect::IntersectionCut(const IntRect &rhs)
 
 void SceneMan::Clear()
 {
-    m_DefaultSceneName = "Tutorial Bunker";
-    m_pSceneToLoad = 0;
-    m_PlaceObjects = true;
+	m_DefaultSceneName = "Tutorial Bunker";
+	m_pSceneToLoad = 0;
+	m_PlaceObjects = true;
 	m_PlaceUnits = true;
-    m_pCurrentScene = 0;
-    m_pMOColorLayer = 0;
-    m_pMOIDLayer = 0;
-    m_MOIDDrawings.clear();
-    m_pDebugLayer = 0;
-    m_LastRayHitPos.Reset();
+	m_pCurrentScene = 0;
+	m_pMOColorLayer = 0;
+	m_pMOIDLayer = 0;
+	m_MOIDDrawings.clear();
+	m_pDebugLayer = 0;
+	m_LastRayHitPos.Reset();
 
-    m_LayerDrawMode = g_LayerNormal;
+	m_LayerDrawMode = g_LayerNormal;
 
-    m_MatNameMap.clear();
-    for (int i = 0; i < c_PaletteEntriesNumber; ++i)
-        m_apMatPalette[i] = 0;
-    m_MaterialCount = 0;
+	m_MatNameMap.clear();
+	for (int i = 0; i < c_PaletteEntriesNumber; ++i)
+		m_apMatPalette[i] = 0;
+	m_MaterialCount = 0;
 
 	m_MaterialCopiesVector.clear();
 
-    for (int i = 0; i < c_MaxScreenCount; ++i) {
-        m_Offset[i].Reset();
-        m_DeltaOffset[i].Reset();
-        m_ScrollTarget[i].Reset();
-        m_ScreenTeam[i] = Activity::NoTeam;
-        m_ScrollSpeed[i] = 0.1;
-        m_ScrollTimer[i].Reset();
-        m_ScreenOcclusion[i].Reset();
-        m_TargetWrapped[i] = false;
-        m_SeamCrossCount[i][X] = 0;
-        m_SeamCrossCount[i][Y] = 0;
-    }
+	for (int i = 0; i < c_MaxScreenCount; ++i) {
+		m_Offset[i].Reset();
+		m_DeltaOffset[i].Reset();
+		m_ScrollTarget[i].Reset();
+		m_ScreenTeam[i] = Activity::NoTeam;
+		m_ScrollSpeed[i] = 0.1;
+		m_ScrollTimer[i].Reset();
+		m_ScreenOcclusion[i].Reset();
+		m_TargetWrapped[i] = false;
+		m_SeamCrossCount[i][X] = 0;
+		m_SeamCrossCount[i][Y] = 0;
+	}
 
-    m_pUnseenRevealSound = 0;
-    m_LastUpdatedScreen = 0;
-    m_SecondStructPass = false;
+	m_pUnseenRevealSound = 0;
+	m_LastUpdatedScreen = 0;
+	m_SecondStructPass = false;
 //    m_CalcTimer.Reset();
-    m_CleanTimer.Reset();
+	m_CleanTimer.Reset();
 
 	if (m_pOrphanSearchBitmap)
 		destroy_bitmap(m_pOrphanSearchBitmap);
@@ -123,14 +127,14 @@ void SceneMan::Clear()
 
 int SceneMan::Create(std::string readerFile)
 {
-    Reader *reader = new Reader();
-    if (reader->Create(readerFile.c_str()))
-        g_ConsoleMan.PrintString("ERROR: Could not find Scene definition file!");
+	Reader *reader = new Reader();
+	if (reader->Create(readerFile.c_str()))
+		g_ConsoleMan.PrintString("ERROR: Could not find Scene definition file!");
 
-    Serializable::Create(*reader);
-    delete reader;
+	Serializable::Create(*reader);
+	delete reader;
 
-    return 0;
+	return 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -170,70 +174,70 @@ int SceneMan::LoadScene(Scene *pNewScene, bool placeObjects, bool placeUnits) {
 
 	g_NetworkServer.LockScene(true);
 
-    m_pCurrentScene = pNewScene;
-    if (m_pCurrentScene->LoadData(placeObjects, true, placeUnits) < 0)
-    {
-        g_ConsoleMan.PrintString("ERROR: Loading scene \'" + m_pCurrentScene->GetPresetName() + "\' failed! Has it been properly defined?");
+	m_pCurrentScene = pNewScene;
+	if (m_pCurrentScene->LoadData(placeObjects, true, placeUnits) < 0)
+	{
+		g_ConsoleMan.PrintString("ERROR: Loading scene \'" + m_pCurrentScene->GetPresetName() + "\' failed! Has it been properly defined?");
 		g_NetworkServer.LockScene(false);
 		return -1;
-    }
+	}
 
-    // Report successful load to the console
-    g_ConsoleMan.PrintString("SYSTEM: Scene \"" + m_pCurrentScene->GetPresetName() + "\" was loaded");
+	// Report successful load to the console
+	g_ConsoleMan.PrintString("SYSTEM: Scene \"" + m_pCurrentScene->GetPresetName() + "\" was loaded");
 
-    // Set the proper scales of the unseen obscuring SceneLayers
-    SceneLayer *pUnseenLayer = 0;
-    for (int team = Activity::TeamOne; team < Activity::MaxTeamCount; ++team)
-    {
-        if (!g_ActivityMan.GetActivity()->TeamActive(team))
-            continue;
-        SceneLayer *pUnseenLayer = m_pCurrentScene->GetUnseenLayer(team);
-        if (pUnseenLayer && pUnseenLayer->GetBitmap())
-        {
-            // Calculate how many times smaller the unseen map is compared to the entire terrain's dimensions, and set it as the scale factor on the Unseen layer
-            pUnseenLayer->SetScaleFactor(Vector((float)m_pCurrentScene->GetTerrain()->GetBitmap()->w / (float)pUnseenLayer->GetBitmap()->w, (float)m_pCurrentScene->GetTerrain()->GetBitmap()->h / (float)pUnseenLayer->GetBitmap()->h));
-        }
-    }
+	// Set the proper scales of the unseen obscuring SceneLayers
+	SceneLayer *pUnseenLayer = 0;
+	for (int team = Activity::TeamOne; team < Activity::MaxTeamCount; ++team)
+	{
+		if (!g_ActivityMan.GetActivity()->TeamActive(team))
+			continue;
+		SceneLayer *pUnseenLayer = m_pCurrentScene->GetUnseenLayer(team);
+		if (pUnseenLayer && pUnseenLayer->GetBitmap())
+		{
+			// Calculate how many times smaller the unseen map is compared to the entire terrain's dimensions, and set it as the scale factor on the Unseen layer
+			pUnseenLayer->SetScaleFactor(Vector((float)m_pCurrentScene->GetTerrain()->GetBitmap()->w / (float)pUnseenLayer->GetBitmap()->w, (float)m_pCurrentScene->GetTerrain()->GetBitmap()->h / (float)pUnseenLayer->GetBitmap()->h));
+		}
+	}
 
-    // Get the unseen reveal sound
-    if (!m_pUnseenRevealSound)
-        m_pUnseenRevealSound = dynamic_cast<SoundContainer *>(g_PresetMan.GetEntityPreset("SoundContainer", "Unseen Reveal Blip")->Clone());
+	// Get the unseen reveal sound
+	if (!m_pUnseenRevealSound)
+		m_pUnseenRevealSound = dynamic_cast<SoundContainer *>(g_PresetMan.GetEntityPreset("SoundContainer", "Unseen Reveal Blip")->Clone());
 
 //    m_pCurrentScene->GetTerrain()->CleanAir();
 
-    // Re-create the MoveableObject:s color SceneLayer
-    delete m_pMOColorLayer;
-    BITMAP *pBitmap = create_bitmap_ex(8, GetSceneWidth(), GetSceneHeight());
-    clear_to_color(pBitmap, g_MaskColor);
-    m_pMOColorLayer = new SceneLayer();
-    m_pMOColorLayer->Create(pBitmap, true, Vector(), m_pCurrentScene->WrapsX(), m_pCurrentScene->WrapsY(), Vector(1.0, 1.0));
-    pBitmap = 0;
+	// Re-create the MoveableObject:s color SceneLayer
+	delete m_pMOColorLayer;
+	BITMAP *pBitmap = create_bitmap_ex(8, GetSceneWidth(), GetSceneHeight());
+	clear_to_color(pBitmap, g_MaskColor);
+	m_pMOColorLayer = new SceneLayer();
+	m_pMOColorLayer->Create(pBitmap, true, Vector(), m_pCurrentScene->WrapsX(), m_pCurrentScene->WrapsY(), Vector(1.0, 1.0));
+	pBitmap = 0;
 
-    // Re-create the MoveableObject:s ID SceneLayer
-    delete m_pMOIDLayer;
-    pBitmap = create_bitmap_ex(c_MOIDLayerBitDepth, GetSceneWidth(), GetSceneHeight());
-    clear_to_color(pBitmap, g_NoMOID);
-    m_pMOIDLayer = new SceneLayer();
-    m_pMOIDLayer->Create(pBitmap, false, Vector(), m_pCurrentScene->WrapsX(), m_pCurrentScene->WrapsY(), Vector(1.0, 1.0));
-    pBitmap = 0;
+	// Re-create the MoveableObject:s ID SceneLayer
+	delete m_pMOIDLayer;
+	pBitmap = create_bitmap_ex(c_MOIDLayerBitDepth, GetSceneWidth(), GetSceneHeight());
+	clear_to_color(pBitmap, g_NoMOID);
+	m_pMOIDLayer = new SceneLayer();
+	m_pMOIDLayer->Create(pBitmap, false, Vector(), m_pCurrentScene->WrapsX(), m_pCurrentScene->WrapsY(), Vector(1.0, 1.0));
+	pBitmap = 0;
 
 #ifdef DEBUG_BUILD
-    // Create the Debug SceneLayer
-    delete m_pDebugLayer;
-    pBitmap = create_bitmap_ex(8, GetSceneWidth(), GetSceneHeight());
-    clear_to_color(pBitmap, g_MaskColor);
-    m_pDebugLayer = new SceneLayer();
-    m_pDebugLayer->Create(pBitmap, true, Vector(), m_pCurrentScene->WrapsX(), m_pCurrentScene->WrapsY(), Vector(1.0, 1.0));
-    pBitmap = 0;
+	// Create the Debug SceneLayer
+	delete m_pDebugLayer;
+	pBitmap = create_bitmap_ex(8, GetSceneWidth(), GetSceneHeight());
+	clear_to_color(pBitmap, g_MaskColor);
+	m_pDebugLayer = new SceneLayer();
+	m_pDebugLayer->Create(pBitmap, true, Vector(), m_pCurrentScene->WrapsX(), m_pCurrentScene->WrapsY(), Vector(1.0, 1.0));
+	pBitmap = 0;
 #endif
 
-    // Finally draw the ID:s of the MO:s to the MOID layers for the first time
-    g_MovableMan.UpdateDrawMOIDs(m_pMOIDLayer->GetBitmap());
+	// Finally draw the ID:s of the MO:s to the MOID layers for the first time
+	g_MovableMan.UpdateDrawMOIDs(m_pMOIDLayer->GetBitmap());
 
 	g_NetworkServer.LockScene(false);
 	g_NetworkServer.ResetScene();
 
-    return 0;
+	return 0;
 }
 
 
@@ -244,19 +248,19 @@ int SceneMan::LoadScene(Scene *pNewScene, bool placeObjects, bool placeUnits) {
 
 int SceneMan::SetSceneToLoad(std::string sceneName, bool placeObjects, bool placeUnits)
 {
-    // Use the name passed in to load the preset requested
-    const Scene *pSceneRef = dynamic_cast<const Scene *>(g_PresetMan.GetEntityPreset("Scene", sceneName));
+	// Use the name passed in to load the preset requested
+	const Scene *pSceneRef = dynamic_cast<const Scene *>(g_PresetMan.GetEntityPreset("Scene", sceneName));
 
-    if (!pSceneRef)
-    {
-        g_ConsoleMan.PrintString("ERROR: Finding Scene preset \'" + sceneName + "\' failed! Has it been properly defined?");
-        return -1;
-    }
+	if (!pSceneRef)
+	{
+		g_ConsoleMan.PrintString("ERROR: Finding Scene preset \'" + sceneName + "\' failed! Has it been properly defined?");
+		return -1;
+	}
 
-    // Store the scene reference to load later
-    SetSceneToLoad(pSceneRef, placeObjects, placeUnits);
+	// Store the scene reference to load later
+	SetSceneToLoad(pSceneRef, placeObjects, placeUnits);
 
-    return 0;
+	return 0;
 }
 
 
@@ -267,22 +271,22 @@ int SceneMan::SetSceneToLoad(std::string sceneName, bool placeObjects, bool plac
 
 int SceneMan::LoadScene()
 {
-    // In case we have no set Scene reference to load from, do something graceful about it
-    if (!m_pSceneToLoad)
-    {
-        // Try to use the Scene the current Activity is associated with
-        if (g_ActivityMan.GetActivity())
-            SetSceneToLoad(g_ActivityMan.GetActivity()->GetSceneName());
+	// In case we have no set Scene reference to load from, do something graceful about it
+	if (!m_pSceneToLoad)
+	{
+		// Try to use the Scene the current Activity is associated with
+		if (g_ActivityMan.GetActivity())
+			SetSceneToLoad(g_ActivityMan.GetActivity()->GetSceneName());
 
-        // If that failed, then resort to the default scene name
-        if (SetSceneToLoad(m_DefaultSceneName) < 0)
-        {
-            g_ConsoleMan.PrintString("ERROR: Couldn't start because no Scene has been specified to load!");
-            return -1;
-        }
-    }
+		// If that failed, then resort to the default scene name
+		if (SetSceneToLoad(m_DefaultSceneName) < 0)
+		{
+			g_ConsoleMan.PrintString("ERROR: Couldn't start because no Scene has been specified to load!");
+			return -1;
+		}
+	}
 
-    return LoadScene(dynamic_cast<Scene *>(m_pSceneToLoad->Clone()), m_PlaceObjects, m_PlaceUnits);
+	return LoadScene(dynamic_cast<Scene *>(m_pSceneToLoad->Clone()), m_PlaceObjects, m_PlaceUnits);
 }
 
 
@@ -293,13 +297,13 @@ int SceneMan::LoadScene()
 
 int SceneMan::LoadScene(std::string sceneName, bool placeObjects, bool placeUnits)
 {
-    // First retrieve and set up the preset reference
-    int error = SetSceneToLoad(sceneName, placeObjects, placeUnits);
-    if (error < 0)
-        return error;
-    // Now actually load and start it
-    error = LoadScene();
-    return error;
+	// First retrieve and set up the preset reference
+	int error = SetSceneToLoad(sceneName, placeObjects, placeUnits);
+	if (error < 0)
+		return error;
+	// Now actually load and start it
+	error = LoadScene();
+	return error;
 }
 
 
@@ -313,60 +317,60 @@ int SceneMan::LoadScene(std::string sceneName, bool placeObjects, bool placeUnit
 
 int SceneMan::ReadProperty(const std::string_view &propName, Reader &reader)
 {
-    if (propName == "AddScene")
-        g_PresetMan.GetEntityPreset(reader);
-    else if (propName == "AddTerrain")
-        g_PresetMan.GetEntityPreset(reader);
-    else if (propName == "AddTerrainDebris")
-        g_PresetMan.GetEntityPreset(reader);
-    else if (propName == "AddTerrainObject")
-        g_PresetMan.GetEntityPreset(reader);
-    else if (propName == "AddMaterial")
-    {
-        // Get this before reading Object, since if it's the last one in its datafile, the stream will show the parent file instead
-        string objectFilePath = reader.GetCurrentFilePath();
+	if (propName == "AddScene")
+		g_PresetMan.GetEntityPreset(reader);
+	else if (propName == "AddTerrain")
+		g_PresetMan.GetEntityPreset(reader);
+	else if (propName == "AddTerrainDebris")
+		g_PresetMan.GetEntityPreset(reader);
+	else if (propName == "AddTerrainObject")
+		g_PresetMan.GetEntityPreset(reader);
+	else if (propName == "AddMaterial")
+	{
+		// Get this before reading Object, since if it's the last one in its datafile, the stream will show the parent file instead
+		string objectFilePath = reader.GetCurrentFilePath();
 
-        // Don't use the << operator, because it adds the material to the PresetMan before we get a chance to set the proper ID!
-        Material *pNewMat = new Material;
-        ((Serializable *)(pNewMat))->Create(reader);
+		// Don't use the << operator, because it adds the material to the PresetMan before we get a chance to set the proper ID!
+		Material *pNewMat = new Material;
+		((Serializable *)(pNewMat))->Create(reader);
 
-        // If the initially requested material slot is available, then put it there
-        // But if it's not available, then check if any subsequent one is, looping around the palette if necessary
-        for (int tryId = pNewMat->GetIndex(); tryId < c_PaletteEntriesNumber; ++tryId)
-        {
-            // We found an empty slot in the Material palette!
-            if (m_apMatPalette[tryId] == 0)
-            {
-                // If the final ID isn't the same as the one originally requested by the data file, then make the mapping so
-                // subsequent ID references to this within the same data module can be translated to the actual ID of this material
-                if (tryId != pNewMat->GetIndex())
-                    g_PresetMan.AddMaterialMapping(pNewMat->GetIndex(), tryId, reader.GetReadModuleID());
+		// If the initially requested material slot is available, then put it there
+		// But if it's not available, then check if any subsequent one is, looping around the palette if necessary
+		for (int tryId = pNewMat->GetIndex(); tryId < c_PaletteEntriesNumber; ++tryId)
+		{
+			// We found an empty slot in the Material palette!
+			if (m_apMatPalette[tryId] == 0)
+			{
+				// If the final ID isn't the same as the one originally requested by the data file, then make the mapping so
+				// subsequent ID references to this within the same data module can be translated to the actual ID of this material
+				if (tryId != pNewMat->GetIndex())
+					g_PresetMan.AddMaterialMapping(pNewMat->GetIndex(), tryId, reader.GetReadModuleID());
 
-                // Assign the final ID to the material and register it in the palette
-                pNewMat->SetIndex(tryId);
-                m_apMatPalette[tryId] = pNewMat;
-                m_MatNameMap.insert(pair<string, unsigned char>(string(pNewMat->GetPresetName()), pNewMat->GetIndex()));
-                // Now add the instance, when ID has been registered!
-                g_PresetMan.AddEntityPreset(pNewMat, reader.GetReadModuleID(), reader.GetPresetOverwriting(), objectFilePath);
-                ++m_MaterialCount;
-                break;
-            }
-            // We reached the end of the Material palette without finding any empty slots.. loop around to the start
-            else if (tryId >= c_PaletteEntriesNumber - 1)
-                tryId = 0;
-            // If we've looped around without finding anything, break and throw error
-            else if (tryId == pNewMat->GetIndex() - 1)
-            {
+				// Assign the final ID to the material and register it in the palette
+				pNewMat->SetIndex(tryId);
+				m_apMatPalette[tryId] = pNewMat;
+				m_MatNameMap.insert(pair<string, unsigned char>(string(pNewMat->GetPresetName()), pNewMat->GetIndex()));
+				// Now add the instance, when ID has been registered!
+				g_PresetMan.AddEntityPreset(pNewMat, reader.GetReadModuleID(), reader.GetPresetOverwriting(), objectFilePath);
+				++m_MaterialCount;
+				break;
+			}
+			// We reached the end of the Material palette without finding any empty slots.. loop around to the start
+			else if (tryId >= c_PaletteEntriesNumber - 1)
+				tryId = 0;
+			// If we've looped around without finding anything, break and throw error
+			else if (tryId == pNewMat->GetIndex() - 1)
+			{
 // TODO: find the closest matching mateiral and map to it?
-                RTEAbort("Tried to load material \"" + pNewMat->GetPresetName() + "\" but the material palette (256 max) is full! Try consolidating or removing some redundant materials, or removing some entire data modules.");
-                break;
-            }
-        }
-    }
-    else
-        return Serializable::ReadProperty(propName, reader);
+				RTEAbort("Tried to load material \"" + pNewMat->GetPresetName() + "\" but the material palette (256 max) is full! Try consolidating or removing some redundant materials, or removing some entire data modules.");
+				break;
+			}
+		}
+	}
+	else
+		return Serializable::ReadProperty(propName, reader);
 
-    return 0;
+	return 0;
 }
 
 
@@ -396,19 +400,19 @@ int SceneMan::Save(Writer &writer) const {
 
 void SceneMan::Destroy()
 {
-    for (int i = 0; i < c_PaletteEntriesNumber; ++i)
-        delete m_apMatPalette[i];
+	for (int i = 0; i < c_PaletteEntriesNumber; ++i)
+		delete m_apMatPalette[i];
 
-    delete m_pCurrentScene;
-    delete m_pDebugLayer;
-    delete m_pMOIDLayer;
-    delete m_pMOColorLayer;
-    delete m_pUnseenRevealSound;
+	delete m_pCurrentScene;
+	delete m_pDebugLayer;
+	delete m_pMOIDLayer;
+	delete m_pMOColorLayer;
+	delete m_pUnseenRevealSound;
 
 	destroy_bitmap(m_pOrphanSearchBitmap);
 	m_pOrphanSearchBitmap = 0;
 
-    Clear();
+	Clear();
 }
 
 
@@ -423,7 +427,7 @@ Vector SceneMan::GetSceneDim() const
 		RTEAssert(m_pCurrentScene->GetTerrain() && m_pCurrentScene->GetTerrain()->GetBitmap(), "Trying to get terrain info before there is a scene or terrain!");
 		return m_pCurrentScene->GetDimensions();
 	}
-    return Vector();
+	return Vector();
 }
 
 
@@ -435,9 +439,9 @@ Vector SceneMan::GetSceneDim() const
 int SceneMan::GetSceneWidth() const
 {
 //    RTEAssert(m_pCurrentScene, "Trying to get terrain info before there is a scene or terrain!");
-    if (m_pCurrentScene)
-        return m_pCurrentScene->GetWidth();
-    return 0;
+	if (m_pCurrentScene)
+		return m_pCurrentScene->GetWidth();
+	return 0;
 }
 
 
@@ -449,9 +453,9 @@ int SceneMan::GetSceneWidth() const
 int SceneMan::GetSceneHeight() const
 {
 //    RTEAssert(m_pCurrentScene, "Trying to get terrain info before there is a scene or terrain!");
-    if (m_pCurrentScene)
-        return m_pCurrentScene->GetHeight();
-    return 0;
+	if (m_pCurrentScene)
+		return m_pCurrentScene->GetHeight();
+	return 0;
 }
 
 
@@ -462,9 +466,9 @@ int SceneMan::GetSceneHeight() const
 
 bool SceneMan::SceneWrapsX() const
 {
-    if (m_pCurrentScene)
-        return m_pCurrentScene->WrapsX();
-    return false;
+	if (m_pCurrentScene)
+		return m_pCurrentScene->WrapsX();
+	return false;
 }
 
 
@@ -475,9 +479,9 @@ bool SceneMan::SceneWrapsX() const
 
 bool SceneMan::SceneWrapsY() const
 {
-    if (m_pCurrentScene)
-        return m_pCurrentScene->WrapsY();
-    return false;
+	if (m_pCurrentScene)
+		return m_pCurrentScene->WrapsY();
+	return false;
 }
 
 
@@ -489,10 +493,10 @@ bool SceneMan::SceneWrapsY() const
 SLTerrain * SceneMan::GetTerrain()
 {
 //    RTEAssert(m_pCurrentScene, "Trying to get terrain matter before there is a scene or terrain!");
-    if (m_pCurrentScene)
-        return m_pCurrentScene->GetTerrain();
+	if (m_pCurrentScene)
+		return m_pCurrentScene->GetTerrain();
 
-    return 0;
+	return 0;
 }
 
 
@@ -534,22 +538,22 @@ BITMAP * SceneMan::GetMOIDBitmap() const { return m_pMOIDLayer->GetBitmap(); }
 
 bool SceneMan::MOIDClearCheck()
 {
-    BITMAP *pMOIDMap = m_pMOIDLayer->GetBitmap();
-    int badMOID = g_NoMOID;
-    for (int y = 0; y < pMOIDMap->h; ++y)
-    {
-        for (int x = 0; x < pMOIDMap->w; ++x)
-        {
-            if ((badMOID = _getpixel(pMOIDMap, x, y)) != g_NoMOID)
-            {
-                g_FrameMan.SaveBitmapToPNG(pMOIDMap, "MOIDCheck");
-                g_FrameMan.SaveBitmapToPNG(m_pMOColorLayer->GetBitmap(), "MOIDCheck");
-                RTEAbort("Bad MOID of MO detected: " + g_MovableMan.GetMOFromID(badMOID)->GetPresetName());
-                return false;
-            }
-        }
-    }
-    return true;
+	BITMAP *pMOIDMap = m_pMOIDLayer->GetBitmap();
+	int badMOID = g_NoMOID;
+	for (int y = 0; y < pMOIDMap->h; ++y)
+	{
+		for (int x = 0; x < pMOIDMap->w; ++x)
+		{
+			if ((badMOID = _getpixel(pMOIDMap, x, y)) != g_NoMOID)
+			{
+				g_FrameMan.SaveBitmapToPNG(pMOIDMap, "MOIDCheck");
+				g_FrameMan.SaveBitmapToPNG(m_pMOColorLayer->GetBitmap(), "MOIDCheck");
+				RTEAbort("Bad MOID of MO detected: " + g_MovableMan.GetMOFromID(badMOID)->GetPresetName());
+				return false;
+			}
+		}
+	}
+	return true;
 }
 
 
@@ -561,23 +565,23 @@ bool SceneMan::MOIDClearCheck()
 
 unsigned char SceneMan::GetTerrMatter(int pixelX, int pixelY)
 {
-    RTEAssert(m_pCurrentScene, "Trying to get terrain matter before there is a scene or terrain!");
+	RTEAssert(m_pCurrentScene, "Trying to get terrain matter before there is a scene or terrain!");
 
-    WrapPosition(pixelX, pixelY);
+	WrapPosition(pixelX, pixelY);
 
-    BITMAP *pTMatBitmap = m_pCurrentScene->GetTerrain()->GetMaterialBitmap();
+	BITMAP *pTMatBitmap = m_pCurrentScene->GetTerrain()->GetMaterialBitmap();
 
-    // If it's still below or to the sides out of bounds after
-    // what is supposed to be wrapped, shit is out of bounds.
-    if (pixelX < 0 || pixelX >= pTMatBitmap->w || pixelY >= pTMatBitmap->h)
+	// If it's still below or to the sides out of bounds after
+	// what is supposed to be wrapped, shit is out of bounds.
+	if (pixelX < 0 || pixelX >= pTMatBitmap->w || pixelY >= pTMatBitmap->h)
 //        return g_MaterialOutOfBounds;
-        return g_MaterialAir;
+		return g_MaterialAir;
 
-    // If above terrain bitmap, return air material.
-    if (pixelY < 0)
-        return g_MaterialAir;
+	// If above terrain bitmap, return air material.
+	if (pixelY < 0)
+		return g_MaterialAir;
 
-    return getpixel(pTMatBitmap, pixelX, pixelY);
+	return getpixel(pTMatBitmap, pixelX, pixelY);
 }
 
 
@@ -589,15 +593,15 @@ unsigned char SceneMan::GetTerrMatter(int pixelX, int pixelY)
 
 MOID SceneMan::GetMOIDPixel(int pixelX, int pixelY)
 {
-    WrapPosition(pixelX, pixelY);
+	WrapPosition(pixelX, pixelY);
 
-    if (pixelX < 0 ||
-       pixelX >= m_pMOIDLayer->GetBitmap()->w ||
-       pixelY < 0 ||
-       pixelY >= m_pMOIDLayer->GetBitmap()->h)
-        return g_NoMOID;
+	if (pixelX < 0 ||
+	   pixelX >= m_pMOIDLayer->GetBitmap()->w ||
+	   pixelY < 0 ||
+	   pixelY >= m_pMOIDLayer->GetBitmap()->h)
+		return g_NoMOID;
 
-    return getpixel(m_pMOIDLayer->GetBitmap(), pixelX, pixelY);
+	return getpixel(m_pMOIDLayer->GetBitmap(), pixelX, pixelY);
 }
 
 
@@ -608,14 +612,14 @@ MOID SceneMan::GetMOIDPixel(int pixelX, int pixelY)
 
 Material const * SceneMan::GetMaterial(const std::string &matName)
 {
-    map<std::string, unsigned char>::iterator itr = m_MatNameMap.find(matName);
-    if (itr == m_MatNameMap.end())
-    {
-        g_ConsoleMan.PrintString("ERROR: Material of name: " + matName + " not found!");
-        return 0;
-    }
-    else
-        return m_apMatPalette[(*itr).second];
+	map<std::string, unsigned char>::iterator itr = m_MatNameMap.find(matName);
+	if (itr == m_MatNameMap.end())
+	{
+		g_ConsoleMan.PrintString("ERROR: Material of name: " + matName + " not found!");
+		return 0;
+	}
+	else
+		return m_apMatPalette[(*itr).second];
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -626,8 +630,8 @@ Material const * SceneMan::GetMaterial(const std::string &matName)
 
 Vector SceneMan::GetGlobalAcc() const
 {
-    RTEAssert(m_pCurrentScene, "Trying to get terrain matter before there is a scene or terrain!");
-    return m_pCurrentScene->GetGlobalAcc();
+	RTEAssert(m_pCurrentScene, "Trying to get terrain matter before there is a scene or terrain!");
+	return m_pCurrentScene->GetGlobalAcc();
 }
 
 
@@ -638,12 +642,12 @@ Vector SceneMan::GetGlobalAcc() const
 
 void SceneMan::SetOffset(const long offsetX, const long offsetY, int screen)
 {
-    if (screen >= c_MaxScreenCount)
-        return;
+	if (screen >= c_MaxScreenCount)
+		return;
 
-    m_Offset[screen].m_X = offsetX;
-    m_Offset[screen].m_Y = offsetY;
-    CheckOffset(screen);
+	m_Offset[screen].m_X = offsetX;
+	m_Offset[screen].m_Y = offsetY;
+	CheckOffset(screen);
 }
 
 
@@ -657,8 +661,8 @@ void SceneMan::SetOffset(const long offsetX, const long offsetY, int screen)
 
 void SceneMan::SetScroll(const Vector &center, int screen)
 {
-    if (screen >= c_MaxScreenCount)
-        return;
+	if (screen >= c_MaxScreenCount)
+		return;
 
 	if (g_FrameMan.IsInMultiplayerMode())
 	{
@@ -671,7 +675,7 @@ void SceneMan::SetScroll(const Vector &center, int screen)
 		m_Offset[screen].m_Y = center.GetFloorIntY() - (g_FrameMan.GetResY() / 2);
 	}
 
-    CheckOffset(screen);
+	CheckOffset(screen);
 
 // *** Temp hack
 //    m_OffsetX = -m_OffsetX;
@@ -685,25 +689,25 @@ void SceneMan::SetScroll(const Vector &center, int screen)
 // Description:     Interpolates a smooth scroll of the view to a new offset over time.
 
 void SceneMan::SetScrollTarget(const Vector &targetCenter,
-                               float speed,
-                               bool targetWrapped,
-                               int screen)
+							   float speed,
+							   bool targetWrapped,
+							   int screen)
 {
-    // See if it would make sense to automatically wrap
-    if (!targetWrapped)
-    {
-        SLTerrain *pTerrain = m_pCurrentScene->GetTerrain();
-        // If the difference is more than half the scene width, then wrap
-        if ((pTerrain->WrapsX() && fabs(targetCenter.m_X - m_ScrollTarget[screen].m_X) > pTerrain->GetBitmap()->w / 2) ||
-            (pTerrain->WrapsY() && fabs(targetCenter.m_Y - m_ScrollTarget[screen].m_Y) > pTerrain->GetBitmap()->h / 2))
-            targetWrapped = true;
-    }
+	// See if it would make sense to automatically wrap
+	if (!targetWrapped)
+	{
+		SLTerrain *pTerrain = m_pCurrentScene->GetTerrain();
+		// If the difference is more than half the scene width, then wrap
+		if ((pTerrain->WrapsX() && fabs(targetCenter.m_X - m_ScrollTarget[screen].m_X) > pTerrain->GetBitmap()->w / 2) ||
+			(pTerrain->WrapsY() && fabs(targetCenter.m_Y - m_ScrollTarget[screen].m_Y) > pTerrain->GetBitmap()->h / 2))
+			targetWrapped = true;
+	}
 
-    m_ScrollTarget[screen].m_X = targetCenter.m_X;
-    m_ScrollTarget[screen].m_Y = targetCenter.m_Y;
-    m_ScrollSpeed[screen] = speed;
-    // Don't override a set wrapping, it will be reset to false upon a drawn frame
-    m_TargetWrapped[screen] = m_TargetWrapped[screen] || targetWrapped;
+	m_ScrollTarget[screen].m_X = targetCenter.m_X;
+	m_ScrollTarget[screen].m_Y = targetCenter.m_Y;
+	m_ScrollSpeed[screen] = speed;
+	// Don't override a set wrapping, it will be reset to false upon a drawn frame
+	m_TargetWrapped[screen] = m_TargetWrapped[screen] || targetWrapped;
 }
 
 
@@ -715,40 +719,40 @@ void SceneMan::SetScrollTarget(const Vector &targetCenter,
 
 float SceneMan::TargetDistanceScalar(Vector point)
 {
-    if (!m_pCurrentScene)
-        return 0;
+	if (!m_pCurrentScene)
+		return 0;
 
-    int screenCount = g_FrameMan.GetScreenCount();
-    int screenRadius = MAX(g_FrameMan.GetPlayerScreenWidth(), g_FrameMan.GetPlayerScreenHeight()) / 2;
-    int sceneRadius = MAX(m_pCurrentScene->GetWidth(), m_pCurrentScene->GetHeight()) / 2;
-    // Avoid divide by zero problems if scene and screen radius are the same
-    if (screenRadius == sceneRadius)
-        sceneRadius += 100;
-    float distance = 0;
-    float scalar = 0;
-    float closestScalar = 1.0;
+	int screenCount = g_FrameMan.GetScreenCount();
+	int screenRadius = MAX(g_FrameMan.GetPlayerScreenWidth(), g_FrameMan.GetPlayerScreenHeight()) / 2;
+	int sceneRadius = MAX(m_pCurrentScene->GetWidth(), m_pCurrentScene->GetHeight()) / 2;
+	// Avoid divide by zero problems if scene and screen radius are the same
+	if (screenRadius == sceneRadius)
+		sceneRadius += 100;
+	float distance = 0;
+	float scalar = 0;
+	float closestScalar = 1.0;
 
-    for (int screen = 0; screen < screenCount; ++screen)
-    {
-        distance = ShortestDistance(point, m_ScrollTarget[screen]).GetMagnitude();
+	for (int screen = 0; screen < screenCount; ++screen)
+	{
+		distance = ShortestDistance(point, m_ScrollTarget[screen]).GetMagnitude();
 
-        // Check if we're off the screen and then fall off
-        if (distance > screenRadius)
-        {
-            // Get ratio of how close to the very opposite of teh scene the point is
-            scalar = 0.5 + 0.5 * (distance - screenRadius) / (sceneRadius - screenRadius);
-        }
-        // Full audio if within the screen
-        else
-            scalar = 0;
+		// Check if we're off the screen and then fall off
+		if (distance > screenRadius)
+		{
+			// Get ratio of how close to the very opposite of teh scene the point is
+			scalar = 0.5 + 0.5 * (distance - screenRadius) / (sceneRadius - screenRadius);
+		}
+		// Full audio if within the screen
+		else
+			scalar = 0;
 
-        // See if this screen's distance scalar is the closest one yet
-        if (scalar < closestScalar)
-            closestScalar = scalar;
-    }
+		// See if this screen's distance scalar is the closest one yet
+		if (scalar < closestScalar)
+			closestScalar = scalar;
+	}
 
-    // Return the scalar that was shows the closest scroll target of any current screen to the point
-    return closestScalar;
+	// Return the scalar that was shows the closest scroll target of any current screen to the point
+	return closestScalar;
 }
 
 
@@ -762,22 +766,22 @@ float SceneMan::TargetDistanceScalar(Vector point)
 
 void SceneMan::CheckOffset(int screen)
 {
-    RTEAssert(m_pCurrentScene, "Trying to check offset before there is a scene or terrain!");
+	RTEAssert(m_pCurrentScene, "Trying to check offset before there is a scene or terrain!");
 
-    // Handy
-    SLTerrain *pTerrain = m_pCurrentScene->GetTerrain();
-    RTEAssert(pTerrain, "Trying to get terrain matter before there is a scene or terrain!");
+	// Handy
+	SLTerrain *pTerrain = m_pCurrentScene->GetTerrain();
+	RTEAssert(pTerrain, "Trying to get terrain matter before there is a scene or terrain!");
 
-    if (!pTerrain->WrapsX() && m_Offset[screen].m_X < 0)
-        m_Offset[screen].m_X = 0;
+	if (!pTerrain->WrapsX() && m_Offset[screen].m_X < 0)
+		m_Offset[screen].m_X = 0;
 
-    if (!pTerrain->WrapsY() && m_Offset[screen].m_Y < 0)
-        m_Offset[screen].m_Y = 0;
+	if (!pTerrain->WrapsY() && m_Offset[screen].m_Y < 0)
+		m_Offset[screen].m_Y = 0;
 
-    int frameWidth = g_FrameMan.GetResX();
-    int frameHeight = g_FrameMan.GetResY();
-    frameWidth = frameWidth / (g_FrameMan.GetVSplit() ? 2 : 1);
-    frameHeight = frameHeight / (g_FrameMan.GetHSplit() ? 2 : 1);
+	int frameWidth = g_FrameMan.GetResX();
+	int frameHeight = g_FrameMan.GetResY();
+	frameWidth = frameWidth / (g_FrameMan.GetVSplit() ? 2 : 1);
+	frameHeight = frameHeight / (g_FrameMan.GetHSplit() ? 2 : 1);
 
 	if (g_FrameMan.IsInMultiplayerMode())
 	{
@@ -785,17 +789,17 @@ void SceneMan::CheckOffset(int screen)
 		frameHeight = g_FrameMan.GetPlayerFrameBufferHeight(screen);
 	}
 
-    if (!pTerrain->WrapsX() && m_Offset[screen].m_X >= pTerrain->GetBitmap()->w - frameWidth)
-        m_Offset[screen].m_X = pTerrain->GetBitmap()->w - frameWidth;
+	if (!pTerrain->WrapsX() && m_Offset[screen].m_X >= pTerrain->GetBitmap()->w - frameWidth)
+		m_Offset[screen].m_X = pTerrain->GetBitmap()->w - frameWidth;
 
-    if (!pTerrain->WrapsY() && m_Offset[screen].m_Y >= pTerrain->GetBitmap()->h - frameHeight)
-        m_Offset[screen].m_Y = pTerrain->GetBitmap()->h - frameHeight;
+	if (!pTerrain->WrapsY() && m_Offset[screen].m_Y >= pTerrain->GetBitmap()->h - frameHeight)
+		m_Offset[screen].m_Y = pTerrain->GetBitmap()->h - frameHeight;
 
-    if (!pTerrain->WrapsX() && m_Offset[screen].m_X >= pTerrain->GetBitmap()->w - frameWidth)
-        m_Offset[screen].m_X = pTerrain->GetBitmap()->w - frameWidth;
+	if (!pTerrain->WrapsX() && m_Offset[screen].m_X >= pTerrain->GetBitmap()->w - frameWidth)
+		m_Offset[screen].m_X = pTerrain->GetBitmap()->w - frameWidth;
 
-    if (!pTerrain->WrapsY() && m_Offset[screen].m_Y >= pTerrain->GetBitmap()->h - frameHeight)
-        m_Offset[screen].m_Y = pTerrain->GetBitmap()->h - frameHeight;
+	if (!pTerrain->WrapsY() && m_Offset[screen].m_Y >= pTerrain->GetBitmap()->h - frameHeight)
+		m_Offset[screen].m_Y = pTerrain->GetBitmap()->h - frameHeight;
 }
 
 
@@ -811,12 +815,12 @@ void SceneMan::CheckOffset(int screen)
 void SceneMan::LockScene()
 {
 //    RTEAssert(!m_pCurrentScene->IsLocked(), "Hey, locking already locked scene!");
-    if (!m_pCurrentScene->IsLocked())
-    {
-        m_pCurrentScene->Lock();
-        m_pMOColorLayer->LockBitmaps();
-        m_pMOIDLayer->LockBitmaps();
-    }
+	if (!m_pCurrentScene->IsLocked())
+	{
+		m_pCurrentScene->Lock();
+		m_pMOColorLayer->LockBitmaps();
+		m_pMOIDLayer->LockBitmaps();
+	}
 }
 
 
@@ -831,12 +835,12 @@ void SceneMan::LockScene()
 void SceneMan::UnlockScene()
 {
 //    RTEAssert(m_pCurrentScene->IsLocked(), "Hey, unlocking already unlocked scene!");
-    if (m_pCurrentScene->IsLocked())
-    {
-        m_pCurrentScene->Unlock();
-        m_pMOColorLayer->UnlockBitmaps();
-        m_pMOIDLayer->UnlockBitmaps();
-    }
+	if (m_pCurrentScene->IsLocked())
+	{
+		m_pCurrentScene->Unlock();
+		m_pMOColorLayer->UnlockBitmaps();
+		m_pMOIDLayer->UnlockBitmaps();
+	}
 }
 
 
@@ -847,8 +851,8 @@ void SceneMan::UnlockScene()
 
 bool SceneMan::SceneIsLocked() const
 {
-    RTEAssert(m_pCurrentScene, "Trying to check offset before there is a scene or terrain!");
-    return m_pCurrentScene->IsLocked();
+	RTEAssert(m_pCurrentScene, "Trying to check offset before there is a scene or terrain!");
+	return m_pCurrentScene->IsLocked();
 }
 
 
@@ -860,8 +864,8 @@ bool SceneMan::SceneIsLocked() const
 
 void SceneMan::RegisterMOIDDrawing(const Vector &center, float radius)
 {
-    if (radius != 0)
-        RegisterMOIDDrawing(center.m_X - radius, center.m_Y - radius, center.m_X + radius, center.m_Y + radius);
+	if (radius != 0)
+		RegisterMOIDDrawing(center.m_X - radius, center.m_Y - radius, center.m_X + radius, center.m_Y + radius);
 }
 
 
@@ -873,10 +877,10 @@ void SceneMan::RegisterMOIDDrawing(const Vector &center, float radius)
 
 void SceneMan::ClearAllMOIDDrawings()
 {
-    for (list<IntRect>::iterator itr = m_MOIDDrawings.begin(); itr != m_MOIDDrawings.end(); ++itr)
-        ClearMOIDRect(itr->m_Left, itr->m_Top, itr->m_Right, itr->m_Bottom);
+	for (list<IntRect>::iterator itr = m_MOIDDrawings.begin(); itr != m_MOIDDrawings.end(); ++itr)
+		ClearMOIDRect(itr->m_Left, itr->m_Top, itr->m_Right, itr->m_Bottom);
 
-    m_MOIDDrawings.clear();
+	m_MOIDDrawings.clear();
 }
 
 
@@ -888,44 +892,44 @@ void SceneMan::ClearAllMOIDDrawings()
 
 void SceneMan::ClearMOIDRect(int left, int top, int right, int bottom)
 {
-    // Draw the first unwrapped rect
-    rectfill(m_pMOIDLayer->GetBitmap(), left, top, right, bottom, g_NoMOID);
+	// Draw the first unwrapped rect
+	rectfill(m_pMOIDLayer->GetBitmap(), left, top, right, bottom, g_NoMOID);
 
-    // Draw wrapped rectangles
-    if (g_SceneMan.SceneWrapsX())
-    {
-        int sceneWidth = m_pCurrentScene->GetWidth();
+	// Draw wrapped rectangles
+	if (g_SceneMan.SceneWrapsX())
+	{
+		int sceneWidth = m_pCurrentScene->GetWidth();
 
-        if (left < 0)
-        {
-            int wrapLeft = left + sceneWidth;
-            int wrapRight = sceneWidth - 1;
-            rectfill(m_pMOIDLayer->GetBitmap(), wrapLeft, top, wrapRight, bottom, g_NoMOID);
-        }
-        if (right >= sceneWidth)
-        {
-            int wrapLeft = 0;
-            int wrapRight = right - sceneWidth;
-            rectfill(m_pMOIDLayer->GetBitmap(), wrapLeft, top, wrapRight, bottom, g_NoMOID);
-        }
-    }
-    if (g_SceneMan.SceneWrapsY())
-    {
-        int sceneHeight = m_pCurrentScene->GetHeight();
+		if (left < 0)
+		{
+			int wrapLeft = left + sceneWidth;
+			int wrapRight = sceneWidth - 1;
+			rectfill(m_pMOIDLayer->GetBitmap(), wrapLeft, top, wrapRight, bottom, g_NoMOID);
+		}
+		if (right >= sceneWidth)
+		{
+			int wrapLeft = 0;
+			int wrapRight = right - sceneWidth;
+			rectfill(m_pMOIDLayer->GetBitmap(), wrapLeft, top, wrapRight, bottom, g_NoMOID);
+		}
+	}
+	if (g_SceneMan.SceneWrapsY())
+	{
+		int sceneHeight = m_pCurrentScene->GetHeight();
 
-        if (top < 0)
-        {
-            int wrapTop = top + sceneHeight;
-            int wrapBottom = sceneHeight - 1;
-            rectfill(m_pMOIDLayer->GetBitmap(), left, wrapTop, right, wrapBottom, g_NoMOID);
-        }
-        if (bottom >= sceneHeight)
-        {
-            int wrapTop = 0;
-            int wrapBottom = bottom - sceneHeight;
-            rectfill(m_pMOIDLayer->GetBitmap(), left, wrapTop, right, wrapBottom, g_NoMOID);
-        }
-    }
+		if (top < 0)
+		{
+			int wrapTop = top + sceneHeight;
+			int wrapBottom = sceneHeight - 1;
+			rectfill(m_pMOIDLayer->GetBitmap(), left, wrapTop, right, wrapBottom, g_NoMOID);
+		}
+		if (bottom >= sceneHeight)
+		{
+			int wrapTop = 0;
+			int wrapBottom = bottom - sceneHeight;
+			rectfill(m_pMOIDLayer->GetBitmap(), left, wrapTop, right, wrapBottom, g_NoMOID);
+		}
+	}
 }
 
 
@@ -937,18 +941,18 @@ void SceneMan::ClearMOIDRect(int left, int top, int right, int bottom)
 //                  to do this!
 
 bool SceneMan::WillPenetrate(const int posX,
-                             const int posY,
-                             const Vector &impulse)
+							 const int posY,
+							 const Vector &impulse)
 {
-    RTEAssert(m_pCurrentScene, "Trying to access scene before there is one!");
+	RTEAssert(m_pCurrentScene, "Trying to access scene before there is one!");
 
-    if (!m_pCurrentScene->GetTerrain()->IsWithinBounds(posX, posY))
-        return false;
+	if (!m_pCurrentScene->GetTerrain()->IsWithinBounds(posX, posY))
+		return false;
 
-    float impMag = impulse.GetMagnitude();
-    unsigned char materialID = getpixel(m_pCurrentScene->GetTerrain()->GetMaterialBitmap(), posX, posY);
+	float impMag = impulse.GetMagnitude();
+	unsigned char materialID = getpixel(m_pCurrentScene->GetTerrain()->GetMaterialBitmap(), posX, posY);
 
-    return impMag >= GetMaterialFromID(materialID)->GetIntegrity();
+	return impMag >= GetMaterialFromID(materialID)->GetIntegrity();
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -989,8 +993,8 @@ int SceneMan::RemoveOrphans(int posX, int posY,
 
 	if (posX < 0 || posY < 0 || posX >= mat->w || posY >= mat->h) return 0;
 
-    unsigned char materialID = _getpixel(mat, posX, posY);
-    if (materialID == g_MaterialAir && (posX != centerPosX || posY != centerPosY))
+	unsigned char materialID = _getpixel(mat, posX, posY);
+	if (materialID == g_MaterialAir && (posX != centerPosX || posY != centerPosY))
 		return 0;
 	else
 	{
@@ -1017,40 +1021,40 @@ int SceneMan::RemoveOrphans(int posX, int posY,
 	{
 		Material const * sceneMat = GetMaterialFromID(materialID);
 		Material const * spawnMat;
-        spawnMat = sceneMat->GetSpawnMaterial() ? GetMaterialFromID(sceneMat->GetSpawnMaterial()) : sceneMat;
+		spawnMat = sceneMat->GetSpawnMaterial() ? GetMaterialFromID(sceneMat->GetSpawnMaterial()) : sceneMat;
 		float sprayScale = 0.1;
-        Color spawnColor;
-        if (spawnMat->UsesOwnColor())
-            spawnColor = spawnMat->GetColor();
-        else
-            spawnColor.SetRGBWithIndex(m_pCurrentScene->GetTerrain()->GetFGColorPixel(posX, posY));
+		Color spawnColor;
+		if (spawnMat->UsesOwnColor())
+			spawnColor = spawnMat->GetColor();
+		else
+			spawnColor.SetRGBWithIndex(m_pCurrentScene->GetTerrain()->GetFGColorPixel(posX, posY));
 
-        // No point generating a key-colored MOPixel
-        if (spawnColor.GetIndex() != g_MaskColor)
-        {
+		// No point generating a key-colored MOPixel
+		if (spawnColor.GetIndex() != g_MaskColor)
+		{
 			// TEST COLOR
 			// spawnColor = 5;
 
-            // Get the new pixel from the pre-allocated pool, should be faster than dynamic allocation
-            // Density is used as the mass for the new MOPixel
+			// Get the new pixel from the pre-allocated pool, should be faster than dynamic allocation
+			// Density is used as the mass for the new MOPixel
 			float tempMax = 2.0F * sprayScale;
 			float tempMin = tempMax / 2.0F;
-            MOPixel *pixelMO = new MOPixel(spawnColor,
-                                           spawnMat->GetPixelDensity(),
-                                           Vector(posX, posY),
-                                           Vector(-RandomNum(tempMin, tempMax),
-                                                  -RandomNum(tempMin, tempMax)),
-                                           new Atom(Vector(), spawnMat->GetIndex(), 0, spawnColor, 2),
-                                           0);
+			MOPixel *pixelMO = new MOPixel(spawnColor,
+										   spawnMat->GetPixelDensity(),
+										   Vector(posX, posY),
+										   Vector(-RandomNum(tempMin, tempMax),
+												  -RandomNum(tempMin, tempMax)),
+										   new Atom(Vector(), spawnMat->GetIndex(), 0, spawnColor, 2),
+										   0);
 
-            pixelMO->SetToHitMOs(spawnMat->GetIndex() == c_GoldMaterialID);
-            pixelMO->SetToGetHitByMOs(false);
-            g_MovableMan.AddParticle(pixelMO);
-            pixelMO = 0;
-        }
-        m_pCurrentScene->GetTerrain()->SetFGColorPixel(posX, posY, g_MaskColor);
+			pixelMO->SetToHitMOs(spawnMat->GetIndex() == c_GoldMaterialID);
+			pixelMO->SetToGetHitByMOs(false);
+			g_MovableMan.AddParticle(pixelMO);
+			pixelMO = 0;
+		}
+		m_pCurrentScene->GetTerrain()->SetFGColorPixel(posX, posY, g_MaskColor);
 		RegisterTerrainChange(posX, posY, 1, 1, g_MaskColor, false);
-        m_pCurrentScene->GetTerrain()->SetMaterialPixel(posX, posY, g_MaterialAir);
+		m_pCurrentScene->GetTerrain()->SetMaterialPixel(posX, posY, g_MaterialAir);
 	}
 
 	int xoff[8] = { -1,  0,  1, -1,  1, -1,  0,  1};
@@ -1182,164 +1186,164 @@ void SceneMan::RegisterTerrainChange(int x, int y, int w, int h, unsigned char c
 //                  incoming particle if it manages to knock the scene pixel out.
 
 bool SceneMan::TryPenetrate(const int posX,
-                            const int posY,
-                            const Vector &impulse,
-                            const Vector &velocity,
-                            float &retardation,
-                            const float airRatio,
-                            const int numPenetrations,
-						    const int removeOrphansRadius,
-					        const int removeOrphansMaxArea,
-					        const float removeOrphansRate)
+							const int posY,
+							const Vector &impulse,
+							const Vector &velocity,
+							float &retardation,
+							const float airRatio,
+							const int numPenetrations,
+							const int removeOrphansRadius,
+							const int removeOrphansMaxArea,
+							const float removeOrphansRate)
 {
-    RTEAssert(m_pCurrentScene, "Trying to access scene before there is one!");
+	RTEAssert(m_pCurrentScene, "Trying to access scene before there is one!");
 
-    if (!m_pCurrentScene->GetTerrain()->IsWithinBounds(posX, posY))
-        return false;
+	if (!m_pCurrentScene->GetTerrain()->IsWithinBounds(posX, posY))
+		return false;
 
-    unsigned char materialID = _getpixel(m_pCurrentScene->GetTerrain()->GetMaterialBitmap(), posX, posY);
-    if (materialID == g_MaterialAir)
-    {
+	unsigned char materialID = _getpixel(m_pCurrentScene->GetTerrain()->GetMaterialBitmap(), posX, posY);
+	if (materialID == g_MaterialAir)
+	{
 //        RTEAbort("Why are we penetrating air??");
-        return true;
-    }
-    Material const * sceneMat = GetMaterialFromID(materialID);
-    Material const * spawnMat;
+		return true;
+	}
+	Material const * sceneMat = GetMaterialFromID(materialID);
+	Material const * spawnMat;
 
-    float sprayScale = 0.1;
+	float sprayScale = 0.1;
 //    float spraySpread = 10.0;
-    float impMag = impulse.GetMagnitude();
+	float impMag = impulse.GetMagnitude();
 
-    // Test if impulse force is enough to penetrate
-    if (impMag >= sceneMat->GetIntegrity())
-    {
-        if (numPenetrations <= 3)
-        {
-            spawnMat = sceneMat->GetSpawnMaterial() ? GetMaterialFromID(sceneMat->GetSpawnMaterial()) : sceneMat;
-            Color spawnColor;
-            if (spawnMat->UsesOwnColor())
-                spawnColor = spawnMat->GetColor();
-            else
-                spawnColor.SetRGBWithIndex(m_pCurrentScene->GetTerrain()->GetFGColorPixel(posX, posY));
+	// Test if impulse force is enough to penetrate
+	if (impMag >= sceneMat->GetIntegrity())
+	{
+		if (numPenetrations <= 3)
+		{
+			spawnMat = sceneMat->GetSpawnMaterial() ? GetMaterialFromID(sceneMat->GetSpawnMaterial()) : sceneMat;
+			Color spawnColor;
+			if (spawnMat->UsesOwnColor())
+				spawnColor = spawnMat->GetColor();
+			else
+				spawnColor.SetRGBWithIndex(m_pCurrentScene->GetTerrain()->GetFGColorPixel(posX, posY));
 
-            // No point generating a key-colored MOPixel
-            if (spawnColor.GetIndex() != g_MaskColor)
-            {
-                // Get the new pixel from the pre-allocated pool, should be faster than dynamic allocation
-                // Density is used as the mass for the new MOPixel
+			// No point generating a key-colored MOPixel
+			if (spawnColor.GetIndex() != g_MaskColor)
+			{
+				// Get the new pixel from the pre-allocated pool, should be faster than dynamic allocation
+				// Density is used as the mass for the new MOPixel
 /*                MOPixel *pixelMO = dynamic_cast<MOPixel *>(MOPixel::InstanceFromPool());
-                pixelMO->Create(spawnColor,
-                                spawnMat.pixelDensity,
-                                Vector(posX, posY),
-                                Vector(-RandomNum((velocity.m_X * sprayScale) / 2 , velocity.m_X * sprayScale),
-                                       -RandomNum((velocity.m_Y * sprayScale) / 2 , velocity.m_Y * sprayScale)),
+				pixelMO->Create(spawnColor,
+								spawnMat.pixelDensity,
+								Vector(posX, posY),
+								Vector(-RandomNum((velocity.m_X * sprayScale) / 2 , velocity.m_X * sprayScale),
+									   -RandomNum((velocity.m_Y * sprayScale) / 2 , velocity.m_Y * sprayScale)),
 //                                               -(impulse * (sprayScale * RandomNum() / spawnMat.density)),
-                                new Atom(Vector(), spawnMat, 0, spawnColor, 2),
-                                0);
+								new Atom(Vector(), spawnMat, 0, spawnColor, 2),
+								0);
 */
 				float tempMaxX = velocity.m_X * sprayScale;
 				float tempMinX = tempMaxX / 2.0F;
 				float tempMaxY = velocity.m_Y * sprayScale;
 				float tempMinY = tempMaxY / 2.0F;
-                MOPixel *pixelMO = new MOPixel(spawnColor,
-                                               spawnMat->GetPixelDensity(),
-                                               Vector(posX, posY),
-                                               Vector(-RandomNum(tempMinX, tempMaxX),
-                                                      -RandomNum(tempMinY, tempMaxY)),
+				MOPixel *pixelMO = new MOPixel(spawnColor,
+											   spawnMat->GetPixelDensity(),
+											   Vector(posX, posY),
+											   Vector(-RandomNum(tempMinX, tempMaxX),
+													  -RandomNum(tempMinY, tempMaxY)),
 //                                              -(impulse * (sprayScale * RandomNum() / spawnMat.density)),
-                                               new Atom(Vector(), spawnMat->GetIndex(), 0, spawnColor, 2),
-                                               0);
+											   new Atom(Vector(), spawnMat->GetIndex(), 0, spawnColor, 2),
+											   0);
 
 // TODO: Make material IDs more robust!")
-                pixelMO->SetToHitMOs(spawnMat->GetIndex() == c_GoldMaterialID);
-                pixelMO->SetToGetHitByMOs(false);
-                g_MovableMan.AddParticle(pixelMO);
-                pixelMO = 0;
-            }
-            m_pCurrentScene->GetTerrain()->SetFGColorPixel(posX, posY, g_MaskColor);
-			RegisterTerrainChange(posX, posY, 1, 1, g_MaskColor, false);
-
-            m_pCurrentScene->GetTerrain()->SetMaterialPixel(posX, posY, g_MaterialAir);
-        }
-// TODO: Improve / tweak randomized pushing away of terrain")
-        else if (RandomNum() <= airRatio)
-        {
-            m_pCurrentScene->GetTerrain()->SetFGColorPixel(posX, posY, g_MaskColor);
+				pixelMO->SetToHitMOs(spawnMat->GetIndex() == c_GoldMaterialID);
+				pixelMO->SetToGetHitByMOs(false);
+				g_MovableMan.AddParticle(pixelMO);
+				pixelMO = 0;
+			}
+			m_pCurrentScene->GetTerrain()->SetFGColorPixel(posX, posY, g_MaskColor);
 			RegisterTerrainChange(posX, posY, 1, 1, g_MaskColor, false);
 
 			m_pCurrentScene->GetTerrain()->SetMaterialPixel(posX, posY, g_MaterialAir);
-        }
+		}
+// TODO: Improve / tweak randomized pushing away of terrain")
+		else if (RandomNum() <= airRatio)
+		{
+			m_pCurrentScene->GetTerrain()->SetFGColorPixel(posX, posY, g_MaskColor);
+			RegisterTerrainChange(posX, posY, 1, 1, g_MaskColor, false);
 
-        // Save the impulse force effects of the penetrating particle.
+			m_pCurrentScene->GetTerrain()->SetMaterialPixel(posX, posY, g_MaterialAir);
+		}
+
+		// Save the impulse force effects of the penetrating particle.
 //        retardation = -sceneMat.density;
-        retardation = -(sceneMat->GetIntegrity() / impMag);
+		retardation = -(sceneMat->GetIntegrity() / impMag);
 
-        // If this is a scrap pixel, or there is no background pixel 'supporting' the knocked-loose pixel, make the column above also turn into particles
-        if (sceneMat->IsScrap() || _getpixel(m_pCurrentScene->GetTerrain()->GetBGColorBitmap(), posX, posY) == g_MaskColor)
-        {
-            // Get quicker direct access to bitmaps
-            BITMAP *pFGColor = m_pCurrentScene->GetTerrain()->GetFGColorBitmap();
-            BITMAP *pBGColor = m_pCurrentScene->GetTerrain()->GetBGColorBitmap();
-            BITMAP *pMaterial = m_pCurrentScene->GetTerrain()->GetMaterialBitmap();
+		// If this is a scrap pixel, or there is no background pixel 'supporting' the knocked-loose pixel, make the column above also turn into particles
+		if (sceneMat->IsScrap() || _getpixel(m_pCurrentScene->GetTerrain()->GetBGColorBitmap(), posX, posY) == g_MaskColor)
+		{
+			// Get quicker direct access to bitmaps
+			BITMAP *pFGColor = m_pCurrentScene->GetTerrain()->GetFGColorBitmap();
+			BITMAP *pBGColor = m_pCurrentScene->GetTerrain()->GetBGColorBitmap();
+			BITMAP *pMaterial = m_pCurrentScene->GetTerrain()->GetMaterialBitmap();
 
-            int testMaterialID = g_MaterialAir;
-            MOPixel *pixelMO = 0;
-            Color spawnColor;
-            float sprayMag = velocity.GetLargest() * sprayScale;
-            Vector sprayVel;
+			int testMaterialID = g_MaterialAir;
+			MOPixel *pixelMO = 0;
+			Color spawnColor;
+			float sprayMag = velocity.GetLargest() * sprayScale;
+			Vector sprayVel;
 
-            // Look at pixel above to see if it isn't air and has support, or should fall down
-            for (int testY = posY - 1; testY > posY - COMPACTINGHEIGHT && testY >= 0; --testY)
-            {
-                // Check if there is a material pixel above
-                if ((testMaterialID = _getpixel(pMaterial, posX, testY)) != g_MaterialAir)
-                {
-                    sceneMat = GetMaterialFromID(testMaterialID);
+			// Look at pixel above to see if it isn't air and has support, or should fall down
+			for (int testY = posY - 1; testY > posY - COMPACTINGHEIGHT && testY >= 0; --testY)
+			{
+				// Check if there is a material pixel above
+				if ((testMaterialID = _getpixel(pMaterial, posX, testY)) != g_MaterialAir)
+				{
+					sceneMat = GetMaterialFromID(testMaterialID);
 
-                    // No support in the background layer, or is scrap material, so make particle of some of them
-                    if (sceneMat->IsScrap() || _getpixel(pBGColor, posX, testY) == g_MaskColor)
-                    {
-                        //  Only generate  particles of some of 'em
-                        if (RandomNum() > 0.75F)
-                        {
-                            // Figure out the mateiral and color of the new spray particle
-                            spawnMat = sceneMat->GetSpawnMaterial() ? GetMaterialFromID(sceneMat->GetSpawnMaterial()) : sceneMat;
-                            if (spawnMat->UsesOwnColor())
-                                spawnColor = spawnMat->GetColor();
-                            else
-                                spawnColor.SetRGBWithIndex(m_pCurrentScene->GetTerrain()->GetFGColorPixel(posX, testY));
+					// No support in the background layer, or is scrap material, so make particle of some of them
+					if (sceneMat->IsScrap() || _getpixel(pBGColor, posX, testY) == g_MaskColor)
+					{
+						//  Only generate  particles of some of 'em
+						if (RandomNum() > 0.75F)
+						{
+							// Figure out the mateiral and color of the new spray particle
+							spawnMat = sceneMat->GetSpawnMaterial() ? GetMaterialFromID(sceneMat->GetSpawnMaterial()) : sceneMat;
+							if (spawnMat->UsesOwnColor())
+								spawnColor = spawnMat->GetColor();
+							else
+								spawnColor.SetRGBWithIndex(m_pCurrentScene->GetTerrain()->GetFGColorPixel(posX, testY));
 
-                            // No point generating a key-colored MOPixel
-                            if (spawnColor.GetIndex() != g_MaskColor)
-                            {
-                                // Figure out the randomized velocity the spray should have upward
+							// No point generating a key-colored MOPixel
+							if (spawnColor.GetIndex() != g_MaskColor)
+							{
+								// Figure out the randomized velocity the spray should have upward
 								sprayVel.SetXY(sprayMag* RandomNormalNum() * 0.5F, (-sprayMag * 0.5F) + (-sprayMag * RandomNum(0.0F, 0.5F)));
 
-                                // Create the new spray pixel
+								// Create the new spray pixel
 								pixelMO = new MOPixel(spawnColor, spawnMat->GetPixelDensity(), Vector(posX, testY), sprayVel, new Atom(Vector(), spawnMat->GetIndex(), 0, spawnColor, 2), 0);
 
-                                // Let it loose into the world
-                                pixelMO->SetToHitMOs(spawnMat->GetIndex() == c_GoldMaterialID);
-                                pixelMO->SetToGetHitByMOs(false);
-                                g_MovableMan.AddParticle(pixelMO);
-                                pixelMO = 0;
-                            }
+								// Let it loose into the world
+								pixelMO->SetToHitMOs(spawnMat->GetIndex() == c_GoldMaterialID);
+								pixelMO->SetToGetHitByMOs(false);
+								g_MovableMan.AddParticle(pixelMO);
+								pixelMO = 0;
+							}
 
 							// Remove orphaned terrain left from hits and scrap damage
 							RemoveOrphans(posX + testY%2 ? -1 : 1, testY, 5, 25, true);
 						}
 
-                        // Clear the terrain pixel now when the particle has been generated from it
+						// Clear the terrain pixel now when the particle has been generated from it
 						RegisterTerrainChange(posX, testY, 1, 1, g_MaskColor, false);
-                        _putpixel(pFGColor, posX, testY, g_MaskColor);
-                        _putpixel(pMaterial, posX, testY, g_MaterialAir);
-                    }
-                    // There is support, so stop checking
-                    else
-                        break;
-                }
-            }
-        }
+						_putpixel(pFGColor, posX, testY, g_MaskColor);
+						_putpixel(pMaterial, posX, testY, g_MaterialAir);
+					}
+					// There is support, so stop checking
+					else
+						break;
+				}
+			}
+		}
 
 		// Remove orphaned regions if told to by parent MO who travelled an atom which tries to penetrate terrain
 		if (removeOrphansRadius && removeOrphansMaxArea && removeOrphansRate > 0 && RandomNum() < removeOrphansRate)
@@ -1350,9 +1354,9 @@ bool SceneMan::TryPenetrate(const int posX,
 			save_bmp("Orphan.bmp", m_pOrphanSearchBitmap, palette);*/
 		}
 
-        return true;
-    }
-    return false;
+		return true;
+	}
+	return false;
 }
 
 
@@ -1364,11 +1368,11 @@ bool SceneMan::TryPenetrate(const int posX,
 
 void SceneMan::MakeAllUnseen(Vector pixelSize, const int team)
 {
-    RTEAssert(m_pCurrentScene, "Messing with scene before the scene exists!");
+	RTEAssert(m_pCurrentScene, "Messing with scene before the scene exists!");
 	if (team < Activity::TeamOne || team >= Activity::MaxTeamCount) 
 		return;
 
-    m_pCurrentScene->FillUnseenLayer(pixelSize, team);
+	m_pCurrentScene->FillUnseenLayer(pixelSize, team);
 }
 
 
@@ -1379,7 +1383,7 @@ void SceneMan::MakeAllUnseen(Vector pixelSize, const int team)
 // Arguments:       The team we're talking about.
 // Return value:    None.
 
-    void MakeAllSeen(const int team);
+	void MakeAllSeen(const int team);
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -1389,17 +1393,17 @@ void SceneMan::MakeAllUnseen(Vector pixelSize, const int team)
 
 bool SceneMan::LoadUnseenLayer(std::string bitmapPath, int team)
 {
-    ContentFile bitmapFile(bitmapPath.c_str());
-    SceneLayer *pUnseenLayer = new SceneLayer();
-    if (pUnseenLayer->Create(bitmapFile.GetAsBitmap(COLORCONV_NONE, false), true, Vector(), m_pCurrentScene->WrapsX(), m_pCurrentScene->WrapsY(), Vector(1.0, 1.0)) < 0)
-    {
-        g_ConsoleMan.PrintString("ERROR: Loading background layer " + pUnseenLayer->GetPresetName() + "\'s data failed!");
-        return false;
-    }
+	ContentFile bitmapFile(bitmapPath.c_str());
+	SceneLayer *pUnseenLayer = new SceneLayer();
+	if (pUnseenLayer->Create(bitmapFile.GetAsBitmap(COLORCONV_NONE, false), true, Vector(), m_pCurrentScene->WrapsX(), m_pCurrentScene->WrapsY(), Vector(1.0, 1.0)) < 0)
+	{
+		g_ConsoleMan.PrintString("ERROR: Loading background layer " + pUnseenLayer->GetPresetName() + "\'s data failed!");
+		return false;
+	}
 
-    // Pass in ownership here
-    m_pCurrentScene->SetUnseenLayer(pUnseenLayer, team);
-    return true;
+	// Pass in ownership here
+	m_pCurrentScene->SetUnseenLayer(pUnseenLayer, team);
+	return true;
 }
 
 
@@ -1410,9 +1414,9 @@ bool SceneMan::LoadUnseenLayer(std::string bitmapPath, int team)
 
 bool SceneMan::AnythingUnseen(const int team)
 {
-    RTEAssert(m_pCurrentScene, "Checking scene before the scene exists!");
+	RTEAssert(m_pCurrentScene, "Checking scene before the scene exists!");
 
-    return m_pCurrentScene->GetUnseenLayer(team) != 0;
+	return m_pCurrentScene->GetUnseenLayer(team) != 0;
 // TODO: Actually check all pixels on the map too?
 }
 
@@ -1425,15 +1429,15 @@ bool SceneMan::AnythingUnseen(const int team)
 
 Vector SceneMan::GetUnseenResolution(const int team) const
 {
-    RTEAssert(m_pCurrentScene, "Checking scene before the scene exists!");
+	RTEAssert(m_pCurrentScene, "Checking scene before the scene exists!");
 	if (team < Activity::TeamOne || team >= Activity::MaxTeamCount) 
 		return Vector(1, 1);
 
-    SceneLayer *pUnseenLayer = m_pCurrentScene->GetUnseenLayer(team);
-    if (pUnseenLayer)
-        return pUnseenLayer->GetScaleFactor();
+	SceneLayer *pUnseenLayer = m_pCurrentScene->GetUnseenLayer(team);
+	if (pUnseenLayer)
+		return pUnseenLayer->GetScaleFactor();
 
-    return Vector(1, 1);
+	return Vector(1, 1);
 }
 
 
@@ -1444,21 +1448,21 @@ Vector SceneMan::GetUnseenResolution(const int team) const
 
 bool SceneMan::IsUnseen(const int posX, const int posY, const int team)
 {
-    RTEAssert(m_pCurrentScene, "Checking scene before the scene exists!");
+	RTEAssert(m_pCurrentScene, "Checking scene before the scene exists!");
 	if (team < Activity::TeamOne || team >= Activity::MaxTeamCount) 
 		return false;
 
-    SceneLayer *pUnseenLayer = m_pCurrentScene->GetUnseenLayer(team);
-    if (pUnseenLayer)
-    {
-        // Translate to the scaled unseen layer's coordinates
-        Vector scale = pUnseenLayer->GetScaleInverse();
-        int scaledX = posX * scale.m_X;
-        int scaledY = posY * scale.m_Y;
-        return getpixel(pUnseenLayer->GetBitmap(), scaledX, scaledY) != g_MaskColor;
-    }
+	SceneLayer *pUnseenLayer = m_pCurrentScene->GetUnseenLayer(team);
+	if (pUnseenLayer)
+	{
+		// Translate to the scaled unseen layer's coordinates
+		Vector scale = pUnseenLayer->GetScaleInverse();
+		int scaledX = posX * scale.m_X;
+		int scaledY = posY * scale.m_Y;
+		return getpixel(pUnseenLayer->GetBitmap(), scaledX, scaledY) != g_MaskColor;
+	}
 
-    return false;
+	return false;
 }
 
 
@@ -1469,35 +1473,35 @@ bool SceneMan::IsUnseen(const int posX, const int posY, const int team)
 
 bool SceneMan::RevealUnseen(const int posX, const int posY, const int team)
 {
-    RTEAssert(m_pCurrentScene, "Checking scene before the scene exists!");
+	RTEAssert(m_pCurrentScene, "Checking scene before the scene exists!");
 	if (team < Activity::TeamOne || team >= Activity::MaxTeamCount) 
 		return false;
 
-    SceneLayer *pUnseenLayer = m_pCurrentScene->GetUnseenLayer(team);
-    if (pUnseenLayer)
-    {
-        // Translate to the scaled unseen layer's coordinates
-        Vector scale = pUnseenLayer->GetScaleInverse();
-        int scaledX = posX * scale.m_X;
-        int scaledY = posY * scale.m_Y;
+	SceneLayer *pUnseenLayer = m_pCurrentScene->GetUnseenLayer(team);
+	if (pUnseenLayer)
+	{
+		// Translate to the scaled unseen layer's coordinates
+		Vector scale = pUnseenLayer->GetScaleInverse();
+		int scaledX = posX * scale.m_X;
+		int scaledY = posY * scale.m_Y;
 
-        // Make sure we're actually revealing an unseen pixel that is ON the bitmap!
-        int pixel = getpixel(pUnseenLayer->GetBitmap(), scaledX, scaledY);
-        if (pixel != g_MaskColor && pixel != -1)
-        {
-            // Add the pixel to the list of now seen pixels so it can be visually flashed
-            m_pCurrentScene->GetSeenPixels(team).push_back(Vector(scaledX, scaledY));
-            // Clear to key color that pixel on the map so it won't be detected as unseen again
-            putpixel(pUnseenLayer->GetBitmap(), scaledX, scaledY, g_MaskColor);
-            // Play the reveal sound, if there's not too many already revealed this frame
-            if (g_SettingsMan.BlipOnRevealUnseen() && m_pUnseenRevealSound && m_pCurrentScene->GetSeenPixels(team).size() < 5)
-                m_pUnseenRevealSound->Play(Vector(posX, posY));
-            // Show that we actually cleared an unseen pixel
-            return true;
-        }
-    }
+		// Make sure we're actually revealing an unseen pixel that is ON the bitmap!
+		int pixel = getpixel(pUnseenLayer->GetBitmap(), scaledX, scaledY);
+		if (pixel != g_MaskColor && pixel != -1)
+		{
+			// Add the pixel to the list of now seen pixels so it can be visually flashed
+			m_pCurrentScene->GetSeenPixels(team).push_back(Vector(scaledX, scaledY));
+			// Clear to key color that pixel on the map so it won't be detected as unseen again
+			putpixel(pUnseenLayer->GetBitmap(), scaledX, scaledY, g_MaskColor);
+			// Play the reveal sound, if there's not too many already revealed this frame
+			if (g_SettingsMan.BlipOnRevealUnseen() && m_pUnseenRevealSound && m_pCurrentScene->GetSeenPixels(team).size() < 5)
+				m_pUnseenRevealSound->Play(Vector(posX, posY));
+			// Show that we actually cleared an unseen pixel
+			return true;
+		}
+	}
 
-    return false;
+	return false;
 }
 
 
@@ -1508,35 +1512,35 @@ bool SceneMan::RevealUnseen(const int posX, const int posY, const int team)
 
 bool SceneMan::RestoreUnseen(const int posX, const int posY, const int team)
 {
-    RTEAssert(m_pCurrentScene, "Checking scene before the scene exists!");
+	RTEAssert(m_pCurrentScene, "Checking scene before the scene exists!");
 	if (team < Activity::TeamOne || team >= Activity::MaxTeamCount) 
 		return false;
 
-    SceneLayer *pUnseenLayer = m_pCurrentScene->GetUnseenLayer(team);
-    if (pUnseenLayer)
-    {
-        // Translate to the scaled unseen layer's coordinates
-        Vector scale = pUnseenLayer->GetScaleInverse();
-        int scaledX = posX * scale.m_X;
-        int scaledY = posY * scale.m_Y;
+	SceneLayer *pUnseenLayer = m_pCurrentScene->GetUnseenLayer(team);
+	if (pUnseenLayer)
+	{
+		// Translate to the scaled unseen layer's coordinates
+		Vector scale = pUnseenLayer->GetScaleInverse();
+		int scaledX = posX * scale.m_X;
+		int scaledY = posY * scale.m_Y;
 
-        // Make sure we're actually revealing an unseen pixel that is ON the bitmap!
-        int pixel = getpixel(pUnseenLayer->GetBitmap(), scaledX, scaledY);
-        if (pixel != g_BlackColor && pixel != -1)
-        {
-            // Add the pixel to the list of now seen pixels so it can be visually flashed
-            m_pCurrentScene->GetSeenPixels(team).push_back(Vector(scaledX, scaledY));
-            // Clear to key color that pixel on the map so it won't be detected as unseen again
-            putpixel(pUnseenLayer->GetBitmap(), scaledX, scaledY, g_BlackColor);
-            // Play the reveal sound, if there's not too many already revealed this frame
-            //if (g_SettingsMan.BlipOnRevealUnseen() && m_pUnseenRevealSound && m_pCurrentScene->GetSeenPixels(team).size() < 5)
-            //    m_pUnseenRevealSound->Play(g_SceneMan.TargetDistanceScalar(Vector(posX, posY)));
-            // Show that we actually cleared an unseen pixel
-            return true;
-        }
-    }
+		// Make sure we're actually revealing an unseen pixel that is ON the bitmap!
+		int pixel = getpixel(pUnseenLayer->GetBitmap(), scaledX, scaledY);
+		if (pixel != g_BlackColor && pixel != -1)
+		{
+			// Add the pixel to the list of now seen pixels so it can be visually flashed
+			m_pCurrentScene->GetSeenPixels(team).push_back(Vector(scaledX, scaledY));
+			// Clear to key color that pixel on the map so it won't be detected as unseen again
+			putpixel(pUnseenLayer->GetBitmap(), scaledX, scaledY, g_BlackColor);
+			// Play the reveal sound, if there's not too many already revealed this frame
+			//if (g_SettingsMan.BlipOnRevealUnseen() && m_pUnseenRevealSound && m_pCurrentScene->GetSeenPixels(team).size() < 5)
+			//    m_pUnseenRevealSound->Play(g_SceneMan.TargetDistanceScalar(Vector(posX, posY)));
+			// Show that we actually cleared an unseen pixel
+			return true;
+		}
+	}
 
-    return false;
+	return false;
 }
 
 
@@ -1547,23 +1551,23 @@ bool SceneMan::RestoreUnseen(const int posX, const int posY, const int team)
 
 void SceneMan::RevealUnseenBox(const int posX, const int posY, const int width, const int height, const int team)
 {
-    RTEAssert(m_pCurrentScene, "Checking scene before the scene exists!");
+	RTEAssert(m_pCurrentScene, "Checking scene before the scene exists!");
 	if (team < Activity::TeamOne || team >= Activity::MaxTeamCount) 
 		return;
 
-    SceneLayer *pUnseenLayer = m_pCurrentScene->GetUnseenLayer(team);
-    if (pUnseenLayer)
-    {
-        // Translate to the scaled unseen layer's coordinates
-        Vector scale = pUnseenLayer->GetScaleInverse();
-        int scaledX = posX * scale.m_X;
-        int scaledY = posY * scale.m_Y;
-        int scaledW = width * scale.m_X;
-        int scaledH = height * scale.m_Y;
+	SceneLayer *pUnseenLayer = m_pCurrentScene->GetUnseenLayer(team);
+	if (pUnseenLayer)
+	{
+		// Translate to the scaled unseen layer's coordinates
+		Vector scale = pUnseenLayer->GetScaleInverse();
+		int scaledX = posX * scale.m_X;
+		int scaledY = posY * scale.m_Y;
+		int scaledW = width * scale.m_X;
+		int scaledH = height * scale.m_Y;
 
-        // Fill the box
-        rectfill(pUnseenLayer->GetBitmap(), scaledX, scaledY, scaledX + scaledW, scaledY + scaledH, g_MaskColor);
-    }
+		// Fill the box
+		rectfill(pUnseenLayer->GetBitmap(), scaledX, scaledY, scaledX + scaledW, scaledY + scaledH, g_MaskColor);
+	}
 }
 
 
@@ -1574,23 +1578,23 @@ void SceneMan::RevealUnseenBox(const int posX, const int posY, const int width, 
 
 void SceneMan::RestoreUnseenBox(const int posX, const int posY, const int width, const int height, const int team)
 {
-    RTEAssert(m_pCurrentScene, "Checking scene before the scene exists!");
+	RTEAssert(m_pCurrentScene, "Checking scene before the scene exists!");
 	if (team < Activity::TeamOne || team >= Activity::MaxTeamCount) 
 		return;
 
-    SceneLayer *pUnseenLayer = m_pCurrentScene->GetUnseenLayer(team);
-    if (pUnseenLayer)
-    {
-        // Translate to the scaled unseen layer's coordinates
-        Vector scale = pUnseenLayer->GetScaleInverse();
-        int scaledX = posX * scale.m_X;
-        int scaledY = posY * scale.m_Y;
-        int scaledW = width * scale.m_X;
-        int scaledH = height * scale.m_Y;
+	SceneLayer *pUnseenLayer = m_pCurrentScene->GetUnseenLayer(team);
+	if (pUnseenLayer)
+	{
+		// Translate to the scaled unseen layer's coordinates
+		Vector scale = pUnseenLayer->GetScaleInverse();
+		int scaledX = posX * scale.m_X;
+		int scaledY = posY * scale.m_Y;
+		int scaledW = width * scale.m_X;
+		int scaledH = height * scale.m_Y;
 
-        // Fill the box
-        rectfill(pUnseenLayer->GetBitmap(), scaledX, scaledY, scaledX + scaledW, scaledY + scaledH, g_BlackColor);
-    }
+		// Fill the box
+		rectfill(pUnseenLayer->GetBitmap(), scaledX, scaledY, scaledX + scaledW, scaledY + scaledH, g_BlackColor);
+	}
 }
 
 
@@ -1604,118 +1608,118 @@ void SceneMan::RestoreUnseenBox(const int posX, const int posY, const int width,
 bool SceneMan::CastUnseenRay(int team, const Vector &start, const Vector &ray, Vector &endPos, int strengthLimit, int skip, bool reveal)
 {
 #ifdef DEBUG_BUILD
-    if (m_pDebugLayer)
-        m_pDebugLayer->LockBitmaps();
+	if (m_pDebugLayer)
+		m_pDebugLayer->LockBitmaps();
 #endif
 
-    if (!m_pCurrentScene->GetUnseenLayer(team))
-        return false;
+	if (!m_pCurrentScene->GetUnseenLayer(team))
+		return false;
 
-    int hitCount = 0, error, dom, sub, domSteps, skipped = skip;
-    int intPos[2], delta[2], delta2[2], increment[2];
-    bool affectedAny = false;
-    unsigned char materialID;
-    Material const * foundMaterial;
-    int totalStrength = 0;
-    // Save the projected end of the ray pos
-    endPos = start + ray;
+	int hitCount = 0, error, dom, sub, domSteps, skipped = skip;
+	int intPos[2], delta[2], delta2[2], increment[2];
+	bool affectedAny = false;
+	unsigned char materialID;
+	Material const * foundMaterial;
+	int totalStrength = 0;
+	// Save the projected end of the ray pos
+	endPos = start + ray;
 
-    intPos[X] = std::floor(start.m_X);
-    intPos[Y] = std::floor(start.m_Y);
-    delta[X] = std::floor(start.m_X + ray.m_X) - intPos[X];
-    delta[Y] = std::floor(start.m_Y + ray.m_Y) - intPos[Y];
+	intPos[X] = std::floor(start.m_X);
+	intPos[Y] = std::floor(start.m_Y);
+	delta[X] = std::floor(start.m_X + ray.m_X) - intPos[X];
+	delta[Y] = std::floor(start.m_Y + ray.m_Y) - intPos[Y];
     
-    if (delta[X] == 0 &&  delta[Y] == 0)
-        return false;
+	if (delta[X] == 0 &&  delta[Y] == 0)
+		return false;
 
-    /////////////////////////////////////////////////////
-    // Bresenham's line drawing algorithm preparation
+	/////////////////////////////////////////////////////
+	// Bresenham's line drawing algorithm preparation
 
-    if (delta[X] < 0)
-    {
-        increment[X] = -1;
-        delta[X] = -delta[X];
-    }
-    else
-        increment[X] = 1;
+	if (delta[X] < 0)
+	{
+		increment[X] = -1;
+		delta[X] = -delta[X];
+	}
+	else
+		increment[X] = 1;
 
-    if (delta[Y] < 0)
-    {
-        increment[Y] = -1;
-        delta[Y] = -delta[Y];
-    }
-    else
-        increment[Y] = 1;
+	if (delta[Y] < 0)
+	{
+		increment[Y] = -1;
+		delta[Y] = -delta[Y];
+	}
+	else
+		increment[Y] = 1;
 
-    // Scale by 2, for better accuracy of the error at the first pixel
-    delta2[X] = delta[X] << 1;
-    delta2[Y] = delta[Y] << 1;
+	// Scale by 2, for better accuracy of the error at the first pixel
+	delta2[X] = delta[X] << 1;
+	delta2[Y] = delta[Y] << 1;
 
-    // If X is dominant, Y is submissive, and vice versa.
-    if (delta[X] > delta[Y]) {
-        dom = X;
-        sub = Y;
-    }
-    else {
-        dom = Y;
-        sub = X;
-    }
+	// If X is dominant, Y is submissive, and vice versa.
+	if (delta[X] > delta[Y]) {
+		dom = X;
+		sub = Y;
+	}
+	else {
+		dom = Y;
+		sub = X;
+	}
 
-    error = delta2[sub] - delta[dom];
+	error = delta2[sub] - delta[dom];
 
-    /////////////////////////////////////////////////////
-    // Bresenham's line drawing algorithm execution
+	/////////////////////////////////////////////////////
+	// Bresenham's line drawing algorithm execution
 
-    for (domSteps = 0; domSteps < delta[dom]; ++domSteps)
-    {
-        intPos[dom] += increment[dom];
-        if (error >= 0)
-        {
-            intPos[sub] += increment[sub];
-            error -= delta2[dom];
-        }
-        error += delta2[sub];
+	for (domSteps = 0; domSteps < delta[dom]; ++domSteps)
+	{
+		intPos[dom] += increment[dom];
+		if (error >= 0)
+		{
+			intPos[sub] += increment[sub];
+			error -= delta2[dom];
+		}
+		error += delta2[sub];
 
-        // Only check pixel if we're not due to skip any, or if this is the last pixel
-        if (++skipped > skip || domSteps + 1 == delta[dom])
-        {
-            // Scene wrapping
-            g_SceneMan.WrapPosition(intPos[X], intPos[Y]);
-            // Reveal if we can, save the result
+		// Only check pixel if we're not due to skip any, or if this is the last pixel
+		if (++skipped > skip || domSteps + 1 == delta[dom])
+		{
+			// Scene wrapping
+			g_SceneMan.WrapPosition(intPos[X], intPos[Y]);
+			// Reveal if we can, save the result
 			if (reveal)
 				affectedAny = RevealUnseen(intPos[X], intPos[Y], team) || affectedAny;
 			else
 				affectedAny = RestoreUnseen(intPos[X], intPos[Y], team) || affectedAny;
 
-            // Check the strength of the terrain to see if we can penetrate further
-            materialID = GetTerrMatter(intPos[X], intPos[Y]);
-            // Get the material object
-            foundMaterial = GetMaterialFromID(materialID);
-            // Add the encountered material's strength to the tally
-            totalStrength += foundMaterial->GetIntegrity();
-            // See if we have hit the limits of our ray's strength
-            if (totalStrength >= strengthLimit)
-            {
-                // Save the position of the end of the ray where blocked
-                endPos.SetXY(intPos[X], intPos[Y]);
-                break;
-            }
-            // Reset skip counter
-            skipped = 0;
+			// Check the strength of the terrain to see if we can penetrate further
+			materialID = GetTerrMatter(intPos[X], intPos[Y]);
+			// Get the material object
+			foundMaterial = GetMaterialFromID(materialID);
+			// Add the encountered material's strength to the tally
+			totalStrength += foundMaterial->GetIntegrity();
+			// See if we have hit the limits of our ray's strength
+			if (totalStrength >= strengthLimit)
+			{
+				// Save the position of the end of the ray where blocked
+				endPos.SetXY(intPos[X], intPos[Y]);
+				break;
+			}
+			// Reset skip counter
+			skipped = 0;
 #ifdef DEBUG_BUILD
-            // Draw debug graphics, if applicable
-            if (m_pDebugLayer)
-                m_pDebugLayer->SetPixel(intPos[X], intPos[Y], 13);
+			// Draw debug graphics, if applicable
+			if (m_pDebugLayer)
+				m_pDebugLayer->SetPixel(intPos[X], intPos[Y], 13);
 #endif
-        }
-    }
+		}
+	}
 
 #ifdef DEBUG_BUILD
-    if (m_pDebugLayer)
-        m_pDebugLayer->UnlockBitmaps();
+	if (m_pDebugLayer)
+		m_pDebugLayer->UnlockBitmaps();
 #endif
 
-    return affectedAny;
+	return affectedAny;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -1753,104 +1757,104 @@ bool SceneMan::CastUnseeRay(int team, const Vector &start, const Vector &ray, Ve
 bool SceneMan::CastMaterialRay(const Vector &start, const Vector &ray, unsigned char material, Vector &result, int skip, bool wrap)
 {
 #ifdef DEBUG_BUILD
-    if (m_pDebugLayer)
-        m_pDebugLayer->LockBitmaps();
+	if (m_pDebugLayer)
+		m_pDebugLayer->LockBitmaps();
 #endif
 
-    int hitCount = 0, error, dom, sub, domSteps, skipped = skip;
-    int intPos[2], delta[2], delta2[2], increment[2];
-    bool foundPixel = false;
+	int hitCount = 0, error, dom, sub, domSteps, skipped = skip;
+	int intPos[2], delta[2], delta2[2], increment[2];
+	bool foundPixel = false;
 
-    intPos[X] = std::floor(start.m_X);
-    intPos[Y] = std::floor(start.m_Y);
-    delta[X] = std::floor(start.m_X + ray.m_X) - intPos[X];
-    delta[Y] = std::floor(start.m_Y + ray.m_Y) - intPos[Y];
+	intPos[X] = std::floor(start.m_X);
+	intPos[Y] = std::floor(start.m_Y);
+	delta[X] = std::floor(start.m_X + ray.m_X) - intPos[X];
+	delta[Y] = std::floor(start.m_Y + ray.m_Y) - intPos[Y];
     
-    if (delta[X] == 0 &&  delta[Y] == 0)
-        return false;
+	if (delta[X] == 0 &&  delta[Y] == 0)
+		return false;
 
-    /////////////////////////////////////////////////////
-    // Bresenham's line drawing algorithm preparation
+	/////////////////////////////////////////////////////
+	// Bresenham's line drawing algorithm preparation
 
-    if (delta[X] < 0)
-    {
-        increment[X] = -1;
-        delta[X] = -delta[X];
-    }
-    else
-        increment[X] = 1;
+	if (delta[X] < 0)
+	{
+		increment[X] = -1;
+		delta[X] = -delta[X];
+	}
+	else
+		increment[X] = 1;
 
-    if (delta[Y] < 0)
-    {
-        increment[Y] = -1;
-        delta[Y] = -delta[Y];
-    }
-    else
-        increment[Y] = 1;
+	if (delta[Y] < 0)
+	{
+		increment[Y] = -1;
+		delta[Y] = -delta[Y];
+	}
+	else
+		increment[Y] = 1;
 
-    // Scale by 2, for better accuracy of the error at the first pixel
-    delta2[X] = delta[X] << 1;
-    delta2[Y] = delta[Y] << 1;
+	// Scale by 2, for better accuracy of the error at the first pixel
+	delta2[X] = delta[X] << 1;
+	delta2[Y] = delta[Y] << 1;
 
-    // If X is dominant, Y is submissive, and vice versa.
-    if (delta[X] > delta[Y]) {
-        dom = X;
-        sub = Y;
-    }
-    else {
-        dom = Y;
-        sub = X;
-    }
+	// If X is dominant, Y is submissive, and vice versa.
+	if (delta[X] > delta[Y]) {
+		dom = X;
+		sub = Y;
+	}
+	else {
+		dom = Y;
+		sub = X;
+	}
 
-    error = delta2[sub] - delta[dom];
+	error = delta2[sub] - delta[dom];
 
-    /////////////////////////////////////////////////////
-    // Bresenham's line drawing algorithm execution
+	/////////////////////////////////////////////////////
+	// Bresenham's line drawing algorithm execution
 
-    for (domSteps = 0; domSteps < delta[dom]; ++domSteps)
-    {
-        intPos[dom] += increment[dom];
-        if (error >= 0)
-        {
-            intPos[sub] += increment[sub];
-            error -= delta2[dom];
-        }
-        error += delta2[sub];
+	for (domSteps = 0; domSteps < delta[dom]; ++domSteps)
+	{
+		intPos[dom] += increment[dom];
+		if (error >= 0)
+		{
+			intPos[sub] += increment[sub];
+			error -= delta2[dom];
+		}
+		error += delta2[sub];
 
-        // Only check pixel if we're not due to skip any, or if this is the last pixel
-        if (++skipped > skip || domSteps + 1 == delta[dom])
-        {
-            // Scene wrapping, if necessary
-            if (wrap)
-                g_SceneMan.WrapPosition(intPos[X], intPos[Y]);
+		// Only check pixel if we're not due to skip any, or if this is the last pixel
+		if (++skipped > skip || domSteps + 1 == delta[dom])
+		{
+			// Scene wrapping, if necessary
+			if (wrap)
+				g_SceneMan.WrapPosition(intPos[X], intPos[Y]);
 
-            // See if we found the looked-for pixel of the correct material
-            if (GetTerrMatter(intPos[X], intPos[Y]) == material)
-            {
-                // Save result and report success
-                foundPixel = true;
-                result.SetXY(intPos[X], intPos[Y]);
-                // Save last ray pos
-                m_LastRayHitPos.SetXY(intPos[X], intPos[Y]);
-                break;
-            }
+			// See if we found the looked-for pixel of the correct material
+			if (GetTerrMatter(intPos[X], intPos[Y]) == material)
+			{
+				// Save result and report success
+				foundPixel = true;
+				result.SetXY(intPos[X], intPos[Y]);
+				// Save last ray pos
+				m_LastRayHitPos.SetXY(intPos[X], intPos[Y]);
+				break;
+			}
 
-            skipped = 0;
-
-#ifdef DEBUG_BUILD
-            // Draw debug graphics, if applicable
-            if (m_pDebugLayer)
-                m_pDebugLayer->SetPixel(intPos[X], intPos[Y], 13);
-#endif
-        }
-    }
+			skipped = 0;
 
 #ifdef DEBUG_BUILD
-    if (m_pDebugLayer)
-        m_pDebugLayer->UnlockBitmaps();
+			// Draw debug graphics, if applicable
+			if (m_pDebugLayer)
+				m_pDebugLayer->SetPixel(intPos[X], intPos[Y], 13);
+#endif
+		}
+	}
+
+#ifdef DEBUG_BUILD
+	if (m_pDebugLayer)
+		m_pDebugLayer->UnlockBitmaps();
 #endif
 
-    return foundPixel;
+	return foundPixel;
 }
 
 
@@ -1862,16 +1866,16 @@ bool SceneMan::CastMaterialRay(const Vector &start, const Vector &ray, unsigned 
 
 float SceneMan::CastMaterialRay(const Vector &start, const Vector &ray, unsigned char material, int skip)
 {
-    Vector result;
-    if (CastMaterialRay(start, ray, material, result, skip))
-    {
-        // Calculate the length between the start and the found material pixel coords
-        result -= start;
-        return result.GetMagnitude();
-    }
+	Vector result;
+	if (CastMaterialRay(start, ray, material, result, skip))
+	{
+		// Calculate the length between the start and the found material pixel coords
+		result -= start;
+		return result.GetMagnitude();
+	}
 
-    // Signal that we didn't hit anything
-    return -1;
+	// Signal that we didn't hit anything
+	return -1;
 }
 
 
@@ -1884,104 +1888,104 @@ float SceneMan::CastMaterialRay(const Vector &start, const Vector &ray, unsigned
 bool SceneMan::CastNotMaterialRay(const Vector &start, const Vector &ray, unsigned char material, Vector &result, int skip, bool checkMOs)
 {
 #ifdef DEBUG_BUILD
-    if (m_pDebugLayer)
-        m_pDebugLayer->LockBitmaps();
+	if (m_pDebugLayer)
+		m_pDebugLayer->LockBitmaps();
 #endif
 
-    int hitCount = 0, error, dom, sub, domSteps, skipped = skip;
-    int intPos[2], delta[2], delta2[2], increment[2];
-    bool foundPixel = false;
+	int hitCount = 0, error, dom, sub, domSteps, skipped = skip;
+	int intPos[2], delta[2], delta2[2], increment[2];
+	bool foundPixel = false;
 
-    intPos[X] = std::floor(start.m_X);
-    intPos[Y] = std::floor(start.m_Y);
-    delta[X] = std::floor(start.m_X + ray.m_X) - intPos[X];
-    delta[Y] = std::floor(start.m_Y + ray.m_Y) - intPos[Y];
+	intPos[X] = std::floor(start.m_X);
+	intPos[Y] = std::floor(start.m_Y);
+	delta[X] = std::floor(start.m_X + ray.m_X) - intPos[X];
+	delta[Y] = std::floor(start.m_Y + ray.m_Y) - intPos[Y];
 
-    if (delta[X] == 0 &&  delta[Y] == 0)
-        return false;
+	if (delta[X] == 0 &&  delta[Y] == 0)
+		return false;
 
-    /////////////////////////////////////////////////////
-    // Bresenham's line drawing algorithm preparation
+	/////////////////////////////////////////////////////
+	// Bresenham's line drawing algorithm preparation
 
-    if (delta[X] < 0)
-    {
-        increment[X] = -1;
-        delta[X] = -delta[X];
-    }
-    else
-        increment[X] = 1;
+	if (delta[X] < 0)
+	{
+		increment[X] = -1;
+		delta[X] = -delta[X];
+	}
+	else
+		increment[X] = 1;
 
-    if (delta[Y] < 0)
-    {
-        increment[Y] = -1;
-        delta[Y] = -delta[Y];
-    }
-    else
-        increment[Y] = 1;
+	if (delta[Y] < 0)
+	{
+		increment[Y] = -1;
+		delta[Y] = -delta[Y];
+	}
+	else
+		increment[Y] = 1;
 
-    // Scale by 2, for better accuracy of the error at the first pixel
-    delta2[X] = delta[X] << 1;
-    delta2[Y] = delta[Y] << 1;
+	// Scale by 2, for better accuracy of the error at the first pixel
+	delta2[X] = delta[X] << 1;
+	delta2[Y] = delta[Y] << 1;
 
-    // If X is dominant, Y is submissive, and vice versa.
-    if (delta[X] > delta[Y]) {
-        dom = X;
-        sub = Y;
-    }
-    else {
-        dom = Y;
-        sub = X;
-    }
+	// If X is dominant, Y is submissive, and vice versa.
+	if (delta[X] > delta[Y]) {
+		dom = X;
+		sub = Y;
+	}
+	else {
+		dom = Y;
+		sub = X;
+	}
 
-    error = delta2[sub] - delta[dom];
+	error = delta2[sub] - delta[dom];
 
-    /////////////////////////////////////////////////////
-    // Bresenham's line drawing algorithm execution
+	/////////////////////////////////////////////////////
+	// Bresenham's line drawing algorithm execution
 
-    for (domSteps = 0; domSteps < delta[dom]; ++domSteps)
-    {
-        intPos[dom] += increment[dom];
-        if (error >= 0)
-        {
-            intPos[sub] += increment[sub];
-            error -= delta2[dom];
-        }
-        error += delta2[sub];
+	for (domSteps = 0; domSteps < delta[dom]; ++domSteps)
+	{
+		intPos[dom] += increment[dom];
+		if (error >= 0)
+		{
+			intPos[sub] += increment[sub];
+			error -= delta2[dom];
+		}
+		error += delta2[sub];
 
-        // Only check pixel if we're not due to skip any, or if this is the last pixel
-        if (++skipped > skip || domSteps + 1 == delta[dom])
-        {
-            // Scene wrapping, if necessary
-            g_SceneMan.WrapPosition(intPos[X], intPos[Y]);
+		// Only check pixel if we're not due to skip any, or if this is the last pixel
+		if (++skipped > skip || domSteps + 1 == delta[dom])
+		{
+			// Scene wrapping, if necessary
+			g_SceneMan.WrapPosition(intPos[X], intPos[Y]);
 
-            // See if we found the looked-for pixel of the correct material,
-            // Or an MO is blocking the way
-            if (GetTerrMatter(intPos[X], intPos[Y]) != material ||
-                (checkMOs && g_SceneMan.GetMOIDPixel(intPos[X], intPos[Y]) != g_NoMOID))
-            {
-                // Save result and report success
-                foundPixel = true;
-                result.SetXY(intPos[X], intPos[Y]);
-                // Save last ray pos
-                m_LastRayHitPos.SetXY(intPos[X], intPos[Y]);
-                break;
-            }
+			// See if we found the looked-for pixel of the correct material,
+			// Or an MO is blocking the way
+			if (GetTerrMatter(intPos[X], intPos[Y]) != material ||
+				(checkMOs && g_SceneMan.GetMOIDPixel(intPos[X], intPos[Y]) != g_NoMOID))
+			{
+				// Save result and report success
+				foundPixel = true;
+				result.SetXY(intPos[X], intPos[Y]);
+				// Save last ray pos
+				m_LastRayHitPos.SetXY(intPos[X], intPos[Y]);
+				break;
+			}
 
-            skipped = 0;
+			skipped = 0;
 #ifdef DEBUG_BUILD
-            // Draw debug graphics, if applicable
-            if (m_pDebugLayer)
-                m_pDebugLayer->SetPixel(intPos[X], intPos[Y], 13);
+			// Draw debug graphics, if applicable
+			if (m_pDebugLayer)
+				m_pDebugLayer->SetPixel(intPos[X], intPos[Y], 13);
 #endif
-        }
-    }
+		}
+	}
 
 #ifdef DEBUG_BUILD
-    if (m_pDebugLayer)
-        m_pDebugLayer->UnlockBitmaps();
+	if (m_pDebugLayer)
+		m_pDebugLayer->UnlockBitmaps();
 #endif
 
-    return foundPixel;
+	return foundPixel;
 }
 
 
@@ -1993,16 +1997,16 @@ bool SceneMan::CastNotMaterialRay(const Vector &start, const Vector &ray, unsign
 
 float SceneMan::CastNotMaterialRay(const Vector &start, const Vector &ray, unsigned char material, int skip, bool checkMOs)
 {
-    Vector result;
-    if (CastNotMaterialRay(start, ray, material, result, skip, checkMOs))
-    {
-        // Calculate the length between the start and the found material pixel coords
-        result -= start;
-        return result.GetMagnitude();
-    }
+	Vector result;
+	if (CastNotMaterialRay(start, ray, material, result, skip, checkMOs))
+	{
+		// Calculate the length between the start and the found material pixel coords
+		result -= start;
+		return result.GetMagnitude();
+	}
 
-    // Signal that we didn't hit anything
-    return -1;
+	// Signal that we didn't hit anything
+	return -1;
 }
 
 
@@ -2014,88 +2018,88 @@ float SceneMan::CastNotMaterialRay(const Vector &start, const Vector &ray, unsig
 
 float SceneMan::CastStrengthSumRay(const Vector &start, const Vector &end, int skip, unsigned char ignoreMaterial)
 {
-    Vector ray = g_SceneMan.ShortestDistance(start, end);
-    float strengthSum = 0;
+	Vector ray = g_SceneMan.ShortestDistance(start, end);
+	float strengthSum = 0;
 
-    int error, dom, sub, domSteps, skipped = skip;
-    int intPos[2], delta[2], delta2[2], increment[2];
-    bool foundPixel = false;
-    unsigned char materialID;
-    Material foundMaterial;
+	int error, dom, sub, domSteps, skipped = skip;
+	int intPos[2], delta[2], delta2[2], increment[2];
+	bool foundPixel = false;
+	unsigned char materialID;
+	Material foundMaterial;
 
-    intPos[X] = std::floor(start.m_X);
-    intPos[Y] = std::floor(start.m_Y);
-    delta[X] = std::floor(start.m_X + ray.m_X) - intPos[X];
-    delta[Y] = std::floor(start.m_Y + ray.m_Y) - intPos[Y];
+	intPos[X] = std::floor(start.m_X);
+	intPos[Y] = std::floor(start.m_Y);
+	delta[X] = std::floor(start.m_X + ray.m_X) - intPos[X];
+	delta[Y] = std::floor(start.m_Y + ray.m_Y) - intPos[Y];
     
-    if (delta[X] == 0 &&  delta[Y] == 0)
-        return false;
+	if (delta[X] == 0 &&  delta[Y] == 0)
+		return false;
 
-    /////////////////////////////////////////////////////
-    // Bresenham's line drawing algorithm preparation
+	/////////////////////////////////////////////////////
+	// Bresenham's line drawing algorithm preparation
 
-    if (delta[X] < 0)
-    {
-        increment[X] = -1;
-        delta[X] = -delta[X];
-    }
-    else
-        increment[X] = 1;
+	if (delta[X] < 0)
+	{
+		increment[X] = -1;
+		delta[X] = -delta[X];
+	}
+	else
+		increment[X] = 1;
 
-    if (delta[Y] < 0)
-    {
-        increment[Y] = -1;
-        delta[Y] = -delta[Y];
-    }
-    else
-        increment[Y] = 1;
+	if (delta[Y] < 0)
+	{
+		increment[Y] = -1;
+		delta[Y] = -delta[Y];
+	}
+	else
+		increment[Y] = 1;
 
-    // Scale by 2, for better accuracy of the error at the first pixel
-    delta2[X] = delta[X] << 1;
-    delta2[Y] = delta[Y] << 1;
+	// Scale by 2, for better accuracy of the error at the first pixel
+	delta2[X] = delta[X] << 1;
+	delta2[Y] = delta[Y] << 1;
 
-    // If X is dominant, Y is submissive, and vice versa.
-    if (delta[X] > delta[Y]) {
-        dom = X;
-        sub = Y;
-    }
-    else
-    {
-        dom = Y;
-        sub = X;
-    }
+	// If X is dominant, Y is submissive, and vice versa.
+	if (delta[X] > delta[Y]) {
+		dom = X;
+		sub = Y;
+	}
+	else
+	{
+		dom = Y;
+		sub = X;
+	}
 
-    error = delta2[sub] - delta[dom];
+	error = delta2[sub] - delta[dom];
 
-    /////////////////////////////////////////////////////
-    // Bresenham's line drawing algorithm execution
+	/////////////////////////////////////////////////////
+	// Bresenham's line drawing algorithm execution
 
-    for (domSteps = 0; domSteps < delta[dom]; ++domSteps)
-    {
-        intPos[dom] += increment[dom];
-        if (error >= 0)
-        {
-            intPos[sub] += increment[sub];
-            error -= delta2[dom];
-        }
-        error += delta2[sub];
+	for (domSteps = 0; domSteps < delta[dom]; ++domSteps)
+	{
+		intPos[dom] += increment[dom];
+		if (error >= 0)
+		{
+			intPos[sub] += increment[sub];
+			error -= delta2[dom];
+		}
+		error += delta2[sub];
 
-        // Only check pixel if we're not due to skip any, or if this is the last pixel
-        if (++skipped > skip || domSteps + 1 == delta[dom])
-        {
-            // Scene wrapping, if necessary
-            g_SceneMan.WrapPosition(intPos[X], intPos[Y]);
+		// Only check pixel if we're not due to skip any, or if this is the last pixel
+		if (++skipped > skip || domSteps + 1 == delta[dom])
+		{
+			// Scene wrapping, if necessary
+			g_SceneMan.WrapPosition(intPos[X], intPos[Y]);
 
-            // Sum all strengths
-            materialID = GetTerrMatter(intPos[X], intPos[Y]);
-            if (materialID != g_MaterialAir && materialID != ignoreMaterial)
-                strengthSum += GetMaterialFromID(materialID)->GetIntegrity();
+			// Sum all strengths
+			materialID = GetTerrMatter(intPos[X], intPos[Y]);
+			if (materialID != g_MaterialAir && materialID != ignoreMaterial)
+				strengthSum += GetMaterialFromID(materialID)->GetIntegrity();
 
-            skipped = 0;
-        }
-    }
+			skipped = 0;
+		}
+	}
 
-    return strengthSum;
+	return strengthSum;
 }
 
 
@@ -2108,88 +2112,88 @@ float SceneMan::CastStrengthSumRay(const Vector &start, const Vector &end, int s
 
 float SceneMan::CastMaxStrengthRay(const Vector &start, const Vector &end, int skip)
 {
-    Vector ray = g_SceneMan.ShortestDistance(start, end);
-    float maxStrength = 0;
+	Vector ray = g_SceneMan.ShortestDistance(start, end);
+	float maxStrength = 0;
 
-    int error, dom, sub, domSteps, skipped = skip;
-    int intPos[2], delta[2], delta2[2], increment[2];
-    bool foundPixel = false;
-    unsigned char materialID;
-    Material foundMaterial;
+	int error, dom, sub, domSteps, skipped = skip;
+	int intPos[2], delta[2], delta2[2], increment[2];
+	bool foundPixel = false;
+	unsigned char materialID;
+	Material foundMaterial;
 
-    intPos[X] = std::floor(start.m_X);
-    intPos[Y] = std::floor(start.m_Y);
-    delta[X] = std::floor(start.m_X + ray.m_X) - intPos[X];
-    delta[Y] = std::floor(start.m_Y + ray.m_Y) - intPos[Y];
+	intPos[X] = std::floor(start.m_X);
+	intPos[Y] = std::floor(start.m_Y);
+	delta[X] = std::floor(start.m_X + ray.m_X) - intPos[X];
+	delta[Y] = std::floor(start.m_Y + ray.m_Y) - intPos[Y];
     
-    if (delta[X] == 0 &&  delta[Y] == 0)
-        return false;
+	if (delta[X] == 0 &&  delta[Y] == 0)
+		return false;
 
-    /////////////////////////////////////////////////////
-    // Bresenham's line drawing algorithm preparation
+	/////////////////////////////////////////////////////
+	// Bresenham's line drawing algorithm preparation
 
-    if (delta[X] < 0)
-    {
-        increment[X] = -1;
-        delta[X] = -delta[X];
-    }
-    else
-        increment[X] = 1;
+	if (delta[X] < 0)
+	{
+		increment[X] = -1;
+		delta[X] = -delta[X];
+	}
+	else
+		increment[X] = 1;
 
-    if (delta[Y] < 0)
-    {
-        increment[Y] = -1;
-        delta[Y] = -delta[Y];
-    }
-    else
-        increment[Y] = 1;
+	if (delta[Y] < 0)
+	{
+		increment[Y] = -1;
+		delta[Y] = -delta[Y];
+	}
+	else
+		increment[Y] = 1;
 
-    // Scale by 2, for better accuracy of the error at the first pixel
-    delta2[X] = delta[X] << 1;
-    delta2[Y] = delta[Y] << 1;
+	// Scale by 2, for better accuracy of the error at the first pixel
+	delta2[X] = delta[X] << 1;
+	delta2[Y] = delta[Y] << 1;
 
-    // If X is dominant, Y is submissive, and vice versa.
-    if (delta[X] > delta[Y]) {
-        dom = X;
-        sub = Y;
-    }
-    else
-    {
-        dom = Y;
-        sub = X;
-    }
+	// If X is dominant, Y is submissive, and vice versa.
+	if (delta[X] > delta[Y]) {
+		dom = X;
+		sub = Y;
+	}
+	else
+	{
+		dom = Y;
+		sub = X;
+	}
 
-    error = delta2[sub] - delta[dom];
+	error = delta2[sub] - delta[dom];
 
-    /////////////////////////////////////////////////////
-    // Bresenham's line drawing algorithm execution
+	/////////////////////////////////////////////////////
+	// Bresenham's line drawing algorithm execution
 
-    for (domSteps = 0; domSteps < delta[dom]; ++domSteps)
-    {
-        intPos[dom] += increment[dom];
-        if (error >= 0)
-        {
-            intPos[sub] += increment[sub];
-            error -= delta2[dom];
-        }
-        error += delta2[sub];
+	for (domSteps = 0; domSteps < delta[dom]; ++domSteps)
+	{
+		intPos[dom] += increment[dom];
+		if (error >= 0)
+		{
+			intPos[sub] += increment[sub];
+			error -= delta2[dom];
+		}
+		error += delta2[sub];
 
-        // Only check pixel if we're not due to skip any, or if this is the last pixel
-        if (++skipped > skip || domSteps + 1 == delta[dom])
-        {
-            // Scene wrapping, if necessary
-            g_SceneMan.WrapPosition(intPos[X], intPos[Y]);
+		// Only check pixel if we're not due to skip any, or if this is the last pixel
+		if (++skipped > skip || domSteps + 1 == delta[dom])
+		{
+			// Scene wrapping, if necessary
+			g_SceneMan.WrapPosition(intPos[X], intPos[Y]);
 
-            // Sum all strengths
-            materialID = GetTerrMatter(intPos[X], intPos[Y]);
-            if (materialID != g_MaterialDoor)
-                maxStrength = std::max(maxStrength, GetMaterialFromID(materialID)->GetIntegrity());
+			// Sum all strengths
+			materialID = GetTerrMatter(intPos[X], intPos[Y]);
+			if (materialID != g_MaterialDoor)
+				maxStrength = std::max(maxStrength, GetMaterialFromID(materialID)->GetIntegrity());
 
-            skipped = 0;
-        }
-    }
+			skipped = 0;
+		}
+	}
     
-    return maxStrength;
+	return maxStrength;
 }
 
 
@@ -2204,39 +2208,39 @@ float SceneMan::CastMaxStrengthRay(const Vector &start, const Vector &end, int s
 bool SceneMan::CastStrengthRay(const Vector &start, const Vector &ray, float strength, Vector &result, int skip, unsigned char ignoreMaterial, bool wrap)
 {
 #ifdef DEBUG_BUILD
-    if (m_pDebugLayer)
-        m_pDebugLayer->LockBitmaps();
+	if (m_pDebugLayer)
+		m_pDebugLayer->LockBitmaps();
 #endif
 
-    int hitCount = 0, error, dom, sub, domSteps, skipped = skip;
-    int intPos[2], delta[2], delta2[2], increment[2];
-    bool foundPixel = false;
-    unsigned char materialID;
-    Material const * foundMaterial;
+	int hitCount = 0, error, dom, sub, domSteps, skipped = skip;
+	int intPos[2], delta[2], delta2[2], increment[2];
+	bool foundPixel = false;
+	unsigned char materialID;
+	Material const * foundMaterial;
 
-    intPos[X] = std::floor(start.m_X);
-    intPos[Y] = std::floor(start.m_Y);
-    delta[X] = std::floor(start.m_X + ray.m_X) - intPos[X];
-    delta[Y] = std::floor(start.m_Y + ray.m_Y) - intPos[Y];
+	intPos[X] = std::floor(start.m_X);
+	intPos[Y] = std::floor(start.m_Y);
+	delta[X] = std::floor(start.m_X + ray.m_X) - intPos[X];
+	delta[Y] = std::floor(start.m_Y + ray.m_Y) - intPos[Y];
     
-    if (delta[X] == 0 &&  delta[Y] == 0)
-        return false;
+	if (delta[X] == 0 &&  delta[Y] == 0)
+		return false;
 
-    /////////////////////////////////////////////////////
-    // Bresenham's line drawing algorithm preparation
+	/////////////////////////////////////////////////////
+	// Bresenham's line drawing algorithm preparation
 
-    if (delta[X] < 0)
-    {
-        increment[X] = -1;
-        delta[X] = -delta[X];
-    }
-    else
-        increment[X] = 1;
+	if (delta[X] < 0)
+	{
+		increment[X] = -1;
+		delta[X] = -delta[X];
+	}
+	else
+		increment[X] = 1;
 
-    if (delta[Y] < 0)
-    {
-        increment[Y] = -1;
-        delta[Y] = -delta[Y];
+	if (delta[Y] < 0)
+	{
+		increment[Y] = -1;
+delta[Y] = -delta[Y];
     }
     else
         increment[Y] = 1;
@@ -3557,7 +3561,7 @@ void SceneMan::Update(int screen)
 // Description:     Draws this SceneMan's current graphical representation to a
 //                  BITMAP of choice.
 
-void SceneMan::Draw(BITMAP *pTargetBitmap, BITMAP *pTargetGUIBitmap, const Vector &targetPos, bool skipSkybox, bool skipTerrain)
+void SceneMan::Draw(SDL_Renderer* renderer, const Vector &targetPos, bool skipSkybox, bool skipTerrain)
 {
     if (m_pCurrentScene == nullptr) {
         return;
@@ -3569,17 +3573,20 @@ void SceneMan::Draw(BITMAP *pTargetBitmap, BITMAP *pTargetGUIBitmap, const Vecto
     int team = m_ScreenTeam[m_LastUpdatedScreen];
     SceneLayer *pUnseenLayer = team != Activity::NoTeam ? m_pCurrentScene->GetUnseenLayer(team) : 0;
 
-    // Set up the target box to draw to on the target bitmap, if it is larger than the scene in either dimension
-    Box targetBox(Vector(0, 0), pTargetBitmap->w, pTargetBitmap->h);
+	SDL_Rect viewport;
+	SDL_RenderGetViewport(renderer, &viewport);
 
-    if (!pTerrain->WrapsX() && pTargetBitmap->w > GetSceneWidth())
+    // Set up the target box to draw to on the target bitmap, if it is larger than the scene in either dimension
+    Box targetBox(Vector(0, 0), viewport.w, viewport.h);
+
+    if (!pTerrain->WrapsX() && viewport.w > GetSceneWidth())
     {
-        targetBox.m_Corner.m_X = (pTargetBitmap->w - GetSceneWidth()) / 2;
+        targetBox.m_Corner.m_X = (viewport.w - GetSceneWidth()) / 2;
         targetBox.m_Width = GetSceneWidth();
     }
-    if (!pTerrain->WrapsY() && pTargetBitmap->h > GetSceneHeight())
+    if (!pTerrain->WrapsY() && viewport.h > GetSceneHeight())
     {
-        targetBox.m_Corner.m_Y = (pTargetBitmap->h - GetSceneHeight()) / 2;
+        targetBox.m_Corner.m_Y = (viewport.h - GetSceneHeight()) / 2;
         targetBox.m_Height = GetSceneHeight();
     }
 
@@ -3587,10 +3594,10 @@ void SceneMan::Draw(BITMAP *pTargetBitmap, BITMAP *pTargetGUIBitmap, const Vecto
     {
         case g_LayerTerrainMatter:
             pTerrain->SetToDrawMaterial(true);
-            pTerrain->Draw(pTargetBitmap, targetBox);
+            pTerrain->Draw(renderer, targetBox);
             break;
         case g_LayerMOID:
-            m_pMOIDLayer->Draw(pTargetBitmap, targetBox);
+            m_pMOIDLayer->Draw(renderer, targetBox);
             break;
         // Draw normally
         default:
