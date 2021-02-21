@@ -1,7 +1,7 @@
 #include <SDL2/SDL_render.h>
 #include <SDL2/SDL_surface.h>
 #include <SDL2/SDL_image.h>
-#include "Managers/SDLFrameMan.h" //Needed to get SDL_Renderer
+#include "Managers/FrameMan.h" //Needed to get SDL_Renderer
 
 #include "ContentFile.h"
 #include "AudioMan.h"
@@ -51,7 +51,7 @@ namespace RTE {
 
 	void ContentFile::FreeAllLoaded() {
 		for (int depth = BitDepths::Eight; depth < BitDepths::BitDepthCount; ++depth) {
-			for (const std::pair<std::string, SDL_Texture *> &texture : s_LoadedTextures) {
+			for (const auto &texture : s_LoadedTextures) {
 				SDL_DestroyTexture(texture.second);
 			}
 		}
@@ -159,7 +159,7 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-SDL_Texture ** ContentFile::GetAsAnimation(int frameCount) {
+	SDL_Texture* *  ContentFile::GetAsAnimation(int frameCount) {
 		if (m_DataPath.empty()) {
 			return nullptr;
 		}
@@ -207,6 +207,11 @@ SDL_Texture ** ContentFile::GetAsAnimation(int frameCount) {
 
 		RTEAssert(tempSurface, "Failed to load image file with following path and name:\n\n" + m_DataPathAndReaderPosition + "\nThe file may be corrupt, incorrectly converted or saved with unsupported parameters.\n"+IMG_GetError());
 
+		// Set the colorkey of tempSurface for transparency
+		Uint32 colorKey{SDL_MapRGB(tempSurface->format, 255, 0, 255)};
+		SDL_SetColorKey(tempSurface, SDL_TRUE, colorKey);
+
+		// Create a Texture from the loaded Image with STATIC ACCESS (!) that lives in vram
 		returnTexture = SDL_CreateTextureFromSurface(g_FrameMan.GetRenderer(),  tempSurface);
 
 		SDL_FreeSurface(tempSurface);

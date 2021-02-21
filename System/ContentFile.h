@@ -67,7 +67,7 @@ namespace RTE {
 		/// <summary>
 		/// Resets the entire ContentFile, including its inherited members, to their default settings or values.
 		/// </summary>
-		void Reset() { Clear(); }
+		void Reset() override { Clear(); }
 
 		/// <summary>
 		/// Frees all loaded data used by all ContentFile instances. This should ONLY be done when quitting the app, or after everything else is completely destroyed.
@@ -123,7 +123,7 @@ namespace RTE {
 		/// <param name="storeBitmap">Whether to store the BITMAP in the relevant static map after loading it or not.</param>
 		/// <param name="dataPathToSpecificFrame">Path to a specific frame when loading an animation to avoid overwriting the original preset DataPath when loading each frame.</param>
 		/// <returns>Pointer to the BITMAP loaded from disk.</returns>
-		SDL_Texture * GetAsTexture(int conversionMode = 0, bool storeBitmap = true, const std::string &dataPathToSpecificFrame = "");
+		SDL_Texture * GetAsTexture(bool storeBitmap = true, const std::string &dataPathToSpecificFrame = "");
 
 		/// <summary>
 		/// Gets the data represented by this ContentFile object as an array of Allegro BITMAPs, each representing a frame in the animation.
@@ -171,6 +171,8 @@ namespace RTE {
 		/// <summary>
 		/// Loads and transfers the data represented by this ContentFile object as an SDL_Texture. Ownership of the SDL_Texture IS transferred!
 		/// Note that this is relatively slow since it reads the data from disk each time.
+		/// Also note that the texture is created with static access which means
+		/// it will render out very fast, but will not allow any pixel level access.
 		/// </summary>
 		/// <param name="dataPathToSpecificFrame">Path to a specific frame when loading an animation to avoid overwriting the original preset DataPath when loading each frame.</param>
 		/// <returns>Pointer to the SDL_Texture loaded from disk.</returns>
