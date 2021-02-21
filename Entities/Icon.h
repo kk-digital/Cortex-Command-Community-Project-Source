@@ -72,13 +72,13 @@ namespace RTE {
 		/// Gets the array of 8-bit bitmaps of this Icon, as many as GetFrameCount says. Neither the array nor the BITMAPs are transferred ownership!
 		/// </summary>
 		/// <returns>The BITMAPs in 8bpp of this Icon.</returns>
-		BITMAP ** GetBitmaps8() const { return m_BitmapsIndexed; }
+		SDL_Texture ** GetBitmaps8() const { return m_BitmapsIndexed; }
 
 		/// <summary>
 		/// Gets the array of 32-bit bitmaps of this Icon, as many as GetFrameCount says. Neither the array nor the BITMAPs are transferred ownership!
 		/// </summary>
 		/// <returns>The BITMAPs in 32bpp of this Icon.</returns>
-		BITMAP ** GetBitmaps32() const { return m_BitmapsTrueColor; }
+		SDL_Texture ** GetBitmaps32() const { return m_BitmapsTrueColor; }
 #pragma endregion
 
 #pragma region Operator Overloads
@@ -97,8 +97,8 @@ namespace RTE {
 		ContentFile m_BitmapFile; //!< ContentFile containing the bitmap file of this Icon.		
 		unsigned short m_FrameCount; //!< Number of frames in this Icon's animation.
 
-		BITMAP **m_BitmapsIndexed; //!< The 8bpp BITMAPs of this Icon. The dynamic array IS owned here, but NOT the BITMAPs!
-		BITMAP **m_BitmapsTrueColor; //!< The 32bpp BITMAPs of this Icon. The dynamic array IS owned here, but NOT the BITMAPs!
+		SDL_Texture **m_BitmapsIndexed; //!< The 8bpp BITMAPs of this Icon. The dynamic array IS owned here, but NOT the BITMAPs!
+		SDL_Texture **m_BitmapsTrueColor; //!< The 32bpp BITMAPs of this Icon. The dynamic array IS owned here, but NOT the BITMAPs!
 
 	private:
 
