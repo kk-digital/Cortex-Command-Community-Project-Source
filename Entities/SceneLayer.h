@@ -19,6 +19,7 @@
 #include "FrameMan.h"
 #include "SceneMan.h"
 
+struct SDL_Renderer;
 namespace RTE
 {
 
@@ -457,7 +458,7 @@ ClassInfoGetters
 //                  is overridder with it. It becomes the new source coordinates.
 // Return value:    None.
 
-    virtual void Draw(BITMAP *pTargetBitmap, Box &targetBox, const Vector &scrollOverride = Vector(-1, -1)) const;
+    virtual void Draw(SDL_Renderer* renderer, Box &targetBox, const Vector &scrollOverride = Vector(-1, -1)) const;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -472,7 +473,7 @@ ClassInfoGetters
 //                  is overridder with it. It becomes the new source coordinates.
 // Return value:    None.
 
-    virtual void DrawScaled(BITMAP *pTargetBitmap, Box &targetBox, const Vector &scrollOverride = Vector(-1, -1)) const;
+    virtual void DrawScaled(SDL_Renderer* renderer, Box &targetBox, const Vector &scrollOverride = Vector(-1, -1)) const;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -499,7 +500,7 @@ protected:
 
     ContentFile m_BitmapFile;
 
-    BITMAP *m_pMainBitmap;
+    BITMAP *m_pMainBitmap; //TODO: fix
     // Whether main bitmap is owned by this
     bool m_MainBitmapOwned;
     bool m_DrawTrans;

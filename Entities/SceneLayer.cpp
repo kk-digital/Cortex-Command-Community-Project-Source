@@ -10,6 +10,8 @@
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Inclusions of header files
+#include <SDL2/SDL_rect.h>
+#include <SDL2/SDL_render.h>
 
 #include "SceneLayer.h"
 #include "ContentFile.h"
@@ -586,16 +588,12 @@ struct SLDrawBox
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Draws this SceneLayer's current scrolled position to a bitmap.
 
-void SceneLayer::Draw(BITMAP *pTargetBitmap, Box& targetBox, const Vector &scrollOverride) const
+void SceneLayer::Draw(SDL_Renderer * renderer, Box& targetBox, const Vector &scrollOverride) const
 {
     RTEAssert(m_pMainBitmap, "Data of this SceneLayer has not been loaded before trying to draw!");
 
-    int sourceX = 0;
-    int sourceY = 0;
-    int sourceW = 0;
-    int sourceH = 0;
-    int destX = 0;
-    int destY = 0;
+	SDL_Rect source;
+	SDL_Rect dest;
     list<SLDrawBox> drawList;
 
     int offsetX;
@@ -626,30 +624,34 @@ void SceneLayer::Draw(BITMAP *pTargetBitmap, Box& targetBox, const Vector &scrol
         targetBox.SetHeight(pTargetBitmap->h);
     }
 
-    // Set the clipping rectangle of the target bitmap to match the specified target box
-    set_clip_rect(pTargetBitmap, targetBox.GetCorner().m_X, targetBox.GetCorner().m_Y, targetBox.GetCorner().m_X + targetBox.GetWidth() - 1, targetBox.GetCorner().m_Y + targetBox.GetHeight() - 1);
-
-    // Choose the correct blitting function based on transparency setting
-    void (*pfBlit)(BITMAP *source, BITMAP *dest, int source_x, int source_y, int dest_x, int dest_y, int width, int height) = m_DrawTrans ? &masked_blit : &blit;
+    // Set the clipping rectangle of the renderer to match the specified target box
+	SDL_rect clipRect{targetBox.GetCorner().m_X, targetBox.GetCorner().m_Y, targetBox.GetWidth(), targetBox.GetHeight()};
+	SDL_RenderSetClipRect(renderer, &clipRect);
 
     // See if this SceneLayer is wider AND higher than the target bitmap; then use simple wrapping logic - oterhwise need to tile
     if (m_pMainBitmap->w >= pTargetBitmap->w && m_pMainBitmap->h >= pTargetBitmap->h)
     {
-        sourceX     = offsetX;
-        sourceY     = offsetY;
-        sourceW     = m_pMainBitmap->w - offsetX;
-        sourceH     = m_pMainBitmap->h - offsetY;
-        destX       = targetBox.GetCorner().m_X;
-        destY       = targetBox.GetCorner().m_Y;
-        pfBlit(m_pMainBitmap, pTargetBitmap, sourceX, sourceY, destX, destY, sourceW, sourceH);
+		source.x = offsetX;
+		source.y = offsetY;
+		source.w = m_pMainBitmap->w -offsetX;
+		source.h = m_pMainBitmap->h - offsetY;
 
-        sourceX     = 0;
-        sourceY     = offsetY;
-        sourceW     = offsetX;
-        sourceH     = m_pMainBitmap->h - offsetY;
-        destX       = targetBox.GetCorner().m_X + m_pMainBitmap->w - offsetX;
-        destY       = targetBox.GetCorner().m_Y;
-        pfBlit(m_pMainBitmap, pTargetBitmap, sourceX, sourceY, destX, destY, sourceW, sourceH);
+		dest.x = targetBox.GetCorner().m_X;
+		dest.y = targetBox.GetCorner().m_Y;
+		dest.w = source.w;
+		dest.h = source.h;
+
+		SDL_RenderCopy(renderer, m_pMainBitmap, source, dest);
+
+		source.x = 0;
+		source.y = offsetY;
+		source.w = offsetX;
+		source.h = m_pMainBitmap->h - offsetY;
+
+        dest.x       = targetBox.GetCorner().m_X + m_pMainBitmap->w - offsetX;
+        dest.y       = targetBox.GetCorner().m_Y;
+
+		SDL_RenderCopy(renderer, m_pMainBitmap, source, dest);
 
         sourceX     = offsetX;
         sourceY     = 0;
