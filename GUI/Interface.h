@@ -67,13 +67,13 @@ namespace RTE {
 		/// Sets the color key of the bitmap.
 		/// </summary>
 		/// <param name="Key">Color key.</param>
-		virtual void SetColorKey(unsigned long Key) {}
+		virtual void SetColorKey(unsigned long Key) = 0;
 
 		/// <summary>
 		/// Sets the color key of the bitmap to the color of the pixel in the upper right corner of the bitmap.
 		/// </summary>
 		/// <param name="Key">Color key.</param>
-		virtual void SetColorKey() {}
+		virtual void SetColorKey() = 0;
 
 		/// <summary>
 		/// Gets the color of a pixel at a specific point.
@@ -86,25 +86,31 @@ namespace RTE {
 		/// <param name="X">Position on X axis.</param>
 		/// <param name="Y">Position on Y axis.</param>
 		/// <param name="Color">Color of this pixel.</param>
-		virtual void SetPixel(int X, int Y, unsigned long Color) {}
+		virtual void SetPixel(int X, int Y, unsigned long Color)=0;
 
 		/// <summary>
 		/// Gets the clipping rectangle of the bitmap.
 		/// </summary>
 		/// <param name="Rect">Pointer to GUIRect struct to fill out.</param>
-		virtual void GetClipRect(GUIRect &Rect) {}
+		virtual void GetClipRect(GUIRect *Rect) = 0;
 
 		/// <summary>
 		/// Sets the clipping rectangle of the bitmap.
 		/// </summary>
-		/// <param name="Rect">Rectangle pointer. 0 for no clipping.</param>
-		virtual void SetClipRect(GUIRect &Rect) {}
+		/// <param name="Rect">Rectangle pointer.</param>
+		virtual void SetClipRect(GUIRect *Rect) = 0;
 
 		/// <summary>
-		/// Sets the clipping rectangle of the specified bitmap as the intersection of its current clipping rectangle and the rectangle described by the passed-in GUIRect. 
+		/// Reset clipping
+		/// </summary>
+
+		virtual void ResetClipRect()=0;
+
+		/// <summary>
+		/// Sets the clipping rectangle of the specified bitmap as the intersection of its current clipping rectangle and the rectangle described by the passed-in GUIRect.
 		/// </summary>
 		/// <param name="Rect">Rectangle pointer.</param>
-		virtual void AddClipRect(GUIRect &Rect) {}
+		virtual void AddClipRect(GUIRect *Rect) = 0;
 #pragma endregion
 
 #pragma region Pure Virtual Methods
@@ -115,7 +121,7 @@ namespace RTE {
 		/// <param name="X">Position on X axis.</param>
 		/// <param name="Y">Position on Y axis.</param>
 		/// <param name="Rect">Size of bitmap we are drawing.</param>
-		virtual void Draw(GUIBitmap &pDestBitmap, int X, int Y, GUIRect &Rect) = 0;
+		virtual void Draw(GUIBitmap *pDestBitmap, int X, int Y, GUIRect *Rect) = 0;
 
 		/// <summary>
 		/// Draw a section of this bitmap onto another bitmap ignoring color-keyed pixels.
@@ -124,7 +130,7 @@ namespace RTE {
 		/// <param name="X">Position on X axis.</param>
 		/// <param name="Y">Position on Y axis.</param>
 		/// <param name="Rect">Size of this bitmap.</param>
-		virtual void DrawTrans(GUIBitmap &pDestBitmap, int X, int Y, GUIRect &Rect) = 0;
+		virtual void DrawTrans(GUIBitmap *pDestBitmap, int X, int Y, GUIRect *Rect) = 0;
 
 		/// <summary>
 		/// Draw this bitmap scaled onto another bitmap ignoring color-keyed pixels.
@@ -134,7 +140,7 @@ namespace RTE {
 		/// <param name="Y">Position on Y axis.</param>
 		/// <param name="width">Width of this bitmap.</param>
 		/// <param name="height">Height of this bitmap.</param>
-		virtual void DrawTransScaled(GUIBitmap &pDestBitmap, int X, int Y, int width, int height) = 0;
+		virtual void DrawTransScaled(GUIBitmap *pDestBitmap, int X, int Y, int width, int height) = 0;
 
 		/// <summary>
 		/// Draws a line.
@@ -180,7 +186,7 @@ namespace RTE {
 		/// </summary>
 		/// <param name="Filename">Filename.</param>
 		/// <returns>Created bitmap.</returns>
-		virtual GUIBitmap & CreateBitmap(const std::string Filename) = 0;
+		virtual GUIBitmap * CreateBitmap(const std::string Filename) = 0;
 
 		/// <summary>
 		/// Creates an empty bitmap.
@@ -188,7 +194,7 @@ namespace RTE {
 		/// <param name="Width">Width of bitmap.</param>
 		/// <param name="Height">Height of bitmap.</param>
 		/// <returns>Created bitmap.</returns>
-		virtual GUIBitmap & CreateBitmap(int Width, int Height) = 0;
+		virtual GUIBitmap * CreateBitmap(int Width, int Height) = 0;
 #pragma endregion
 
 #pragma region Destruction
@@ -200,7 +206,7 @@ namespace RTE {
 		/// <summary>
 		/// Destroy the screen.
 		/// </summary>
-		virtual void Destroy() {}
+		virtual void Destroy() =0;
 #pragma endregion
 
 #pragma region Getters
@@ -208,7 +214,7 @@ namespace RTE {
 		/// Gets a bitmap representing the screen.
 		/// </summary>
 		/// <returns>The bitmap representing the screen.</returns>
-		virtual GUIBitmap &GetBitmap() = 0;
+		virtual GUIBitmap *GetBitmap() = 0;
 #pragma endregion
 
 #pragma region Pure Virtual Methods
@@ -219,7 +225,7 @@ namespace RTE {
 		/// <param name="X">Position on X axis.</param>
 		/// <param name="Y">Position on Y axis.</param>
 		/// <param name="Rect">Source rectangle.</param>
-		virtual void DrawBitmap(GUIBitmap &Bitmap, int X, int Y, GUIRect &Rect) = 0;
+		virtual void DrawBitmap(GUIBitmap *Bitmap, int X, int Y, GUIRect *Rect) = 0;
 
 		/// <summary>
 		/// Draws a bitmap onto the back buffer using the color key.
@@ -228,7 +234,7 @@ namespace RTE {
 		/// <param name="X">Position on X axis.</param>
 		/// <param name="Y">Position on Y axis.</param>
 		/// <param name="Rect">Source rectangle.</param>
-		virtual void DrawBitmapTrans(GUIBitmap &Bitmap, int X, int Y, GUIRect &Rect) = 0;
+		virtual void DrawBitmapTrans(GUIBitmap *Bitmap, int X, int Y, GUIRect *Rect) = 0;
 
 		/// <summary>
 		/// Converts an 8bit palette index to a valid pixel format. Primarily used for development in windowed mode.
