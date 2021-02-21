@@ -14,6 +14,11 @@
 #include "GUI.h"
 #include "GUICollectionBox.h"
 
+#if defined(__linux__)
+#include <strings.h>
+using stricmp=strcasecmp;
+#endif
+
 using namespace RTE;
 
 //////////////////////////////////////////////////////////////////////////////////////////
