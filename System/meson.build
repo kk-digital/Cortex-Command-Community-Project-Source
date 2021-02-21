@@ -2,7 +2,7 @@ sources += files(
 # 'Atom.cpp',
 # 'Box.cpp',
 # 'Color.cpp',
-# 'ContentFile.cpp',
+'ContentFile.cpp',
 # 'Controller.cpp',
 # 'DataModule.cpp',
 # 'Entity.cpp',
