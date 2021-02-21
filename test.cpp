@@ -1,5 +1,5 @@
 #include <SDL2/SDL.h>
-#include "Managers/SDLFrameMan.h"
+#include "Managers/FrameMan.h"
 
 using namespace RTE;
 
