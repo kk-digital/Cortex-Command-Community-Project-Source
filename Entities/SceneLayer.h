@@ -502,10 +502,10 @@ protected:
 
     SDL_Texture *m_pMainTexture;
 	//! 1D flattened arrays of Pixels for direct pixel level access
-	void* m_PixelsRW;
+	Uint32* m_PixelsRW;
 	//! This array is WRITE ONLY and must only be accessible while m_pMainTexture
 	//! is locked!
-	void* m_PixelsWO;
+	Uint32* m_PixelsWO;
 	//! Length of one row of Pixels in memory
 	int m_Pitch;
 

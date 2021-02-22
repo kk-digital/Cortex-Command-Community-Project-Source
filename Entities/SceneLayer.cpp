@@ -31,11 +31,11 @@ ConcreteClassInfo(SceneLayer, Entity, 0)
 void SceneLayer::Clear()
 {
     m_TextureFile.Reset();
-	if(m_MainBitmapOwned && m_pMainTexture)
+	if (m_MainBitmapOwned && m_pMainTexture) {
 		SDL_DestroyTexture(m_pMainTexture);
-
-    m_pMainTexture = nullptr;
-	std::free(m_PixelsRW);
+		delete[] m_PixelsRW;
+	}
+	m_pMainTexture = nullptr;
 	m_PixelsRW = nullptr;
 	m_PixelsWO = nullptr;
 	m_Pitch = 0;
@@ -93,10 +93,10 @@ int SceneLayer::Create(ContentFile textureFile,
     m_TextureFile = textureFile;
 
 	// Load the Texture file from disk requesting streaming access
-    m_pMainTexture = m_TextureFile.GetAsTexture(true);
-    RTEAssert(m_pMainTexture, "Failed to load BITMAP in SceneLayer::Create");
+	m_TextureFile.GetAsTexture(m_pMainTexture, m_PixelsRW, m_Pitch, true, true);
+	RTEAssert(m_pMainTexture, "Failed to load SDL_Texture in SceneLayer::Create");
 
-    Create(m_pMainTexture, drawTrans, offset, wrapX, wrapY, scrollInfo);
+	Create(m_pMainTexture, drawTrans, offset, wrapX, wrapY, scrollInfo);
 
     m_MainBitmapOwned = false;
 
@@ -228,12 +228,12 @@ int SceneLayer::Create(const SceneLayer &reference)
 		// Copy the RW access Pixels from the reference
 		try {
 			if (m_PixelsRW) {
-				m_PixelsRW = std::realloc(m_PixelsRW,
-					                       reference.m_Pitch *
-					                           reference.m_pMainTextureHeight);
+				m_PixelsRW = static_cast<Uint32 *>(std::realloc(
+					m_PixelsRW,
+					reference.m_Pitch * reference.m_pMainTextureHeight));
 			} else {
-				m_PixelsRW = std::malloc(reference.m_Pitch *
-					                      reference.m_pMainTextureHeight);
+				m_PixelsRW = new Uint32[reference.m_Pitch *
+					                    reference.m_pMainTextureHeight];
 			}
 		} catch (std::bad_alloc) {
 			RTEAbort("Could not allocate memory for SceneLayer")
