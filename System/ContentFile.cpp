@@ -105,7 +105,8 @@ namespace RTE {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void ContentFile::GetAsTexture(SDL_Texture *&texture, Uint32 *&pixels,
-	                               int &pitch, bool streamingAccess, bool storeTexture,
+	                               int &pitch, bool streamingAccess,
+	                               bool storeTexture,
 	                               const std::string &dataPathToSpecificFrame) {
 		if (m_DataPath.empty()) {
 			return;
@@ -145,10 +146,13 @@ namespace RTE {
 					    m_FormattedReaderPosition);
 				}
 			}
-			// NOTE: This takes ownership of the bitmap file
-			LoadAndReleaseTexture(dataPathToLoad, returnTexture, returnPixels, returnPitch);
+			// NOTE: This takes ownership of the texture file
+			LoadAndReleaseTexture(dataPathToLoad,
+								  returnTexture,
+								  returnPixels,
+			                      returnPitch);
 
-			// Insert the bitmap into the map, PASSING OVER OWNERSHIP OF THE
+			// Insert the texture into the map, PASSING OVER OWNERSHIP OF THE
 			// LOADED DATAFILE
 			if (storeTexture) {
 				s_LoadedTextures.insert(
@@ -171,6 +175,10 @@ namespace RTE {
 		SDL_Texture **returnTextures = new SDL_Texture *[frameCount];
 		SetFormattedReaderPosition(GetFormattedReaderPosition());
 
+		// TODO: If neccessary add additional returns or find better option for
+		// read access
+		Uint32 *emptyPixels;
+		int emptyPitch;
 		// Don't try to append numbers if there's only one frame
 		if (frameCount == 1) {
 			// Check for 000 in the file name in case it is part of an animation but the FrameCount was set to 1. Do not warn about this because it's normal operation, but warn about incorrect extension.
@@ -184,13 +192,13 @@ namespace RTE {
 					SetDataPath(m_DataPathWithoutExtension + "000" + altFileExtension);
 				}
 			}
-			returnTextures[0] = GetAsTexture();
+			GetAsTexture(returnTextures[0],emptyPixels,emptyPitch);
 			return returnTextures;
 		}
 		char framePath[1024];
 		for (int frameNum = 0; frameNum < frameCount; frameNum++) {
 			std::snprintf(framePath, sizeof(framePath), "%s%03i%s", m_DataPathWithoutExtension.c_str(), frameNum, m_DataPathExtension.c_str());
-			returnTextures[frameNum] = GetAsTexture(true, framePath);
+			GetAsTexture(returnTextures[frameNum], emptyPixels,emptyPitch,false,true, framePath);
 		}
 		return returnTextures;
 	}
@@ -212,7 +220,13 @@ namespace RTE {
 
 		tempSurface = IMG_Load(dataPathToLoad.c_str());
 
-		RTEAssert(tempSurface, "Failed to load image file with following path and name:\n\n" + m_DataPathAndReaderPosition + "\nThe file may be corrupt, incorrectly converted or saved with unsupported parameters.\n"+IMG_GetError());
+		RTEAssert(
+		    tempSurface,
+		    "Failed to load image file with following path and name:\n\n" +
+			m_DataPathAndReaderPosition +
+			"\nThe file may be corrupt, incorrectly converted or saved with unsupported parameters.\n" +
+			IMG_GetError()
+			);
 
 		// Set the colorkey of tempSurface for transparency
 		Uint32 colorKey{SDL_MapRGB(tempSurface->format, 255, 0, 255)};
@@ -221,12 +235,15 @@ namespace RTE {
 		// Copy the pixels from the surface for accessing pixel colors
 		Uint32* pixelsRW = new Uint32[tempSurface->w * tempSurface->h];
 
-
-		// Create a Texture from the loaded Image with STATIC ACCESS (!) that lives in vram
-		if(!streamingAccess){
-			returnTexture = SDL_CreateTextureFromSurface(g_FrameMan.GetRenderer(),  tempSurface);
-		}else{
-			returnTexture = SDL_CreateTexture(g_FrameMan.GetRenderer(), SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, tempSurface->w, tempSurface->h);
+		// Create a Texture from the loaded Image with STATIC ACCESS (!) that
+		// lives in vram
+		if (!streamingAccess) {
+			returnTexture = SDL_CreateTextureFromSurface(
+			    g_FrameMan.GetRenderer(), tempSurface);
+		} else {
+			returnTexture = SDL_CreateTexture(
+			    g_FrameMan.GetRenderer(), SDL_PIXELFORMAT_RGBA32,
+			    SDL_TEXTUREACCESS_STREAMING, tempSurface->w, tempSurface->h);
 		}
 
 		int access;
@@ -258,13 +275,13 @@ namespace RTE {
 
 		SDL_FreeSurface(tempSurface);
 
-		RTEAssert(returnTexture, "Failed to create Texture from "+m_DataPathAndReaderPosition+"\n SDL Error: "+ SDL_GetError());
+		RTEAssert(returnTexture, "Failed to create Texture from " +
+		                             m_DataPathAndReaderPosition +
+		                             "\n SDL Error: " + SDL_GetError());
 
 		returnedTexture = returnTexture;
-		if (returnedPixels) {
-			returnedPixels = pixelsRW;
-			returnedPitch = w * SDL_BYTESPERPIXEL(format);
-		}
+		returnedPixels = pixelsRW;
+		returnedPitch = w * SDL_BYTESPERPIXEL(format);
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

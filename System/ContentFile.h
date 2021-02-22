@@ -145,14 +145,15 @@ namespace RTE {
 		/// </param>
 		/// <returns>Pointer to the SDL_Texture loaded
 		/// from disk.</returns>
-		void GetAsTexture(SDL_Texture* &texture, uint32_t* &pixels, int &pitch, bool streamingAccess, bool storeBitmap = true, const std::string &dataPathToSpecificFrame = "");
+		void GetAsTexture(SDL_Texture *&texture, uint32_t *&pixels, int &pitch,
+		                  bool streamingAccess = false, bool storeBitmap = true,
+		                  const std::string &dataPathToSpecificFrame = "");
 
 		/// <summary>
-		/// Gets the data represented by this ContentFile object as an array of Allegro SDL_Textures, each representing a frame in the animation.
+		/// Gets the data represented by this ContentFile object as an array of SDL_Textures, each representing a frame in the animation.
 		/// It loads the SDL_Textures into the static maps if they're not already loaded. Ownership of the SDL_Textures is NOT transferred, but the array itself IS!
 		/// </summary>
 		/// <param name="frameCount">The number of frames to attempt to load, more than 1 frame will mean 00# is appended to datapath to handle naming conventions.</param>
-		/// <param name="conversionMode">The Allegro color conversion mode to use when loading this bitmap.</param>
 		/// <returns>Pointer to the beginning of the array of SDL_Texture pointers loaded from the disk, the length of which is specified with the FrameCount argument.</returns>
 		SDL_Texture ** GetAsAnimation(int frameCount = 1);
 
