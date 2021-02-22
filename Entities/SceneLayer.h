@@ -20,6 +20,7 @@
 #include "SceneMan.h"
 
 struct SDL_Renderer;
+struct SDL_Texture;
 namespace RTE
 {
 
@@ -132,7 +133,7 @@ ClassInfoGetters
 //                  Anything below 0 is an error signal.
 
 // TODO: streamline interface")
-	int Create(BITMAP *pBitmap, bool drawTrans, Vector offset, bool wrapX, bool wrapY, Vector scrollInfo);
+	int Create(SDL_Texture *pTexture, bool drawTrans, Vector offset, bool wrapX, bool wrapY, Vector scrollInfo);
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -187,7 +188,7 @@ ClassInfoGetters
 // Arguments:       None.
 // Return value:    Whether the data in this' bitmap was loaded from a datafile, or generated.
 
-    virtual bool IsFileData() const { return !m_BitmapFile.GetDataPath().empty();  }
+    virtual bool IsFileData() const { return !m_TextureFile.GetDataPath().empty();  }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -219,9 +220,9 @@ ClassInfoGetters
 // Arguments:       None.
 // Return value:    A pointer to the BITMAP object. Ownership is NOT transferred!
 
-    BITMAP * GetBitmap() const { return m_pMainBitmap; }
+    SDL_Texture * GetTexture() const { return m_pMainTexture; }
 
-	size_t GetBitmapHash() const { return m_BitmapFile.GetHash(); }
+	size_t GetBitmapHash() const { return m_TextureFile.GetHash(); }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -330,7 +331,7 @@ ClassInfoGetters
 // Arguments:       None.
 // Return value:    None.
 
-    virtual void LockBitmaps() { acquire_bitmap(m_pMainBitmap); }
+    virtual void LockTexture() { SDL_LockTexture(m_pMainTexture, NULL, &m_PixelsWO, &m_Pitch); }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -343,8 +344,7 @@ ClassInfoGetters
 // Arguments:       None.
 // Return value:    None.
 
-    virtual void UnlockBitmaps() { release_bitmap(m_pMainBitmap); }
-
+	virtual void UnlockTexture();
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          GetPixel
@@ -354,7 +354,7 @@ ClassInfoGetters
 // Arguments:       The X and Y coordinates of which pixel to get.
 // Return value:    An unsigned char specifying the requested pixel's value.
 
-    unsigned char GetPixel(const int pixelX, const int pixelY);
+    Uint32 GetPixel(const int pixelX, const int pixelY);
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -367,7 +367,7 @@ ClassInfoGetters
 //                  The value to set the pixel to.
 // Return value:    None.
 
-    void SetPixel(const int pixelX, const int pixelY, const unsigned char value);
+    void SetPixel(const int pixelX, const int pixelY, const Uint32 value);
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -498,9 +498,21 @@ protected:
     // Member variables
     static Entity::ClassInfo m_sClass;
 
-    ContentFile m_BitmapFile;
+    ContentFile m_TextureFile;
 
-    BITMAP *m_pMainBitmap; //TODO: fix
+    SDL_Texture *m_pMainTexture;
+	//! 1D flattened arrays of Pixels for direct pixel level access
+	void* m_PixelsRW;
+	//! This array is WRITE ONLY and must only be accessible while m_pMainTexture
+	//! is locked!
+	void* m_PixelsWO;
+	//! Length of one row of Pixels in memory
+	int m_Pitch;
+
+	Uint32 m_pMainTextureFormat;
+	int m_pMainTextureWidth;
+	int m_pMainTextureHeight;
+
     // Whether main bitmap is owned by this
     bool m_MainBitmapOwned;
     bool m_DrawTrans;
@@ -514,10 +526,10 @@ protected:
 
     bool m_WrapX;
     bool m_WrapY;
-    int m_FillLeftColor;
-    int m_FillRightColor;
-    int m_FillUpColor;
-    int m_FillDownColor;
+    Uint32 m_FillLeftColor;
+    Uint32 m_FillRightColor;
+    Uint32 m_FillUpColor;
+    Uint32 m_FillDownColor;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////

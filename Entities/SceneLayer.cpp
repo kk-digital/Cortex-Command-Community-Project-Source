@@ -12,6 +12,7 @@
 // Inclusions of header files
 #include <SDL2/SDL_rect.h>
 #include <SDL2/SDL_render.h>
+#include <SDL2/SDL_image.h>
 
 #include "SceneLayer.h"
 #include "ContentFile.h"
@@ -29,18 +30,32 @@ ConcreteClassInfo(SceneLayer, Entity, 0)
 
 void SceneLayer::Clear()
 {
-    m_BitmapFile.Reset();
-    m_pMainBitmap = 0;
+    m_TextureFile.Reset();
+	if(m_MainBitmapOwned && m_pMainTexture)
+		SDL_DestroyTexture(m_pMainTexture);
+
+    m_pMainTexture = nullptr;
+	std::free(m_PixelsRW);
+	m_PixelsRW = nullptr;
+	m_PixelsWO = nullptr;
+	m_Pitch = 0;
+	m_pMainTextureHeight = 0;
+	m_pMainTextureWidth = 0;
+	m_pMainTextureFormat = SDL_PIXELFORMAT_UNKNOWN;
     m_MainBitmapOwned = false;
+
     m_DrawTrans = true;
+
     m_Offset.Reset();
     m_ScrollInfo.SetXY(1.0, 1.0);
     m_ScrollRatio.SetXY(1.0, 1.0);
     m_ScaleFactor.SetXY(1.0, 1.0);
     m_ScaleInverse.SetXY(1.0, 1.0);
     m_ScaledDimensions.SetXY(1.0, 1.0);
+
     m_WrapX = true;
     m_WrapY = true;
+
     m_FillLeftColor = g_MaskColor;
     m_FillRightColor = g_MaskColor;
     m_FillUpColor = g_MaskColor;
@@ -68,24 +83,25 @@ int SceneLayer::Create()
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Makes the SceneLayer object ready for use.
 
-int SceneLayer::Create(ContentFile bitmapFile,
+int SceneLayer::Create(ContentFile textureFile,
                        bool drawTrans,
                        Vector offset,
                        bool wrapX,
                        bool wrapY,
                        Vector scrollInfo)
 {
-    m_BitmapFile = bitmapFile;
+    m_TextureFile = textureFile;
 
-    m_pMainBitmap = m_BitmapFile.GetAsBitmap();
-    RTEAssert(m_pMainBitmap, "Failed to load BITMAP in SceneLayer::Create");
+	// Load the Texture file from disk requesting streaming access
+    m_pMainTexture = m_TextureFile.GetAsTexture(true);
+    RTEAssert(m_pMainTexture, "Failed to load BITMAP in SceneLayer::Create");
 
-    Create(m_pMainBitmap, drawTrans, offset, wrapX, wrapY, scrollInfo);
+    Create(m_pMainTexture, drawTrans, offset, wrapX, wrapY, scrollInfo);
 
     m_MainBitmapOwned = false;
 
     // Establisht he scaled dimensions of this
-    m_ScaledDimensions.SetXY(m_pMainBitmap->w * m_ScaleFactor.m_X, m_pMainBitmap->h * m_ScaleFactor.m_Y);
+    m_ScaledDimensions.SetXY(m_pMainTextureWidth * m_ScaleFactor.m_X, m_pMainTextureHeight * m_ScaleFactor.m_Y);
 
     return 0;
 }
@@ -96,16 +112,24 @@ int SceneLayer::Create(ContentFile bitmapFile,
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Makes the SceneLayer object ready for use.
 
-int SceneLayer::Create(BITMAP *pBitmap,
+int SceneLayer::Create(SDL_Texture *pTexture,
                        bool drawTrans,
                        Vector offset,
                        bool wrapX,
                        bool wrapY,
                        Vector scrollInfo)
 {
-    m_pMainBitmap = pBitmap;
-    RTEAssert(m_pMainBitmap, "Null bitmap passed in when creating SceneLayer");
-    m_MainBitmapOwned = true;
+
+	RTEAssert(pTexture, "Null bitmap passed in when creating SceneLayer");
+	int access;
+
+	SDL_QueryTexture(pTexture, &m_pMainTextureFormat, &access, &m_pMainTextureWidth, &m_pMainTextureHeight);
+
+	RTEAssert(access == SDL_TEXTUREACCESS_STREAMING,
+		      "Non streaming access texture passed in when creating SceneLayer")
+	m_pMainTexture = pTexture;
+
+	m_MainBitmapOwned = true;
 
     m_DrawTrans = drawTrans;
     m_Offset = offset;
@@ -119,11 +143,11 @@ int SceneLayer::Create(BITMAP *pBitmap,
         if (m_ScrollInfo.m_X == -1.0 || m_ScrollInfo.m_X == 1.0)
             m_ScrollRatio.m_X = 1.0;
         else if (m_ScrollInfo.m_X == g_FrameMan.GetPlayerScreenWidth())
-            m_ScrollRatio.m_X = m_pMainBitmap->w - g_FrameMan.GetPlayerScreenWidth();
-        else if (m_pMainBitmap->w == g_FrameMan.GetPlayerScreenWidth())
+            m_ScrollRatio.m_X = m_pMainTextureWidth - g_FrameMan.GetPlayerScreenWidth();
+        else if (m_pMainTextureWidth == g_FrameMan.GetPlayerScreenWidth())
             m_ScrollRatio.m_X = 1.0f / (float)(m_ScrollInfo.m_X - g_FrameMan.GetPlayerScreenWidth());
         else
-            m_ScrollRatio.m_X = (float)(m_pMainBitmap->w - g_FrameMan.GetPlayerScreenWidth()) /
+            m_ScrollRatio.m_X = (float)(m_pMainTextureWidth - g_FrameMan.GetPlayerScreenWidth()) /
                                 (float)(m_ScrollInfo.m_X - g_FrameMan.GetPlayerScreenWidth());
 
     if (m_WrapY)
@@ -132,23 +156,40 @@ int SceneLayer::Create(BITMAP *pBitmap,
         if (m_ScrollInfo.m_Y == -1.0 || m_ScrollInfo.m_Y == 1.0)
             m_ScrollRatio.m_Y = 1.0;
         else if (m_ScrollInfo.m_Y == g_FrameMan.GetPlayerScreenHeight())
-            m_ScrollRatio.m_Y = m_pMainBitmap->h - g_FrameMan.GetPlayerScreenHeight();
-        else if (m_pMainBitmap->h == g_FrameMan.GetPlayerScreenHeight())
+            m_ScrollRatio.m_Y = m_pMainTextureHeight - g_FrameMan.GetPlayerScreenHeight();
+        else if (m_pMainTextureHeight == g_FrameMan.GetPlayerScreenHeight())
             m_ScrollRatio.m_Y = 1.0f / (float)(m_ScrollInfo.m_Y - g_FrameMan.GetPlayerScreenHeight());
         else
-            m_ScrollRatio.m_Y = (float)(m_pMainBitmap->h - g_FrameMan.GetPlayerScreenHeight()) /
+            m_ScrollRatio.m_Y = (float)(m_pMainTextureHeight - g_FrameMan.GetPlayerScreenHeight()) /
                                 (float)(m_ScrollInfo.m_Y - g_FrameMan.GetPlayerScreenHeight());
 
-    // Establisht he scaled dimensions of this
-    m_ScaledDimensions.SetXY(m_pMainBitmap->w * m_ScaleFactor.m_X, m_pMainBitmap->h * m_ScaleFactor.m_Y);
+    // Establish the scaled dimensions of this
+    m_ScaledDimensions.SetXY(m_pMainTextureWidth * m_ScaleFactor.m_X, m_pMainTextureHeight * m_ScaleFactor.m_Y);
 
     // Sampled color at the edges of the layer that can be used to fill gap if the layer isn't large enough to cover a target bitmap
-    m_FillLeftColor = m_WrapX ? g_MaskColor : _getpixel(m_pMainBitmap, 0, m_pMainBitmap->h / 2);
-    m_FillRightColor = m_WrapX ? g_MaskColor : _getpixel(m_pMainBitmap, m_pMainBitmap->w - 1, m_pMainBitmap->h / 2);
-    m_FillUpColor = m_WrapY ? g_MaskColor : _getpixel(m_pMainBitmap, m_pMainBitmap->w / 2, 0);
-    m_FillDownColor = m_WrapY ? g_MaskColor : _getpixel(m_pMainBitmap, m_pMainBitmap->w / 2, m_pMainBitmap->h - 1);
+	m_FillLeftColor =
+		m_WrapX ? g_MaskColor
+		        : reinterpret_cast<Uint32 *>(
+		              m_PixelsRW)[m_pMainTextureWidth *
+		                          (m_pMainTextureHeight / 2)];
+	m_FillRightColor =
+		m_WrapX
+		    ? g_MaskColor
+		    : reinterpret_cast<Uint32 *>(
+		          m_PixelsRW)[m_pMainTextureWidth * (m_pMainTextureHeight / 2) +
+		                    m_pMainTextureWidth - 1];
+	m_FillUpColor = m_WrapY ? g_MaskColor
+		                    : reinterpret_cast<Uint32 *>(
+		                          m_PixelsRW)[(m_pMainTextureWidth / 2) - 1];
 
-    return 0;
+	m_FillDownColor =
+		m_WrapY
+		    ? g_MaskColor
+		    : reinterpret_cast<Uint32 *>(
+		          m_PixelsRW)[m_pMainTextureWidth * (m_pMainTextureHeight - 1) +
+		                      (m_pMainTextureWidth / 2)];
+
+	return 0;
 }
 
 
@@ -162,21 +203,51 @@ int SceneLayer::Create(const SceneLayer &reference)
 {
     Entity::Create(reference);
 
-    m_BitmapFile = reference.m_BitmapFile;
+    m_TextureFile = reference.m_TextureFile;
 
     // Deep copy the bitmap
-    if (reference.m_pMainBitmap)
+    if (reference.m_pMainTexture)
     {
         // Copy the bitmap from the ContentFile, because we're going to be changing it!
-        BITMAP *pCopyFrom = reference.m_pMainBitmap;
+        SDL_Texture *pCopyFrom = reference.m_pMainTexture;
         RTEAssert(pCopyFrom, "Couldn't load the bitmap file specified for SceneLayer!");
 
-        // Destination
-        m_pMainBitmap = create_bitmap_ex(8, pCopyFrom->w, pCopyFrom->h);
-        RTEAssert(m_pMainBitmap, "Failed to allocate BITMAP in SceneLayer::Create");
 
-        // Copy!
-        blit(pCopyFrom, m_pMainBitmap, 0, 0, 0, 0, pCopyFrom->w, pCopyFrom->h);
+
+
+        // Destination
+		m_pMainTexture = SDL_CreateTexture(
+			g_FrameMan.GetRenderer(), reference.m_pMainTextureFormat,
+			SDL_TEXTUREACCESS_STREAMING, reference.m_pMainTextureWidth,
+			reference.m_pMainTextureHeight);
+
+
+		RTEAssert(m_pMainTexture,
+			      "Failed to allocate SDL_Texture in SceneLayer::Create");
+
+		// Copy the RW access Pixels from the reference
+		try {
+			if (m_PixelsRW) {
+				m_PixelsRW = std::realloc(m_PixelsRW,
+					                       reference.m_Pitch *
+					                           reference.m_pMainTextureHeight);
+			} else {
+				m_PixelsRW = std::malloc(reference.m_Pitch *
+					                      reference.m_pMainTextureHeight);
+			}
+		} catch (std::bad_alloc) {
+			RTEAbort("Could not allocate memory for SceneLayer")
+		}
+
+		std::memcpy(m_PixelsRW, reference.m_PixelsRW,
+			   reference.m_Pitch * reference.m_pMainTextureHeight);
+
+		// Lock the newly created Texture
+		SDL_LockTexture(m_pMainTexture, nullptr, &m_PixelsWO, &m_Pitch);
+		// Copy the RW pixels to the Texture
+		std::memcpy(m_PixelsWO, m_PixelsRW, m_Pitch*m_pMainTextureHeight);
+		// Unlock the Texture again
+		SDL_UnlockTexture(m_pMainTexture);
 
         InitScrollRatios();
 
@@ -226,19 +297,37 @@ int SceneLayer::LoadData()
     blit(pCopyFrom, m_pMainBitmap, 0, 0, 0, 0, pCopyFrom->w, pCopyFrom->h);
 */
     // Re-load directly from disk each time; don't do any caching of these bitmaps
-    m_pMainBitmap = m_BitmapFile.GetAsBitmap(COLORCONV_NONE, false);
+    m_pMainTexture = m_TextureFile.GetAsTexture(false);
 
     m_MainBitmapOwned = true;
 
     InitScrollRatios();
 
-    // Sampled color at the edges of the layer that can be used to fill gap if the layer isn't large enough to cover a target bitmap
-    m_FillLeftColor = m_WrapX ? g_MaskColor : _getpixel(m_pMainBitmap, 0, m_pMainBitmap->h / 2);
-    m_FillRightColor = m_WrapX ? g_MaskColor : _getpixel(m_pMainBitmap, m_pMainBitmap->w - 1, m_pMainBitmap->h / 2);
-    m_FillUpColor = m_WrapY ? g_MaskColor : _getpixel(m_pMainBitmap, m_pMainBitmap->w / 2, 0);
-    m_FillDownColor = m_WrapY ? g_MaskColor : _getpixel(m_pMainBitmap, m_pMainBitmap->w / 2, m_pMainBitmap->h - 1);
+	// Sampled color at the edges of the layer that can be used to fill gap if
+	// the layer isn't large enough to cover a target bitmap
+	m_FillLeftColor =
+		m_WrapX
+		    ? g_MaskColor
+		    : reinterpret_cast<Uint32 *>(
+		          m_PixelsRW)[m_pMainTextureWidth * (m_pMainTextureHeight / 2)];
+	m_FillRightColor =
+		m_WrapX
+		    ? g_MaskColor
+		    : reinterpret_cast<Uint32 *>(
+		          m_PixelsRW)[m_pMainTextureWidth * (m_pMainTextureHeight / 2) +
+		                      m_pMainTextureWidth - 1];
+	m_FillUpColor = m_WrapY ? g_MaskColor
+		                    : reinterpret_cast<Uint32 *>(
+		                          m_PixelsRW)[(m_pMainTextureWidth / 2) - 1];
 
-    return 0;
+	m_FillDownColor =
+		m_WrapY
+		    ? g_MaskColor
+		    : reinterpret_cast<Uint32 *>(
+		          m_PixelsRW)[m_pMainTextureWidth * (m_pMainTextureHeight - 1) +
+		                      (m_pMainTextureWidth / 2)];
+
+	return 0;
 }
 
 
@@ -253,15 +342,17 @@ int SceneLayer::SaveData(string bitmapPath)
         return -1;
 
     // Save out the bitmap
-    if (m_pMainBitmap)
+    if (m_pMainTexture)
     {
-        PALETTE palette;
-        get_palette(palette);
-        if (save_bmp(bitmapPath.c_str(), m_pMainBitmap, palette) != 0)
-            return -1;
+		SDL_Surface *savePNG = SDL_CreateRGBSurfaceWithFormatFrom(m_PixelsRW, m_pMainTextureWidth, m_pMainTextureHeight, 32, m_Pitch, m_pMainTextureFormat);
+		if(!savePNG){
+			return -1;
+		}
+		if(!IMG_SavePNG(savePNG, bitmapPath.c_str()))
+			return -1;
 
         // Set the new path to point to the new file location - only if there was a successful save of the bitmap
-        m_BitmapFile.SetDataPath(bitmapPath);
+        m_TextureFile.SetDataPath(bitmapPath);
     }
 
     return 0;
@@ -275,9 +366,16 @@ int SceneLayer::SaveData(string bitmapPath)
 
 int SceneLayer::ClearData()
 {
-    if (m_pMainBitmap && m_MainBitmapOwned)
-        destroy_bitmap(m_pMainBitmap);
-    m_pMainBitmap = 0;
+    if (m_pMainTexture && m_MainBitmapOwned)
+		SDL_DestroyTexture(m_pMainTexture);
+    m_pMainTexture = nullptr;
+	m_pMainTextureWidth = 0;
+	m_pMainTextureHeight = 0;
+	m_pMainTextureFormat = SDL_PIXELFORMAT_UNKNOWN;
+	m_PixelsWO = nullptr;
+	free(m_PixelsRW);
+	m_PixelsRW = nullptr;
+	m_Pitch = 0;
 
     m_MainBitmapOwned = false;
 
@@ -296,7 +394,7 @@ int SceneLayer::ClearData()
 int SceneLayer::ReadProperty(const std::string_view &propName, Reader &reader)
 {
     if (propName == "BitmapFile")
-        reader >> m_BitmapFile;
+        reader >> m_TextureFile;
     else if (propName == "DrawTransparent")
         reader >> m_DrawTrans;
     else if (propName == "Offset")
@@ -332,7 +430,7 @@ int SceneLayer::Save(Writer &writer) const
     Entity::Save(writer);
 
     writer.NewProperty("BitmapFile");
-    writer << m_BitmapFile;
+    writer << m_TextureFile;
     writer.NewProperty("DrawTransparent");
     writer << m_DrawTrans;
     writer.NewProperty("Offset");
@@ -358,7 +456,7 @@ int SceneLayer::Save(Writer &writer) const
 void SceneLayer::Destroy(bool notInherited)
 {
     if (m_MainBitmapOwned)
-        destroy_bitmap(m_pMainBitmap);
+        SDL_DestroyTexture(m_pMainTexture);
 
     if (!notInherited)
         Entity::Destroy();
@@ -375,10 +473,15 @@ void SceneLayer::SetScaleFactor(const Vector newScale)
 {
     m_ScaleFactor = newScale;
     m_ScaleInverse.SetXY(1.0f / newScale.m_X, 1.0f / newScale.m_Y);
-    if (m_pMainBitmap)
-        m_ScaledDimensions.SetXY(m_pMainBitmap->w * newScale.m_X, m_pMainBitmap->h * newScale.m_Y);
+    if (m_pMainTexture)
+        m_ScaledDimensions.SetXY(m_pMainTextureWidth * newScale.m_X, m_pMainTextureHeight * newScale.m_Y);
 }
 
+void SceneLayer::UnlockTexture()
+{
+	SDL_UnlockTexture(m_pMainTexture);
+	m_PixelsWO = nullptr;
+}
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          GetPixel
@@ -386,14 +489,13 @@ void SceneLayer::SetScaleFactor(const Vector newScale)
 // Description:     Gets a specific pixel from the main bitmap of this SceneLayer.
 //                  LockColorBitmap() must be called before using this method.
 
-unsigned char SceneLayer::GetPixel(const int pixelX, const int pixelY)
+Uint32 SceneLayer::GetPixel(const int pixelX, const int pixelY)
 {
     // Make sure it's within the boundaries of the bitmap.
-    if (pixelX < 0 || pixelX >= m_pMainBitmap->w || pixelY < 0 || pixelY >= m_pMainBitmap->h)
+    if (pixelX < 0 || pixelX >= m_pMainTextureWidth || pixelY < 0 || pixelY >= m_pMainTextureHeight)
         return 0;
-//    RTEAssert(m_pTerrain->GetBitmap()->m_LockCount > 0, "Trying to access unlocked terrain bitmap");
-//    RTEAssert(is_inside_bitmap(m_pMainBitmap, pixelX, pixelY, 0), "Trying to access pixel outside of SceneLayer's bitmap's boundaries!");
-    return  _getpixel(m_pMainBitmap, pixelX, pixelY);
+
+    return reinterpret_cast<Uint32 *>(m_PixelsRW)[pixelX + pixelY * m_Pitch/4];
 }
 
 
@@ -404,22 +506,20 @@ unsigned char SceneLayer::GetPixel(const int pixelX, const int pixelY)
 //                  specific value. LockColorBitmap() must be called before using this
 //                  method.
 
-void SceneLayer::SetPixel(const int pixelX, const int pixelY, const unsigned char value)
+void SceneLayer::SetPixel(const int pixelX, const int pixelY, const Uint32 value)
 {
     RTEAssert(m_MainBitmapOwned, "Trying to set a pixel of a SceneLayer's bitmap which isn't owned!");
 
     // Make sure it's within the boundaries of the bitmap.
     if (pixelX < 0 ||
-       pixelX >= m_pMainBitmap->w ||
+       pixelX >= m_pMainTextureWidth ||
        pixelY < 0 ||
-       pixelY >= m_pMainBitmap->h)
+       pixelY >= m_pMainTextureHeight)
        return;
-//    RTEAssert(m_pTerrain->GetBitmap()->m_LockCount > 0, "Trying to access unlocked terrain bitmap");
-//    RTEAssert(is_inside_bitmap(m_pMainBitmap, pixelX, pixelY, 0), "Trying to access pixel outside of SceneLayer's bitmap's boundaries!");
-//    _putpixel(m_pMainBitmap, pixelX, pixelY, value);
-    putpixel(m_pMainBitmap, pixelX, pixelY, value);
-}
 
+	reinterpret_cast<Uint32 *>(m_PixelsRW)[pixelX + pixelY * m_Pitch / 4] = value;
+	reinterpret_cast<Uint32 *>(m_PixelsWO)[pixelX + pixelY * m_Pitch / 4] = value;
+}
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          ForceBounds
@@ -430,8 +530,8 @@ void SceneLayer::SetPixel(const int pixelX, const int pixelY, const unsigned cha
 bool SceneLayer::ForceBounds(int &posX, int &posY, bool scaled) const
 {
     bool wrapped = false;
-    int width = scaled ? m_ScaledDimensions.GetFloorIntX() : m_pMainBitmap->w;
-    int height = scaled ? m_ScaledDimensions.GetFloorIntY() : m_pMainBitmap->h;
+    int width = scaled ? m_ScaledDimensions.GetFloorIntX() : m_pMainTextureWidth;
+    int height = scaled ? m_ScaledDimensions.GetFloorIntY() : m_pMainTextureHeight;
 
     if (posX < 0) {
         if (m_WrapX)
@@ -508,8 +608,8 @@ bool SceneLayer::ForceBounds(Vector &pos, bool scaled) const
 bool SceneLayer::WrapPosition(int &posX, int &posY, bool scaled) const
 {
     bool wrapped = false;
-    int width = scaled ? m_ScaledDimensions.GetFloorIntX() : m_pMainBitmap->w;
-    int height = scaled ? m_ScaledDimensions.GetFloorIntY() : m_pMainBitmap->h;
+    int width = scaled ? m_ScaledDimensions.GetFloorIntX() : m_pMainTextureWidth;
+    int height = scaled ? m_ScaledDimensions.GetFloorIntY() : m_pMainTextureHeight;
 
     if (m_WrapX) {
         if (posX < 0) {
@@ -590,13 +690,16 @@ struct SLDrawBox
 
 void SceneLayer::Draw(SDL_Renderer * renderer, Box& targetBox, const Vector &scrollOverride) const
 {
-    RTEAssert(m_pMainBitmap, "Data of this SceneLayer has not been loaded before trying to draw!");
+    RTEAssert(m_pMainTexture, "Data of this SceneLayer has not been loaded before trying to draw!");
 
 	SDL_Rect source;
 	SDL_Rect dest;
     list<SLDrawBox> drawList;
 
-    int offsetX;
+	SDL_Rect viewportDimensions;
+	SDL_RenderGetViewport(renderer, &viewportDimensions);
+
+	int offsetX;
     int offsetY;
     bool scrollOverridden = !(scrollOverride.m_X == -1 && scrollOverride.m_Y == -1);
 
@@ -620,54 +723,63 @@ void SceneLayer::Draw(SDL_Renderer * renderer, Box& targetBox, const Vector &scr
     if (targetBox.IsEmpty())
     {
         targetBox.SetCorner(Vector(0, 0));
-        targetBox.SetWidth(pTargetBitmap->w);
-        targetBox.SetHeight(pTargetBitmap->h);
+        targetBox.SetWidth(viewportDimensions.w);
+        targetBox.SetHeight(viewportDimensions.h);
     }
 
     // Set the clipping rectangle of the renderer to match the specified target box
-	SDL_rect clipRect{targetBox.GetCorner().m_X, targetBox.GetCorner().m_Y, targetBox.GetWidth(), targetBox.GetHeight()};
+	SDL_Rect clipRect{static_cast<int>(targetBox.GetCorner().m_X),
+		              static_cast<int>(targetBox.GetCorner().m_Y),
+		              static_cast<int>(targetBox.GetWidth()),
+		              static_cast<int>(targetBox.GetHeight())};
 	SDL_RenderSetClipRect(renderer, &clipRect);
 
-    // See if this SceneLayer is wider AND higher than the target bitmap; then use simple wrapping logic - oterhwise need to tile
-    if (m_pMainBitmap->w >= pTargetBitmap->w && m_pMainBitmap->h >= pTargetBitmap->h)
+	// See if this SceneLayer is wider AND higher than the target bitmap; then use simple wrapping logic - oterhwise need to tile
+    if (m_pMainTextureWidth >= viewportDimensions.w && m_pMainTextureHeight >= viewportDimensions.h)
     {
 		source.x = offsetX;
 		source.y = offsetY;
-		source.w = m_pMainBitmap->w -offsetX;
-		source.h = m_pMainBitmap->h - offsetY;
+		source.w = m_pMainTextureWidth -offsetX;
+		source.h = m_pMainTextureHeight - offsetY;
 
 		dest.x = targetBox.GetCorner().m_X;
 		dest.y = targetBox.GetCorner().m_Y;
 		dest.w = source.w;
 		dest.h = source.h;
 
-		SDL_RenderCopy(renderer, m_pMainBitmap, source, dest);
+		SDL_RenderCopy(renderer, m_pMainTexture, &source, &dest);
 
 		source.x = 0;
 		source.y = offsetY;
 		source.w = offsetX;
-		source.h = m_pMainBitmap->h - offsetY;
+		source.h = m_pMainTextureHeight - offsetY;
 
-        dest.x       = targetBox.GetCorner().m_X + m_pMainBitmap->w - offsetX;
+        dest.x       = targetBox.GetCorner().m_X + m_pMainTextureWidth - offsetX;
         dest.y       = targetBox.GetCorner().m_Y;
+		dest.w = source.w;
+		dest.h = source.h;
 
-		SDL_RenderCopy(renderer, m_pMainBitmap, source, dest);
+		SDL_RenderCopy(renderer, m_pMainTexture, &source, &dest);
 
-        sourceX     = offsetX;
-        sourceY     = 0;
-        sourceW     = m_pMainBitmap->w - offsetX;
-        sourceH     = offsetY;
-        destX       = targetBox.GetCorner().m_X;
-        destY       = targetBox.GetCorner().m_Y + m_pMainBitmap->h - offsetY;
-        pfBlit(m_pMainBitmap, pTargetBitmap, sourceX, sourceY, destX, destY, sourceW, sourceH);
+        source.x     = offsetX;
+        source.y     = 0;
+        source.w     = m_pMainTextureWidth - offsetX;
+        source.h     = offsetY;
+        dest.x       = targetBox.GetCorner().m_X;
+        dest.y       = targetBox.GetCorner().m_Y + m_pMainTextureHeight - offsetY;
+		dest.w = source.w;
+		dest.h = source.h;
+		SDL_RenderCopy(renderer, m_pMainTexture, &source, &dest);
 
-        sourceX     = 0;
-        sourceY     = 0;
-        sourceW     = offsetX;
-        sourceH     = offsetY;
-        destX       = targetBox.GetCorner().m_X + m_pMainBitmap->w - offsetX;
-        destY       = targetBox.GetCorner().m_Y + m_pMainBitmap->h - offsetY;
-        pfBlit(m_pMainBitmap, pTargetBitmap, sourceX, sourceY, destX, destY, sourceW, sourceH);
+        source.x     = 0;
+        source.y     = 0;
+        source.w     = offsetX;
+        source.h     = offsetY;
+        dest.x       = targetBox.GetCorner().m_X + m_pMainTextureWidth - offsetX;
+        dest.y       = targetBox.GetCorner().m_Y + m_pMainTextureHeight - offsetY;
+		dest.w = source.w;
+		dest.h = source.h;
+		SDL_RenderCopy(renderer, m_pMainTexture, &source, &dest);
     }
     // Target bitmap is larger in some dimension, so need to draw this tiled as many times as necessary to cover the whole target
     else
@@ -675,8 +787,8 @@ void SceneLayer::Draw(SDL_Renderer * renderer, Box& targetBox, const Vector &scr
         int tiledOffsetX = 0;
         int tiledOffsetY = 0;
         // Use the dimensions of the target box, if it has any area at all
-        int targetWidth = MIN(pTargetBitmap->w, targetBox.GetWidth());
-        int targetHeight = MIN(pTargetBitmap->h, targetBox.GetHeight());
+        int targetWidth = std::min(viewportDimensions.w, static_cast<int>(targetBox.GetWidth()));
+        int targetHeight = std::min(viewportDimensions.h, static_cast<int>(targetBox.GetHeight()));
         int toCoverX = offsetX + targetBox.GetCorner().m_X + targetWidth;
         int toCoverY = offsetY + targetBox.GetCorner().m_Y + targetHeight;
 
@@ -685,8 +797,8 @@ void SceneLayer::Draw(SDL_Renderer * renderer, Box& targetBox, const Vector &scr
         bool screenLargerThanSceneY = false;
         if (!scrollOverridden && g_SceneMan.GetSceneWidth() > 0)
         {
-            screenLargerThanSceneX = pTargetBitmap->w > g_SceneMan.GetSceneWidth();
-            screenLargerThanSceneY = pTargetBitmap->h > g_SceneMan.GetSceneHeight();
+            screenLargerThanSceneX = viewportDimensions.w > g_SceneMan.GetSceneWidth();
+            screenLargerThanSceneY = viewportDimensions.h > g_SceneMan.GetSceneHeight();
         }
 
         // Y tiling
@@ -695,46 +807,87 @@ void SceneLayer::Draw(SDL_Renderer * renderer, Box& targetBox, const Vector &scr
             // X tiling
             do
             {
-                sourceX     = 0;
-                sourceY     = 0;
-                sourceW     = m_pMainBitmap->w;
-                sourceH     = m_pMainBitmap->h;
+                source.x     = 0;
+                source.y     = 0;
+                source.w     = m_pMainTextureWidth;
+                source.h     = m_pMainTextureHeight;
                 // If the unwrapped and untiled direction can't cover the target area, place it in the middle of the target bitmap, and leave the excess perimeter on each side untouched
-                destX       = (!m_WrapX && screenLargerThanSceneX) ? ((pTargetBitmap->w / 2) - (m_pMainBitmap->w / 2)) : (targetBox.GetCorner().m_X + tiledOffsetX - offsetX);
-                destY       = (!m_WrapY && screenLargerThanSceneY) ? ((pTargetBitmap->h / 2) - (m_pMainBitmap->h / 2)) : (targetBox.GetCorner().m_Y + tiledOffsetY - offsetY);
-                pfBlit(m_pMainBitmap, pTargetBitmap, sourceX, sourceY, destX, destY, sourceW, sourceH);
+                dest.x       = (!m_WrapX && screenLargerThanSceneX) ? ((viewportDimensions.w / 2) - (m_pMainTextureWidth / 2)) : (targetBox.GetCorner().m_X + tiledOffsetX - offsetX);
+                dest.y       = (!m_WrapY && screenLargerThanSceneY) ? ((viewportDimensions.h / 2) - (m_pMainTextureHeight / 2)) : (targetBox.GetCorner().m_Y + tiledOffsetY - offsetY);
+				dest.w = source.w;
+				dest.h = source.h;
+				SDL_RenderCopy(renderer, m_pMainTexture, &source, &dest);
 
-                tiledOffsetX += m_pMainBitmap->w;
+                tiledOffsetX += m_pMainTextureWidth;
             }
             // Only tile if we're supposed to wrap widthwise
             while (m_WrapX && toCoverX > tiledOffsetX);
 
-            tiledOffsetY += m_pMainBitmap->h;
+            tiledOffsetY += m_pMainTextureHeight;
         }
         // Only tile if we're supposed to wrap heightwise
         while (m_WrapY && toCoverY > tiledOffsetY);
 
 // TODO: Do this above instead, testing down here only
         // Detect if nonwrapping layer dimensions can't cover the whole target area with its main bitmap. If so, fill in the gap with appropriate solid color sampled from the hanging edge
-        if (!m_WrapX && !screenLargerThanSceneX && m_ScrollRatio.m_X < 0)
-        {
-            if (m_FillLeftColor != g_MaskColor && offsetX != 0)
-                rectfill(pTargetBitmap, targetBox.GetCorner().m_X, targetBox.GetCorner().m_Y, targetBox.GetCorner().m_X - offsetX, targetBox.GetCorner().m_Y + targetBox.GetHeight(), m_FillLeftColor);
-            if (m_FillRightColor != g_MaskColor)
-                rectfill(pTargetBitmap, (targetBox.GetCorner().m_X - offsetX) + m_pMainBitmap->w, targetBox.GetCorner().m_Y, targetBox.GetCorner().m_X + targetBox.GetWidth(), targetBox.GetCorner().m_Y + targetBox.GetHeight(), m_FillRightColor);
-        }
+		SDL_PixelFormat *format = SDL_AllocFormat(m_pMainTextureFormat);
+		uint_fast8_t r, g, b, a;
+		if (!m_WrapX && !screenLargerThanSceneX && m_ScrollRatio.m_X < 0) {
+			if (m_FillLeftColor != g_MaskColor && offsetX != 0){
+				SDL_GetRGBA(m_FillLeftColor, format, &r, &g, &b, &a);
+				SDL_SetRenderDrawColor(renderer, r, g, b, a);
+				SDL_Rect target{
+					static_cast<int>(targetBox.GetCorner().m_X),
+					static_cast<int>(targetBox.GetCorner().m_Y),
+					static_cast<int>(-offsetX),
+					static_cast<int>(targetBox.GetHeight())
+				};
+				SDL_RenderDrawRect(renderer, &target);
+			}
+            if (m_FillRightColor != g_MaskColor){
+				SDL_GetRGBA(m_FillRightColor, format, &r, &g, &b, &a);
+				SDL_SetRenderDrawColor(renderer, r, g, b, a);
+				SDL_Rect target{
+					static_cast<int>(targetBox.GetCorner().m_X-offsetX)+m_pMainTextureWidth,
+					static_cast<int>(targetBox.GetCorner().m_Y),
+					static_cast<int>(targetBox.GetWidth()+offsetX),
+					static_cast<int>(-offsetY)
+				};
+				SDL_RenderDrawRect(renderer, &target);
+			}
+		}
 
-        if (!m_WrapY && !screenLargerThanSceneY && m_ScrollRatio.m_Y < 0)
+		if (!m_WrapY && !screenLargerThanSceneY && m_ScrollRatio.m_Y < 0)
         {
-            if (m_FillUpColor != g_MaskColor && offsetY != 0)
-                rectfill(pTargetBitmap, targetBox.GetCorner().m_X, targetBox.GetCorner().m_Y, targetBox.GetCorner().m_X + targetBox.GetWidth(), targetBox.GetCorner().m_Y - offsetY, m_FillUpColor);
-            if (m_FillDownColor != g_MaskColor)
-                rectfill(pTargetBitmap, targetBox.GetCorner().m_X, (targetBox.GetCorner().m_Y - offsetY) + m_pMainBitmap->h, targetBox.GetCorner().m_X + targetBox.GetWidth(), targetBox.GetCorner().m_Y + targetBox.GetHeight(), m_FillDownColor);
+            if (m_FillUpColor != g_MaskColor && offsetY != 0){
+
+				SDL_GetRGBA(m_FillUpColor, format, &r, &g, &b, &a);
+				SDL_SetRenderDrawColor(renderer, r, g, b, a);
+				SDL_Rect target{
+					static_cast<int>(targetBox.GetCorner().m_X),
+					static_cast<int>(targetBox.GetCorner().m_Y),
+					static_cast<int>(targetBox.GetWidth()),
+					static_cast<int>(-offsetY)};
+				SDL_RenderDrawRect(renderer, &target);
+			}
+            if (m_FillDownColor != g_MaskColor){
+				SDL_GetRGBA(m_FillDownColor, format, &r, &g, &b, &a);
+				SDL_SetRenderDrawColor(renderer, r, g, b, a);
+				SDL_Rect target{
+					static_cast<int>(targetBox.GetCorner().m_X),
+					static_cast<int>(targetBox.GetCorner().m_Y - offsetY) +
+					    m_pMainTextureHeight,
+					static_cast<int>(targetBox.GetWidth()),
+					static_cast<int>(targetBox.GetHeight() + offsetY -
+					                 m_pMainTextureHeight)};
+				SDL_RenderDrawRect(renderer, &target);
+			}
         }
-    }
+		SDL_FreeFormat(format);
+	}
 
     // Reset the clip rect back to the entire target bitmap
-    set_clip_rect(pTargetBitmap, 0, 0, pTargetBitmap->w - 1, pTargetBitmap->h - 1);
+	SDL_RenderSetClipRect(renderer, nullptr);
 }
 
 
@@ -744,13 +897,13 @@ void SceneLayer::Draw(SDL_Renderer * renderer, Box& targetBox, const Vector &scr
 // Description:     Draws this SceneLayer's current scrolled position to a bitmap, but also
 //                  scaled according to what has been set with SetScaleFactor.
 
-void SceneLayer::DrawScaled(BITMAP *pTargetBitmap, Box &targetBox, const Vector &scrollOverride) const
+void SceneLayer::DrawScaled(SDL_Renderer *renderer, Box &targetBox, const Vector &scrollOverride) const
 {
     // If no scaling, use the regular scaling routine
     if (m_ScaleFactor.m_X == 1.0 && m_ScaleFactor.m_Y == 1.0)
-        return Draw(pTargetBitmap, targetBox, scrollOverride);
+        return Draw(renderer, targetBox, scrollOverride);
 
-    RTEAssert(m_pMainBitmap, "Data of this SceneLayer has not been loaded before trying to draw!");
+    RTEAssert(m_pMainTexture, "Data of this SceneLayer has not been loaded before trying to draw!");
 
 
 /*
@@ -762,7 +915,7 @@ void SceneLayer::DrawScaled(BITMAP *pTargetBitmap, Box &targetBox, const Vector 
     Vector resMult(1.0f / resDenom.m_X, 1.0f / resDenom.m_Y);
     // This is the sub-source-pixel offset on the target to make scrolling of the pixelated bitmap smooth
     Vector subOffset((int)targetPos.m_X % (int)resDenom.m_X, (int)targetPos.m_Y % (int)resDenom.m_Y);
-    masked_stretch_blit(pUnseenLayer->GetBitmap(), pTargetBitmap, (int)(targetPos.m_X * resMult.m_X + 0.0001f), (int)(targetPos.m_Y * resMult.m_Y + 0.0001f), pTargetBitmap->w * resMult.m_X + 1.0001f, pTargetBitmap->h * resMult.m_Y + 1.0001f, -subOffset.m_X, -subOffset.m_Y, pTargetBitmap->w + resDenom.m_X, pTargetBitmap->h + resDenom.m_Y);
+    masked_stretch_blit(pUnseenLayer->GetBitmap(), pTargetBitmap, (int)(targetPos.m_X * resMult.m_X + 0.0001f), (int)(targetPos.m_Y * resMult.m_Y + 0.0001f), viewportDimensions.w * resMult.m_X + 1.0001f, viewportDimensions.h * resMult.m_Y + 1.0001f, -subOffset.m_X, -subOffset.m_Y, pTargetBitmap->w + resDenom.m_X, pTargetBitmap->h + resDenom.m_Y);
 
 
 
@@ -774,16 +927,11 @@ void SceneLayer::DrawScaled(BITMAP *pTargetBitmap, Box &targetBox, const Vector 
 
 */
 
+	SDL_Rect viewportDimensions;
+	SDL_RenderGetViewport(renderer, &viewportDimensions);
 
-
-    int sourceX = 0;
-    int sourceY = 0;
-    int sourceW = 0;
-    int sourceH = 0;
-    int destX = 0;
-    int destY = 0;
-    int destW = 0;
-    int destH = 0;
+	SDL_Rect source{0,0,0,0};
+	SDL_Rect dest{0,0,0,0};
     list<SLDrawBox> drawList;
 
     int offsetX;
@@ -810,66 +958,67 @@ void SceneLayer::DrawScaled(BITMAP *pTargetBitmap, Box &targetBox, const Vector 
     if (targetBox.IsEmpty())
     {
         targetBox.SetCorner(Vector(0, 0));
-        targetBox.SetWidth(pTargetBitmap->w);
-        targetBox.SetHeight(pTargetBitmap->h);
+        targetBox.SetWidth(viewportDimensions.w);
+        targetBox.SetHeight(viewportDimensions.h);
     }
 
-    // Set the clipping rectangle of the target bitmap to match the specified target box
-    set_clip_rect(pTargetBitmap, targetBox.GetCorner().m_X, targetBox.GetCorner().m_Y, targetBox.GetCorner().m_X + targetBox.GetWidth() - 1, targetBox.GetCorner().m_Y + targetBox.GetHeight() - 1);
-
-    // Choose the correct blitting function based on transparency setting
-    void (*pfBlit)(BITMAP *source, BITMAP *dest, int source_x, int source_y, int source_w, int source_h, int dest_x, int dest_y, int dest_w, int dest_h) = m_DrawTrans ? &masked_stretch_blit : &stretch_blit;
-//    void (*pfBlit)(BITMAP *source, BITMAP *dest, int source_x, int source_y, int dest_x, int dest_y, int width, int height) = m_DrawTrans ? &masked_blit : &blit;
+	// Set the clipping rectangle of the target bitmap to match the specified
+	// target box
+	SDL_Rect clipRect{static_cast<int>(targetBox.GetCorner().m_X),
+		              static_cast<int>(targetBox.GetCorner().m_Y),
+		              static_cast<int>(targetBox.GetWidth()),
+		              static_cast<int>(targetBox.GetHeight())};
+	SDL_RenderSetClipRect(renderer, &clipRect);
 
     // Get a scaled offset for the source layer
     Vector sourceOffset(offsetX * m_ScaleInverse.m_X, offsetY * m_ScaleInverse.m_Y);
 
     // See if this SceneLayer is wider AND higher than the target bitmap when scaled; then use simple wrapping logic - oterhwise need to tile
-    if (m_ScaledDimensions.m_X >= pTargetBitmap->w && m_ScaledDimensions.m_Y >= pTargetBitmap->h)
+    if (m_ScaledDimensions.m_X >= viewportDimensions.w && m_ScaledDimensions.m_Y >= viewportDimensions.h)
     {
         // Upper left
-        sourceX     = 0;
-        sourceY     = 0;
-        sourceW     = m_pMainBitmap->w;
-        sourceH     = m_pMainBitmap->h;
-        destX       = targetBox.GetCorner().m_X - offsetX;
-        destY       = targetBox.GetCorner().m_Y - offsetY;
-        destW       = sourceW * m_ScaleFactor.m_X + 1;
-        destH       = sourceH * m_ScaleFactor.m_Y + 1;
-        pfBlit(m_pMainBitmap, pTargetBitmap, sourceX, sourceY, sourceW, sourceH, destX, destY, destW, destH);
+        source.x     = 0;
+        source.y     = 0;
+        source.w     = m_pMainTextureWidth;
+        source.h     = m_pMainTextureHeight;
+        dest.x       = targetBox.GetCorner().m_X - offsetX;
+        dest.y       = targetBox.GetCorner().m_Y - offsetY;
+        dest.w       = source.w * m_ScaleFactor.m_X + 1;
+        dest.h       = source.h * m_ScaleFactor.m_Y + 1;
+        SDL_RenderCopy(renderer, m_pMainTexture, &source, &dest);
 
         // Upper right
-        sourceX     = 0;
-        sourceY     = 0;
-        sourceW     = sourceOffset.m_X;
-        sourceH     = m_pMainBitmap->h;
-        destX       = targetBox.GetCorner().m_X + m_ScaledDimensions.m_X - offsetX;
-        destY       = targetBox.GetCorner().m_Y - offsetY;
-        destW       = sourceW * m_ScaleFactor.m_X + 1;
-        destH       = sourceH * m_ScaleFactor.m_Y + 1;
-        pfBlit(m_pMainBitmap, pTargetBitmap, sourceX, sourceY, sourceW, sourceH, destX, destY, destW, destH);
+        source.x     = 0;
+        source.y     = 0;
+        source.w     = sourceOffset.m_X;
+        source.h     = m_pMainTextureHeight;
+        dest.x       = targetBox.GetCorner().m_X + m_ScaledDimensions.m_X - offsetX;
+        dest.y       = targetBox.GetCorner().m_Y - offsetY;
+        dest.w       = source.w * m_ScaleFactor.m_X + 1;
+        dest.h       = source.h * m_ScaleFactor.m_Y + 1;
+        SDL_RenderCopy(renderer, m_pMainTexture, &source, &dest);
 
         // Lower left
-        sourceX     = 0;
-        sourceY     = 0;
-        sourceW     = m_pMainBitmap->w;
-        sourceH     = sourceOffset.m_Y;
-        destX       = targetBox.GetCorner().m_X - offsetX;
-        destY       = targetBox.GetCorner().m_Y + m_ScaledDimensions.m_Y - offsetY;
-        destW       = sourceW * m_ScaleFactor.m_X + 1;
-        destH       = sourceH * m_ScaleFactor.m_Y + 1;
-        pfBlit(m_pMainBitmap, pTargetBitmap, sourceX, sourceY, sourceW, sourceH, destX, destY, destW, destH);
+        source.x     = 0;
+        source.y     = 0;
+        source.w     = m_pMainTextureWidth;
+        source.h     = sourceOffset.m_Y;
+        dest.x       = targetBox.GetCorner().m_X - offsetX;
+        dest.y       = targetBox.GetCorner().m_Y + m_ScaledDimensions.m_Y - offsetY;
+        dest.w       = source.w * m_ScaleFactor.m_X + 1;
+        dest.h       = source.h * m_ScaleFactor.m_Y + 1;
+        SDL_RenderCopy(renderer, m_pMainTexture, &source, &dest);
 
         // Lower right
-        sourceX     = 0;
-        sourceY     = 0;
-        sourceW     = sourceOffset.m_X;
-        sourceH     = sourceOffset.m_Y;
-        destX       = targetBox.GetCorner().m_X + m_ScaledDimensions.m_X - offsetX;
-        destY       = targetBox.GetCorner().m_Y + m_ScaledDimensions.m_Y - offsetY;
-        destW       = sourceW * m_ScaleFactor.m_X + 1;
-        destH       = sourceH * m_ScaleFactor.m_Y + 1;
-        pfBlit(m_pMainBitmap, pTargetBitmap, sourceX, sourceY, sourceW, sourceH, destX, destY, destW, destH);
+        source.x     = 0;
+        source.y     = 0;
+        source.w     = sourceOffset.m_X;
+        source.h     = sourceOffset.m_Y;
+        dest.x       = targetBox.GetCorner().m_X + m_ScaledDimensions.m_X - offsetX;
+        dest.y       = targetBox.GetCorner().m_Y + m_ScaledDimensions.m_Y - offsetY;
+        dest.w       = source.w * m_ScaleFactor.m_X + 1;
+        dest.h       = source.h * m_ScaleFactor.m_Y + 1;
+        SDL_RenderCopy(renderer, m_pMainTexture, &source, &dest);
     }
     // Target bitmap is larger in some dimension, so need to draw this tiled as many times as necessary to cover the whole target
     else
@@ -877,8 +1026,8 @@ void SceneLayer::DrawScaled(BITMAP *pTargetBitmap, Box &targetBox, const Vector 
         int tiledOffsetX = 0;
         int tiledOffsetY = 0;
         // Use the dimensions of the target box, if it has any area at all
-        int targetWidth = MIN(pTargetBitmap->w, targetBox.GetWidth());
-        int targetHeight = MIN(pTargetBitmap->h, targetBox.GetHeight());
+        int targetWidth = std::min(viewportDimensions.w, static_cast<int>(targetBox.GetWidth()));
+        int targetHeight = std::min(viewportDimensions.h, static_cast<int>(targetBox.GetHeight()));
         int toCoverX = offsetX + targetBox.GetCorner().m_X + targetWidth;
         int toCoverY = offsetY + targetBox.GetCorner().m_Y + targetHeight;
 
@@ -887,8 +1036,8 @@ void SceneLayer::DrawScaled(BITMAP *pTargetBitmap, Box &targetBox, const Vector 
         bool screenLargerThanSceneY = false;
         if (!scrollOverridden && g_SceneMan.GetSceneWidth() > 0)
         {
-            screenLargerThanSceneX = pTargetBitmap->w > g_SceneMan.GetSceneWidth();
-            screenLargerThanSceneY = pTargetBitmap->h > g_SceneMan.GetSceneHeight();
+            screenLargerThanSceneX = viewportDimensions.w > g_SceneMan.GetSceneWidth();
+            screenLargerThanSceneY = viewportDimensions.h > g_SceneMan.GetSceneHeight();
         }
 
         // Y tiling
@@ -897,16 +1046,16 @@ void SceneLayer::DrawScaled(BITMAP *pTargetBitmap, Box &targetBox, const Vector 
             // X tiling
             do
             {
-                sourceX     = 0;
-                sourceY     = 0;
-                sourceW     = m_pMainBitmap->w;
-                sourceH     = m_pMainBitmap->h;
+                source.x     = 0;
+                source.y     = 0;
+                source.w     = m_pMainTextureWidth;
+                source.h     = m_pMainTextureHeight;
                 // If the unwrapped and untiled direction can't cover the target area, place it in the middle of the target bitmap, and leave the excess perimeter on each side untouched
-                destX       = (!m_WrapX && screenLargerThanSceneX) ? ((pTargetBitmap->w / 2) - (m_ScaledDimensions.m_X / 2)) : (targetBox.GetCorner().m_X + tiledOffsetX - offsetX);
-                destY       = (!m_WrapY && screenLargerThanSceneY) ? ((pTargetBitmap->h / 2) - (m_ScaledDimensions.m_Y / 2)) : (targetBox.GetCorner().m_Y + tiledOffsetY - offsetY);
-                destW       = m_ScaledDimensions.m_X;
-                destH       = m_ScaledDimensions.m_Y;
-                pfBlit(m_pMainBitmap, pTargetBitmap, sourceX, sourceY, sourceW, sourceH, destX, destY, destW, destH);
+                dest.x       = (!m_WrapX && screenLargerThanSceneX) ? ((viewportDimensions.w / 2) - (m_ScaledDimensions.m_X / 2)) : (targetBox.GetCorner().m_X + tiledOffsetX - offsetX);
+                dest.y       = (!m_WrapY && screenLargerThanSceneY) ? ((viewportDimensions.h / 2) - (m_ScaledDimensions.m_Y / 2)) : (targetBox.GetCorner().m_Y + tiledOffsetY - offsetY);
+                dest.w       = m_ScaledDimensions.m_X;
+                dest.h       = m_ScaledDimensions.m_Y;
+                SDL_RenderCopy(renderer, m_pMainTexture, &source, &dest);
 
                 tiledOffsetX += m_ScaledDimensions.m_X;
             }
@@ -926,7 +1075,7 @@ void SceneLayer::DrawScaled(BITMAP *pTargetBitmap, Box &targetBox, const Vector 
             if (m_FillLeftColor != g_MaskColor && offsetX != 0)
                 rectfill(pTargetBitmap, targetBox.GetCorner().m_X, targetBox.GetCorner().m_Y, targetBox.GetCorner().m_X - offsetX, targetBox.GetCorner().m_Y + targetBox.GetHeight(), m_FillLeftColor);
             if (m_FillRightColor != g_MaskColor)
-                rectfill(pTargetBitmap, (targetBox.GetCorner().m_X - offsetX) + m_pMainBitmap->w, targetBox.GetCorner().m_Y, targetBox.GetCorner().m_X + targetBox.GetWidth(), targetBox.GetCorner().m_Y + targetBox.GetHeight(), m_FillRightColor);
+                rectfill(pTargetBitmap, (targetBox.GetCorner().m_X - offsetX) + m_pMainTextureWidth, targetBox.GetCorner().m_Y, targetBox.GetCorner().m_X + targetBox.GetWidth(), targetBox.GetCorner().m_Y + targetBox.GetHeight(), m_FillRightColor);
         }
 
         if (!m_WrapY && !screenLargerThanSceneY && m_ScrollRatio.m_Y < 0)
@@ -934,13 +1083,13 @@ void SceneLayer::DrawScaled(BITMAP *pTargetBitmap, Box &targetBox, const Vector 
             if (m_FillUpColor != g_MaskColor && offsetY != 0)
                 rectfill(pTargetBitmap, targetBox.GetCorner().m_X, targetBox.GetCorner().m_Y, targetBox.GetCorner().m_X + targetBox.GetWidth(), targetBox.GetCorner().m_Y - offsetY, m_FillUpColor);
             if (m_FillDownColor != g_MaskColor)
-                rectfill(pTargetBitmap, targetBox.GetCorner().m_X, (targetBox.GetCorner().m_Y - offsetY) + m_pMainBitmap->h, targetBox.GetCorner().m_X + targetBox.GetWidth(), targetBox.GetCorner().m_Y + targetBox.GetHeight(), m_FillDownColor);
+                rectfill(pTargetBitmap, targetBox.GetCorner().m_X, (targetBox.GetCorner().m_Y - offsetY) + m_pMainTextureHeight, targetBox.GetCorner().m_X + targetBox.GetWidth(), targetBox.GetCorner().m_Y + targetBox.GetHeight(), m_FillDownColor);
         }
 */
     }
 
     // Reset the clip rect back to the entire target bitmap
-    set_clip_rect(pTargetBitmap, 0, 0, pTargetBitmap->w - 1, pTargetBitmap->h - 1);
+	SDL_RenderSetClipRect(renderer, nullptr);
 }
 
 /* not neccessary
@@ -970,11 +1119,11 @@ void SceneLayer::InitScrollRatios()
         if (m_ScrollInfo.m_X == -1.0 || m_ScrollInfo.m_X == 1.0)
             m_ScrollRatio.m_X = 1.0;
         else if (m_ScrollInfo.m_X == g_FrameMan.GetPlayerScreenWidth())
-            m_ScrollRatio.m_X = m_pMainBitmap->w - g_FrameMan.GetPlayerScreenWidth();
-        else if (m_pMainBitmap->w == g_FrameMan.GetPlayerScreenWidth())
+            m_ScrollRatio.m_X = m_pMainTextureWidth - g_FrameMan.GetPlayerScreenWidth();
+        else if (m_pMainTextureWidth == g_FrameMan.GetPlayerScreenWidth())
             m_ScrollRatio.m_X = 1.0f / (float)(m_ScrollInfo.m_X - g_FrameMan.GetPlayerScreenWidth());
         else
-            m_ScrollRatio.m_X = (float)(m_pMainBitmap->w - g_FrameMan.GetPlayerScreenWidth()) /
+            m_ScrollRatio.m_X = (float)(m_pMainTextureWidth - g_FrameMan.GetPlayerScreenWidth()) /
                                 (float)(m_ScrollInfo.m_X - g_FrameMan.GetPlayerScreenWidth());
     }
 
@@ -985,16 +1134,16 @@ void SceneLayer::InitScrollRatios()
         if (m_ScrollInfo.m_Y == -1.0 || m_ScrollInfo.m_Y == 1.0)
             m_ScrollRatio.m_Y = 1.0;
         else if (m_ScrollInfo.m_Y == g_FrameMan.GetPlayerScreenHeight())
-            m_ScrollRatio.m_Y = m_pMainBitmap->h - g_FrameMan.GetPlayerScreenHeight();
-        else if (m_pMainBitmap->h == g_FrameMan.GetPlayerScreenHeight())
+            m_ScrollRatio.m_Y = m_pMainTextureHeight - g_FrameMan.GetPlayerScreenHeight();
+        else if (m_pMainTextureHeight == g_FrameMan.GetPlayerScreenHeight())
             m_ScrollRatio.m_Y = 1.0f / (float)(m_ScrollInfo.m_Y - g_FrameMan.GetPlayerScreenHeight());
         else
-            m_ScrollRatio.m_Y = (float)(m_pMainBitmap->h - g_FrameMan.GetPlayerScreenHeight()) /
+            m_ScrollRatio.m_Y = (float)(m_pMainTextureHeight - g_FrameMan.GetPlayerScreenHeight()) /
                                 (float)(m_ScrollInfo.m_Y - g_FrameMan.GetPlayerScreenHeight());
     }
 
     // Establish the scaled dimensions of this
-    m_ScaledDimensions.SetXY(m_pMainBitmap->w * m_ScaleFactor.m_X, m_pMainBitmap->h * m_ScaleFactor.m_Y);
+    m_ScaledDimensions.SetXY(m_pMainTextureWidth * m_ScaleFactor.m_X, m_pMainTextureHeight * m_ScaleFactor.m_Y);
 }
 
 
@@ -1007,11 +1156,11 @@ void SceneLayer::UpdateScrollRatiosForNetworkPlayer(int player)
 		if (m_ScrollInfo.m_X == -1.0 || m_ScrollInfo.m_X == 1.0)
 			m_ScrollRatio.m_X = 1.0;
 		else if (m_ScrollInfo.m_X == g_FrameMan.GetPlayerFrameBufferWidth(player))
-			m_ScrollRatio.m_X = m_pMainBitmap->w - g_FrameMan.GetPlayerFrameBufferWidth(player);
-		else if (m_pMainBitmap->w == g_FrameMan.GetPlayerFrameBufferWidth(player))
+			m_ScrollRatio.m_X = m_pMainTextureWidth - g_FrameMan.GetPlayerFrameBufferWidth(player);
+		else if (m_pMainTextureWidth == g_FrameMan.GetPlayerFrameBufferWidth(player))
 			m_ScrollRatio.m_X = 1.0f / (float)(m_ScrollInfo.m_X - g_FrameMan.GetPlayerFrameBufferWidth(player));
 		else
-			m_ScrollRatio.m_X = (float)(m_pMainBitmap->w - g_FrameMan.GetPlayerFrameBufferWidth(player)) /
+			m_ScrollRatio.m_X = (float)(m_pMainTextureWidth - g_FrameMan.GetPlayerFrameBufferWidth(player)) /
 			(float)(m_ScrollInfo.m_X - g_FrameMan.GetPlayerFrameBufferWidth(player));
 	}
 
@@ -1022,16 +1171,16 @@ void SceneLayer::UpdateScrollRatiosForNetworkPlayer(int player)
 		if (m_ScrollInfo.m_Y == -1.0 || m_ScrollInfo.m_Y == 1.0)
 			m_ScrollRatio.m_Y = 1.0;
 		else if (m_ScrollInfo.m_Y == g_FrameMan.GetPlayerFrameBufferHeight(player))
-			m_ScrollRatio.m_Y = m_pMainBitmap->h - g_FrameMan.GetPlayerFrameBufferHeight(player);
-		else if (m_pMainBitmap->h == g_FrameMan.GetPlayerFrameBufferHeight(player))
+			m_ScrollRatio.m_Y = m_pMainTextureHeight - g_FrameMan.GetPlayerFrameBufferHeight(player);
+		else if (m_pMainTextureHeight == g_FrameMan.GetPlayerFrameBufferHeight(player))
 			m_ScrollRatio.m_Y = 1.0f / (float)(m_ScrollInfo.m_Y - g_FrameMan.GetPlayerFrameBufferHeight(player));
 		else
-			m_ScrollRatio.m_Y = (float)(m_pMainBitmap->h - g_FrameMan.GetPlayerFrameBufferHeight(player)) /
+			m_ScrollRatio.m_Y = (float)(m_pMainTextureHeight - g_FrameMan.GetPlayerFrameBufferHeight(player)) /
 			(float)(m_ScrollInfo.m_Y - g_FrameMan.GetPlayerFrameBufferHeight(player));
 	}
 
 	// Establish the scaled dimensions of this
-	m_ScaledDimensions.SetXY(m_pMainBitmap->w * m_ScaleFactor.m_X, m_pMainBitmap->h * m_ScaleFactor.m_Y);
+	m_ScaledDimensions.SetXY(m_pMainTextureWidth * m_ScaleFactor.m_X, m_pMainTextureHeight * m_ScaleFactor.m_Y);
 }
 
 
