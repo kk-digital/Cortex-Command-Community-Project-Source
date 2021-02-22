@@ -38,7 +38,7 @@ sources += files(
 # 'Scene.cpp',
 'SceneLayer.cpp',
 # 'SceneObject.cpp',
-# 'SLTerrain.cpp',
+'SLTerrain.cpp',
 # 'SoundContainer.cpp',
 # 'SoundSet.cpp',
 # 'TDExplosive.cpp',
