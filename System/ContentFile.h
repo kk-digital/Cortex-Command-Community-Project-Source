@@ -117,21 +117,43 @@ namespace RTE {
 
 #pragma region Data Handling
 		/// <summary>
-		/// Gets the data represented by this ContentFile object as an Allegro BITMAP, loading it into the static maps if it's not already loaded. Note that ownership of the BITMAP is NOT transferred!
+		/// Gets the data represented by this ContentFile object as an Allegro
+		/// SDL_Texture, loading it into the static maps if it's not already
+		/// loaded. Note that ownership of the SDL_Texture is NOT transferred!
 		/// </summary>
-		/// <param name="conversionMode">The Allegro color conversion mode to use when loading this bitmap.</param>
-		/// <param name="storeBitmap">Whether to store the BITMAP in the relevant static map after loading it or not.</param>
-		/// <param name="dataPathToSpecificFrame">Path to a specific frame when loading an animation to avoid overwriting the original preset DataPath when loading each frame.</param>
-		/// <returns>Pointer to the BITMAP loaded from disk.</returns>
-		SDL_Texture * GetAsTexture(bool storeBitmap = true, const std::string &dataPathToSpecificFrame = "");
+		/// <param name="texture">
+		/// A SDL_Texture pointer to be filles by the loaded texture
+		/// </param>
+		/// <param name="pixels">
+		/// A pointer which will store the texture pixels in a flattened array
+		/// for read access
+		/// </param>
+		/// <param name="pitch">
+		/// An int to be filled by the pixel pitch of the texture this
+		/// represents the size of one row of pixels in memory
+		/// </param>
+		/// <param name="streamingAccess">
+		/// Wether to create the texture with streaming access, this allow pixel
+		/// manipulation
+		/// </param>
+		/// <param name="storeBitmap">Whether to store the SDL_Texture in the
+		/// relevant static map after loading it or not.</param>
+		/// <param name="dataPathToSpecificFrame">
+		/// Path to a specific frame when loading
+		/// an animation to avoid overwriting the original preset DataPath when
+		/// loading each frame.
+		/// </param>
+		/// <returns>Pointer to the SDL_Texture loaded
+		/// from disk.</returns>
+		void GetAsTexture(SDL_Texture* &texture, uint32_t* &pixels, int &pitch, bool streamingAccess, bool storeBitmap = true, const std::string &dataPathToSpecificFrame = "");
 
 		/// <summary>
-		/// Gets the data represented by this ContentFile object as an array of Allegro BITMAPs, each representing a frame in the animation.
-		/// It loads the BITMAPs into the static maps if they're not already loaded. Ownership of the BITMAPs is NOT transferred, but the array itself IS!
+		/// Gets the data represented by this ContentFile object as an array of Allegro SDL_Textures, each representing a frame in the animation.
+		/// It loads the SDL_Textures into the static maps if they're not already loaded. Ownership of the SDL_Textures is NOT transferred, but the array itself IS!
 		/// </summary>
 		/// <param name="frameCount">The number of frames to attempt to load, more than 1 frame will mean 00# is appended to datapath to handle naming conventions.</param>
 		/// <param name="conversionMode">The Allegro color conversion mode to use when loading this bitmap.</param>
-		/// <returns>Pointer to the beginning of the array of BITMAP pointers loaded from the disk, the length of which is specified with the FrameCount argument.</returns>
+		/// <returns>Pointer to the beginning of the array of SDL_Texture pointers loaded from the disk, the length of which is specified with the FrameCount argument.</returns>
 		SDL_Texture ** GetAsAnimation(int frameCount = 1);
 
 		/// <summary>
@@ -145,13 +167,9 @@ namespace RTE {
 
 	protected:
 
-		/// <summary>
-		/// Enumeration for loading BITMAPs by bit depth. NOTE: This can't be lower down because s_LoadedBitmaps relies on this definition.
-		/// </summary>
-		enum BitDepths { Eight = 0, ThirtyTwo, BitDepthCount };
-
 		static std::unordered_map<size_t, std::string> s_PathHashes; //!< Static map containing the hash values of paths of all loaded data files.
 		static std::unordered_map<std::string, SDL_Texture *> s_LoadedTextures; //!< Static map containing all the already loaded SDL_Textures and their paths.
+		static std::unordered_map<std::string, uint32_t *> s_LoadedPixels; //!< Static map containing all the pixel arrays for the loaded textures and their paths.
 		static std::unordered_map<std::string, FMOD::Sound *> s_LoadedSamples; //!< Static map containing all the already loaded FSOUND_SAMPLEs and their paths.
 
 		std::string m_DataPath; //!< The path to this ContentFile's data file. In the case of an animation, this filename/name will be appended with 000, 001, 002 etc.
@@ -176,7 +194,11 @@ namespace RTE {
 		/// </summary>
 		/// <param name="dataPathToSpecificFrame">Path to a specific frame when loading an animation to avoid overwriting the original preset DataPath when loading each frame.</param>
 		/// <returns>Pointer to the SDL_Texture loaded from disk.</returns>
-		SDL_Texture * LoadAndReleaseTexture(const std::string &dataPathToSpecificFrame = "");
+		void LoadAndReleaseTexture(const std::string &dataPathToSpecificFrame,
+		                           SDL_Texture *&returnedTexture,
+		                           uint32_t *&returnedPixels,
+								   int &returnedPitch,
+		                           bool streamingAccess = false);
 
 		/// <summary>
 		/// Loads and transfers the data represented by this ContentFile object as an FMOD FSOUND_SAMPLE. Ownership of the FSOUND_SAMPLE is NOT transferred!

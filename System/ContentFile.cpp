@@ -13,6 +13,7 @@ namespace RTE {
 	const std::string ContentFile::c_ClassName = "ContentFile";
 
 	std::unordered_map<std::string, SDL_Texture *> ContentFile::s_LoadedTextures;
+	std::unordered_map<std::string, uint32_t *> ContentFile::s_LoadedPixels;
 	std::unordered_map<std::string, FMOD::Sound *> ContentFile::s_LoadedSamples;
 	std::unordered_map<size_t, std::string> ContentFile::s_PathHashes;
 
@@ -50,10 +51,9 @@ namespace RTE {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void ContentFile::FreeAllLoaded() {
-		for (int depth = BitDepths::Eight; depth < BitDepths::BitDepthCount; ++depth) {
-			for (const auto &texture : s_LoadedTextures) {
-				SDL_DestroyTexture(texture.second);
-			}
+		for (const std::pair<std::string, SDL_Texture *> &texture : s_LoadedTextures) {
+			SDL_DestroyTexture(texture.second);
+			delete s_LoadedPixels[texture.first];
 		}
 	}
 
@@ -104,17 +104,19 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	SDL_Texture *
-	ContentFile::GetAsTexture(bool storeTexture,
-	                         const std::string &dataPathToSpecificFrame) {
+	void ContentFile::GetAsTexture(SDL_Texture *&texture, Uint32 *&pixels,
+	                               int &pitch, bool streamingAccess, bool storeTexture,
+	                               const std::string &dataPathToSpecificFrame) {
 		if (m_DataPath.empty()) {
-			return nullptr;
+			return;
 		}
 		std::string dataPathToLoad = dataPathToSpecificFrame.empty()
 		                                 ? m_DataPath
 		                                 : dataPathToSpecificFrame;
 		SetFormattedReaderPosition(GetFormattedReaderPosition());
 		SDL_Texture *returnTexture{nullptr};
+		Uint32* returnPixels{nullptr};
+		int returnPitch{0};
 		// Check if the file has already been read and loaded from the disk and,
 		// if so, use that data.
 		auto it_foundTexture = s_LoadedTextures.find(dataPathToLoad);
@@ -143,18 +145,20 @@ namespace RTE {
 					    m_FormattedReaderPosition);
 				}
 			}
-			returnTexture = LoadAndReleaseTexture(
-			    dataPathToLoad); // NOTE: This takes ownership
-			                     // of the bitmap file
+			// NOTE: This takes ownership of the bitmap file
+			LoadAndReleaseTexture(dataPathToLoad, returnTexture, returnPixels, returnPitch);
 
 			// Insert the bitmap into the map, PASSING OVER OWNERSHIP OF THE
 			// LOADED DATAFILE
 			if (storeTexture) {
 				s_LoadedTextures.insert(
 				    {dataPathToLoad, returnTexture});
+				s_LoadedPixels.insert({dataPathToLoad, returnPixels});
 			}
 		}
-		return returnTexture;
+		texture = returnTexture;
+		pixels = returnPixels;
+		pitch = returnPitch;
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -193,11 +197,14 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	SDL_Texture * ContentFile::LoadAndReleaseTexture(const std::string &dataPathToSpecificFrame) {
-		if (m_DataPath.empty()) {
-			return nullptr;
-		}
-		const std::string dataPathToLoad = dataPathToSpecificFrame.empty() ? m_DataPath : dataPathToSpecificFrame;
+	void ContentFile::LoadAndReleaseTexture(
+	    const std::string &dataPathToSpecificFrame,
+	    SDL_Texture *&returnedTexture, Uint32 *&returnedPixels,
+	    int &returnedPitch, bool streamingAccess) {
+
+		const std::string dataPathToLoad = dataPathToSpecificFrame.empty()
+		                                       ? m_DataPath
+		                                       : dataPathToSpecificFrame;
 		SetFormattedReaderPosition(GetFormattedReaderPosition());
 
 		SDL_Texture *returnTexture = nullptr;
@@ -211,14 +218,53 @@ namespace RTE {
 		Uint32 colorKey{SDL_MapRGB(tempSurface->format, 255, 0, 255)};
 		SDL_SetColorKey(tempSurface, SDL_TRUE, colorKey);
 
+		// Copy the pixels from the surface for accessing pixel colors
+		Uint32* pixelsRW = new Uint32[tempSurface->w * tempSurface->h];
+
+
 		// Create a Texture from the loaded Image with STATIC ACCESS (!) that lives in vram
-		returnTexture = SDL_CreateTextureFromSurface(g_FrameMan.GetRenderer(),  tempSurface);
+		if(!streamingAccess){
+			returnTexture = SDL_CreateTextureFromSurface(g_FrameMan.GetRenderer(),  tempSurface);
+		}else{
+			returnTexture = SDL_CreateTexture(g_FrameMan.GetRenderer(), SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, tempSurface->w, tempSurface->h);
+		}
+
+		int access;
+		Uint32 format;
+		int w,h;
+
+		SDL_QueryTexture(returnTexture, &format, &access, &w, &h);
+
+		// Make a copy of the pixeldata to retain it for read access
+		SDL_LockSurface(tempSurface);
+		SDL_ConvertPixels(w, h, tempSurface->format->format,
+		                  tempSurface->pixels, tempSurface->pitch,
+						  format, pixelsRW, w * SDL_BYTESPERPIXEL(format));
+		SDL_UnlockSurface(tempSurface);
+
+		// In case a streaming texture was requested copy the pixels over now
+		if(streamingAccess){
+			void *tempPixelsWO{nullptr};
+			int pitch;
+			SDL_LockTexture(returnTexture, nullptr, &tempPixelsWO, &pitch);
+
+			// Copy the pixels from the read access array to the texture
+			std::memcpy(tempPixelsWO, pixelsRW, pitch*h);
+
+			SDL_UnlockTexture(returnTexture);
+		}
+
+
 
 		SDL_FreeSurface(tempSurface);
 
 		RTEAssert(returnTexture, "Failed to create Texture from "+m_DataPathAndReaderPosition+"\n SDL Error: "+ SDL_GetError());
 
-		return returnTexture;
+		returnedTexture = returnTexture;
+		if (returnedPixels) {
+			returnedPixels = pixelsRW;
+			returnedPitch = w * SDL_BYTESPERPIXEL(format);
+		}
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
