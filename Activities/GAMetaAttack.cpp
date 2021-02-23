@@ -504,9 +504,9 @@ void GAMetaAttack::Update()
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Draws the currently active GUI of a screen to a BITMAP of choice.
 
-void GAMetaAttack::DrawGUI(BITMAP *pTargetBitmap, const Vector &targetPos, int which)
+void GAMetaAttack::DrawGUI(SDL_Renderer* renderer, const Vector &targetPos, int which)
 {
-    GameActivity::DrawGUI(pTargetBitmap, targetPos, which);
+    GameActivity::DrawGUI(renderer, targetPos, which);
 }
 
 
@@ -516,9 +516,9 @@ void GAMetaAttack::DrawGUI(BITMAP *pTargetBitmap, const Vector &targetPos, int w
 // Description:     Draws this GAMetaAttack's current graphical representation to a
 //                  BITMAP of choice. This includes all game-related graphics.
 
-void GAMetaAttack::Draw(BITMAP *pTargetBitmap, const Vector &targetPos)
+void GAMetaAttack::Draw(SDL_Renderer* renderer, const Vector &targetPos)
 {
-    GameActivity::Draw(pTargetBitmap, targetPos);
+    GameActivity::Draw(renderer, targetPos);
 }
 
 } // namespace RTE

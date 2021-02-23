@@ -1410,9 +1410,9 @@ void SLTerrain::Update()
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Draws this SLTerrain's current scrolled position to a bitmap.
 
-void SLTerrain::DrawBackground(BITMAP *pTargetBitmap, Box &targetBox, const Vector &scrollOverride)
+void SLTerrain::DrawBackground(SDL_Renderer *renderer, Box &targetBox, const Vector &scrollOverride)
 {
-    m_pBGColor->Draw(pTargetBitmap, targetBox, scrollOverride);
+    m_pBGColor->Draw(renderer, targetBox, scrollOverride);
 }
 
 
@@ -1421,15 +1421,15 @@ void SLTerrain::DrawBackground(BITMAP *pTargetBitmap, Box &targetBox, const Vect
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Draws this SLTerrain's current scrolled position to a bitmap.
 
-void SLTerrain::Draw(BITMAP *pTargetBitmap, Box &targetBox, const Vector &scrollOverride) const
+void SLTerrain::Draw(SDL_Renderer *renderer, Box &targetBox, const Vector &scrollOverride) const
 {
     if (m_DrawMaterial)
     {
-        SceneLayer::Draw(pTargetBitmap, targetBox, scrollOverride);
+        SceneLayer::Draw(renderer, targetBox, scrollOverride);
     }
     else
     {
-        m_pFGColor->Draw(pTargetBitmap, targetBox, scrollOverride);
+        m_pFGColor->Draw(renderer, targetBox, scrollOverride);
     }
 }
 

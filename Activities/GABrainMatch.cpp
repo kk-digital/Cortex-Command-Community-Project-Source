@@ -30,6 +30,7 @@
 #include "BuyMenuGUI.h"
 #include "SceneEditorGUI.h"
 
+
 extern bool g_ResetActivity;
 
 namespace RTE {
@@ -410,9 +411,9 @@ void GABrainMatch::Update()
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Draws the currently active GUI of a screen to a BITMAP of choice.
 
-void GABrainMatch::DrawGUI(BITMAP *pTargetBitmap, const Vector &targetPos, int which)
+void GABrainMatch::DrawGUI(SDL_Renderer* renderer, const Vector &targetPos, int which)
 {
-    GameActivity::DrawGUI(pTargetBitmap, targetPos, which);
+    GameActivity::DrawGUI(renderer, targetPos, which);
 }
 
 
@@ -422,9 +423,9 @@ void GABrainMatch::DrawGUI(BITMAP *pTargetBitmap, const Vector &targetPos, int w
 // Description:     Draws this GABrainMatch's current graphical representation to a
 //                  BITMAP of choice. This includes all game-related graphics.
 
-void GABrainMatch::Draw(BITMAP *pTargetBitmap, const Vector &targetPos)
+void GABrainMatch::Draw(SDL_Renderer* renderer, const Vector &targetPos)
 {
-    GameActivity::Draw(pTargetBitmap, targetPos);
+    GameActivity::Draw(renderer, targetPos);
 }
 
 } // namespace RTE

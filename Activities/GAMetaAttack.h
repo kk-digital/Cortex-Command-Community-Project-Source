@@ -16,6 +16,7 @@
 
 #include "GameActivity.h"
 
+struct SDL_Renderer;
 namespace RTE
 {
 
@@ -215,7 +216,7 @@ ENTITYALLOCATION(GAMetaAttack)
 //                  Which screen's GUI to draw onto the bitmap.
 // Return value:    None.
 
-    virtual void DrawGUI(BITMAP *pTargetBitmap, const Vector &targetPos = Vector(), int which = 0);
+    virtual void DrawGUI(SDL_Renderer* renderer, const Vector &targetPos = Vector(), int which = 0);
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -227,7 +228,7 @@ ENTITYALLOCATION(GAMetaAttack)
 //                  The absolute position of the target bitmap's upper left corner in the scene.
 // Return value:    None.
 
-    virtual void Draw(BITMAP *pTargetBitmap, const Vector &targetPos = Vector());
+    virtual void Draw(SDL_Renderer* renderer, const Vector &targetPos = Vector());
 
 
 //////////////////////////////////////////////////////////////////////////////////////////

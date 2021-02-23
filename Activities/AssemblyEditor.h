@@ -18,6 +18,7 @@
 #include "EditorActivity.h"
 #include "BunkerAssembly.h"
 
+struct SDL_Renderer;
 namespace RTE
 {
 
@@ -192,7 +193,7 @@ ClassInfoGetters
 //                  Which screen's GUI to draw onto the bitmap.
 // Return value:    None.
 
-	void DrawGUI(BITMAP *pTargetBitmap, const Vector &targetPos = Vector(), int which = 0) override;
+	void DrawGUI(SDL_Renderer* renderer, const Vector &targetPos = Vector(), int which = 0) override;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -204,7 +205,7 @@ ClassInfoGetters
 //                  The absolute position of the target bitmap's upper left corner in the scene.
 // Return value:    None.
 
-	void Draw(BITMAP *pTargetBitmap, const Vector &targetPos = Vector()) override;
+	void Draw(SDL_Renderer* renderer, const Vector &targetPos = Vector()) override;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////

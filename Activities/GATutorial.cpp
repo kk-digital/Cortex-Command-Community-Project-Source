@@ -27,7 +27,7 @@
 
 #include "GUI/GUI.h"
 #include "GUI/GUIFont.h"
-#include "GUI/AllegroBitmap.h"
+#include "GUI/SDLGUITexture.h"
 #include "BuyMenuGUI.h"
 #include "SceneEditorGUI.h"
 
@@ -844,13 +844,13 @@ void GATutorial::Update()
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Draws the currently active GUI of a screen to a BITMAP of choice.
 
-void GATutorial::DrawGUI(BITMAP *pTargetBitmap, const Vector &targetPos, int which)
+void GATutorial::DrawGUI(SDL_Renderer* renderer, const Vector &targetPos, int which)
 {
-    GameActivity::DrawGUI(pTargetBitmap, targetPos, which);
+    GameActivity::DrawGUI(renderer, targetPos, which);
 
     if (IsRunning())// && (m_AreaTimer.AlternateReal(500) || m_AreaTimer.AlternateReal(250) || m_AreaTimer.AlternateReal(125)))
     {
-        AllegroBitmap pBitmapInt(pTargetBitmap);
+        SDLGUITexture pTextureInt(renderer);
         Vector screenTextPos = m_ScreenPositions[m_CurrentArea] + m_TextOffsets[m_CurrentArea] - targetPos;
         // How long the revealing of the text period will be, clamped, and plus three for the last three dots added later
         float revealPeriod = (m_TutAreaSteps[m_CurrentArea][m_CurrentStep].m_Text.size() + 3) * 30;
@@ -867,7 +867,7 @@ void GATutorial::DrawGUI(BITMAP *pTargetBitmap, const Vector &targetPos, int whi
             int timePhase = (int)m_AreaTimer.GetElapsedRealTimeMS() % 1200;
             revealText = revealText + (timePhase > 900 ? "..." : (timePhase > 600 ? ".. " : (timePhase > 300 ? ".  " : "   ")));
         }
-        g_FrameMan.GetSmallFont()->DrawAligned(&pBitmapInt, screenTextPos.m_X, screenTextPos.m_Y, revealText.c_str(), GUIFont::Centre);
+        g_FrameMan.GetSmallFont()->DrawAligned(&pTextureInt, screenTextPos.m_X, screenTextPos.m_Y, revealText.c_str(), GUIFont::Centre);
     }
 }
 
@@ -878,7 +878,7 @@ void GATutorial::DrawGUI(BITMAP *pTargetBitmap, const Vector &targetPos, int whi
 // Description:     Draws this GATutorial's current graphical representation to a
 //                  BITMAP of choice. This includes all game-related graphics.
 
-void GATutorial::Draw(BITMAP *pTargetBitmap, const Vector &targetPos)
+void GATutorial::Draw(SDL_Renderer, const Vector &targetPos)
 {
     GameActivity::Draw(pTargetBitmap, targetPos);
 }

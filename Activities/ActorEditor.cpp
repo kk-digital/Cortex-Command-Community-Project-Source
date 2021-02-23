@@ -319,22 +319,22 @@ void ActorEditor::Update()
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Draws the currently active GUI of a screen to a BITMAP of choice.
 
-void ActorEditor::DrawGUI(BITMAP *pTargetBitmap, const Vector &targetPos, int which)
+void ActorEditor::DrawGUI(SDL_Renderer *renderer, const Vector &targetPos, int which)
 {
     // Draw the edited actor
     if (m_pEditedActor)
     {
-        m_pEditedActor->Draw(pTargetBitmap, targetPos, g_DrawColor);
-        m_pEditedActor->Draw(pTargetBitmap, targetPos, g_DrawDebug);
+        m_pEditedActor->Draw(renderer, targetPos, g_DrawColor);
+        m_pEditedActor->Draw(renderer, targetPos, g_DrawDebug);
     }
 
     // Clear out annoying blooms
     g_PostProcessMan.ClearScenePostEffects();
 
-    m_pPicker->Draw(pTargetBitmap);
-    m_pPieMenu->Draw(pTargetBitmap, targetPos);
+    m_pPicker->Draw(renderer);
+    m_pPieMenu->Draw(renderer, targetPos);
 
-    EditorActivity::DrawGUI(pTargetBitmap, targetPos, which);
+    EditorActivity::DrawGUI(renderer, targetPos, which);
 }
 
 
@@ -344,9 +344,9 @@ void ActorEditor::DrawGUI(BITMAP *pTargetBitmap, const Vector &targetPos, int wh
 // Description:     Draws this ActorEditor's current graphical representation to a
 //                  BITMAP of choice. This includes all game-related graphics.
 
-void ActorEditor::Draw(BITMAP *pTargetBitmap, const Vector &targetPos)
+void ActorEditor::Draw(SDL_Renderer *renderer, const Vector &targetPos)
 {
-    EditorActivity::Draw(pTargetBitmap, targetPos);
+    EditorActivity::Draw(renderer, targetPos);
 }
 
 

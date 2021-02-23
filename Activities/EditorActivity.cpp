@@ -27,9 +27,9 @@
 
 #include "GUI/GUI.h"
 #include "GUI/GUIFont.h"
-#include "GUI/AllegroScreen.h"
-#include "GUI/AllegroBitmap.h"
-#include "GUI/AllegroInput.h"
+#include "GUI/SDLScreen.h"
+#include "GUI/SDLBitmap.h"
+// #include "GUI/AllegroInput.h"
 #include "GUI/GUIControlManager.h"
 #include "GUI/GUICollectionBox.h"
 #include "GUI/GUITab.h"
@@ -616,9 +616,9 @@ void EditorActivity::Update()
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Draws the currently active GUI of a screen to a BITMAP of choice.
 
-void EditorActivity::DrawGUI(BITMAP *pTargetBitmap, const Vector &targetPos, int which)
+void EditorActivity::DrawGUI(SDL_Renderer* renderer, const Vector &targetPos, int which)
 {
-    AllegroScreen drawScreen(pTargetBitmap);
+    SDLScreen drawScreen(renderer);
     m_pGUIController->Draw(&drawScreen);
     if (m_EditorMode != EDITINGOBJECT)
         m_pGUIController->DrawMouse();
@@ -631,9 +631,9 @@ void EditorActivity::DrawGUI(BITMAP *pTargetBitmap, const Vector &targetPos, int
 // Description:     Draws this EditorActivity's current graphical representation to a
 //                  BITMAP of choice. This includes all game-related graphics.
 
-void EditorActivity::Draw(BITMAP *pTargetBitmap, const Vector &targetPos)
+void EditorActivity::Draw(SDL_Renderer* renderer, const Vector &targetPos)
 {
-    
+
 }
 
 } // namespace RTE

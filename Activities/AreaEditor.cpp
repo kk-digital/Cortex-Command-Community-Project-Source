@@ -581,9 +581,9 @@ void AreaEditor::Update()
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Draws the currently active GUI of a screen to a BITMAP of choice.
 
-void AreaEditor::DrawGUI(BITMAP *pTargetBitmap, const Vector &targetPos, int which)
+void AreaEditor::DrawGUI(SDL_Renderer *renderer, const Vector &targetPos, int which)
 {
-    m_pEditorGUI->Draw(pTargetBitmap, targetPos);
+    m_pEditorGUI->Draw(renderer, targetPos);
 
     EditorActivity::DrawGUI(pTargetBitmap, targetPos, which);
 }
@@ -595,7 +595,7 @@ void AreaEditor::DrawGUI(BITMAP *pTargetBitmap, const Vector &targetPos, int whi
 // Description:     Draws this AreaEditor's current graphical representation to a
 //                  BITMAP of choice. This includes all game-related graphics.
 
-void AreaEditor::Draw(BITMAP* pTargetBitmap, const Vector &targetPos)
+void AreaEditor::Draw(SDL_Renderer* renderer, const Vector &targetPos)
 {
     EditorActivity::Draw(pTargetBitmap, targetPos);    
 }

@@ -501,11 +501,11 @@ void AssemblyEditor::Update()
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Draws the currently active GUI of a screen to a BITMAP of choice.
 
-void AssemblyEditor::DrawGUI(BITMAP *pTargetBitmap, const Vector &targetPos, int which)
+void AssemblyEditor::DrawGUI(SDL_Renderer* renderer, const Vector &targetPos, int which)
 {
-    m_pEditorGUI->Draw(pTargetBitmap, targetPos);
+    m_pEditorGUI->Draw(renderer, targetPos);
 
-    EditorActivity::DrawGUI(pTargetBitmap, targetPos, which);
+    EditorActivity::DrawGUI(renderer, targetPos, which);
 }
 
 
@@ -515,9 +515,9 @@ void AssemblyEditor::DrawGUI(BITMAP *pTargetBitmap, const Vector &targetPos, int
 // Description:     Draws this AssemblyEditor's current graphical representation to a
 //                  BITMAP of choice. This includes all game-related graphics.
 
-void AssemblyEditor::Draw(BITMAP* pTargetBitmap, const Vector &targetPos)
+void AssemblyEditor::Draw(SDL_Renderer* renderer, const Vector &targetPos)
 {
-    EditorActivity::Draw(pTargetBitmap, targetPos);    
+    EditorActivity::Draw(renderer, targetPos);
 }
 
 

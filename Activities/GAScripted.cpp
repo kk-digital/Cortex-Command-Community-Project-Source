@@ -435,9 +435,9 @@ void GAScripted::UpdateGlobalScripts(bool lateUpdate)
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Draws the currently active GUI of a screen to a BITMAP of choice.
 
-void GAScripted::DrawGUI(BITMAP *pTargetBitmap, const Vector &targetPos, int which)
+void GAScripted::DrawGUI(SDL_Renderer* renderer, const Vector &targetPos, int which)
 {
-    GameActivity::DrawGUI(pTargetBitmap, targetPos, which);
+    GameActivity::DrawGUI(renderer, targetPos, which);
 }
 
 
@@ -447,9 +447,9 @@ void GAScripted::DrawGUI(BITMAP *pTargetBitmap, const Vector &targetPos, int whi
 // Description:     Draws this GAScripted's current graphical representation to a
 //                  BITMAP of choice. This includes all game-related graphics.
 
-void GAScripted::Draw(BITMAP *pTargetBitmap, const Vector &targetPos)
+void GAScripted::Draw(SDL_Renderer *renderer, const Vector &targetPos)
 {
-    GameActivity::Draw(pTargetBitmap, targetPos);
+    GameActivity::Draw(renderer, targetPos);
 }
 
 

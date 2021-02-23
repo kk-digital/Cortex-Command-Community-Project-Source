@@ -17,6 +17,7 @@
 #include "RTETools.h"
 #include "EditorActivity.h"
 
+struct SDL_Renderer;
 namespace RTE
 {
 

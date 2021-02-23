@@ -343,11 +343,11 @@ void BaseEditor::Update()
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Draws the currently active GUI of a screen to a BITMAP of choice.
 
-void BaseEditor::DrawGUI(BITMAP *pTargetBitmap, const Vector &targetPos, int which)
+void BaseEditor::DrawGUI(SDL_Renderer* renderer, const Vector &targetPos, int which)
 {
-    m_pEditorGUI->Draw(pTargetBitmap, targetPos);
+    m_pEditorGUI->Draw(renderer, targetPos);
 
-    Activity::DrawGUI(pTargetBitmap, targetPos, which);
+    Activity::DrawGUI(renderer, targetPos, which);
 }
 
 
@@ -357,9 +357,9 @@ void BaseEditor::DrawGUI(BITMAP *pTargetBitmap, const Vector &targetPos, int whi
 // Description:     Draws this BaseEditor's current graphical representation to a
 //                  BITMAP of choice. This includes all game-related graphics.
 
-void BaseEditor::Draw(BITMAP* pTargetBitmap, const Vector &targetPos)
+void BaseEditor::Draw(SDL_Renderer* renderer, const Vector &targetPos)
 {
-    Activity::Draw(pTargetBitmap, targetPos);    
+    Activity::Draw(renderer, targetPos);
 }
 
 
