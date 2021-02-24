@@ -20,6 +20,7 @@
 #include "Scene.h"
 #include "Actor.h"
 
+struct SDL_Renderer;
 namespace RTE
 {
 
@@ -574,7 +575,7 @@ public:
 //                  Which screen's GUI to draw onto the bitmap.
 // Return value:    None.
 
-	void DrawGUI(BITMAP *pTargetBitmap, const Vector &targetPos = Vector(), int which = 0) override;
+	void DrawGUI(SDL_Renderer* renderer, const Vector &targetPos = Vector(), int which = 0) override;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -586,7 +587,7 @@ public:
 //                  The absolute position of the target bitmap's upper left corner in the scene.
 // Return value:    None.
 
-	void Draw(BITMAP *pTargetBitmap, const Vector &targetPos = Vector()) override;
+	void Draw(SDL_Renderer* renderer, const Vector &targetPos = Vector()) override;
 
 
 
@@ -1113,9 +1114,9 @@ protected:
 	bool m_BuyMenuEnabled;
 
     // The cursor animations for the LZ indicators
-    BITMAP **m_aLZCursor[4];
+    SDL_Texture **m_aLZCursor[4];
     // The cursor animations for the objective indications
-    BITMAP **m_aObjCursor[4];
+    SDL_Texture **m_aObjCursor[4];
 
     // Time it takes for a delivery to be made, in ms
     long m_DeliveryDelay;

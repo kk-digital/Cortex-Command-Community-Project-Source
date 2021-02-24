@@ -33,11 +33,13 @@
 
 #include "GUI/GUI.h"
 #include "GUI/GUIFont.h"
-#include "GUI/AllegroBitmap.h"
+#include "GUI/SDLGUITexture.h"
 #include "PieMenuGUI.h"
 #include "BuyMenuGUI.h"
 #include "SceneEditorGUI.h"
 #include "GUIBanner.h"
+
+#include <SDL2/SDL.h>
 
 extern bool g_ResetActivity;
 extern bool g_InActivity;
@@ -2136,7 +2138,7 @@ void GameActivity::Update()
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Draws the currently active GUI of a screen to a BITMAP of choice.
 
-void GameActivity::DrawGUI(BITMAP *pTargetBitmap, const Vector &targetPos, int which)
+void GameActivity::DrawGUI(SDL_Renderer* renderer, const Vector &targetPos, int which)
 {
     if (which < 0 || which >= c_MaxScreenCount)
         return;
@@ -2148,10 +2150,13 @@ void GameActivity::DrawGUI(BITMAP *pTargetBitmap, const Vector &targetPos, int w
     int PoS = PlayerOfScreen(which);
     if (PoS < Players::PlayerOne || PoS >= Players::MaxPlayerCount)
         return;
-    Box screenBox(targetPos, pTargetBitmap->w, pTargetBitmap->h);
+
+	SDL_Rect viewport;
+	SDL_RenderGetViewport(renderer, &viewport);
+    Box screenBox(targetPos, viewport.w, viewport.h);
     GUIFont *pLargeFont = g_FrameMan.GetLargeFont();
     GUIFont *pSmallFont = g_FrameMan.GetSmallFont();
-    AllegroBitmap pBitmapInt(pTargetBitmap);
+    SDLGUITexture pBitmapInt(renderer);
     int frame = ((int)m_CursorTimer.GetElapsedSimTimeMS() % 1000) / 250;
     Vector landZone;
 
