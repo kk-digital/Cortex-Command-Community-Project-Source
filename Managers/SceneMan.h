@@ -1591,7 +1591,7 @@ public:
 //                  is located.
 // Return value:    None.
 
-    void Draw(BITMAP *pTargetBitmap, BITMAP *pTargetGUIBitmap,  const Vector &targetPos = Vector(), bool skipSkybox = false, bool skipTerrain = false);
+    void Draw(SDL_Renderer* renderer,  const Vector &targetPos = Vector(), bool skipSkybox = false, bool skipTerrain = false);
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -1743,7 +1743,7 @@ public:
     // The Timer to measure time between cleanings of the color layer of the Terrain.
     Timer m_CleanTimer;
 	// Bitmap to look for orphaned regions
-	BITMAP * m_pOrphanSearchBitmap;
+	SDL_Texture * m_pOrphanSearchBitmap;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////

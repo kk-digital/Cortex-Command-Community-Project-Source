@@ -3609,36 +3609,36 @@ void SceneMan::Draw(SDL_Renderer* renderer, const Vector &targetPos, bool skipSk
 			{
 				// Background Layers
 				for (list<SceneLayer *>::reverse_iterator itr = m_pCurrentScene->GetBackLayers().rbegin(); itr != m_pCurrentScene->GetBackLayers().rend(); ++itr)
-					(*itr)->Draw(pTargetBitmap, targetBox);
+					(*itr)->Draw(renderer, targetBox);
 			}
 
 			if (!skipTerrain)
 				// Terrain background
 				pTerrain->DrawBackground(pTargetBitmap, targetBox);
             // Movables' color layer
-            m_pMOColorLayer->Draw(pTargetBitmap, targetBox);
+            m_pMOColorLayer->Draw(renderer, targetBox);
             // Terrain foreground
             pTerrain->SetToDrawMaterial(false);
 			if (!skipTerrain)
-				pTerrain->Draw(pTargetBitmap, targetBox);
+				pTerrain->Draw(renderer, targetBox);
 
             // Obscure unexplored/unseen areas
             if (pUnseenLayer && !g_FrameMan.IsInMultiplayerMode())
             {
                 // Draw the unseen obstruction layer so it obscures the team's view
-                pUnseenLayer->DrawScaled(pTargetBitmap, targetBox);
+                pUnseenLayer->DrawScaled(renderer, targetBox);
             }
 
             // Actor and gameplay HUDs and GUIs
             g_MovableMan.DrawHUD(pTargetGUIBitmap, targetPos, m_LastUpdatedScreen);
 			g_PrimitiveMan.DrawPrimitives(m_LastUpdatedScreen, pTargetGUIBitmap, targetPos);
 //            g_ActivityMan.GetActivity()->Draw(pTargetBitmap, targetPos, m_LastUpdatedScreen);
-            g_ActivityMan.GetActivity()->DrawGUI(pTargetGUIBitmap, targetPos, m_LastUpdatedScreen);
+            g_ActivityMan.GetActivity()->DrawGUI(renderer, targetPos, m_LastUpdatedScreen);
 
 //            std::snprintf(str, sizeof(str), "Normal Layer Draw Mode\nHit M to cycle modes");
 
 #ifdef DEBUG_BUILD
-            m_pDebugLayer->Draw(pTargetBitmap, Box());
+            m_pDebugLayer->Draw(renderer, Box());
 #endif
     }
 }
