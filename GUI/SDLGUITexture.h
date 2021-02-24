@@ -65,7 +65,7 @@ namespace RTE {
 		/// <param name="y">y position on the target</param>
 		/// <param name="pRect">Destination size</param>
 		void Draw(GUIBitmap *pDestBitmap, int x, int y,
-		          GUIRect *pRect) override {
+				  GUIRect *pRect) override {
 			Draw(x, y, pRect);
 		}
 
@@ -78,7 +78,7 @@ namespace RTE {
 		/// <param name="y">y position on the target</parma>
 		/// <param name="pRect">Destination size</param>
 		void DrawTrans(GUIBitmap *pDestBitmap, int x, int y,
-		               GUIRect *pRect) override {
+					   GUIRect *pRect) override {
 			Draw(x, y, pRect);
 		}
 
@@ -91,7 +91,7 @@ namespace RTE {
 		/// <param name="width">width to scale to</param>
 		/// <param name="height">height to scale to</param>
 		void DrawTransScaled(GUIBitmap *pDestBitmap, int x, int y, int width,
-		                     int height) override;
+							 int height) override;
 
 		/// <summary>
 		/// Draw a Line on the Bitmap
@@ -101,7 +101,7 @@ namespace RTE {
 		/// <param name="x2">x coordinate of second point</param>
 		/// <param name="y2">y coordinate of second point</param>
 		void DrawLine(int x1, int y1, int x2, int y2,
-		              unsigned long color) override;
+					  unsigned long color) override;
 
 		/// <summary>
 		/// Draw a rectangle in the bitmap
@@ -112,7 +112,7 @@ namespace RTE {
 		/// <param name="height">height of rectangle</param>
 		/// <parma name="color">color of the rectangle
 		void DrawRectangle(int x, int y, int width, int height,
-		                   unsigned long color, bool filled) override;
+						   unsigned long color, bool filled) override;
 
 		/// <summary>
 		/// Get the color of the pixel at coordinates (x,y).
@@ -171,7 +171,7 @@ namespace RTE {
 		/// <summary>
 		/// Get the color depth of the texture (deprecated)
 		/// </summary>
-		int GetColorDepth() override { return 0; };
+		int GetColorDepth() override { return 32; };
 
 		/// <summary>
 		/// Get the clipping rectangle
@@ -193,14 +193,14 @@ namespace RTE {
 		/// </summary>
 		/// <param name="rect"> pointer to the rectangle to intersect</param>
 		void AddClipRect(GUIRect *rect) override;
-		/*
+
 		/// <summary>
 		/// Get the path to the datafile object in use by this GUIBitmap
 		/// </summary>
 		/// <returns> The Path to the datafile </returns>
 		std::string GetDataPath() override {
-		    return m_TextureFile.GetDataPath();
-		}*/
+			return m_TextureFile.GetDataPath();
+		}
 
 		/// <summary>
 		/// Get the texture of the SDLTexture object
@@ -234,7 +234,6 @@ namespace RTE {
 		int m_Width;
 		int m_Height;
 
-	public:
 	};
 } // namespace RTE
 
