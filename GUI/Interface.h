@@ -62,19 +62,19 @@ namespace RTE {
 		/// </summary>
 		/// <returns>Color depth. 8, 16, 32.</returns>
 		virtual int GetColorDepth() { return 0; }
-		/*
+
 		/// <summary>
 		/// Sets the color key of the bitmap.
 		/// </summary>
 		/// <param name="Key">Color key.</param>
-		virtual void SetColorKey(unsigned long Key) = 0;
+		virtual void SetColorKey(unsigned long Key){};
 
 		/// <summary>
 		/// Sets the color key of the bitmap to the color of the pixel in the upper right corner of the bitmap.
 		/// </summary>
 		/// <param name="Key">Color key.</param>
-		virtual void SetColorKey() = 0;
-		*/
+		virtual void SetColorKey() {};
+
 		/// <summary>
 		/// Gets the color of a pixel at a specific point.
 		/// </summary>
