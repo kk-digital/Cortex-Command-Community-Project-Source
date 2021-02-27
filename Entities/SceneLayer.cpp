@@ -243,11 +243,11 @@ int SceneLayer::Create(const SceneLayer &reference)
 			   reference.m_Pitch * reference.m_pMainTextureHeight);
 
 		// Lock the newly created Texture
-		SDL_LockTexture(m_pMainTexture, nullptr, &m_PixelsWO, &m_Pitch);
+		LockTexture();
 		// Copy the RW pixels to the Texture
 		std::memcpy(m_PixelsWO, m_PixelsRW, m_Pitch*m_pMainTextureHeight);
 		// Unlock the Texture again
-		SDL_UnlockTexture(m_pMainTexture);
+		UnlockTexture();
 
         InitScrollRatios();
 
@@ -297,7 +297,7 @@ int SceneLayer::LoadData()
     blit(pCopyFrom, m_pMainBitmap, 0, 0, 0, 0, pCopyFrom->w, pCopyFrom->h);
 */
     // Re-load directly from disk each time; don't do any caching of these bitmaps
-    m_pMainTexture = m_TextureFile.GetAsTexture(false);
+    m_TextureFile.GetAsTexture(m_pMainTexture, m_PixelsRW, m_Pitch, true, false);
 
     m_MainBitmapOwned = true;
 

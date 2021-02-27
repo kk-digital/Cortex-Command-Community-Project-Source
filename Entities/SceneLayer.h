@@ -331,7 +331,7 @@ ClassInfoGetters
 // Arguments:       None.
 // Return value:    None.
 
-    virtual void LockTexture() { SDL_LockTexture(m_pMainTexture, NULL, &m_PixelsWO, &m_Pitch); }
+    virtual void LockTexture() { SDL_LockTexture(m_pMainTexture, NULL, reinterpret_cast<void**>(&m_PixelsWO), &m_Pitch); }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -346,13 +346,15 @@ ClassInfoGetters
 
 	virtual void UnlockTexture();
 
-//////////////////////////////////////////////////////////////////////////////////////////
-// Method:          GetPixel
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Gets a specific pixel from the main bitmap of this SceneLayer.
-//                  LockColorBitmap() must be called before using this method.
-// Arguments:       The X and Y coordinates of which pixel to get.
-// Return value:    An unsigned char specifying the requested pixel's value.
+	//////////////////////////////////////////////////////////////////////////////////////////
+	// Method:          GetPixel
+	//////////////////////////////////////////////////////////////////////////////////////////
+	// Description:     Gets a specific pixel from the main bitmap of this
+	// SceneLayer.
+	//                  LockColorBitmap() must be called before using this
+	//                  method.
+	// Arguments:       The X and Y coordinates of which pixel to get.
+	// Return value:    An unsigned char specifying the requested pixel's value.
 
     Uint32 GetPixel(const int pixelX, const int pixelY);
 
@@ -381,7 +383,7 @@ ClassInfoGetters
     bool IsWithinBounds(const int pixelX, const int pixelY, const int margin = 0)
     {
 // TODO: This doesn't take Y wrapping into acocunt!$@#$
-        return (m_WrapX || (pixelX >= -margin) && pixelX < (m_pMainBitmap->w + margin)) && pixelY >= -1000 && pixelY < (m_pMainBitmap->h + margin);
+        return (m_WrapX || (pixelX >= -margin) && pixelX < (m_pMainTextureWidth + margin)) && pixelY >= -1000 && pixelY < (m_pMainTextureHeight + margin);
     }
 
 
