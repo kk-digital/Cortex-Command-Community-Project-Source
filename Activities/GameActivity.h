@@ -943,7 +943,7 @@ protected:
         //                  Which orientation to draw the arrow in, relative to the point.
         // Return value:    None.
 
-        void Draw(BITMAP *pTargetBitmap, BITMAP *pArrowBitmap, const Vector &arrowPoint, ObjectiveArrowDir arrowDir = ARROWDOWN);
+        void Draw(SDL_Renderer* renderer, SDL_Texture *pArrowTexture, const Vector &arrowPoint, ObjectiveArrowDir arrowDir = ARROWDOWN);
 
 
         // The description of this objective point
@@ -1142,6 +1142,13 @@ protected:
 
 private:
 
+	/// <summary>
+	/// Draw the LZ Cursors
+	/// </summary>
+	/// <param name="renderer">
+	/// The rendering context to draw to
+	/// </param>
+	void DrawDeliveryCursors(SDL_Renderer* renderer, Vector targetPos, int frame);
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          Clear

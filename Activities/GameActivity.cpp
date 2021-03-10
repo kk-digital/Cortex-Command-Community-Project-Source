@@ -39,8 +39,10 @@
 #include "SceneEditorGUI.h"
 #include "GUIBanner.h"
 
-#include <SDL2/SDL.h>
+#include "System/SDLHelper.h"
+#include <SDL2/SDL2_gfxPrimitives.h>
 
+//TODO evil
 extern bool g_ResetActivity;
 extern bool g_InActivity;
 
@@ -2143,403 +2145,425 @@ void GameActivity::DrawGUI(SDL_Renderer* renderer, const Vector &targetPos, int 
     if (which < 0 || which >= c_MaxScreenCount)
         return;
 
-    char str[512];
-    int yTextPos = 0;
-    int team = Teams::NoTeam;
-    int cursor = 0;
-    int PoS = PlayerOfScreen(which);
-    if (PoS < Players::PlayerOne || PoS >= Players::MaxPlayerCount)
-        return;
+	char str[512];
+	int yTextPos = 0;
+	int team = Teams::NoTeam;
+	int cursor = 0;
+	int PoS = PlayerOfScreen(which);
+	if (PoS < Players::PlayerOne || PoS >= Players::MaxPlayerCount)
+		return;
 
 	SDL_Rect viewport;
 	SDL_RenderGetViewport(renderer, &viewport);
-    Box screenBox(targetPos, viewport.w, viewport.h);
-    GUIFont *pLargeFont = g_FrameMan.GetLargeFont();
-    GUIFont *pSmallFont = g_FrameMan.GetSmallFont();
-    SDLGUITexture pBitmapInt(renderer);
-    int frame = ((int)m_CursorTimer.GetElapsedSimTimeMS() % 1000) / 250;
-    Vector landZone;
+	Box screenBox(targetPos, viewport.w, viewport.h);
+	SDLGUITexture pBitmapInt;
 
-    // Iterate through all players, drawing each currently used LZ cursor.
-    for (int player = Players::PlayerOne; player < Players::MaxPlayerCount; ++player)
-    {
-        if (!(m_IsActive[player] && m_IsHuman[player]))
-            continue;
+	int frame = ((int)m_CursorTimer.GetElapsedSimTimeMS() % 1000) / 250;
 
-        if (m_ViewState[player] == ViewState::LandingZoneSelect)
-        {
-            int halfWidth = 36;
-            team = m_Team[player];
-            if (team == Teams::NoTeam)
-                continue;
-			cursor = team;
-            landZone = m_LandingZone[player] - targetPos;
-            // Cursor
-            draw_sprite(pTargetBitmap, m_aLZCursor[cursor][frame], landZone.m_X - halfWidth, landZone.m_Y - 48);
-            draw_sprite_h_flip(pTargetBitmap, m_aLZCursor[cursor][frame], landZone.m_X + halfWidth - m_aLZCursor[cursor][frame]->w, landZone.m_Y - 48);
-            // Text
-            pSmallFont->DrawAligned(&pBitmapInt, landZone.m_X, landZone.m_Y - 42, m_AIReturnCraft[player] ? "Deliver here" : "Travel here", GUIFont::Centre);
-            pSmallFont->DrawAligned(&pBitmapInt, landZone.m_X, landZone.m_Y - 36, "and then", GUIFont::Centre);
-            pLargeFont->DrawAligned(&pBitmapInt, landZone.m_X, landZone.m_Y - 30, m_AIReturnCraft[player] ? "RETURN" : "STAY", GUIFont::Centre);
-            // Draw wrap around the world if necessary, and only if this is being drawn directly to a scenewide target bitmap
-            if (targetPos.IsZero() && (landZone.m_X < halfWidth || landZone.m_X > g_SceneMan.GetSceneWidth() - halfWidth))
-            {
-                // Wrap shit around and draw dupe on the other side
-                int wrappedX = landZone.m_X + (landZone.m_X < halfWidth ? g_SceneMan.GetSceneWidth() : -g_SceneMan.GetSceneWidth());
-                // Cursor
-                draw_sprite(pTargetBitmap, m_aLZCursor[cursor][frame], wrappedX - halfWidth, landZone.m_Y - 48);
-                draw_sprite_h_flip(pTargetBitmap, m_aLZCursor[cursor][frame], wrappedX + halfWidth - m_aLZCursor[cursor][frame]->w, landZone.m_Y - 48);
-                // Text
-                pSmallFont->DrawAligned(&pBitmapInt, wrappedX, landZone.m_Y - 42, m_AIReturnCraft[player] ? "Deliver here" : "Travel here", GUIFont::Centre);
-                pSmallFont->DrawAligned(&pBitmapInt, wrappedX, landZone.m_Y - 36, "and then", GUIFont::Centre);
-                pLargeFont->DrawAligned(&pBitmapInt, wrappedX, landZone.m_Y - 30, m_AIReturnCraft[player] ? "RETURN" : "STAY", GUIFont::Centre);
-            }
-        }
-    }
+	DrawDeliveryCursors(renderer, targetPos, frame);
 
-    // Iterate through all teams, drawing all pending delivery cursors
-    for (int team = Teams::TeamOne; team < Teams::MaxTeamCount; ++team)
-    {
-        if (!m_TeamActive[team])
-            continue;
-        char str[64];
-		cursor = team;
-        for (deque<Delivery>::iterator itr = m_Deliveries[team].begin(); itr != m_Deliveries[team].end(); ++itr)
-        {
-            int halfWidth = 24;
-            landZone = itr->landingZone - targetPos;
-            // Cursor
-            draw_sprite(pTargetBitmap, m_aLZCursor[cursor][frame], landZone.m_X - halfWidth, landZone.m_Y - 48);
-            draw_sprite_h_flip(pTargetBitmap, m_aLZCursor[cursor][frame], landZone.m_X + halfWidth - m_aLZCursor[cursor][frame]->w, landZone.m_Y - 48);
-            // Text
-            pSmallFont->DrawAligned(&pBitmapInt, landZone.m_X, landZone.m_Y - 38, "ETA:", GUIFont::Centre);
-            if (m_ActivityState == ActivityState::PreGame)
-                std::snprintf(str, sizeof(str), "???s");
-            else
-                std::snprintf(str, sizeof(str), "%is", ((int)itr->delay - (int)itr->timer.GetElapsedSimTimeMS()) / 1000);
-            pLargeFont->DrawAligned(&pBitmapInt, landZone.m_X, landZone.m_Y - 32, str, GUIFont::Centre);
-            // Draw wrap around the world if necessary, and only if this is being drawn directly to a scenewide target bitmap
-            if (targetPos.IsZero() && (landZone.m_X < halfWidth || landZone.m_X > g_SceneMan.GetSceneWidth() - halfWidth))
-            {
-                // Wrap shit around and draw dupe on the other side
-                int wrappedX = landZone.m_X + (landZone.m_X < halfWidth ? g_SceneMan.GetSceneWidth() : -g_SceneMan.GetSceneWidth());
-                // Cursor
-                draw_sprite(pTargetBitmap, m_aLZCursor[cursor][frame], wrappedX - halfWidth, landZone.m_Y - 48);
-                draw_sprite_h_flip(pTargetBitmap, m_aLZCursor[cursor][frame], wrappedX + halfWidth - m_aLZCursor[cursor][frame]->w, landZone.m_Y - 48);
-                // Text
-                pSmallFont->DrawAligned(&pBitmapInt, wrappedX, landZone.m_Y - 38, "ETA:", GUIFont::Centre);
-                pLargeFont->DrawAligned(&pBitmapInt, wrappedX, landZone.m_Y - 32, str, GUIFont::Centre);
-            }
-        }
-    }
+	// The team of the screen
+	team = m_Team[PoS];
+	if (team == Teams::NoTeam)
+		return;
 
-    // The team of the screen
-    team = m_Team[PoS];
-    if (team == Teams::NoTeam)
-        return;
+	// None of the following player-specific GUI elements apply if this isn't a
+	// played human actor
+	if (!(m_IsActive[PoS] && m_IsHuman[PoS]))
+		return;
 
-    // None of the following player-specific GUI elements apply if this isn't a played human actor
-    if (!(m_IsActive[PoS] && m_IsHuman[PoS]))
-        return;
+	// Get all possible wrapped boxes of the screen
+	list<Box> wrappedBoxes;
+	g_SceneMan.WrapBox(screenBox, wrappedBoxes);
+	Vector wrappingOffset, objScenePos, onScreenEdgePos;
+	float distance, shortestDist;
+	float sceneWidth = g_SceneMan.GetSceneWidth();
 
-    // Get all possible wrapped boxes of the screen
-    list<Box> wrappedBoxes;
-    g_SceneMan.WrapBox(screenBox, wrappedBoxes);
-    Vector wrappingOffset, objScenePos, onScreenEdgePos;
-    float distance, shortestDist;
-    float sceneWidth = g_SceneMan.GetSceneWidth();
-    float halfScreenWidth = pTargetBitmap->w / 2;
-    float halfScreenHeight = pTargetBitmap->h / 2;
-    // THis is the max distance that is possible between a point inside the scene, but outside the screen box, and the screen box's outer edge closest to the point (taking wrapping into account)
-    float maxOffScreenSceneWidth = g_SceneMan.SceneWrapsX() ? ((sceneWidth / 2) - halfScreenWidth) : (sceneWidth - pTargetBitmap->w);
-    // These handle arranging the left and right stacks of arrows, so they don't pile up on top of each other
-    cursor = team;
-    float leftStackY = halfScreenHeight - m_aObjCursor[cursor][frame]->h * 2;
-    float rightStackY = leftStackY;
+	SDL_Rect renderSize;
+	SDL_RenderGetViewport(renderer, &renderSize);
+	float halfScreenWidth = renderSize.w / 2;
+	float halfScreenHeight = renderSize.h / 2;
+	// This is the max distance that is possible between a point inside the
+	// scene, but outside the screen box, and the screen box's outer edge
+	// closest to the point (taking wrapping into account)
+	float maxOffScreenSceneWidth = g_SceneMan.SceneWrapsX()
+		                               ? ((sceneWidth / 2) - halfScreenWidth)
+		                               : (sceneWidth - renderSize.w);
+	// These handle arranging the left and right stacks of arrows, so they don't
+	// pile up on top of each other
+	int cursorW,cursorH;
+	SDL_QueryTexture(m_aObjCursor[cursor][frame], nullptr, nullptr, &cursorW, &cursorH);
 
-    // Draw the objective points this player should care about
-    for (list<ObjectivePoint>::iterator itr = m_Objectives.begin(); itr != m_Objectives.end(); ++itr)
-    {
-        // Only draw objectives of the same team as the current player
-        if (itr->m_Team == team)
-        {
-            // Iterate through the wrapped screen boxes - will only be one if there's no wrapping
-            // Try to the find one that contains the objective point
-            bool withinAny = false;
-            list<Box>::iterator nearestBoxItr = wrappedBoxes.begin();
-            shortestDist = 1000000.0;
-            for (list<Box>::iterator wItr = wrappedBoxes.begin(); wItr != wrappedBoxes.end(); ++wItr)
-            {
-                // See if we found the point to be within the screen or not
-                if (wItr->IsWithinBox((*itr).m_ScenePos))
-                {
-                    nearestBoxItr = wItr;
-                    withinAny = true;
-                    break;
-                }
-                // Well, which wrapped screen box is closest to the point?
-                distance = g_SceneMan.ShortestDistance(wItr->GetCenter(), (*itr).m_ScenePos).GetLargest();
-                if (distance < shortestDist)
-                {
-                    shortestDist = distance;
-                    nearestBoxItr = wItr;
-                }
-            }
+	cursor = team;
+	float leftStackY = halfScreenHeight - cursorH * 2;
+	float rightStackY = leftStackY;
 
-            // Get the difference that the wrapped screen has from the actual one
-            wrappingOffset = screenBox.GetCorner() - nearestBoxItr->GetCorner();
-            // Apply that offet to the objective point's position
-            objScenePos = itr->m_ScenePos + wrappingOffset;
+	// Draw the objective points this player should care about
+	for (list<ObjectivePoint>::iterator itr = m_Objectives.begin();
+		 itr != m_Objectives.end(); ++itr) {
+		// Only draw objectives of the same team as the current player
+		if (itr->m_Team == team) {
+			// Iterate through the wrapped screen boxes - will only be one if
+			// there's no wrapping Try to the find one that contains the
+			// objective point
+			bool withinAny = false;
+			list<Box>::iterator nearestBoxItr = wrappedBoxes.begin();
+			shortestDist = 1000000.0;
+			for (list<Box>::iterator wItr = wrappedBoxes.begin();
+				 wItr != wrappedBoxes.end(); ++wItr) {
+				// See if we found the point to be within the screen or not
+				if (wItr->IsWithinBox((*itr).m_ScenePos)) {
+					nearestBoxItr = wItr;
+					withinAny = true;
+					break;
+				}
+				// Well, which wrapped screen box is closest to the point?
+				distance =
+					g_SceneMan
+					    .ShortestDistance(wItr->GetCenter(), (*itr).m_ScenePos)
+					    .GetLargest();
+				if (distance < shortestDist) {
+					shortestDist = distance;
+					nearestBoxItr = wItr;
+				}
+			}
 
-            // Objective is within the screen, so draw the set arrow over it
-            if (withinAny)
-                itr->Draw(pTargetBitmap, m_aObjCursor[cursor][frame], objScenePos - targetPos, itr->m_ArrowDir);
-            // Outside the screen, so draw it at the edge of it
-            else
-            {
-                // Figure out which point is closest to the box, taking scene wrapping into account
-                objScenePos = nearestBoxItr->GetCenter() + g_SceneMan.ShortestDistance(nearestBoxItr->GetCenter(), objScenePos);
-                // Shortest distance from the edge of the screen box, not the center.
-                shortestDist -= halfScreenWidth;
+			// Get the difference that the wrapped screen has from the actual
+			// one
+			wrappingOffset = screenBox.GetCorner() - nearestBoxItr->GetCorner();
+			// Apply that offet to the objective point's position
+			objScenePos = itr->m_ScenePos + wrappingOffset;
 
-                // Make the arrow point toward the edge of the screen
-                if (objScenePos.m_X >= nearestBoxItr->GetCorner().m_X + nearestBoxItr->GetWidth())
-                {
-                    // Make the edge position approach the center of the vertical edge of the screen the farther away the objective position is from the screen
-                    onScreenEdgePos = nearestBoxItr->GetWithinBox(objScenePos) - targetPos;
-                    // Double the EaseIn to make it even more exponential, want the arrow to stay close to the edge for a long time
-                    onScreenEdgePos.m_Y = rightStackY + EaseIn(0, onScreenEdgePos.m_Y - rightStackY, EaseIn(0, 1.0, 1.0 - (shortestDist / maxOffScreenSceneWidth)));
-                    itr->Draw(pTargetBitmap, m_aObjCursor[cursor][frame], onScreenEdgePos, ARROWRIGHT);
-                    // Stack cursor moves down an arrowheight
-                    rightStackY += m_aObjCursor[cursor][frame]->h;
-                }
-                else if (objScenePos.m_X < nearestBoxItr->GetCorner().m_X)
-                {
-                    // Make the edge position approach the center of the vertical edge of the screen the farther away the objective position is from the screen
-                    onScreenEdgePos = nearestBoxItr->GetWithinBox(objScenePos) - targetPos;
-                    // Double the EaseIn to make it even more exponential, want the arrow to stay close to the edge for a long time
-                    onScreenEdgePos.m_Y = leftStackY + EaseIn(0, onScreenEdgePos.m_Y - leftStackY, EaseIn(0, 1.0, 1.0 - (shortestDist / maxOffScreenSceneWidth)));
-                    itr->Draw(pTargetBitmap, m_aObjCursor[cursor][frame], onScreenEdgePos, ARROWLEFT);
-                    // Stack cursor moves down an arrowheight
-                    leftStackY += m_aObjCursor[cursor][frame]->h;
-                }
-                else if (objScenePos.m_Y < nearestBoxItr->GetCorner().m_Y)
-                    itr->Draw(pTargetBitmap, m_aObjCursor[cursor][frame], nearestBoxItr->GetWithinBox(objScenePos) - targetPos, ARROWUP);
-                else                        
-                    itr->Draw(pTargetBitmap, m_aObjCursor[cursor][frame], nearestBoxItr->GetWithinBox(objScenePos) - targetPos, ARROWDOWN);
-            }
-        }
-    }
+			// Objective is within the screen, so draw the set arrow over it
+			if (withinAny)
+				itr->Draw(renderer, m_aObjCursor[cursor][frame],
+					      objScenePos - targetPos, itr->m_ArrowDir);
+			// Outside the screen, so draw it at the edge of it
+			else {
+				// Figure out which point is closest to the box, taking scene
+				// wrapping into account
+				objScenePos = nearestBoxItr->GetCenter() +
+					          g_SceneMan.ShortestDistance(
+					              nearestBoxItr->GetCenter(), objScenePos);
+				// Shortest distance from the edge of the screen box, not the
+				// center.
+				shortestDist -= halfScreenWidth;
 
-    // Team Icon up in the top left corner
-    const Icon *pIcon = GetTeamIcon(m_Team[PoS]);
-    if (pIcon)
-        draw_sprite(pTargetBitmap, pIcon->GetBitmaps8()[0], MAX(2, g_SceneMan.GetScreenOcclusion(which).m_X + 2), 2);
-    // Gold
-    std::snprintf(str, sizeof(str), "%c Funds: %.0f oz", TeamFundsChanged(which) ? -57 : -58, GetTeamFunds(m_Team[PoS]));
-    g_FrameMan.GetLargeFont()->DrawAligned(&pBitmapInt, MAX(16, g_SceneMan.GetScreenOcclusion(which).m_X + 16), yTextPos, str, GUIFont::Left);
-/* Not applicable anymore to the 4-team games
-    // Body losses
-    std::snprintf(str, sizeof(str), "%c Losses: %c%i %c%i", -39, -62, GetTeamDeathCount(Teams::TeamOne), -59, GetTeamDeathCount(Teams::TeamTwo));
-    g_FrameMan.GetLargeFont()->DrawAligned(&pBitmapInt, MIN(pTargetBitmap->w - 4, pTargetBitmap->w - 4 + g_SceneMan.GetScreenOcclusion(which).m_X), yTextPos, str, GUIFont::Right);
-*/
-    // Show the player's controller scheme icon in the upper right corner of his screen, but only for a minute
-    if (m_GameTimer.GetElapsedRealTimeS() < 30)
-    {
-// TODO: Only blink if there hasn't been any input on a controller since start of game??
-        // Blink them at first, but only if there's more than one human player
-        if (m_GameTimer.GetElapsedRealTimeS() > 4 || m_GameTimer.AlternateReal(150) || GetHumanCount() < 2)
-        {
-            pIcon = g_UInputMan.GetSchemeIcon(PoS);
-            if (pIcon)
-            {
-                draw_sprite(pTargetBitmap, pIcon->GetBitmaps8()[0], MIN(pTargetBitmap->w - pIcon->GetBitmaps8()[0]->w - 2, pTargetBitmap->w - pIcon->GetBitmaps8()[0]->w - 2 + g_SceneMan.GetScreenOcclusion(which).m_X), yTextPos);
-// TODO: make a black Activity intro screen, saying "Player X, press any key/button to show that you are ready!, and display their controller icon, then fade into the scene"
-//                stretch_sprite(pTargetBitmap, pIcon->GetBitmaps8()[0], 10, 10, pIcon->GetBitmaps8()[0]->w * 4, pIcon->GetBitmaps8()[0]->h * 4);
-            }
-        }
-    }
+				// Make the arrow point toward the edge of the screen
+				if (objScenePos.m_X >= nearestBoxItr->GetCorner().m_X +
+					                       nearestBoxItr->GetWidth()) {
+					// Make the edge position approach the center of the
+					// vertical edge of the screen the farther away the
+					// objective position is from the screen
+					onScreenEdgePos =
+						nearestBoxItr->GetWithinBox(objScenePos) - targetPos;
+					// Double the EaseIn to make it even more exponential, want
+					// the arrow to stay close to the edge for a long time
+					onScreenEdgePos.m_Y =
+						rightStackY +
+						EaseIn(0, onScreenEdgePos.m_Y - rightStackY,
+						       EaseIn(0, 1.0,
+						              1.0 - (shortestDist /
+						                     maxOffScreenSceneWidth)));
+					itr->Draw(renderer, m_aObjCursor[cursor][frame],
+						      onScreenEdgePos, ARROWRIGHT);
+					// Stack cursor moves down an arrowheight
+					rightStackY += cursorH;
+				} else if (objScenePos.m_X < nearestBoxItr->GetCorner().m_X) {
+					// Make the edge position approach the center of the
+					// vertical edge of the screen the farther away the
+					// objective position is from the screen
+					onScreenEdgePos =
+						nearestBoxItr->GetWithinBox(objScenePos) - targetPos;
+					// Double the EaseIn to make it even more exponential, want
+					// the arrow to stay close to the edge for a long time
+					onScreenEdgePos.m_Y =
+						leftStackY +
+						EaseIn(0, onScreenEdgePos.m_Y - leftStackY,
+						       EaseIn(0, 1.0,
+						              1.0 - (shortestDist /
+						                     maxOffScreenSceneWidth)));
+					itr->Draw(renderer, m_aObjCursor[cursor][frame],
+						      onScreenEdgePos, ARROWLEFT);
+					// Stack cursor moves down an arrowheight
+					leftStackY += cursorH;
+				} else if (objScenePos.m_Y < nearestBoxItr->GetCorner().m_Y)
+					itr->Draw(renderer, m_aObjCursor[cursor][frame],
+						      nearestBoxItr->GetWithinBox(objScenePos) -
+						          targetPos,
+						      ARROWUP);
+				else
+					itr->Draw(renderer, m_aObjCursor[cursor][frame],
+						      nearestBoxItr->GetWithinBox(objScenePos) -
+						          targetPos,
+						      ARROWDOWN);
+			}
+		}
+	}
 
-    if (m_ActivityState == ActivityState::Running)
-    {
-        // Pie menu may be visible if we're choosing actors
-        if (/*m_ControlledActor[PoS] && */m_pPieMenu[PoS] && m_pPieMenu[PoS]->IsVisible())
-            m_pPieMenu[PoS]->Draw(pTargetBitmap, targetPos);
+	// Team Icon up in the top left corner
+	const Icon *pIcon = GetTeamIcon(m_Team[PoS]);
+	if (pIcon) {
+		SDL_Rect pos{
+			std::max(2, static_cast<int>(g_SceneMan.GetScreenOcclusion(which).m_X)),
+			2,
+			0,0
+		};
+		SDL_QueryTexture(pIcon->GetBitmaps8()[0], NULL, NULL, &pos.w, &pos.h);
+		SDL_RenderCopy(renderer, pIcon->GetBitmaps8()[0], NULL, &pos);
+	}
 
-        if (m_pBuyGUI[PoS] && m_pBuyGUI[PoS]->IsVisible())
-            m_pBuyGUI[PoS]->Draw(pTargetBitmap);
-    }
+	// Gold
+	std::snprintf(str, sizeof(str), "%c Funds: %.0f oz",
+		          TeamFundsChanged(which) ? -57 : -58,
+		          GetTeamFunds(m_Team[PoS]));
+	g_FrameMan.GetLargeFont()->DrawAligned(
+		&pBitmapInt,
+		std::max(16, static_cast<int>(g_SceneMan.GetScreenOcclusion(which).m_X +
+		                              16)),
+		yTextPos, str, GUIFont::Left);
+	/* Not applicable anymore to the 4-team games
+		// Body losses
+		std::snprintf(str, sizeof(str), "%c Losses: %c%i %c%i", -39, -62,
+	   GetTeamDeathCount(Teams::TeamOne), -59,
+	   GetTeamDeathCount(Teams::TeamTwo));
+		g_FrameMan.GetLargeFont()->DrawAligned(&pBitmapInt, MIN(viewport.w
+	   - 4, viewport.w - 4 + g_SceneMan.GetScreenOcclusion(which).m_X),
+	   yTextPos, str, GUIFont::Right);
+	*/
+	// Show the player's controller scheme icon in the upper right corner of his
+	// screen, but only for a minute
+	if (m_GameTimer.GetElapsedRealTimeS() < 30) {
+		// TODO: Only blink if there hasn't been any input on a controller since
+		// start of game?? Blink them at first, but only if there's more than
+		// one human player
+		if (m_GameTimer.GetElapsedRealTimeS() > 4 ||
+			m_GameTimer.AlternateReal(150) || GetHumanCount() < 2) {
+			pIcon = g_UInputMan.GetSchemeIcon(PoS);
+			if (pIcon) {
+				SDL_Rect pos;
+				SDL_QueryTexture(pIcon->GetBitmaps8()[0], NULL, NULL, &pos.w,
+					             &pos.h);
+				pos.x =
+					std::min(viewport.w - pos.w - 2,
+					         viewport.w - pos.w - 2 +
+					             static_cast<int>(g_SceneMan.GetScreenOcclusion(which).m_X));
+				pos.y = yTextPos;
+				SDL_RenderCopy(renderer, pIcon->GetBitmaps8()[0], NULL, &pos);
 
-    // Draw actor picking crosshairs if applicable
-    if (m_ViewState[PoS] == ViewState::ActorSelect && m_IsActive[PoS] && m_IsHuman[PoS])
-    {
-        Vector center = m_ActorCursor[PoS] - targetPos;
-        circle(pTargetBitmap, center.m_X, center.m_Y, m_CursorTimer.AlternateReal(150) ? 6 : 8, g_YellowGlowColor);
-        // Add pixel glow area around it, in scene coordinates
+				// TODO: make a black Activity intro screen, saying "Player X,
+				// press any key/button to show that you are ready!, and display
+				// their controller icon, then fade into the scene"
+				//                stretch_sprite(pTargetBitmap,
+				//                pIcon->GetBitmaps8()[0], 10, 10,
+				//                pIcon->GetBitmaps8()[0]->w * 4,
+				//                pIcon->GetBitmaps8()[0]->h * 4);
+			}
+		}
+	}
+
+	if (m_ActivityState == ActivityState::Running) {
+		// Pie menu may be visible if we're choosing actors
+		if (/*m_ControlledActor[PoS] && */ m_pPieMenu[PoS] &&
+			m_pPieMenu[PoS]->IsVisible())
+			m_pPieMenu[PoS]->Draw(renderer, targetPos);
+
+		if (m_pBuyGUI[PoS] && m_pBuyGUI[PoS]->IsVisible())
+			m_pBuyGUI[PoS]->Draw(renderer);
+	}
+
+	// Draw actor picking crosshairs if applicable
+	if (m_ViewState[PoS] == ViewState::ActorSelect && m_IsActive[PoS] &&
+		m_IsHuman[PoS]) {
+		Vector center = m_ActorCursor[PoS] - targetPos;
+		circleColor(renderer, center.m_X, center.m_Y,
+			   m_CursorTimer.AlternateReal(150) ? 6 : 8, g_YellowGlowColor);
+		// Add pixel glow area around it, in scene coordinates
 		g_PostProcessMan.RegisterGlowArea(m_ActorCursor[PoS], 10);
-/* Crosshairs
-        putpixel(pTargetBitmap, center.m_X, center.m_Y, g_YellowGlowColor);
-        hline(pTargetBitmap, center.m_X - 5, center.m_Y, center.m_X - 2, g_YellowGlowColor);
-        hline(pTargetBitmap, center.m_X + 5, center.m_Y, center.m_X + 2, g_YellowGlowColor);
-        vline(pTargetBitmap, center.m_X, center.m_Y - 5, center.m_Y - 2, g_YellowGlowColor);
-        vline(pTargetBitmap, center.m_X, center.m_Y + 5, center.m_Y + 2, g_YellowGlowColor);
-*/
-    }
-    // AI point commands cursor
-    else if (m_ViewState[PoS] == ViewState::AIGoToPoint)
-    {
-        Vector center = m_ActorCursor[PoS] - targetPos;
-        circle(pTargetBitmap, center.m_X, center.m_Y, m_CursorTimer.AlternateReal(150) ? 6 : 8, g_YellowGlowColor);
-        circlefill(pTargetBitmap, center.m_X, center.m_Y, 2, g_YellowGlowColor);
-//            putpixel(pTargetBitmap, center.m_X, center.m_Y, g_YellowGlowColor);
-        // Add pixel glow area around it, in scene coordinates
+		/* Crosshairs
+			    putpixel(pTargetBitmap, center.m_X, center.m_Y,
+		   g_YellowGlowColor); hline(pTargetBitmap, center.m_X - 5, center.m_Y,
+		   center.m_X - 2, g_YellowGlowColor); hline(pTargetBitmap, center.m_X +
+		   5, center.m_Y, center.m_X + 2, g_YellowGlowColor);
+			    vline(pTargetBitmap, center.m_X, center.m_Y - 5, center.m_Y - 2,
+		   g_YellowGlowColor); vline(pTargetBitmap, center.m_X, center.m_Y + 5,
+		   center.m_Y + 2, g_YellowGlowColor);
+		*/
+	}
+	// AI point commands cursor
+	else if (m_ViewState[PoS] == ViewState::AIGoToPoint) {
+		Vector center = m_ActorCursor[PoS] - targetPos;
+		circleColor(renderer, center.m_X, center.m_Y,
+			   m_CursorTimer.AlternateReal(150) ? 6 : 8, g_YellowGlowColor);
+		filledCircleColor(renderer, center.m_X, center.m_Y, 2, g_YellowGlowColor);
+		//            putpixel(pTargetBitmap, center.m_X, center.m_Y,
+		//            g_YellowGlowColor);
+		// Add pixel glow area around it, in scene coordinates
 		g_PostProcessMan.RegisterGlowArea(m_ActorCursor[PoS], 10);
 
-        // Draw a line from the last set waypoint to the cursor
-        if (m_ControlledActor[PoS] && g_MovableMan.IsActor(m_ControlledActor[PoS]))
-            g_FrameMan.DrawLine(pTargetBitmap, m_ControlledActor[PoS]->GetLastAIWaypoint() - targetPos, m_ActorCursor[PoS] - targetPos, g_YellowGlowColor, 0, AILINEDOTSPACING, 0, true);
-    }
+		// Draw a line from the last set waypoint to the cursor
+		if (m_ControlledActor[PoS] &&
+			g_MovableMan.IsActor(m_ControlledActor[PoS]))
+			g_FrameMan.DrawLine(
+				m_ControlledActor[PoS]->GetLastAIWaypoint() - targetPos,
+				m_ActorCursor[PoS] - targetPos, g_YellowGlowColor, 0,
+				AILINEDOTSPACING, 0, true);
+	}
 	// Group selection circle
-	else if (m_ViewState[PoS] == ViewState::UnitSelectCircle)
-    {
-		if (m_ControlledActor[PoS] && g_MovableMan.IsActor(m_ControlledActor[PoS]))
-		{
+	else if (m_ViewState[PoS] == ViewState::UnitSelectCircle) {
+		if (m_ControlledActor[PoS] &&
+			g_MovableMan.IsActor(m_ControlledActor[PoS])) {
 			Vector cursorDrawPos = m_ActorCursor[PoS] - targetPos;
 			Vector actorPos = m_ControlledActor[PoS]->GetPos();
 			Vector drawPos = actorPos - targetPos;
 
-			//Fix cursor coordinates
-			if (!targetPos.IsZero())
-			{
+			// Fix cursor coordinates
+			if (!targetPos.IsZero()) {
 				// Spans vertical scene seam
 				int sceneWidth = g_SceneMan.GetSceneWidth();
-				if (g_SceneMan.SceneWrapsX() && pTargetBitmap->w < sceneWidth)
-				{
-					if ((targetPos.m_X < 0) && (m_ActorCursor[PoS].m_X > (sceneWidth - pTargetBitmap->w)))
+				if (g_SceneMan.SceneWrapsX() && viewport.w < sceneWidth) {
+					if ((targetPos.m_X < 0) &&
+						(m_ActorCursor[PoS].m_X >
+						 (sceneWidth - viewport.w)))
 						cursorDrawPos.m_X -= sceneWidth;
-					else if (((targetPos.m_X + pTargetBitmap->w) > sceneWidth) && (m_ActorCursor[PoS].m_X < pTargetBitmap->w))
+					else if (((targetPos.m_X + viewport.w) >
+						      sceneWidth) &&
+						     (m_ActorCursor[PoS].m_X < viewport.w))
 						cursorDrawPos.m_X += sceneWidth;
 				}
 				// Spans horizontal scene seam
 				int sceneHeight = g_SceneMan.GetSceneHeight();
-				if (g_SceneMan.SceneWrapsY() && pTargetBitmap->h < sceneHeight)
-				{
-					if ((targetPos.m_Y < 0) && (m_ActorCursor[PoS].m_Y > (sceneHeight - pTargetBitmap->h)))
+				if (g_SceneMan.SceneWrapsY() &&
+					viewport.h < sceneHeight) {
+					if ((targetPos.m_Y < 0) &&
+						(m_ActorCursor[PoS].m_Y >
+						 (sceneHeight - viewport.h)))
 						cursorDrawPos.m_Y -= sceneHeight;
-					else if (((targetPos.m_Y + pTargetBitmap->h) > sceneHeight) && (m_ActorCursor[PoS].m_Y < pTargetBitmap->h))
+					else if (((targetPos.m_Y + viewport.h) >
+						      sceneHeight) &&
+						     (m_ActorCursor[PoS].m_Y < viewport.h))
 						cursorDrawPos.m_Y += sceneHeight;
 				}
 			}
 
-
 			// Fix circle center coordinates
-			if (!targetPos.IsZero())
-			{
+			if (!targetPos.IsZero()) {
 				// Spans vertical scene seam
 				int sceneWidth = g_SceneMan.GetSceneWidth();
-				if (g_SceneMan.SceneWrapsX() && pTargetBitmap->w < sceneWidth)
-				{
-					if ((targetPos.m_X < 0) && (actorPos.m_X > (sceneWidth - pTargetBitmap->w)))
+				if (g_SceneMan.SceneWrapsX() && viewport.w < sceneWidth) {
+					if ((targetPos.m_X < 0) &&
+						(actorPos.m_X > (sceneWidth - viewport.w)))
 						drawPos.m_X -= sceneWidth;
-					else if (((targetPos.m_X + pTargetBitmap->w) > sceneWidth) && (actorPos.m_X < pTargetBitmap->w))
+					else if (((targetPos.m_X + viewport.w) >
+						      sceneWidth) &&
+						     (actorPos.m_X < viewport.w))
 						drawPos.m_X += sceneWidth;
 				}
 				// Spans horizontal scene seam
 				int sceneHeight = g_SceneMan.GetSceneHeight();
-				if (g_SceneMan.SceneWrapsY() && pTargetBitmap->h < sceneHeight)
-				{
-					if ((targetPos.m_Y < 0) && (actorPos.m_Y > (sceneHeight - pTargetBitmap->h)))
+				if (g_SceneMan.SceneWrapsY() &&
+					viewport.h < sceneHeight) {
+					if ((targetPos.m_Y < 0) &&
+						(actorPos.m_Y > (sceneHeight - viewport.h)))
 						drawPos.m_Y -= sceneHeight;
-					else if (((targetPos.m_Y + pTargetBitmap->h) > sceneHeight) && (actorPos.m_Y < pTargetBitmap->h))
+					else if (((targetPos.m_Y + viewport.h) >
+						      sceneHeight) &&
+						     (actorPos.m_Y < viewport.h))
 						drawPos.m_Y += sceneHeight;
 				}
 			}
 
-			float radius = g_SceneMan.ShortestDistance(m_ActorCursor[PoS], m_ControlledActor[PoS]->GetPos(), true).GetMagnitude();
+			float radius =
+				g_SceneMan
+				    .ShortestDistance(m_ActorCursor[PoS],
+				                      m_ControlledActor[PoS]->GetPos(), true)
+				    .GetMagnitude();
 
-			circle(pTargetBitmap, cursorDrawPos.m_X, cursorDrawPos.m_Y, m_CursorTimer.AlternateReal(150) ? 6 : 8, g_YellowGlowColor);
-			circlefill(pTargetBitmap, cursorDrawPos.m_X, cursorDrawPos.m_Y, 2, g_YellowGlowColor);
+			circleColor(renderer, cursorDrawPos.m_X, cursorDrawPos.m_Y,
+				   m_CursorTimer.AlternateReal(150) ? 6 : 8, g_YellowGlowColor);
+			filledCircleColor(renderer, cursorDrawPos.m_X, cursorDrawPos.m_Y, 2,
+				       g_YellowGlowColor);
 
 			Vector unwrappedPos;
 
-			//Check if we crossed the seam
-			if (g_SceneMan.GetScene()->WrapsX())
-			{
-				//Calculate unwrapped cursor position, or it won't glow
-				unwrappedPos = m_ActorCursor[PoS] - m_ControlledActor[PoS]->GetPos();
+			// Check if we crossed the seam
+			if (g_SceneMan.GetScene()->WrapsX()) {
+				// Calculate unwrapped cursor position, or it won't glow
+				unwrappedPos =
+					m_ActorCursor[PoS] - m_ControlledActor[PoS]->GetPos();
 				float sceneWidth = g_SceneMan.GetSceneWidth();
-				
-				if (unwrappedPos.GetMagnitude() > sceneWidth / 2 && unwrappedPos.GetMagnitude() > 350)
-				{
+
+				if (unwrappedPos.GetMagnitude() > sceneWidth / 2 &&
+					unwrappedPos.GetMagnitude() > 350) {
 					if (m_ActorCursor->m_X < sceneWidth / 2)
-						unwrappedPos = m_ActorCursor[PoS] + Vector(sceneWidth , 0);
+						unwrappedPos =
+							m_ActorCursor[PoS] + Vector(sceneWidth, 0);
 					else
-						unwrappedPos = m_ActorCursor[PoS] - Vector(sceneWidth , 0);
+						unwrappedPos =
+							m_ActorCursor[PoS] - Vector(sceneWidth, 0);
 					g_PostProcessMan.RegisterGlowArea(unwrappedPos, 10);
 				}
-			}
-			else
+			} else
 				unwrappedPos = m_ActorCursor[PoS];
 
 			g_PostProcessMan.RegisterGlowArea(m_ActorCursor[PoS], 10);
 
-			//Glowing dotted circle version
-			int dots = 2 * c_PI * radius / 25;//5 + (int)(radius / 10);
+			// Glowing dotted circle version
+			int dots = 2 * c_PI * radius / 25; // 5 + (int)(radius / 10);
 			float radsperdot = 2 * 3.14159265359 / dots;
 
-			for (int i = 0; i < dots; i++)
-			{
-				Vector dotPos = Vector(actorPos.m_X + sin(i * radsperdot) * radius, actorPos.m_Y + cos(i * radsperdot) * radius);
+			for (int i = 0; i < dots; i++) {
+				Vector dotPos =
+					Vector(actorPos.m_X + sin(i * radsperdot) * radius,
+					       actorPos.m_Y + cos(i * radsperdot) * radius);
 				Vector dotDrawPos = dotPos - targetPos;
 
-				if (!targetPos.IsZero())
-				{
+				if (!targetPos.IsZero()) {
 					// Spans vertical scene seam
-					if (g_SceneMan.SceneWrapsX() && pTargetBitmap->w < sceneWidth)
-					{
-						if ((targetPos.m_X < 0) && (dotPos.m_X > (sceneWidth - pTargetBitmap->w)))
-						{
+					if (g_SceneMan.SceneWrapsX() &&
+						viewport.w < sceneWidth) {
+						if ((targetPos.m_X < 0) &&
+							(dotPos.m_X > (sceneWidth - viewport.w))) {
 							dotDrawPos.m_X -= sceneWidth;
-						}
-						else if (((targetPos.m_X + pTargetBitmap->w) > sceneWidth) && (actorPos.m_X < pTargetBitmap->w))
-						{
+						} else if (((targetPos.m_X + viewport.w) >
+							        sceneWidth) &&
+							       (actorPos.m_X < viewport.w)) {
 							dotDrawPos.m_X += sceneWidth;
 						}
 					}
 					// Spans horizontal scene seam
 					int sceneHeight = g_SceneMan.GetSceneHeight();
-					if (g_SceneMan.SceneWrapsY() && pTargetBitmap->h < sceneHeight)
-					{
-						if ((targetPos.m_Y < 0) && (dotPos.m_Y > (sceneHeight - pTargetBitmap->h)))
-						{
+					if (g_SceneMan.SceneWrapsY() &&
+						viewport.h < sceneHeight) {
+						if ((targetPos.m_Y < 0) &&
+							(dotPos.m_Y > (sceneHeight - viewport.h))) {
 							dotDrawPos.m_Y -= sceneHeight;
-						}
-						else if (((targetPos.m_Y + pTargetBitmap->h) > sceneHeight) && (actorPos.m_Y < pTargetBitmap->h))
-						{
+						} else if (((targetPos.m_Y + viewport.h) >
+							        sceneHeight) &&
+							       (actorPos.m_Y < viewport.h)) {
 							dotDrawPos.m_Y += sceneHeight;
 						}
 					}
 
-					circlefill(pTargetBitmap, dotDrawPos.m_X, dotDrawPos.m_Y, 1, g_YellowGlowColor);
+					filledCircleColor(renderer, dotDrawPos.m_X, dotDrawPos.m_Y, 1,
+						       g_YellowGlowColor);
 					g_PostProcessMan.RegisterGlowArea(dotPos, 3);
 				}
 			}
-		}
-		else
-		{
+		} else {
 			// Cancel squad selection
-
 		}
 	}
 
-    if ((m_ActivityState == ActivityState::Editing || m_ActivityState == ActivityState::PreGame) && m_pEditorGUI[PoS])
-        m_pEditorGUI[PoS]->Draw(pTargetBitmap, targetPos);
+	if ((m_ActivityState == ActivityState::Editing ||
+		 m_ActivityState == ActivityState::PreGame) &&
+		m_pEditorGUI[PoS])
+		m_pEditorGUI[PoS]->Draw(renderer, targetPos);
 
-    // Draw Banners
-    m_pBannerRed[PoS]->Draw(pTargetBitmap);
-    m_pBannerYellow[PoS]->Draw(pTargetBitmap);
+	// Draw Banners
+	m_pBannerRed[PoS]->Draw(pBitmapInt);
+	m_pBannerYellow[PoS]->Draw(pBitmapInt);
 }
-
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          Draw
@@ -2547,85 +2571,192 @@ void GameActivity::DrawGUI(SDL_Renderer* renderer, const Vector &targetPos, int 
 // Description:     Draws this GameActivity's current graphical representation to a
 //                  BITMAP of choice. This includes all game-related graphics.
 
-void GameActivity::Draw(BITMAP *pTargetBitmap, const Vector &targetPos)
+void GameActivity::Draw(SDL_Renderer* renderer, const Vector &targetPos)
 {
-    GUIFont *pLargeFont = g_FrameMan.GetLargeFont();
-    GUIFont *pSmallFont = g_FrameMan.GetSmallFont();
-    AllegroBitmap pBitmapInt(pTargetBitmap);
     int frame = ((int)m_CursorTimer.GetElapsedSimTimeMS() % 1000) / 250;
-    int cursor = 0;
-    Vector landZone;
 
-    // Iterate through all players, drawing each currently used LZ cursor.
-    for (int player = Players::PlayerOne; player < Players::MaxPlayerCount; ++player)
-    {
-        if (!(m_IsActive[player] && m_IsHuman[player]))
-            continue;
+	DrawDeliveryCursors(renderer, targetPos, frame);
+}
 
-        if (m_ViewState[player] == ViewState::LandingZoneSelect)
-        {
-            int halfWidth = 36;
-            int team = m_Team[player];
-            if (team == Teams::NoTeam)
-                continue;
-            landZone = m_LandingZone[player] - targetPos;
-            // Cursor
-            draw_sprite(pTargetBitmap, m_aLZCursor[cursor][frame], landZone.m_X - halfWidth, landZone.m_Y - 48);
-            draw_sprite_h_flip(pTargetBitmap, m_aLZCursor[cursor][frame], landZone.m_X + halfWidth - m_aLZCursor[cursor][frame]->w, landZone.m_Y - 48);
-            // Text
-            pSmallFont->DrawAligned(&pBitmapInt, landZone.m_X, landZone.m_Y - 42, m_AIReturnCraft[player] ? "Deliver here" : "Travel here", GUIFont::Centre);
-            pSmallFont->DrawAligned(&pBitmapInt, landZone.m_X, landZone.m_Y - 36, "and then", GUIFont::Centre);
-            pLargeFont->DrawAligned(&pBitmapInt, landZone.m_X, landZone.m_Y - 30, m_AIReturnCraft[player] ? "RETURN" : "STAY", GUIFont::Centre);
-            // Draw wrap around the world if necessary, and only if this is being drawn directly to a scenewide target bitmap
-            if (targetPos.IsZero() && (landZone.m_X < halfWidth || landZone.m_X > g_SceneMan.GetSceneWidth() - halfWidth))
-            {
-                // Wrap shit around and draw dupe on the other side
-                int wrappedX = landZone.m_X + (landZone.m_X < halfWidth ? g_SceneMan.GetSceneWidth() : -g_SceneMan.GetSceneWidth());
-                // Cursor
-                draw_sprite(pTargetBitmap, m_aLZCursor[cursor][frame], wrappedX - halfWidth, landZone.m_Y - 48);
-                draw_sprite_h_flip(pTargetBitmap, m_aLZCursor[cursor][frame], wrappedX + halfWidth - m_aLZCursor[cursor][frame]->w, landZone.m_Y - 48);
-                // Text
-                pSmallFont->DrawAligned(&pBitmapInt, wrappedX, landZone.m_Y - 42, m_AIReturnCraft[player] ? "Deliver here" : "Travel here", GUIFont::Centre);
-                pSmallFont->DrawAligned(&pBitmapInt, wrappedX, landZone.m_Y - 36, "and then", GUIFont::Centre);
-                pLargeFont->DrawAligned(&pBitmapInt, wrappedX, landZone.m_Y - 30, m_AIReturnCraft[player] ? "RETURN" : "STAY", GUIFont::Centre);
-            }
-        }
-    }
+void GameActivity::DrawDeliveryCursors(SDL_Renderer *renderer,
+	                                   Vector targetPos, int frame) {
 
-    // Iterate through all teams, drawing all pending delivery cursors
-    for (int team = Teams::TeamOne; team < Teams::MaxTeamCount; ++team)
-    {
-        if (!m_TeamActive[team])
-            continue;
-        char str[64];
-        for (deque<Delivery>::iterator itr = m_Deliveries[team].begin(); itr != m_Deliveries[team].end(); ++itr)
-        {
-            int halfWidth = 24;
-            landZone = itr->landingZone - targetPos;
-            // Cursor
-            draw_sprite(pTargetBitmap, m_aLZCursor[cursor][frame], landZone.m_X - halfWidth, landZone.m_Y - 48);
-            draw_sprite_h_flip(pTargetBitmap, m_aLZCursor[cursor][frame], landZone.m_X + halfWidth - m_aLZCursor[cursor][frame]->w, landZone.m_Y - 48);
-            // Text
-            pSmallFont->DrawAligned(&pBitmapInt, landZone.m_X, landZone.m_Y - 38, "ETA:", GUIFont::Centre);
-            if (m_ActivityState == ActivityState::PreGame)
-                std::snprintf(str, sizeof(str), "???s");
-            else
-                std::snprintf(str, sizeof(str), "%is", ((int)itr->delay - (int)itr->timer.GetElapsedSimTimeMS()) / 1000);
-            pLargeFont->DrawAligned(&pBitmapInt, landZone.m_X, landZone.m_Y - 32, str, GUIFont::Centre);
-            // Draw wrap around the world if necessary, and only if this is being drawn directly to a scenewide target bitmap
-            if (targetPos.IsZero() && (landZone.m_X < halfWidth || landZone.m_X > g_SceneMan.GetSceneWidth() - halfWidth))
-            {
-                // Wrap shit around and draw dupe on the other side
-                int wrappedX = landZone.m_X + (landZone.m_X < halfWidth ? g_SceneMan.GetSceneWidth() : -g_SceneMan.GetSceneWidth());
-                // Cursor
-                draw_sprite(pTargetBitmap, m_aLZCursor[cursor][frame], wrappedX - halfWidth, landZone.m_Y - 48);
-                draw_sprite_h_flip(pTargetBitmap, m_aLZCursor[cursor][frame], wrappedX + halfWidth - m_aLZCursor[cursor][frame]->w, landZone.m_Y - 48);
-                // Text
-                pSmallFont->DrawAligned(&pBitmapInt, wrappedX, landZone.m_Y - 38, "ETA:", GUIFont::Centre);
-                pLargeFont->DrawAligned(&pBitmapInt, wrappedX, landZone.m_Y - 32, str, GUIFont::Centre);
-            }
-        }
-    }
+
+	GUIFont *pLargeFont = g_FrameMan.GetLargeFont();
+	GUIFont *pSmallFont = g_FrameMan.GetSmallFont();
+	SDLGUITexture pBitmapInt;
+	Vector landZone;
+
+	int team = Teams::NoTeam;
+	int cursor = 0;
+
+	// Iterate through all players, drawing each currently used LZ cursor.
+	//DONE
+	for (int player = Players::PlayerOne; player < Players::MaxPlayerCount;
+		 ++player) {
+		if (!(m_IsActive[player] && m_IsHuman[player]))
+			continue;
+
+		if (m_ViewState[player] == ViewState::LandingZoneSelect) {
+			int halfWidth = 36;
+			team = m_Team[player];
+			if (team == Teams::NoTeam)
+				continue;
+			cursor = team;
+			landZone = m_LandingZone[player] - targetPos;
+			// Cursor
+
+			int cursorW,cursorH;
+			SDL_QueryTexture(m_aLZCursor[cursor][frame], nullptr, nullptr,
+				             &cursorW, &cursorH);
+			SDL_Rect renderDest{static_cast<int>(landZone.m_X) - halfWidth,
+				            static_cast<int>(landZone.m_Y) - 48, cursorW,
+				            cursorH};
+
+			SDL_RenderCopy(renderer, m_aLZCursor[cursor][frame], nullptr, &renderDest);
+
+
+			SDL_Rect renderDestFlip{
+				renderDest.x-cursorW,
+				renderDest.y,
+				cursorW,
+				cursorH
+			};
+
+			SDL_RenderCopyEx(renderer, m_aLZCursor[cursor][frame], nullptr,
+				             &renderDestFlip, 0, nullptr, SDL_FLIP_HORIZONTAL);
+
+			// Text
+			pSmallFont->DrawAligned(
+				&pBitmapInt, landZone.m_X, landZone.m_Y - 42,
+				m_AIReturnCraft[player] ? "Deliver here" : "Travel here",
+				GUIFont::Centre);
+			pSmallFont->DrawAligned(&pBitmapInt, landZone.m_X,
+				                    landZone.m_Y - 36, "and then",
+				                    GUIFont::Centre);
+			pLargeFont->DrawAligned(
+				&pBitmapInt, landZone.m_X, landZone.m_Y - 30,
+				m_AIReturnCraft[player] ? "RETURN" : "STAY", GUIFont::Centre);
+			// Draw wrap around the world if necessary, and only if this is
+			// being drawn directly to a scenewide target bitmap
+			if (targetPos.IsZero() &&
+				(landZone.m_X < halfWidth ||
+				 landZone.m_X > g_SceneMan.GetSceneWidth() - halfWidth)) {
+				// Wrap shit around and draw dupe on the other side
+				int wrappedX =
+					landZone.m_X + (landZone.m_X < halfWidth
+					                    ? g_SceneMan.GetSceneWidth()
+					                    : -g_SceneMan.GetSceneWidth());
+				// Cursor
+				int cursorW, cursorH;
+				SDL_QueryTexture(m_aLZCursor[cursor][frame], nullptr, nullptr,
+					             &cursorW, &cursorH);
+				SDL_Rect renderDest{wrappedX - halfWidth,
+					                static_cast<int>(landZone.m_Y) - 48,
+					                cursorW, cursorH};
+
+				SDL_RenderCopy(renderer, m_aLZCursor[cursor][frame], nullptr,
+					           &renderDest);
+
+				SDL_Rect renderDestFlip{renderDest.x - cursorW, renderDest.y,
+					                    cursorW, cursorH};
+
+				SDL_RenderCopyEx(renderer, m_aLZCursor[cursor][frame], nullptr,
+					             &renderDestFlip, 0, nullptr,
+					             SDL_FLIP_HORIZONTAL);
+
+				// Text
+				pSmallFont->DrawAligned(
+					&pBitmapInt, wrappedX, landZone.m_Y - 42,
+					m_AIReturnCraft[player] ? "Deliver here" : "Travel here",
+					GUIFont::Centre);
+				pSmallFont->DrawAligned(&pBitmapInt, wrappedX,
+					                    landZone.m_Y - 36, "and then",
+					                    GUIFont::Centre);
+				pLargeFont->DrawAligned(
+					&pBitmapInt, wrappedX, landZone.m_Y - 30,
+					m_AIReturnCraft[player] ? "RETURN" : "STAY",
+					GUIFont::Centre);
+			}
+		}
+	}
+
+	// Iterate through all teams, drawing all pending delivery cursors
+	//DONE
+	for (int team = Teams::TeamOne; team < Teams::MaxTeamCount; ++team) {
+		if (!m_TeamActive[team])
+			continue;
+		char str[64];
+		cursor = team;
+		for (deque<Delivery>::iterator itr = m_Deliveries[team].begin();
+			 itr != m_Deliveries[team].end(); ++itr) {
+			int halfWidth = 24;
+			landZone = itr->landingZone - targetPos;
+			// Cursor
+			int cursorW, cursorH;
+			SDL_QueryTexture(m_aLZCursor[cursor][frame], nullptr, nullptr,
+				             &cursorW, &cursorH);
+			SDL_Rect renderDest{static_cast<int>(landZone.m_X) - halfWidth,
+				                static_cast<int>(landZone.m_Y) - 48, cursorW,
+				                cursorH};
+
+			SDL_RenderCopy(renderer, m_aLZCursor[cursor][frame], nullptr,
+				           &renderDest);
+
+			SDL_Rect renderDestFlip{renderDest.x - cursorW, renderDest.y,
+				                    cursorW, cursorH};
+
+			SDL_RenderCopyEx(renderer, m_aLZCursor[cursor][frame], nullptr,
+				             &renderDestFlip, 0, nullptr, SDL_FLIP_HORIZONTAL);
+			// Text
+			pSmallFont->DrawAligned(&pBitmapInt, landZone.m_X,
+				                    landZone.m_Y - 38, "ETA:", GUIFont::Centre);
+			if (m_ActivityState == ActivityState::PreGame)
+				std::snprintf(str, sizeof(str), "???s");
+			else
+				std::snprintf(
+					str, sizeof(str), "%is",
+					((int)itr->delay - (int)itr->timer.GetElapsedSimTimeMS()) /
+					    1000);
+			pLargeFont->DrawAligned(&pBitmapInt, landZone.m_X,
+				                    landZone.m_Y - 32, str, GUIFont::Centre);
+			// Draw wrap around the world if necessary, and only if this is
+			// being drawn directly to a scenewide target bitmap
+			if (targetPos.IsZero() &&
+				(landZone.m_X < halfWidth ||
+				 landZone.m_X > g_SceneMan.GetSceneWidth() - halfWidth)) {
+				// Wrap shit around and draw dupe on the other side
+				int wrappedX =
+					landZone.m_X + (landZone.m_X < halfWidth
+					                    ? g_SceneMan.GetSceneWidth()
+					                    : -g_SceneMan.GetSceneWidth());
+				// Cursor
+				int cursorW, cursorH;
+				SDL_QueryTexture(m_aLZCursor[cursor][frame], nullptr, nullptr,
+					             &cursorW, &cursorH);
+				SDL_Rect renderDest{wrappedX - halfWidth,
+					                static_cast<int>(landZone.m_Y) - 48,
+					                cursorW, cursorH};
+
+				SDL_RenderCopy(renderer, m_aLZCursor[cursor][frame], nullptr,
+					           &renderDest);
+
+				SDL_Rect renderDestFlip{renderDest.x - cursorW, renderDest.y,
+					                    cursorW, cursorH};
+
+				SDL_RenderCopyEx(renderer, m_aLZCursor[cursor][frame], nullptr,
+					             &renderDestFlip, 0, nullptr,
+					             SDL_FLIP_HORIZONTAL);
+				// Text
+				pSmallFont->DrawAligned(&pBitmapInt, wrappedX,
+					                    landZone.m_Y - 38,
+					                    "ETA:", GUIFont::Centre);
+				pLargeFont->DrawAligned(&pBitmapInt, wrappedX,
+					                    landZone.m_Y - 32, str,
+					                    GUIFont::Centre);
+			}
+		}
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
