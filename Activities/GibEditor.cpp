@@ -11,10 +11,12 @@
 //////////////////////////////////////////////////////////////////////////////////////////
 // Inclusions of header files
 
+
 #include "GibEditor.h"
-#include "PresetMan.h"
-#include "MovableMan.h"
-#include "UInputMan.h"
+#include "Managers/FrameMan.h"
+#include "Managers/PresetMan.h"
+#include "Managers/MovableMan.h"
+#include "Managers/UInputMan.h"
 //#include "AHuman.h"
 //#include "MOPixel.h"
 #include "SLTerrain.h"
@@ -29,8 +31,8 @@
 
 #include "GUI/GUI.h"
 #include "GUI/GUIFont.h"
-#include "GUI/AllegroScreen.h"
-#include "GUI/AllegroBitmap.h"
+#include "GUI/SDLGUITexture.h"
+#include "GUI/SDLScreen.h"
 #include "GUI/AllegroInput.h"
 #include "GUI/GUIControlManager.h"
 #include "GUI/GUICollectionBox.h"
@@ -41,10 +43,12 @@
 #include "GUI/GUILabel.h"
 #include "GUI/GUIComboBox.h"
 
+
 #include "GibEditorGUI.h"
 #include "PieMenuGUI.h"
 #include "GABaseDefense.h"
 
+// TODO: evil
 extern bool g_ResetActivity;
 
 namespace RTE {
@@ -675,13 +679,13 @@ void GibEditor::Update()
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Draws the currently active GUI of a screen to a BITMAP of choice.
 
-void GibEditor::DrawGUI(BITMAP *pTargetBitmap, const Vector &targetPos, int which)
+void GibEditor::DrawGUI(SDL_Renderer* renderer, const Vector &targetPos, int which)
 {
     // Testing mode
     if (m_EditorMode == EditorActivity::TESTINGOBJECT)
     {
         if (m_pTestingObject)
-            m_pTestingObject->Draw(pTargetBitmap, targetPos, g_DrawColor, true);
+            m_pTestingObject->Draw(renderer, targetPos, g_DrawColor, true);
     }
     // Regular drawing mode
     else
@@ -691,11 +695,11 @@ void GibEditor::DrawGUI(BITMAP *pTargetBitmap, const Vector &targetPos, int whic
         {
             g_FrameMan.SetTransTable(MoreTrans);
             // Draw only the MOSRotating since that's all we are adding gibs for; any attachables have to be edited separately
-            m_pEditedObject->MOSRotating::Draw(pTargetBitmap, targetPos, g_DrawTrans, true);
+            m_pEditedObject->MOSRotating::Draw(renderer, targetPos, g_DrawTrans, true);
         }
 
-        m_pEditorGUI->Draw(pTargetBitmap, targetPos);
-        EditorActivity::DrawGUI(pTargetBitmap, targetPos, which);
+        m_pEditorGUI->Draw(renderer, targetPos);
+        EditorActivity::DrawGUI(renderer, targetPos, which);
     }
 }
 
@@ -706,9 +710,9 @@ void GibEditor::DrawGUI(BITMAP *pTargetBitmap, const Vector &targetPos, int whic
 // Description:     Draws this GibEditor's current graphical representation to a
 //                  BITMAP of choice. This includes all game-related graphics.
 
-void GibEditor::Draw(BITMAP *pTargetBitmap, const Vector &targetPos)
+void GibEditor::Draw(SDL_Renderer* renderer, const Vector &targetPos)
 {
-    EditorActivity::Draw(pTargetBitmap, targetPos);
+    EditorActivity::Draw(renderer, targetPos);
 }
 
 
