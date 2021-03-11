@@ -1,5 +1,7 @@
 #include "FrameMan.h"
 
+#include "System/SDLHelper.h"
+
 #include "ContentFile.h"
 #include "Timer.h"
 #include "Box.h"
@@ -93,8 +95,8 @@ namespace RTE {
 	void FrameMan::Draw() {
 		// Count how many split screens we'll need
 		int screenCount = (m_HSplit ? 2 : 1) * (m_VSplit ? 2 : 1);
-		RTEAssert(screenCount <= 1 || m_PlayerScreen,
-		          "Splitscreen surface not ready when needed!");
+		// RTEAssert(screenCount <= 1 || m_PlayerScreen,
+		//           "Splitscreen surface not ready when needed!");
 
 		g_PostProcessMan.ClearScreenPostEffects();
 

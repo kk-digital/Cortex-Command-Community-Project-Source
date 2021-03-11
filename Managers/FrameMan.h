@@ -3,9 +3,13 @@
 
 #include "System/Singleton.h"
 #include "System/Box.h"
-#include <SDL2/SDL.h>
 
 #define g_FrameMan FrameMan::Instance()
+
+struct SDL_Renderer;
+struct SDL_Window;
+struct SDL_Rect;
+struct SDL_Texture;
 
 namespace RTE {
 	class SDLScreen;
@@ -20,14 +24,11 @@ namespace RTE {
 		friend class SettingsMan;
 
 	public:
-
 		/// <summary>
 		/// Constructor method used to instantiate a FrameMan object in system
 		/// memory. Create() should be called before using the object.
 		/// </summary>
-		FrameMan() {
-			Clear();
-		}
+		FrameMan() { Clear(); }
 
 		/// <summary>
 		/// Makes the FrameMan object ready for use, which is to be used with
@@ -60,7 +61,6 @@ namespace RTE {
 		/// </summary>
 		void Draw();
 
-
 		/// <summary>
 		/// Gets the horizontal resolution of the screen.
 		/// </summary>
@@ -78,29 +78,32 @@ namespace RTE {
 		unsigned short GetResY() const { return m_ResY; }
 
 		/// <summary>
-		/// Gets the horizontal resolution of the screen that will be used the next
-		/// time this FrameMan is created.
+		/// Gets the horizontal resolution of the screen that will be used the
+		/// next time this FrameMan is created.
 		/// </summary>
 		/// <returns>
-		/// An int describing the horizontal resolution of the new screen in pixels.
+		/// An int describing the horizontal resolution of the new screen in
+		/// pixels.
 		/// </returns>
 		unsigned short GetNewResX() const { return m_NewResX; }
 
 		/// <summary>
-		/// Sets the horizontal resolution of the screen that will be used next time
-		/// this FrameMan is created.
+		/// Sets the horizontal resolution of the screen that will be used next
+		/// time this FrameMan is created.
 		/// </summary>
 		/// <param name="newResX">
-		/// an int describing the horizontal resolution of the new screen in pixels.
+		/// an int describing the horizontal resolution of the new screen in
+		/// pixels.
 		/// </param>
 		void SetNewResX(unsigned short newResX) { m_NewResX = newResX; }
 
 		/// <summary>
-		/// Gets the vertical resolution of the screen that will be used the next
-		/// time this FrameMan is created.
+		/// Gets the vertical resolution of the screen that will be used the
+		/// next time this FrameMan is created.
 		/// </summary>
 		/// <returns>
-		/// An int describing the horizontal resolution of the new screen in pixels.
+		/// An int describing the horizontal resolution of the new screen in
+		/// pixels.
 		/// </returns>
 		unsigned short GetNewResY() const { return m_NewResY; }
 
@@ -109,13 +112,14 @@ namespace RTE {
 		/// FrameMan is created
 		/// </summary>
 		/// <param name="newResY">
-		/// An int describing the horizontal resolution of the new screen in pixels.
+		/// An int describing the horizontal resolution of the new screen in
+		/// pixels.
 		/// </param>
 		void SetNewResY(unsigned short newResY) { m_NewResY = newResY; }
 
 		/// <summary>
-		/// Indicates wether a new resolution has been set for the next time this
-		/// FrameMan is created
+		/// Indicates wether a new resolution has been set for the next time
+		/// this FrameMan is created
 		/// </summary>
 		/// <returns>
 		/// Wether the new resolution set differs from the current one.
@@ -136,7 +140,8 @@ namespace RTE {
 		/// <returns>
 		/// True if the resolution is supported.
 		/// </returns>
-		bool IsValidResolution(unsigned short width, unsigned short height) const;
+		bool IsValidResolution(unsigned short width,
+		                       unsigned short height) const;
 
 		/// <summary>
 		/// Tells how many time the screen resolution is being multiplied
@@ -184,10 +189,9 @@ namespace RTE {
 		}
 
 		/// <summary>
-		/// Switches the game window into fullscreen or upscaled fullscreen mode.
-		/// <summary>
-		/// <param name = "upscaled">
-		/// Wether to switch to upscaled mode or not.
+		/// Switches the game window into fullscreen or upscaled fullscreen
+		/// mode. <summary> <param name = "upscaled"> Wether to switch to
+		/// upscaled mode or not.
 		/// </param>
 		/// <param name="endActivity">
 		/// Wether the current Activity should be ended before performing the
@@ -217,8 +221,8 @@ namespace RTE {
 
 		/// <summary>
 		/// Sets wether the game resolution was changed. Used to reset the flag
-		/// after the change is complete. This is called from ReinitMainMenu() and
-		/// should not be called anywhere else.
+		/// after the change is complete. This is called from ReinitMainMenu()
+		/// and should not be called anywhere else.
 		/// </summary>
 		/// <param name="resolutionChanged">
 		/// Wether the resolution changed or not.
@@ -368,7 +372,6 @@ namespace RTE {
 		/// </returns>
 		GUIFont *GetLargeFont() { return GetFont(false); }
 
-
 		/// <summary>
 		/// Get the current SDL_Renderer
 		/// </summary>
@@ -376,7 +379,6 @@ namespace RTE {
 		/// A Pointer to the current SDL_Renderer
 		/// </returns>
 		SDL_Renderer *GetRenderer() { return m_Renderer; }
-
 
 		/// <summary>
 		/// Get the current game window as SDL_Window
@@ -392,7 +394,7 @@ namespace RTE {
 		/// <returns>
 		/// An Uint32 representing a pixelformat from SDL_PixelFormatEnum
 		/// </returns>
-		Uint32 GetPixelFormat() { return SDL_GetWindowPixelFormat(m_Window); }
+		uint32_t GetPixelFormat();
 
 		/// <summary>
 		/// Calculates the width of a text string using the given font size.
@@ -406,7 +408,8 @@ namespace RTE {
 		/// <returns>
 		/// Width of the text string
 		/// </returns>
-		unsigned short CalculateTextWidth(const std::string &text, bool isSmall);
+		unsigned short CalculateTextWidth(const std::string &text,
+		                                  bool isSmall);
 
 		/// <summary>
 		/// Calculates the height of a text string using the given font size.
@@ -424,7 +427,8 @@ namespace RTE {
 		/// Height of the text string.
 		/// </returns>
 		unsigned short CalculateTextHeight(const std::string &text,
-		                                   unsigned short maxWidth, bool isSmall);
+		                                   unsigned short maxWidth,
+		                                   bool isSmall);
 
 		/// <summary>
 		/// Gets the message to display on tp of each player's screen.
@@ -436,7 +440,8 @@ namespace RTE {
 		/// Current message shown to player.
 		/// </returns>
 		std::string GetScreenText(short whichScreen = 0) const {
-			return (whichScreen >= 0 && whichScreen < c_MaxScreenCount) ? "" : "";
+			return (whichScreen >= 0 && whichScreen < c_MaxScreenCount) ? ""
+			                                                            : "";
 		} // TODO: add fonts and screen text handling
 
 		/// <summary>
@@ -446,9 +451,9 @@ namespace RTE {
 		/// An std::string that specifies what should be displayed.
 		/// </param>
 		/// <param name="displayDuration">
-		/// The duration, in ms to force this message to display. No other message
-		/// can be displayed before this expires. ClearScreenText overrides it
-		/// though.
+		/// The duration, in ms to force this message to display. No other
+		/// message can be displayed before this expires. ClearScreenText
+		/// overrides it though.
 		/// </param>
 		void SetScreenText(std::string message, short whichScreen = 0,
 		                   unsigned short blinkInterval = 0,
@@ -478,46 +483,57 @@ namespace RTE {
 		/// </param>
 		void FlashScreen(short screen, int colro, float periodMS = 0);
 
+		int DrawLine(const Vector &start, const Vector &end, int color,
+		             int altColor = 0, int skip = 0, int skipStart = 0,
+		             bool shortestWrap = false) const;
+
 		int SaveScreenToBMP(std::string nameBase) { return 0; }
 
 		int SaveWorldToBMP(std::string nameBase) { return 0; }
 
-		bool IsInMultiplayerMode() const {return false;}
+		bool IsInMultiplayerMode() const { return false; }
+
 	private:
 		//!< The game window
 		SDL_Window *m_Window;
 		//!< The renderer instance needed for drawing
 		SDL_Renderer *m_Renderer;
 
-		SDL_Rect m_Resolution; //!< Screen area excluding things like start menus,
-		                       //!< window decoration, etc.
-		static constexpr unsigned short m_BPP = 32; //!< Color Depth (bits per pixel)
+		SDL_Rect m_Resolution; //!< Screen area excluding things like start
+		                       //!< menus, window decoration, etc.
+		static constexpr unsigned short m_BPP =
+		    32; //!< Color Depth (bits per pixel)
 		unsigned short m_NumScreens; //!< Number of physical displays
 		unsigned short
 		    m_ScreenResX; //!< Horizontal resolution of the primary display
-		unsigned short m_ScreenResY; //!< Vertical resolution of the primary display
+		unsigned short
+		    m_ScreenResY; //!< Vertical resolution of the primary display
 
 		unsigned short m_ResX; //!< Game window width.
 		unsigned short m_ResY; //!< Game window height.
 		unsigned short m_ResMultiplier; //!< Resolution multiplier
-		unsigned short m_NewResX; //!< New game window height that will take
-		                          //!< effect next time this FrameMan is started.
-		unsigned short m_NewResY; //!< New game window width that will take effect
-		                          //!< next time this FrameMan is started.
-		unsigned short m_NewResMultiplier; //!< New multiplier that will take effect
-		                                   //!< the next time FrameMan is started
+		unsigned short
+		    m_NewResX; //!< New game window height that will take
+		               //!< effect next time this FrameMan is started.
+		unsigned short
+		    m_NewResY; //!< New game window width that will take effect
+		               //!< next time this FrameMan is started.
+		unsigned short
+		    m_NewResMultiplier; //!< New multiplier that will take effect
+		                        //!< the next time FrameMan is started
 		bool m_ResChanged; //!< Wether the resolution was changed through the
 		                   //!< settings fullscreen/upscaled fullscreen buttons.
 
 		bool m_Fullscreen; //!< Wether in fullscreen mode or not.
-		bool m_UpscaledFullscreen; //!< Wether in upscaled fullscreen mode or not
+		bool
+		    m_UpscaledFullscreen; //!< Wether in upscaled fullscreen mode or not
 
 		bool m_HSplit; //!< Wether the screen is split horizontally across the
 		               //!< screen, i.e. as two scplitscreens above another.
 		bool m_VSplit; //!< Wether the screen is split vertically across the
 		               //!< screen, i.e. as two splitscreens side by side.
-		bool m_HSplitOverride; //!< Wether the screen is set to split horizontally
-		                       //!< in settings
+		bool m_HSplitOverride; //!< Wether the screen is set to split
+		                       //!< horizontally in settings
 		bool m_VSplitOverride; //!< Wether the screen is set to split vertically
 		                       //!< in settings
 
