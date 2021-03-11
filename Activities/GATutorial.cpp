@@ -31,6 +31,8 @@
 #include "BuyMenuGUI.h"
 #include "SceneEditorGUI.h"
 
+#include "System/SDLHelper.h"
+
 extern bool g_ResetActivity;
 extern bool g_InActivity;
 
@@ -50,7 +52,7 @@ GATutorial::TutStep::TutStep(string text, int stepDuration, string screensPath, 
     if (!screensPath.empty())
     {
         ContentFile screenFile(screensPath.c_str());
-        BITMAP **apScreens = screenFile.GetAsAnimation(frameCount);
+        SDL_Texture **apScreens = screenFile.GetAsAnimation(frameCount);
         for (int frame = 0; frame < frameCount; ++frame)
             m_pScreens.push_back(apScreens[frame]);
         // Delete only the array of pointers, not the BITMAPs themselves
@@ -349,7 +351,7 @@ int GATutorial::Start()
 
     // COMMON SCREENS
     ContentFile screenFile;
-    BITMAP **apScreens;
+    SDL_Texture **apScreens;
     screenFile.SetDataPath("Base.rte/GUIs/Tutorial/ScreenStatic.png");
     apScreens = screenFile.GetAsAnimation(3);
     m_apCommonScreens[SCREENOFF] = apScreens[0];
@@ -357,11 +359,11 @@ int GATutorial::Start()
     m_apCommonScreens[STATICLARGE] = apScreens[2];
     // Delete only the array of pointers, not the BITMAPs themselves
     delete[] apScreens;
-    apScreens = 0;
+    apScreens = nullptr;
 
     // ROOM SIGNS
     ContentFile signFile;
-    BITMAP **apSigns;
+    SDL_Texture **apSigns;
     for (int room = 0; room < ROOMCOUNT; ++room)
     {
         if (room == ROOM0)
@@ -377,7 +379,7 @@ int GATutorial::Start()
         m_aapRoomSigns[room][LIT] = apSigns[1];
         // Delete only the array of pointers, not the BITMAPs themselves
         delete[] apSigns;
-        apSigns = 0;
+        apSigns = nullptr;
     }
 
     m_RoomSignPositions[ROOM0].SetXY(744, 695);
@@ -712,7 +714,7 @@ void GATutorial::Update()
     g_FrameMan.SetScreenText(m_TutAreaSteps[m_CurrentArea][m_CurrentStep].m_Text, 0, 500, -1, true);//, m_TutAreaSteps[m_CurrentArea][m_CurrentStep].m_Duration);
 */
     // Draw the correct current screens
-    BITMAP *pScreen = 0;
+    SDL_Texture *pScreen = nullptr;
 
     // Turn ON the screen of the CURRENT area, animating the static-y frames and drawing them to the scene
     // Then show the current step image
@@ -721,7 +723,7 @@ void GATutorial::Update()
         // Figure out if to draw static or the step screen
         m_ScreenStates[m_CurrentArea] = m_AreaTimer.IsPastRealMS(200) ? SHOWINGSTEP : (m_AreaTimer.IsPastRealMS(100) ? STATICLARGE : STATICLITTLE);
 
-        pScreen = 0;
+        pScreen = nullptr;
         // Showing step image or a static screen?
         if (m_ScreenStates[m_CurrentArea] == SHOWINGSTEP)
         {
@@ -731,7 +733,7 @@ void GATutorial::Update()
         else
             pScreen = m_apCommonScreens[(int)(m_ScreenStates[m_CurrentArea])];
 
-        // Draw to the scene bg layer
+        // Draw to the scene bg layer TODO: evil
         if (pScreen)
             blit(pScreen, g_SceneMan.GetTerrain()->GetBGColorBitmap(), 0, 0, m_ScreenPositions[m_CurrentArea].GetFloorIntX(), m_ScreenPositions[m_CurrentArea].GetFloorIntY(), pScreen->w, pScreen->h);
 
@@ -747,7 +749,7 @@ void GATutorial::Update()
         {
             m_ScreenStates[area] = m_AreaTimer.IsPastRealMS(200) ? SCREENOFF : (m_AreaTimer.IsPastRealMS(100) ? STATICLITTLE : STATICLARGE);
             pScreen = m_apCommonScreens[(int)(m_ScreenStates[area])];
-            if (pScreen)
+            if (pScreen) //TODO EVIL
                 blit(pScreen, g_SceneMan.GetTerrain()->GetBGColorBitmap(), 0, 0, m_ScreenPositions[area].GetFloorIntX(), m_ScreenPositions[area].GetFloorIntY(), pScreen->w, pScreen->h);
         }
     }

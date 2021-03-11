@@ -18,6 +18,8 @@
 #include "Box.h"
 
 struct SDL_Renderer;
+struct SDL_Texture;
+
 namespace RTE
 {
 
@@ -269,8 +271,8 @@ protected:
         std::string m_Text;
         // Duration of the whole step
         int m_Duration;
-        // BITMAPs not owned here
-        std::vector<BITMAP *> m_pScreens;
+        // SDL_Textures not owned here
+        std::vector<SDL_Texture *> m_pScreens;
         // The duration of one frame
         int m_FrameDuration;
 
@@ -291,13 +293,13 @@ protected:
     // Offsets of the center of the text line from the screen position
     Vector m_TextOffsets[AREACOUNT];
     // Screen bitmaps common to all areas.. off, static etc
-    BITMAP *m_apCommonScreens[STATICLARGE + 1];
+    SDL_Texture *m_apCommonScreens[STATICLARGE + 1];
     // The steps themselves; cycles through for each area
     std::vector<TutStep> m_TutAreaSteps[AREACOUNT];
     // Positions of the numbered room signs
     Vector m_RoomSignPositions[ROOMCOUNT];
     // Room sign bitmaps, unlit and lit
-    BITMAP *m_aapRoomSigns[ROOMCOUNT][LITSTATECOUNT];
+    SDL_Texture *m_aapRoomSigns[ROOMCOUNT][LITSTATECOUNT];
     // The timer which keeps track of how long each area has been showing
     Timer m_AreaTimer;
     // The timer which keeps track of how long each step should be shown
