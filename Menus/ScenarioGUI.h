@@ -17,7 +17,8 @@
 #include "ActivityMan.h"
 #include "Timer.h"
 
-struct BITMAP;
+struct SDL_Renderer;
+struct SDL_Texture;
 
 
 namespace RTE

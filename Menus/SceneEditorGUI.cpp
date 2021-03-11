@@ -37,6 +37,8 @@
 #include "Deployment.h"
 #include "BunkerAssemblyScheme.h"
 
+#include "System/SDLHelper.h"
+
 using namespace RTE;
 
 #define MAXBRAINPATHCOST 10000
@@ -1381,7 +1383,7 @@ void SceneEditorGUI::Update()
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Draws the menu
 
-void SceneEditorGUI::Draw(BITMAP *pTargetBitmap, const Vector &targetPos) const
+void SceneEditorGUI::Draw(SDL_Renderer* renderer, const Vector &targetPos) const
 {
     // Done, so don't draw the UI
     if (m_EditorGUIMode == DONEEDITING)

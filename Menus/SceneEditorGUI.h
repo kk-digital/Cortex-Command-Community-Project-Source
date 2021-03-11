@@ -19,7 +19,8 @@
 #include "Vector.h"
 #include "Controller.h"
 
-struct BITMAP;
+struct SDL_Renderer;
+struct SDL_Texture;
 
 
 namespace RTE
@@ -289,7 +290,7 @@ public:
 //                  The absolute position of the target bitmap's upper left corner in the scene.
 // Return value:    None.
 
-	void Draw(BITMAP *pTargetBitmap, const Vector &targetPos = Vector()) const;
+	void Draw(SDL_Renderer* renderer, const Vector &targetPos = Vector()) const;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////

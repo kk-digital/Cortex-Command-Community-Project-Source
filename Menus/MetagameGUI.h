@@ -18,7 +18,8 @@
 #include "Timer.h"
 #include "GUIBanner.h"
 
-struct BITMAP;
+struct SDL_Renderer;
+struct SDL_Texture;
 
 
 namespace RTE
@@ -168,7 +169,7 @@ public:
         // Arguments:       The bitmap to draw to.
         // Return value:    None.
 
-            void Draw(BITMAP *drawBitmap) const;
+            void Draw(SDL_Renderer* renderer) const;
 
 
     };

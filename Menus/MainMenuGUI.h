@@ -18,7 +18,8 @@
 #include "Timer.h"
 #include "Box.h"
 
-struct BITMAP;
+struct SDL_Renderer;
+struct SDL_Texture;
 
 
 namespace RTE
@@ -290,7 +291,7 @@ public:
 // Arguments:       The bitmap to draw on.
 // Return value:    None.
 
-    void Draw(BITMAP *drawBitmap) const;
+    void Draw(SDL_Renderer* renderer) const;
 
 #pragma region Editor Activity Handling
 	/// <summary>
