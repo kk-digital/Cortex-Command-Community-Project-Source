@@ -4,6 +4,7 @@
 #include "Icon.h"
 #include "Controller.h"
 
+struct SDL_Renderer;
 namespace RTE {
 
 	class Scene;
@@ -225,19 +226,19 @@ namespace RTE {
 		virtual void Update();
 
 		/// <summary>
-		/// Draws the currently active GUI of a screen to a BITMAP of choice.
+		/// Draws the currently active GUI of a screen to the active render target.
 		/// </summary>
-		/// <param name="targetBitmap">A pointer to a screen-sized BITMAP to draw on.</param>
+		/// <param name="renderer">A pointer to the current renderer.</param>
 		/// <param name="targetPos">The absolute position of the target bitmap's upper left corner in the scene.</param>
 		/// <param name="whichScreen">Which screen's GUI to draw onto the bitmap.</param>
-		virtual void DrawGUI(BITMAP *targetBitmap, const Vector &targetPos = Vector(), int whichScreen = 0) {}
+		virtual void DrawGUI(SDL_Renderer* renderer, const Vector &targetPos = Vector(), int whichScreen = 0) {}
 
 		/// <summary>
-		/// Draws this Activity's current graphical representation to a BITMAP of choice. This includes all game-related graphics.
+		/// Draws this Activity's current graphical representation to the current render target. This includes all game-related graphics.
 		/// </summary>
-		/// <param name="targetBitmap">A pointer to a BITMAP to draw on.</param>
+		/// <param name="targetBitmap">A pointer to the renderer.</param>
 		/// <param name="targetPos">The absolute position of the target bitmap's upper left corner in the scene.</param>
-		virtual void Draw(BITMAP *targetBitmap, const Vector &targetPos = Vector()) {}
+		virtual void Draw(SDL_Renderer* renderer, const Vector &targetPos = Vector()) {}
 #pragma endregion
 
 #pragma region Player Handling
