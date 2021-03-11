@@ -28,7 +28,7 @@
 #include "GUI/GUI.h"
 #include "GUI/GUIFont.h"
 #include "GUI/SDLScreen.h"
-#include "GUI/SDLBitmap.h"
+#include "GUI/SDLGUITexture.h"
 // #include "GUI/AllegroInput.h"
 #include "GUI/GUIControlManager.h"
 #include "GUI/GUICollectionBox.h"
