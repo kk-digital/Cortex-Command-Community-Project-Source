@@ -21,6 +21,8 @@
 #include "Actor.h"
 
 struct SDL_Renderer;
+struct SDL_Texture;
+
 namespace RTE
 {
 

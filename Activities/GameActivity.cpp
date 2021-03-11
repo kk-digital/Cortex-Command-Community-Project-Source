@@ -2142,8 +2142,8 @@ void GameActivity::Update()
 
 void GameActivity::DrawGUI(SDL_Renderer* renderer, const Vector &targetPos, int which)
 {
-    if (which < 0 || which >= c_MaxScreenCount)
-        return;
+	if (which < 0 || which >= c_MaxScreenCount)
+		return;
 
 	char str[512];
 	int yTextPos = 0;
@@ -2992,69 +2992,88 @@ void GameActivity::DisableAIs(bool disable, int whichTeam)
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Simply draws this' arrow relative to a point on a bitmap.
 
-void GameActivity::ObjectivePoint::Draw(BITMAP *pTargetBitmap, BITMAP *pArrowBitmap, const Vector &arrowPoint, ObjectiveArrowDir arrowDir)
+void GameActivity::ObjectivePoint::Draw(SDL_Renderer* renderer, SDL_Texture* pArrowTexture, const Vector &arrowPoint, ObjectiveArrowDir arrowDir)
 {
-    if (!pTargetBitmap || !pArrowBitmap)
+    if (!renderer || !pArrowTexture)
         return;
 
-    AllegroBitmap allegroBitmap(pTargetBitmap);
+    SDLGUITexture sdlGUITexture;
     int x = arrowPoint.GetFloorIntX();
     int y = arrowPoint.GetFloorIntY();
-    int halfWidth = pArrowBitmap->w / 2;
-    int halfHeight = pArrowBitmap->h / 2;
-    int textSpace = 4;
+
+	SDL_Rect arrowDim;
+	SDL_QueryTexture(pArrowTexture, nullptr, nullptr, &arrowDim.w, &arrowDim.h);
+    int halfWidth = arrowDim.w / 2;
+    int halfHeight = arrowDim.h / 2;
+
+	SDL_Rect viewport;
+	SDL_RenderGetViewport(renderer, &viewport);
+
+	int textSpace = 4;
 
     // Constrain the point within a gutter of the whole screen so the arrow is never right up agains teh edge of the screen.
 /*
-    Box constrainBox(halfWidth, pArrowBitmap->h, pTargetBitmap->w - halfWidth, pTargetBitmap->h - pArrowBitmap->h);
+    Box constrainBox(halfWidth, arrowDim.h, viewport.w - halfWidth, viewport.h - arrowDim.h);
     x = constrainBox.GetWithinBoxX(x);
     y = constrainBox.GetWithinBoxY(y);
 */
-    if (x < halfWidth || x > pTargetBitmap->w - halfWidth)
+    if (x < halfWidth || x > viewport.w - halfWidth)
     {
         if (x < halfWidth)
             x = halfWidth;
-        if (x > pTargetBitmap->w - halfWidth)
-            x = pTargetBitmap->w - halfWidth - 1.0;
+        if (x > viewport.w - halfWidth)
+            x = viewport.w - halfWidth - 1.0;
 
-        if (y > pTargetBitmap->h - pArrowBitmap->h)
-            y = pTargetBitmap->h - pArrowBitmap->h;
-        else if (y < pArrowBitmap->h)
-            y = pArrowBitmap->h;
+        if (y > viewport.h - arrowDim.h)
+            y = viewport.h - arrowDim.h;
+        else if (y < arrowDim.h)
+            y = arrowDim.h;
     }
-    else if (y < halfHeight || y > pTargetBitmap->h - halfHeight)
+    else if (y < halfHeight || y > viewport.h - halfHeight)
     {
         if (y < halfHeight)
             y = halfHeight;
-        if (y > pTargetBitmap->h - halfHeight)
-            y = pTargetBitmap->h - halfHeight - 1.0;
+        if (y > viewport.h - halfHeight)
+            y = viewport.h - halfHeight - 1.0;
 
-        if (x > pTargetBitmap->w - pArrowBitmap->w)
-            x = pTargetBitmap->w - pArrowBitmap->w;
-        else if (x < pArrowBitmap->w)
-            x = pArrowBitmap->w;
+        if (x > viewport.w - arrowDim.w)
+            x = viewport.w - arrowDim.w;
+        else if (x < arrowDim.w)
+            x = arrowDim.w;
     }
 
     // Draw the arrow and text descritpion of the Object so the point of the arrow ends up on the arrowPoint
     if (arrowDir == ARROWDOWN)
     {
-        masked_blit(pArrowBitmap, pTargetBitmap, 0, 0, x - halfWidth, y - pArrowBitmap->h, pArrowBitmap->w, pArrowBitmap->h);
-        g_FrameMan.GetLargeFont()->DrawAligned(&allegroBitmap, x, y - pArrowBitmap->h - textSpace, m_Description, GUIFont::Centre, GUIFont::Bottom);
+		SDL_Point pos{x-halfWidth, y-arrowDim.h};
+		SDL_Rect destination{arrowDim+pos};
+		SDL_RenderCopy(renderer, pArrowTexture, NULL, &destination);
+        g_FrameMan.GetLargeFont()->DrawAligned(&sdlGUITexture, x, y - arrowDim.h - textSpace, m_Description, GUIFont::Centre, GUIFont::Bottom);
     }
     else if (arrowDir == ARROWLEFT)
     {
-        rotate_sprite(pTargetBitmap, pArrowBitmap, x, y - halfHeight, itofix(64));
-        g_FrameMan.GetLargeFont()->DrawAligned(&allegroBitmap, x + pArrowBitmap->w + textSpace, y, m_Description, GUIFont::Left, GUIFont::Middle);
+		SDL_Point pos{x, y-halfHeight};
+		SDL_Rect destination{arrowDim + pos};
+		SDL_RenderCopyEx(renderer, pArrowTexture, NULL, &destination, 64.0,
+			             nullptr, SDL_FLIP_NONE);
+		g_FrameMan.GetLargeFont()->DrawAligned(&sdlGUITexture, x + arrowDim.w + textSpace, y, m_Description, GUIFont::Left, GUIFont::Middle);
     }
     else if (arrowDir == ARROWRIGHT)
     {
-        rotate_sprite(pTargetBitmap, pArrowBitmap, x - pArrowBitmap->w, y - halfHeight, itofix(-64));
-        g_FrameMan.GetLargeFont()->DrawAligned(&allegroBitmap, x - pArrowBitmap->w - textSpace, y, m_Description, GUIFont::Right, GUIFont::Middle);
+
+		SDL_Point pos{x - arrowDim.w, y - halfHeight};
+		SDL_Rect destination{arrowDim+pos};
+		SDL_RenderCopyEx(renderer, pArrowTexture, NULL, &destination, -64.0,
+			             nullptr, SDL_FLIP_NONE);
+        g_FrameMan.GetLargeFont()->DrawAligned(&sdlGUITexture, x - arrowDim.w - textSpace, y, m_Description, GUIFont::Right, GUIFont::Middle);
     }
     else if (arrowDir == ARROWUP)
     {
-        rotate_sprite(pTargetBitmap, pArrowBitmap, x - halfWidth, y, itofix(-128));
-        g_FrameMan.GetLargeFont()->DrawAligned(&allegroBitmap, x, y + pArrowBitmap->h + textSpace, m_Description, GUIFont::Centre, GUIFont::Top);
+		SDL_Point pos{x - halfWidth, y};
+		SDL_Rect destination{arrowDim + pos};
+		SDL_RenderCopyEx(renderer, pArrowTexture, NULL, &destination, -128.0,
+			             nullptr, SDL_FLIP_NONE);
+        g_FrameMan.GetLargeFont()->DrawAligned(&sdlGUITexture, x, y + arrowDim.h + textSpace, m_Description, GUIFont::Centre, GUIFont::Top);
     }
 }
 
