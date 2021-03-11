@@ -30,15 +30,15 @@ namespace RTE {
 	static constexpr unsigned short c_GoldMaterialID = 2; //!< Index of gold material in the material palette.
 
 	enum ColorKeys {
-		g_MaskColor = 0, //!< Mask color for all 8bpp bitmaps (palette index 0 (255,0,255)). This color is fully transparent.
+		g_MaskColor = 0xFF00FFFF, //!< Mask color for all 8bpp bitmaps (palette index 0 (255,0,255)). This color is fully transparent.
 		//g_MOIDMaskColor = 0, //!< Mask color for 8bpp MOID layer bitmaps (palette index 0 (255,0,255)). This color is fully transparent.
-		g_MOIDMaskColor = 0xF81F, //!< Mask color for 16bpp MOID layer bitmaps (255,0,255). This color is fully transparent.
+		g_MOIDMaskColor = 0xFF00FFFF, //!< Mask color for 16bpp MOID layer bitmaps (255,0,255). This color is fully transparent.
 		//g_MOIDMaskColor = 0xFF00FF, //!< Mask color for 32bpp MOID layer bitmaps (255,0,255). This color is fully transparent.
-		g_BlackColor = 245,
-		g_WhiteColor = 254,
-		g_RedColor = 13,
-		g_YellowGlowColor = 117,
-		g_NoMOID = 255
+		g_BlackColor = 0x00000000,
+		g_WhiteColor = 0xFFFFFFFF,
+		g_RedColor = 0xEA1507FF,
+		g_YellowGlowColor = 0xF9F338,
+		g_NoMOID = 0x2F2020FF
 	};
 
 	enum DotGlowColor { NoDot = 0, YellowDot, RedDot, BlueDot };
