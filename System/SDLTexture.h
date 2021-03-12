@@ -17,10 +17,17 @@ namespace RTE {
 	/// </summary>
 	class Texture {
 		friend class SceneLayer;
+		friend class ContentFile;
 
 	public:
-		// no empty texture allowed
-		Texture() = delete;
+		/// <summary>
+		/// Create a texture object from an existing one.
+		/// </summary>
+		/// <param name="texture">
+		/// The texture to be assigned. Since this is a move assignment, texture
+		/// must be an r-value
+		/// </param>
+		Texture(Texture &&texture);
 
 		/// <summary>
 		/// Create a Texture from a file, with the given texture access
@@ -34,7 +41,8 @@ namespace RTE {
 		/// </param>
 		Texture(std::string filename, int access = 0);
 
-		~Texture();
+		~Texture() { Reset(); }
+
 
 		/// <summary>
 		/// Render the texture to the screen.
@@ -210,10 +218,110 @@ namespace RTE {
 		/// SDL_GetError
 		/// </returns>
 		int lock();
+
+		/// <summary>
+		/// Lock a region of the Texture. This is only available for streaming
+		/// Textures
+		/// </summary>
+		/// <param name="region">
+		/// An SDL_Rect designating the area to be locked.
+		/// </param>
 		int lock(const SDL_Rect &region);
+
+		/// <summary>
+		/// Unlock the Texture. (It is safe to call this on an unlocked texture)
+		/// </summary>
 		void unlock();
 
+		/// <summary>
+		/// Get the color of the pixel at (x,y)
+		/// </summary>
+		/// <param name="x">
+		/// x position of the pixel to get.
+		/// </param>
+		/// <param name="y">
+		/// y position of the pixel to get.
+		/// </param>
+		/// <reutrns>
+		/// A uint32_t in the pixel format of the texture
+		/// </returns>
+		uint32_t getPixel(int x, int y);
+
+		/// <summary>
+		/// Get the color of the pixel at (pos.x,pos.y)
+		/// </summary>
+		/// <param name="pos">
+		/// Position of the pixel to get.
+		/// </param>
+		/// <reutrns>
+		/// A uint32_t in the pixel format of the texture
+		/// </returns>
+		uint32_t getPixel(SDL_Point pos);
+
+		/// <summary>
+		/// Get the alpha value that will be multiplied onto all render
+		/// operations
+		/// </summary>
+		/// <returns>
+		/// The current alpha value
+		/// </returns>
+		int getAlphaMod();
+
+		/// <summary>
+		/// Set the alpha value that will be multiplied onto all render
+		/// operations
+		/// </summary>
+		/// <param name="alpha">
+		/// The alpha value to be used
+		/// </param>
+		int setAlphaMod(uint8_t alpha);
+
+		/// <summary>
+		/// Get the currently used blend mode for the Texture
+		/// </summary>
+		/// <returns>
+		/// One of <a href="https://wiki.libsdl.org/SDL_BlendMode">
+		/// SDL_BlendMode</a>
+		/// </returns>
+		int getBlendMode();
+
+		/// <summary>
+		/// Set the blend mode to be used in render operations
+		/// </summary>
+		/// <param name="blendMode">
+		/// One of <a href="https://wiki.libsdl.org/SDL_BlendMode">
+		/// SDL_BlendMode</a>
+		/// </param>
+		int setBlendMode(int blendMode);
+
+		/// <summary>
+		/// Get the current RGB modulation that is multiplied onto render.
+		/// operations
+		/// </summary>
+		/// <returns>
+		/// A uint32_t representing 0xRRGGBBFF.
+		/// </returns>
+		uint32_t getColorMod();
+
+		/// <summary>
+		/// Set values for red, green and blue to be multiplied onto render
+		/// operations.
+		/// </summary>
+		/// <param name="r">
+		/// The red value multiplier.
+		/// </param>
+		/// <param name="g">
+		/// The green value multiplier.
+		/// </param>
+		/// <param name="b">
+		/// The blue value multiplier.
+		/// </param>
+		int setColorMod(uint8_t r, uint8_t g, uint8_t b);
+
+	public:
+		//! Width of the texture
 		int w;
+		//! Height of the texture
 		int h;
 
 	private:
@@ -225,18 +333,36 @@ namespace RTE {
 		//! Internal SDL_Texture
 		std::unique_ptr<SDL_Texture, sdl_texture_deleter> m_Texture;
 
+		//! Texture Access specifier
+		int m_Access;
+
 		//! READ ONLY pixel array
 		std::vector<uint32_t> m_PixelsRO;
-		//! WRITE ONLY pixel array. only accessible while Texture is locked
+		//! WRITE ONLY pixel array. Only accessible while Texture is locked
 		void *m_PixelsWO;
 
-		//! Size of one row of pixels in Memory, only useful while Texture is
-		//! locked
+		//! Size of one row of pixels in Memory, only meaningful while Texture
+		//! is locked
 		int m_Pitch;
 
-		// Disable copy constructors
+	private:
+		/// <summary>
+		/// Clear the texture and reset member variables
+		/// </summary>
+		void Reset();
+
+		/// <summary>
+		/// Create an empty Texture. Only for use by friend classes
+		/// </summary>
+		Texture() { Reset(); }
+
+		// No copying of textures allowed
 		Texture(Texture &copy) = delete;
-		Texture &operator=(Texture &copy) = delete;
+		Texture &operator=(const Texture &copy) = delete;
+
+	public:
+		//! Move assignment operator
+		Texture &operator=(Texture &&texture);
 	};
 } // namespace RTE
 

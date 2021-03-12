@@ -7,34 +7,42 @@
 
 #include <SDL2/SDL.h>
 
-
 /// <summary>
 /// Shift the Position of an SDL_Rect by an SDL_Point
 /// </summary>
-SDL_Rect operator+(const SDL_Rect &lhs, const SDL_Point &rhs){
-	return SDL_Rect{lhs.x+rhs.x,lhs.y+rhs.y, lhs.w, lhs.h};
+SDL_Rect operator+(const SDL_Rect &lhs, const SDL_Point &rhs) {
+	return SDL_Rect{lhs.x + rhs.x, lhs.y + rhs.y, lhs.w, lhs.h};
 }
 
 /// <summary>
 /// Shift the Position of an SDL_Rect by -SDL_Point
 /// </summary>
-SDL_Rect operator-(const SDL_Rect &lhs, const SDL_Point &rhs){
-	return SDL_Rect{lhs.x-rhs.x, lhs.y-rhs.y, lhs.w, lhs.h};
+SDL_Rect operator-(const SDL_Rect &lhs, const SDL_Point &rhs) {
+	return SDL_Rect{lhs.x - rhs.x, lhs.y - rhs.y, lhs.w, lhs.h};
 }
-
 
 /// <summary>
 /// Add two SDL_Points
 /// </summary>
-SDL_Point operator+(const SDL_Point &lhs, const SDL_Point &rhs){
-	return SDL_Point{lhs.x+rhs.x, lhs.x+rhs.y};
+SDL_Point operator+(const SDL_Point &lhs, const SDL_Point &rhs) {
+	return SDL_Point{lhs.x + rhs.x, lhs.x + rhs.y};
 }
 
 /// <summary>
 /// Subtract two SDL_Points
 /// </summary>
-SDL_Point operator-(const SDL_Point &lhs, const SDL_Point &rhs){
-	return SDL_Point{lhs.x-rhs.x, lhs.y-rhs.x};
+SDL_Point operator-(const SDL_Point &lhs, const SDL_Point &rhs) {
+	return SDL_Point{lhs.x - rhs.x, lhs.y - rhs.x};
 }
+
+/// <summary>
+/// Deleter structure for the sdl pointers for use in smartpointers
+/// </summary>
+struct sdl_deleter {
+	void operator()(SDL_Surface *p) { SDL_FreeSurface(p); }
+	void operator()(SDL_Texture *p) { SDL_DestroyTexture(p); }
+	void operator()(SDL_Renderer *p) { SDL_DestroyRenderer(p); }
+	void operator()(SDL_Window *p) { SDL_DestroyWindow(p); }
+};
 
 #endif
