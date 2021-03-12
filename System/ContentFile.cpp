@@ -1,19 +1,17 @@
-#include <SDL2/SDL_render.h>
-#include <SDL2/SDL_surface.h>
-#include <SDL2/SDL_image.h>
-#include "Managers/FrameMan.h" //Needed to get SDL_Renderer
-
 #include "ContentFile.h"
 #include "AudioMan.h"
 #include "PresetMan.h"
 #include "ConsoleMan.h"
 
+#include "FrameMan.h"
+#include "SDLHelper.h"
+#include <SDL2/SDL_image.h>
+
 namespace RTE {
 
 	const std::string ContentFile::c_ClassName = "ContentFile";
 
-	std::unordered_map<std::string, SDL_Texture *> ContentFile::s_LoadedTextures;
-	std::unordered_map<std::string, uint32_t *> ContentFile::s_LoadedPixels;
+	std::unordered_map<std::string, std::shared_ptr<Texture>> ContentFile::s_LoadedTextures;
 	std::unordered_map<std::string, FMOD::Sound *> ContentFile::s_LoadedSamples;
 	std::unordered_map<size_t, std::string> ContentFile::s_PathHashes;
 
@@ -48,14 +46,6 @@ namespace RTE {
 		return 0;
 	}
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-	void ContentFile::FreeAllLoaded() {
-		for (const std::pair<std::string, SDL_Texture *> &texture : s_LoadedTextures) {
-			SDL_DestroyTexture(texture.second);
-			delete s_LoadedPixels[texture.first];
-		}
-	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -104,20 +94,18 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void ContentFile::GetAsTexture(SDL_Texture *&texture, Uint32 *&pixels,
-	                               int &pitch, bool streamingAccess,
-	                               bool storeTexture,
-	                               const std::string &dataPathToSpecificFrame) {
+	std::shared_ptr<Texture> ContentFile::GetAsTexture(bool storeTexture,
+	                               const std::string &dataPathToSpecificFrame,
+								   bool streamingAccess) {
 		if (m_DataPath.empty()) {
-			return;
+			return nullptr;
 		}
 		std::string dataPathToLoad = dataPathToSpecificFrame.empty()
 		                                 ? m_DataPath
 		                                 : dataPathToSpecificFrame;
 		SetFormattedReaderPosition(GetFormattedReaderPosition());
-		SDL_Texture *returnTexture{nullptr};
-		Uint32* returnPixels{nullptr};
-		int returnPitch{0};
+		std::shared_ptr<Texture> returnTexture;
+
 		// Check if the file has already been read and loaded from the disk and,
 		// if so, use that data.
 		auto it_foundTexture = s_LoadedTextures.find(dataPathToLoad);
@@ -147,38 +135,30 @@ namespace RTE {
 				}
 			}
 			// NOTE: This takes ownership of the texture file
-			LoadAndReleaseTexture(dataPathToLoad,
-								  returnTexture,
-								  returnPixels,
-			                      returnPitch);
+			returnTexture = std::make_shared<Texture>(
+			    LoadAndReleaseImage(dataPathToLoad, streamingAccess));
 
 			// Insert the texture into the map, PASSING OVER OWNERSHIP OF THE
 			// LOADED DATAFILE
 			if (storeTexture) {
 				s_LoadedTextures.insert(
 				    {dataPathToLoad, returnTexture});
-				s_LoadedPixels.insert({dataPathToLoad, returnPixels});
 			}
 		}
-		texture = returnTexture;
-		pixels = returnPixels;
-		pitch = returnPitch;
+	return returnTexture;
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	SDL_Texture* *  ContentFile::GetAsAnimation(int frameCount) {
+	std::vector<std::shared_ptr<Texture>>  ContentFile::GetAsAnimation(int frameCount) {
 		if (m_DataPath.empty()) {
-			return nullptr;
+			std::vector<std::shared_ptr<Texture>> empty;
+			return empty;
 		}
 		// Create the array of as many BITMAP pointers as requested frames
-		SDL_Texture **returnTextures = new SDL_Texture *[frameCount];
+		std::vector<std::shared_ptr<Texture>> returnTextures;
 		SetFormattedReaderPosition(GetFormattedReaderPosition());
 
-		// TODO: If neccessary add additional returns or find better option for
-		// read access
-		Uint32 *emptyPixels;
-		int emptyPitch;
 		// Don't try to append numbers if there's only one frame
 		if (frameCount == 1) {
 			// Check for 000 in the file name in case it is part of an animation but the FrameCount was set to 1. Do not warn about this because it's normal operation, but warn about incorrect extension.
@@ -192,96 +172,91 @@ namespace RTE {
 					SetDataPath(m_DataPathWithoutExtension + "000" + altFileExtension);
 				}
 			}
-			GetAsTexture(returnTextures[0],emptyPixels,emptyPitch);
+			returnTextures.push_back(GetAsTexture());
 			return returnTextures;
 		}
 		char framePath[1024];
 		for (int frameNum = 0; frameNum < frameCount; frameNum++) {
 			std::snprintf(framePath, sizeof(framePath), "%s%03i%s", m_DataPathWithoutExtension.c_str(), frameNum, m_DataPathExtension.c_str());
-			GetAsTexture(returnTextures[frameNum], emptyPixels,emptyPitch,false,true, framePath);
+			returnTextures.push_back(GetAsTexture(true, framePath));
 		}
 		return returnTextures;
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void ContentFile::LoadAndReleaseTexture(
-	    const std::string &dataPathToSpecificFrame,
-	    SDL_Texture *&returnedTexture, Uint32 *&returnedPixels,
-	    int &returnedPitch, bool streamingAccess) {
+	Texture
+	ContentFile::LoadAndReleaseImage(const std::string &dataPathToSpecificFrame,
+	                                 bool streamingAccess) {
 
 		const std::string dataPathToLoad = dataPathToSpecificFrame.empty()
 		                                       ? m_DataPath
 		                                       : dataPathToSpecificFrame;
 		SetFormattedReaderPosition(GetFormattedReaderPosition());
 
-		SDL_Texture *returnTexture = nullptr;
-		SDL_Surface *tempSurface = nullptr;
-
-		tempSurface = IMG_Load(dataPathToLoad.c_str());
+		std::unique_ptr<SDL_Surface, sdl_deleter> tempSurface{
+		    IMG_Load(dataPathToLoad.c_str())};
 
 		RTEAssert(
-		    tempSurface,
+		    tempSurface.get(),
 		    "Failed to load image file with following path and name:\n\n" +
-			m_DataPathAndReaderPosition +
-			"\nThe file may be corrupt, incorrectly converted or saved with unsupported parameters.\n" +
-			IMG_GetError()
-			);
+		        m_DataPathAndReaderPosition +
+		        "\nThe file may be corrupt, incorrectly converted or saved with unsupported parameters.\n" +
+		        IMG_GetError());
 
 		// Set the colorkey of tempSurface for transparency
 		Uint32 colorKey{SDL_MapRGB(tempSurface->format, 255, 0, 255)};
-		SDL_SetColorKey(tempSurface, SDL_TRUE, colorKey);
+		SDL_SetColorKey(tempSurface.get(), SDL_TRUE, colorKey);
 
 		// Copy the pixels from the surface for accessing pixel colors
-		Uint32* pixelsRW = new Uint32[tempSurface->w * tempSurface->h];
-
+		Texture returnTexture;
 		// Create a Texture from the loaded Image with STATIC ACCESS (!) that
 		// lives in vram
 		if (!streamingAccess) {
-			returnTexture = SDL_CreateTextureFromSurface(
-			    g_FrameMan.GetRenderer(), tempSurface);
+			returnTexture.m_Texture.reset(SDL_CreateTextureFromSurface(
+			    g_FrameMan.GetRenderer(), tempSurface.get()));
 		} else {
-			returnTexture = SDL_CreateTexture(
+			returnTexture.m_Texture.reset(SDL_CreateTexture(
 			    g_FrameMan.GetRenderer(), SDL_PIXELFORMAT_RGBA32,
-			    SDL_TEXTUREACCESS_STREAMING, tempSurface->w, tempSurface->h);
+			    SDL_TEXTUREACCESS_STREAMING, tempSurface->w, tempSurface->h));
 		}
 
+		RTEAssert(returnTexture.m_Texture.get(),
+		          "Failed to create Texture from " +
+		              m_DataPathAndReaderPosition +
+		              "\n SDL Error: " + SDL_GetError());
 		int access;
 		Uint32 format;
-		int w,h;
+		int w, h;
 
-		SDL_QueryTexture(returnTexture, &format, &access, &w, &h);
+		SDL_QueryTexture(returnTexture.m_Texture.get(), &format, &access, &w,
+		                 &h);
+
+		returnTexture.m_PixelsRO.resize(w * h);
 
 		// Make a copy of the pixeldata to retain it for read access
-		SDL_LockSurface(tempSurface);
+		SDL_LockSurface(tempSurface.get());
 		SDL_ConvertPixels(w, h, tempSurface->format->format,
-		                  tempSurface->pixels, tempSurface->pitch,
-						  format, pixelsRW, w * SDL_BYTESPERPIXEL(format));
-		SDL_UnlockSurface(tempSurface);
+		                  tempSurface->pixels, tempSurface->pitch, format,
+		                  returnTexture.m_PixelsRO.data(),
+		                  w * SDL_BYTESPERPIXEL(format));
+		SDL_UnlockSurface(tempSurface.get());
 
 		// In case a streaming texture was requested copy the pixels over now
-		if(streamingAccess){
-			void *tempPixelsWO{nullptr};
-			int pitch;
-			SDL_LockTexture(returnTexture, nullptr, &tempPixelsWO, &pitch);
+		if (streamingAccess) {
+			returnTexture.lock();
 
 			// Copy the pixels from the read access array to the texture
-			std::memcpy(tempPixelsWO, pixelsRW, pitch*h);
+			// Do not modify the following line unless you know exactly what
+			// you're doing
+			std::memcpy(returnTexture.m_PixelsWO,
+			            returnTexture.m_PixelsRO.data(),
+			            returnTexture.m_Pitch * h);
 
-			SDL_UnlockTexture(returnTexture);
+			returnTexture.unlock();
 		}
 
-
-
-		SDL_FreeSurface(tempSurface);
-
-		RTEAssert(returnTexture, "Failed to create Texture from " +
-		                             m_DataPathAndReaderPosition +
-		                             "\n SDL Error: " + SDL_GetError());
-
-		returnedTexture = returnTexture;
-		returnedPixels = pixelsRW;
-		returnedPitch = w * SDL_BYTESPERPIXEL(format);
+		return returnTexture;
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

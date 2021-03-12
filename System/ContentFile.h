@@ -2,11 +2,11 @@
 #define _RTECONTENTFILE_
 
 #include "Serializable.h"
+#include "SDLTexture.h"
 
 #include "fmod/fmod.hpp"
 #include "fmod/fmod_errors.h"
 
-struct SDL_Texture;
 
 namespace RTE {
 
@@ -69,10 +69,6 @@ namespace RTE {
 		/// </summary>
 		void Reset() override { Clear(); }
 
-		/// <summary>
-		/// Frees all loaded data used by all ContentFile instances. This should ONLY be done when quitting the app, or after everything else is completely destroyed.
-		/// </summary>
-		static void FreeAllLoaded();
 #pragma endregion
 
 #pragma region Getters and Setters
@@ -117,45 +113,33 @@ namespace RTE {
 
 #pragma region Data Handling
 		/// <summary>
-		/// Gets the data represented by this ContentFile object as an Allegro
-		/// SDL_Texture, loading it into the static maps if it's not already
-		/// loaded. Note that ownership of the SDL_Texture is NOT transferred!
+		/// Gets the data represented by this ContentFile object as an
+		/// RTE::Texture object, loading it into the static maps if it's not
+		/// already loaded.
 		/// </summary>
-		/// <param name="texture">
-		/// A SDL_Texture pointer to be filles by the loaded texture
-		/// </param>
-		/// <param name="pixels">
-		/// A pointer which will store the texture pixels in a flattened array
-		/// for read access
-		/// </param>
-		/// <param name="pitch">
-		/// An int to be filled by the pixel pitch of the texture this
-		/// represents the size of one row of pixels in memory
-		/// </param>
-		/// <param name="streamingAccess">
-		/// Wether to create the texture with streaming access, this allow pixel
-		/// manipulation
-		/// </param>
-		/// <param name="storeBitmap">Whether to store the SDL_Texture in the
+		/// <param name="storeBitmap">Whether to store the Texture in the
 		/// relevant static map after loading it or not.</param>
 		/// <param name="dataPathToSpecificFrame">
 		/// Path to a specific frame when loading
 		/// an animation to avoid overwriting the original preset DataPath when
 		/// loading each frame.
 		/// </param>
+		/// <param name="textureAccess">
+		/// The access specifier used in creation of the Texture
+		/// </param>
 		/// <returns>Pointer to the SDL_Texture loaded
 		/// from disk.</returns>
-		void GetAsTexture(SDL_Texture *&texture, uint32_t *&pixels, int &pitch,
-		                  bool streamingAccess = false, bool storeBitmap = true,
-		                  const std::string &dataPathToSpecificFrame = "");
+		std::shared_ptr<Texture> GetAsTexture(bool storeBitmap = true,
+		                     const std::string &dataPathToSpecificFrame = "",
+		                     bool streamingAccess = false);
 
 		/// <summary>
 		/// Gets the data represented by this ContentFile object as an array of SDL_Textures, each representing a frame in the animation.
-		/// It loads the SDL_Textures into the static maps if they're not already loaded. Ownership of the SDL_Textures is NOT transferred, but the array itself IS!
+		/// It loads the SDL_Textures into the static maps if they're not already loaded.
 		/// </summary>
 		/// <param name="frameCount">The number of frames to attempt to load, more than 1 frame will mean 00# is appended to datapath to handle naming conventions.</param>
 		/// <returns>Pointer to the beginning of the array of SDL_Texture pointers loaded from the disk, the length of which is specified with the FrameCount argument.</returns>
-		SDL_Texture ** GetAsAnimation(int frameCount = 1);
+		std::vector<std::shared_ptr<Texture>> GetAsAnimation(int frameCount = 1);
 
 		/// <summary>
 		/// Gets the data represented by this ContentFile object as an FMOD FSOUND_SAMPLE, loading it into the static maps if it's not already loaded. Ownership of the FSOUND_SAMPLE is NOT transferred!
@@ -169,8 +153,7 @@ namespace RTE {
 	protected:
 
 		static std::unordered_map<size_t, std::string> s_PathHashes; //!< Static map containing the hash values of paths of all loaded data files.
-		static std::unordered_map<std::string, SDL_Texture *> s_LoadedTextures; //!< Static map containing all the already loaded SDL_Textures and their paths.
-		static std::unordered_map<std::string, uint32_t *> s_LoadedPixels; //!< Static map containing all the pixel arrays for the loaded textures and their paths.
+		static std::unordered_map<std::string, std::shared_ptr<Texture>> s_LoadedTextures; //!< Static map containing all the already loaded SDL_Textures and their paths.
 		static std::unordered_map<std::string, FMOD::Sound *> s_LoadedSamples; //!< Static map containing all the already loaded FSOUND_SAMPLEs and their paths.
 
 		std::string m_DataPath; //!< The path to this ContentFile's data file. In the case of an animation, this filename/name will be appended with 000, 001, 002 etc.
@@ -195,19 +178,22 @@ namespace RTE {
 		/// </summary>
 		/// <param name="dataPathToSpecificFrame">Path to a specific frame when loading an animation to avoid overwriting the original preset DataPath when loading each frame.</param>
 		/// <returns>Pointer to the SDL_Texture loaded from disk.</returns>
-		void LoadAndReleaseTexture(const std::string &dataPathToSpecificFrame,
-		                           SDL_Texture *&returnedTexture,
-		                           uint32_t *&returnedPixels,
-								   int &returnedPitch,
-		                           bool streamingAccess = false);
+		Texture LoadAndReleaseImage(const std::string &dataPathToSpecificFrame,
+		                            bool streamingAccess);
 
 		/// <summary>
-		/// Loads and transfers the data represented by this ContentFile object as an FMOD FSOUND_SAMPLE. Ownership of the FSOUND_SAMPLE is NOT transferred!
+		/// Loads and transfers the data represented by this ContentFile
+		/// object as an FMOD FSOUND_SAMPLE. Ownership of the FSOUND_SAMPLE
+		/// is NOT transferred!
 		/// </summary>
-		/// <param name="abortGameForInvalidSound">Whether to abort the game if the sound couldn't be added, or just show a console error. Default true.</param>
-		/// <param name="asyncLoading">Whether to enable FMOD asynchronous loading or not. Should be disabled for loading audio files with Lua AddSound.</param>
-		/// <returns>Pointer to the FSOUND_SAMPLE loaded from disk.</returns>
-		FMOD::Sound * LoadAndReleaseSound(bool abortGameForInvalidSound = true, bool asyncLoading = true);
+		/// <param name="abortGameForInvalidSound">Whether to abort the game
+		/// if the sound couldn't be added, or just show a console error.
+		/// Default true.</param> <param name="asyncLoading">Whether to
+		/// enable FMOD asynchronous loading or not. Should be disabled for
+		/// loading audio files with Lua AddSound.</param> <returns>Pointer
+		/// to the FSOUND_SAMPLE loaded from disk.</returns>
+		FMOD::Sound *LoadAndReleaseSound(bool abortGameForInvalidSound = true,
+		                                 bool asyncLoading = true);
 #pragma endregion
 
 		/// <summary>
