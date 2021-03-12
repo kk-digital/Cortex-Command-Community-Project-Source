@@ -8,6 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
+- SDL  
+    - Added helper header to provide useful vector operations for SDL\_Rect and
+      SDL\_Point as well as a deleter struct for use by smart pointers  
+    - Added a wrapper class for SDL\_Texture that provides safe pixel level access
+      and hides the SDL\_Texture  
+
 - Executable can be compiled as 64bit.
 
 - New `Settings.ini` property `MeasureModuleLoadTime = 0/1` to measure the duration of module loading (archived module extraction included). For benchmarking purpuses.
@@ -93,7 +99,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 	`limbPath.SegmentCount` (R) - the number of segments in the `LimbPath`.  
 	`limbPath:GetSegment(segmentIndex)` - Gets the segment Vector for the given segment index. You can use this to modify `LimbPaths`.  
 
+
 ### Changed
+
+- SDL:  
+    - ContenFile now provides a shared_ptr to the Texture wrapper to clear all
+      ownership confusion  
+    - TimerMan now uses cross platform SDL_Timer functions  
+    - GUIUtil now provides cross platform clipboard handling through SDL  
 
 - Hands will now draw in transparent drawing mode, i.e. editing menu.
 
@@ -145,7 +158,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 	`AudioMan:StopSound(soundContainer);` and `AudioMan:StopSound(soundContainer, player);` have been replaced with `soundContainer:Stop();` and `soundContainer:Stop(player);`
 	
 - Pressing escape when a buy menu is open now closes it instead of pausing the game.
-
+  
 ### Fixed
 
 - `MovableObject:SetWhichMOToNotHit` will now work properly for Attachables. They will also not hit the relevant MO. When they're removed, Attachables will check if they have the same MO for this value and, if so, unset it so they can hit that MO.
@@ -169,6 +182,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Enabled DPI Awareness to fix issues with resolution settings when Windows scaling is enabled.
 
 ### Removed
+- Removed all references to Allegro
 
 - Removed obsolete graphics drivers and their `Settings.ini` properties `ForceOverlayedWindowGfxDriver` and `ForceNonOverlayedWindowGfxDriver`.
 
