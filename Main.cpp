@@ -1823,7 +1823,6 @@ int main(int argc, char **argv) {
     g_FrameMan.Destroy();
     g_TimerMan.Destroy();
     g_LuaMan.Destroy();
-    ContentFile::FreeAllLoaded();
     g_ConsoleMan.Destroy();
 
 #ifdef DEBUG_BUILD
