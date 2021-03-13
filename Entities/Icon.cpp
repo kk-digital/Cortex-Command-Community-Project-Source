@@ -9,18 +9,16 @@ namespace RTE {
 	void Icon::Clear() {
 		m_BitmapFile.Reset();
 		m_FrameCount = 0;
-		m_TexturesIndexed = 0;
-		m_TexturesTrueColor = 0;
+		m_Textures.clear();
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	int Icon::Create() {
-		if (!m_TexturesIndexed || !m_TexturesTrueColor) {
+		if (m_Textures.empty()) {
 			if (m_BitmapFile.GetDataPath().empty()) { m_BitmapFile.SetDataPath("Base.rte/GUIs/DefaultIcon.png"); }
 
-			m_TexturesIndexed = m_BitmapFile.GetAsAnimation(m_FrameCount);
-			m_TexturesTrueColor = m_BitmapFile.GetAsAnimation(m_FrameCount);
+			m_Textures = m_BitmapFile.GetAsAnimation(m_FrameCount);
 		}
 		return 0;
 	}
@@ -33,15 +31,9 @@ namespace RTE {
 		m_BitmapFile = reference.m_BitmapFile;
 		m_FrameCount = reference.m_FrameCount;
 
-		if (reference.m_TexturesIndexed && reference.m_TexturesTrueColor) {
-			m_TexturesIndexed = new SDL_Texture *[m_FrameCount];
-			m_TexturesTrueColor = new SDL_Texture *[m_FrameCount];
+		m_Textures.clear();
+		m_Textures = reference.m_Textures;
 
-			for (unsigned short frame = 0; frame < m_FrameCount; ++frame) {
-				m_TexturesIndexed[frame] = reference.m_TexturesIndexed[frame];
-				m_TexturesTrueColor[frame] = reference.m_TexturesTrueColor[frame];
-			}
-		}
 		return 0;
 	}
 
@@ -73,9 +65,6 @@ namespace RTE {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void Icon::Destroy(bool notInherited) {
-		delete[] m_TexturesIndexed;
-		delete[] m_TexturesTrueColor;
-
 		if (!notInherited) { Entity::Destroy(); }
 		Clear();
 	}
