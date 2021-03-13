@@ -15,6 +15,7 @@
 // Inclusions of header files
 
 #include "Attachable.h"
+#include "System/SDLTexture.h"
 
 namespace RTE
 {
@@ -376,7 +377,7 @@ ClassInfoGetters
 //                  indicator arrows or hovering HUD text and so on.
 // Return value:    None.
 
-    void Draw(BITMAP *pTargetBitmap, const Vector &targetPos = Vector(), DrawMode mode = g_DrawColor, bool onlyPhysical = false) const override;
+    void Draw(SDL_Renderer* renderer, const Vector &targetPos = Vector(), DrawMode mode = g_DrawColor, bool onlyPhysical = false) const override;
 
     /// <summary>
     /// Draws this Arm's hand's graphical representation to a BITMAP of choice.
@@ -384,7 +385,7 @@ ClassInfoGetters
     /// <param name="targetBitmap">A pointer to a BITMAP to draw on.</param>
     /// <param name="targetPos">The absolute position of the target bitmap's upper left corner in the Scene.</param>
     /// <param name="mode">Which mode to draw in. See the DrawMode enumeration for available modes.</param>
-	void DrawHand(BITMAP *targetBitmap, const Vector &targetPos = Vector(), DrawMode mode = g_DrawColor) const;
+	void DrawHand(SDL_Renderer* renderer, const Vector &targetPos = Vector(), DrawMode mode = g_DrawColor) const;
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Protected member variable and method declarations
@@ -415,7 +416,7 @@ protected:
     // The file containing the hand bitmap.
     ContentFile m_HandFile;
     // The small bitmap holding the hand bitmap.
-    BITMAP *m_pHand;
+	std::shared_ptr<Texture> m_pHand;
 	// The maximum reaching length of this Arm. Max distance between the joint position and the hand offset. Length of a straight arm sprite in pixels.
     float m_MaxLength;
     // Current offset position of the hand relative to m_JointPos.

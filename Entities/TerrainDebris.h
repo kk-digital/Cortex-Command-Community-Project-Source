@@ -69,7 +69,7 @@ namespace RTE {
 		/// Gets all the bitmaps of this collection of debris.
 		/// </summary>
 		/// <returns>An array of pointers to BITMAPs. Ownership is NOT transferred.</returns>
-		BITMAP ** GetBitmaps() const { return m_Bitmaps; }
+		std::vector<std::shared_ptr<Texture>> GetBitmaps() const { return m_Textures; }
 
 		/// <summary>
 		/// Gets the current number of BITMAPs that describe all the different pieces of debris.
@@ -91,7 +91,7 @@ namespace RTE {
 		static Entity::ClassInfo m_sClass; //!< ClassInfo for this class.
 
 		ContentFile m_DebrisFile; //!< Shows where the bitmaps are.
-		BITMAP **m_Bitmaps; //!< All the different bitmaps for each chunk of debris. Not owned.	
+		std::vector<std::shared_ptr<Texture>> m_Textures; //!< All the different bitmaps for each chunk of debris. Not owned.
 		unsigned short m_BitmapCount; //!< How many bitmaps we have loaded.
 
 		Material m_Material; //!< The material of all this debris.

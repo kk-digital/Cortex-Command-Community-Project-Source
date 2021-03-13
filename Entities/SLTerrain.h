@@ -331,8 +331,8 @@ ClassInfoGetters
 // Return value:    None.
 
     void Destroy(bool notInherited = false) override;
-
-
+	//TODO: replace by opaque rendering fncs
+/*
 //////////////////////////////////////////////////////////////////////////////////////////
 // Virtual method:  LockBitmaps
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -358,6 +358,7 @@ ClassInfoGetters
 
 	void UnlockBitmaps() override { SceneLayer::UnlockBitmaps(); release_bitmap(m_pMainBitmap); }
 
+	// TODO: these are evil because theyre used to blit. Replace by opaque blitting functions
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          GetFGColorBitmap
@@ -387,7 +388,7 @@ ClassInfoGetters
 // Return value:    A pointer to the material bitmap.
 
     BITMAP * GetMaterialBitmap() { return m_pMainBitmap; }
-
+	*/
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          GetFGColorPixel
@@ -477,8 +478,8 @@ ClassInfoGetters
 // Description:     Gets the structural bitmap of this Terrain.
 // Arguments:       None.
 // Return value:    A pointer to the material bitmap.
-
-    BITMAP * GetStructuralBitmap() { return m_pStructural; }
+// TODO probably replace
+    // BITMAP * GetStructuralBitmap() { return m_pStructural; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -512,7 +513,7 @@ ClassInfoGetters
 //                  Note that ownership of all the MOPixel:s in the deque ARE transferred!
 //                  This will be empty if makeMOPs is false.
 
-    std::deque<MOPixel *> EraseSilhouette(BITMAP *pSprite,
+    std::deque<MOPixel *> EraseSilhouette(std::shared_ptr<Texture> pSprite,
                                           Vector pos,
                                           Vector pivot,
                                           Matrix rotation,
@@ -670,7 +671,7 @@ ClassInfoGetters
 //                  is overridder with it. It becomes the new source coordinates.
 // Return value:    None.
 
-	void DrawBackground(BITMAP *pTargetBitmap, Box& targetBox, const Vector &scrollOverride = Vector(-1, -1));
+	void DrawBackground(SDL_Renderer* renderer, Box& targetBox, const Vector &scrollOverride = Vector(-1, -1));
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -684,7 +685,7 @@ ClassInfoGetters
 //                  is overridder with it. It becomes the new source coordinates.
 // Return value:    None.
 
-	void Draw(BITMAP *pTargetBitmap, Box& targetBox, const Vector &scrollOverride = Vector(-1, -1)) const override;
+	void Draw(SDL_Renderer* renderer, Box& targetBox, const Vector &scrollOverride = Vector(-1, -1)) const override;
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Protected member variable and method declarations
@@ -696,7 +697,7 @@ protected:
 
     SceneLayer *m_pFGColor;
     SceneLayer *m_pBGColor;
-    BITMAP *m_pStructural;
+	std::shared_ptr<Texture> m_pStructural;
     ContentFile m_BGTextureFile;
 
     std::list<TerrainFrosting> m_TerrainFrostings;
@@ -710,13 +711,14 @@ protected:
     // Draw the material layer instead of the color layer.
     bool m_DrawMaterial;
 
-    // Intermediate test layers, deffernt sizes for efficiency
-    static BITMAP *m_spTempBitmap16;
-    static BITMAP *m_spTempBitmap32;
-    static BITMAP *m_spTempBitmap64;
-    static BITMAP *m_spTempBitmap128;
-    static BITMAP *m_spTempBitmap256;
-    static BITMAP *m_spTempBitmap512;
+    // Intermediate test layers, differnt sizes for efficiency
+	// TODO probably unneccessary
+    static std::unique_ptr<Texture> m_spTempBitmap16;
+    static std::unique_ptr<Texture> m_spTempBitmap32;
+    static std::unique_ptr<Texture> m_spTempBitmap64;
+    static std::unique_ptr<Texture> m_spTempBitmap128;
+    static std::unique_ptr<Texture> m_spTempBitmap256;
+    static std::unique_ptr<Texture> m_spTempBitmap512;
 
 	// Indicates, that before processing frostings-related properties for this terrain
 	// derived list with frostings must be cleared to avoid duplication when loading scenes

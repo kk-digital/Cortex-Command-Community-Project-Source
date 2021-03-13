@@ -138,7 +138,7 @@ ClassInfoGetters
 // Return value:    A good identifyable graphical representation of this in a BITMAP, if
 //                  available. If not, 0 is returned. Ownership is NOT TRANSFERRED!
 
-    BITMAP * GetGraphicalIcon() override { return m_Icon.GetBitmaps8() ? m_Icon.GetBitmaps8()[0] : 0; }
+	std::shared_ptr<Texture> GetGraphicalIcon() override { return !m_Icon.GetTextures().empty() ? m_Icon.GetTextures()[0] : nullptr; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -340,7 +340,7 @@ ClassInfoGetters
 //                  like indicator arrows or hovering HUD text and so on.
 // Return value:    None.
 
-    void Draw(BITMAP *pTargetBitmap, const Vector &targetPos = Vector(), DrawMode mode = g_DrawColor, bool onlyPhysical = false) const override;
+    void Draw(SDL_Renderer* renderer, const Vector &targetPos = Vector(), DrawMode mode = g_DrawColor, bool onlyPhysical = false) const override;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -385,8 +385,8 @@ protected:
 	// Whether the deployment and it's loadout is flipped
 	bool m_HFlipped;
 	// Shared HFlipped arrow bitmaps
-	static BITMAP **m_apArrowLeftBitmap;
-	static BITMAP **m_apArrowRightBitmap;
+	static std::vector<std::shared_ptr<Texture>> m_apArrowLeftBitmap;
+	static std::vector<std::shared_ptr<Texture>> m_apArrowRightBitmap;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////

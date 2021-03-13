@@ -3,6 +3,8 @@
 
 #include "HeldDevice.h"
 
+struct SDL_Renderer;
+
 namespace RTE {
 
 	class HeldDevice;
@@ -96,7 +98,7 @@ namespace RTE {
 		/// <param name="targetPos">The absolute position of the target bitmap's upper left corner in the Scene.</param>
 		/// <param name="mode">In which mode to draw in. See the DrawMode enumeration for the modes.</param>
 		/// <param name="onlyPhysical">Whether to not draw any extra 'ghost' items of this MovableObject, indicator arrows or hovering HUD text and so on.</param>
-		void Draw(BITMAP *pTargetBitmap, const Vector &targetPos = Vector(), DrawMode mode = g_DrawColor, bool onlyPhysical = false) const override;
+		void Draw(SDL_Renderer* renderer, const Vector &targetPos = Vector(), DrawMode mode = g_DrawColor, bool onlyPhysical = false) const override;
 #pragma endregion
 
 	protected:

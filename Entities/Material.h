@@ -47,10 +47,10 @@ namespace RTE {
 
 #pragma region Getters and Setters
 		/// <summary>
-		/// Gets the texture bitmap of this Material, if any is associated with it.
+		/// Gets the texture of this Material, if any is associated with it.
 		/// </summary>
 		/// <returns>Pointer to the texture bitmap of this Material.</returns>
-		BITMAP * GetTexture() const { return m_TerrainTexture; }
+		std::shared_ptr<Texture> GetTexture() const { return m_TerrainTexture; }
 
 		/// <summary>
 		/// Gets the index of this Material in the material palette.
@@ -173,7 +173,7 @@ namespace RTE {
 		bool m_UseOwnColor; //!< Whether or not to use the own color when a pixel of this material is knocked loose from the terrain. If 0, then the terrain pixel's color will be applied instead.
 
 		ContentFile m_TextureFile; //!< The file pointing to the terrain texture of this Material 
-		BITMAP *m_TerrainTexture; //!< The texture of this material, used when building an SLTerrain.
+		std::shared_ptr<Texture> m_TerrainTexture; //!< The texture of this material, used when building an SLTerrain.
 
 	private:
 

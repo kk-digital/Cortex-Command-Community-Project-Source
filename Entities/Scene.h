@@ -400,7 +400,7 @@ EntityAllocation(Scene)
 //					scaled map offset, scale.
 // Return value:    None.
 
-	void DrawPlacedObjectsPreview(BITMAP * pBitmap, int set, int width, int height, int xOffset, int yOffset, float scale);
+	void DrawPlacedObjectsPreview(SDL_Renderer* renderer, int set, int width, int height, int xOffset, int yOffset, float scale);
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -1302,7 +1302,7 @@ const SceneObject * PickPlacedActorInRange(int whichSet, Vector &scenePoint, int
 // Arguments:       None.
 // Return value:    Pointer to preview bitmap.
 
-	BITMAP * GetPreviewBitmap() const { return m_pPreviewBitmap; };
+	std::shared_ptr<Texture> GetPreviewBitmap() const { return m_pPreviewBitmap; };
 
     // Holds the path calculated by CalculateScenePath
     std::list<Vector> m_ScenePath;
@@ -1373,7 +1373,7 @@ protected:
     // Amounts of limited assemblies
     std::map<std::string, int> m_AssembliesCounts;
 	// Scene preview bitmap
-	BITMAP * m_pPreviewBitmap;
+	std::shared_ptr<Texture> m_pPreviewBitmap;
 	// Scene preview source file
 	ContentFile m_PreviewBitmapFile;
 	// Name of a scene which can be replaced by this scene in MetaGame

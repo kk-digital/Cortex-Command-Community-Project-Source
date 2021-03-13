@@ -17,6 +17,8 @@
 #include "SceneObject.h"
 #include "SceneMan.h"
 
+#include "System/SDLTexture.h"
+
 #define ICON_WIDTH 69
 #define AREA_PER_DEPLOYMENT 64
 
@@ -172,7 +174,7 @@ ClassInfoGetters
 // Return value:    A pointer to the foreground color BITMAP object. Ownership is not
 //                  transferred.
 
-    BITMAP * GetBitmap() const { return m_pPresentationBitmap; }
+	std::shared_ptr<Texture> GetBitmap() const { return m_pPresentationBitmap; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -194,7 +196,7 @@ ClassInfoGetters
 // Return value:    A good identifyable graphical representation of this in a BITMAP, if
 //                  available. If not, 0 is returned. Ownership is NOT TRANSFERRED!
 
-    BITMAP * GetGraphicalIcon() override;
+	std::shared_ptr<Texture> GetGraphicalIcon() override;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -229,7 +231,7 @@ ClassInfoGetters
 //                  like indicator arrows or hovering HUD text and so on.
 // Return value:    None.
 
-    void Draw(BITMAP *pTargetBitmap, const Vector &targetPos = Vector(), DrawMode mode = g_DrawColor, bool onlyPhysical = false) const override;
+    void Draw(SDL_Renderer* renderer, const Vector &targetPos = Vector(), DrawMode mode = g_DrawColor, bool onlyPhysical = false) const override;
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:  GetOneTypePerScene
@@ -293,9 +295,9 @@ protected:
     ContentFile m_BitmapFile;
 
     // Not owned by this
-    BITMAP *m_pBitmap;
-	BITMAP *m_pPresentationBitmap;
-	BITMAP *m_pIconBitmap;
+	std::shared_ptr<Texture> m_pBitmap;
+	std::shared_ptr<Texture> m_pPresentationBitmap;
+	std::shared_ptr<Texture> m_pIconBitmap;
 
     // The objects that are placed along with this in the scene
     std::list<SOPlacer> m_ChildObjects;

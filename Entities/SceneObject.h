@@ -16,8 +16,8 @@
 
 #include "Entity.h"
 #include "Matrix.h"
+#include "System/SDLTexture.h"
 
-struct BITMAP;
 
 namespace RTE
 {
@@ -479,7 +479,7 @@ public:
 // Return value:    A good identifyable graphical representation of this in a BITMAP, if
 //                  available. If not, 0 is returned. Ownership is NOT TRANSFERRED!
 
-    virtual BITMAP * GetGraphicalIcon() { return 0; }
+    virtual std::shared_ptr<Texture> GetGraphicalIcon() { return 0; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -515,7 +515,7 @@ public:
 //                  like indicator arrows or hovering HUD text and so on.
 // Return value:    None.
 
-	virtual void Draw(BITMAP *pTargetBitmap, const Vector &targetPos = Vector(), DrawMode mode = g_DrawColor, bool onlyPhysical = false) const = 0;
+	virtual void Draw(SDL_Renderer* renderer, const Vector &targetPos = Vector(), DrawMode mode = g_DrawColor, bool onlyPhysical = false) const = 0;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -526,7 +526,7 @@ public:
 //                  The absolute position of the target bitmap's upper left corner in the Scene.
 // Return value:    None.
 
-	void DrawTeamMark(BITMAP *pTargetBitmap, const Vector &targetPos = Vector()) const;
+	void DrawTeamMark(SDL_Renderer* renderer, const Vector &targetPos = Vector()) const;
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Protected member variable and method declarations

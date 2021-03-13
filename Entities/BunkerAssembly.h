@@ -22,6 +22,8 @@
 #include "Deployment.h"
 //#include "MovableMan.h"
 
+#include "System/SDLTexture.h"
+
 namespace RTE
 {
 
@@ -202,7 +204,7 @@ ClassInfoGetters
 // Return value:    A good identifyable graphical representation of this in a BITMAP, if
 //                  available. If not, 0 is returned. Ownership is NOT TRANSFERRED!
 
-	BITMAP * GetGraphicalIcon() override { return m_pPresentationBitmap; };
+	std::shared_ptr<Texture> GetGraphicalIcon() override { return m_pPresentationBitmap; };
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -236,7 +238,7 @@ ClassInfoGetters
 //                  like indicator arrows or hovering HUD text and so on.
 // Return value:    None.
 
-    void Draw(BITMAP *pTargetBitmap, const Vector &targetPos = Vector(), DrawMode mode = g_DrawColor, bool onlyPhysical = false) const override;
+    void Draw(SDL_Renderer* renderer, const Vector &targetPos = Vector(), DrawMode mode = g_DrawColor, bool onlyPhysical = false) const override;
 
 
 
@@ -256,7 +258,7 @@ protected:
 	// Group proveded by parent scheme to which this assembly was added
 	std::string m_ParentSchemeGroup;
 	// Bitmap shown during draw and icon creation
-	BITMAP * m_pPresentationBitmap;
+	std::shared_ptr<Texture> m_pPresentationBitmap;
 	//Assembly symmetric to this one
 	string m_SymmetricAssembly;
 

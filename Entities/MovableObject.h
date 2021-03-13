@@ -19,10 +19,14 @@
 #include "Matrix.h"
 #include "Timer.h"
 #include "Material.h"
-#include "MovableMan.h"
-#include "FrameMan.h"
 
-struct BITMAP;
+#include "Managers/SceneMan.h"
+#include "Managers/MovableMan.h"
+
+#include "System/SDLTexture.h"
+
+
+class Actor;
 
 namespace RTE
 {
@@ -665,7 +669,7 @@ friend class Atom;
 // Arguments:       None.
 // Return value:    The 32bpp screen effect BITMAP. Ownership is NOT transferred!
 
-    BITMAP * GetScreenEffect() const { return m_pScreenEffect; }
+	std::shared_ptr<Texture> GetScreenEffect() const { return m_pScreenEffect; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -1579,7 +1583,7 @@ friend class Atom;
 //                  get drawn etc.
 // Return value:    None.
 
-    virtual void DrawHUD(BITMAP *pTargetBitmap, const Vector &targetPos = Vector(), int whichScreen = 0, bool playerControlled = false) { return; }
+    virtual void DrawHUD(SDL_Renderer* renderer, const Vector &targetPos = Vector(), int whichScreen = 0, bool playerControlled = false) { return; }
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Virtual method:  GetRestThreshold
@@ -1908,7 +1912,7 @@ protected:
     // Special post processing flash effect file and Bitmap. Shuold be loaded from a 32bpp bitmap
     ContentFile m_ScreenEffectFile;
     // Not owned by this, owned by the contentfiles
-    BITMAP *m_pScreenEffect;
+	std::shared_ptr<Texture> m_pScreenEffect;
 
 	size_t m_ScreenEffectHash;
 

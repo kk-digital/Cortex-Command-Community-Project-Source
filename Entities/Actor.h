@@ -16,6 +16,7 @@
 
 #include "MOSRotating.h"
 #include "PieMenuGUI.h"
+#include "System/SDLTexture.h"
 
 namespace RTE
 {
@@ -647,7 +648,7 @@ ClassInfoGetters
 // Arguments:       None.
 // Return value:    The current AI mode icon of this. Ownership is NOT transferred!
 
-	BITMAP * GetAIModeIcon();
+	std::shared_ptr<Texture> GetAIModeIcon();
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -1151,7 +1152,7 @@ ClassInfoGetters
 //                  indicator arrows or hovering HUD text and so on.
 // Return value:    None.
 
-    void Draw(BITMAP *pTargetBitmap, const Vector &targetPos = Vector(), DrawMode mode = g_DrawColor, bool onlyPhysical = false) const override;
+    void Draw(SDL_Renderer *renderer, const Vector &targetPos = Vector(), DrawMode mode = g_DrawColor, bool onlyPhysical = false) const override;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -1165,7 +1166,7 @@ ClassInfoGetters
 //                  get drawn etc.
 // Return value:    None.
 
-    void DrawHUD(BITMAP *pTargetBitmap, const Vector &targetPos = Vector(), int whichScreen = 0, bool playerControlled = false) override;
+    void DrawHUD(SDL_Renderer* renderer, const Vector &targetPos = Vector(), int whichScreen = 0, bool playerControlled = false) override;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -1401,13 +1402,13 @@ protected:
          FOLLOWWAIT
     };
     // Unknown team icon
-    static BITMAP **m_apNoTeamIcon;
+    static std::vector<std::shared_ptr<Texture>> m_apNoTeamIcon;
     // The AI mode icons
-    static BITMAP *m_apAIIcons[AIMODE_COUNT];
+    static std::array<std::shared_ptr<Texture>, AIMODE_COUNT> m_apAIIcons;
     // Selection arrow
-    static BITMAP **m_apSelectArrow;
+    static std::vector<std::shared_ptr<Texture>> m_apSelectArrow;
     // Selection arrow
-    static BITMAP **m_apAlarmExclamation;
+    static std::vector<std::shared_ptr<Texture>> m_apAlarmExclamation;
     // Whether the static icons have been loaded yet or not
     static bool m_sIconsLoaded;
     // Whether a Lua update AI function was provided in this' script file

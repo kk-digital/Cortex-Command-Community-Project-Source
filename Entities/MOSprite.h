@@ -17,6 +17,8 @@
 #include "MovableObject.h"
 #include "Box.h"
 
+struct SDL_Renderer;
+
 namespace RTE
 {
 
@@ -191,7 +193,7 @@ public:
 // Return value:    A pointer to the requested frame of this MOSprite's BITMAP array.
 //                  Ownership is NOT transferred!
 
-    BITMAP * GetSpriteFrame(int whichFrame = 0) const { return (whichFrame >= 0 && whichFrame < m_FrameCount) ? m_aSprite[whichFrame] : 0; }
+	std::shared_ptr<Texture> GetSpriteFrame(int whichFrame = 0) const { return (whichFrame >= 0 && whichFrame < m_FrameCount) ? m_aSprite[whichFrame] : 0; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -393,7 +395,7 @@ public:
 // Return value:    A good identifyable graphical representation of this in a BITMAP, if
 //                  available. If not, 0 is returned. Ownership is NOT TRANSFERRED!
 
-    BITMAP * GetGraphicalIcon() override { return m_aSprite[0]; }
+	std::shared_ptr<Texture> GetGraphicalIcon() override { return m_aSprite[0]; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -541,7 +543,7 @@ public:
 //                  indicator arrows or hovering HUD text and so on.
 // Return value:    None.
 
-	void Draw(BITMAP *pTargetBitmap, const Vector &targetPos = Vector(), DrawMode mode = g_DrawColor, bool onlyPhysical = false) const override;
+	void Draw(SDL_Renderer* renderer, const Vector &targetPos = Vector(), DrawMode mode = g_DrawColor, bool onlyPhysical = false) const override;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -568,7 +570,7 @@ protected:
     float m_PrevAngVel; // Previous frame's angular velocity.
     ContentFile m_SpriteFile;
     // Array of pointers to BITMAP:s representing the multiple frames of this sprite
-    BITMAP **m_aSprite;
+	std::vector<std::shared_ptr<Texture>> m_aSprite;
     // Number of frames, or elements in the m_aSprite array.
     unsigned int m_FrameCount;
     Vector m_SpriteOffset;
