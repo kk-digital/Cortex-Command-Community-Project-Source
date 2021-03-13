@@ -5,6 +5,8 @@
 #include "Box.h"
 #include "SceneMan.h"
 
+#include "System/SDLTexture.h"
+
 #define g_PostProcessMan PostProcessMan::Instance()
 
 namespace RTE {
@@ -13,7 +15,7 @@ namespace RTE {
 	/// Structure for storing a post-process screen effect to be applied at the last stage of 32bpp rendering.
 	/// </summary>
 	struct PostEffect {
-		BITMAP *m_Bitmap = nullptr; //!< The bitmap to blend, not owned.
+		std::shared_ptr<Texture> m_Texture; //!< The bitmap to blend, not owned.
 		size_t m_BitmapHash = 0; //!< Hash used to transmit glow events over the network.
 		float m_Angle = 0; // Post effect angle.
 		int m_Strength = 128; //!< Scalar float for how hard to blend it in, 0 - 255.
@@ -22,7 +24,11 @@ namespace RTE {
 		/// <summary>
 		/// Constructor method used to instantiate a PostEffect object in system memory.
 		/// </summary>
-		PostEffect(const Vector &pos, BITMAP *bitmap, size_t bitmapHash, int strength, float angle) : m_Bitmap(bitmap), m_BitmapHash(bitmapHash), m_Angle(angle), m_Strength(std::clamp(strength, 0, 255)), m_Pos(pos) {}
+		PostEffect(const Vector &pos, std::shared_ptr<Texture> texture,
+		           size_t bitmapHash, int strength, float angle) :
+		    m_Texture{texture},
+		    m_BitmapHash(bitmapHash), m_Angle(angle),
+		    m_Strength(std::clamp(strength, 0, 255)), m_Pos(pos) {}
 	};
 
 	/// <summary>
@@ -81,7 +87,7 @@ namespace RTE {
 		/// <param name="targetBitmapOffset">The position of the specified player's draw screen on the backbuffer.</param>
 		/// <param name="screenRelativeEffectsList">List of the specified player's accumulated post effects for this frame.</param>
 		/// <param name="screenRelativeGlowBoxesList">List of the specified player's accumulated glow boxes for this frame.</param>
-		void AdjustEffectsPosToPlayerScreen(int playerScreen, BITMAP *targetBitmap, const Vector &targetBitmapOffset, std::list<PostEffect> &screenRelativeEffectsList, std::list<Box> &screenRelativeGlowBoxesList) const;
+		void AdjustEffectsPosToPlayerScreen(int playerScreen, SDL_Renderer *target, const Vector &targetBitmapOffset, std::list<PostEffect> &screenRelativeEffectsList, std::list<Box> &screenRelativeGlowBoxesList) const;
 #pragma endregion
 
 #pragma region Post Effect Handling
@@ -95,11 +101,11 @@ namespace RTE {
 		/// Registers a post effect to be added at the very last stage of 32bpp rendering by the FrameMan.
 		/// </summary>
 		/// <param name="effectPos">The absolute scene coordinates of the center of the effect.</param>
-		/// <param name="effect">A 32bpp BITMAP screen should be drawn centered on the above scene location in the final frame buffer. Ownership is NOT transferred!</param>
+		/// <param name="effect">A 32bpp BITMAP screen should be drawn centered on the above scene location in the final frame buffer.</param>
 		/// <param name="hash">Hash value of the effect for transmitting over the network.</param>
 		/// <param name="strength">The intensity level this effect should have when blended in post. 0 - 255.</param>
 		/// <param name="angle">The angle this effect should be rotated at.</param>
-		void RegisterPostEffect(const Vector &effectPos, BITMAP *effect, size_t hash, int strength = 255, float angle = 0);
+		void RegisterPostEffect(const Vector &effectPos, std::shared_ptr<Texture> effect, size_t hash, int strength = 255, float angle = 0);
 
 		/// <summary>
 		/// Gets all screen effects that are located within a box in the scene.
@@ -113,12 +119,14 @@ namespace RTE {
 		/// <returns>Whether any active post effects were found in that box.</returns>
 		bool GetPostScreenEffectsWrapped(const Vector &boxPos, int boxWidth, int boxHeight, std::list<PostEffect> &effectsList, int team = -1);
 
+		/* TODO: likely unneccessary
 		/// <summary>
 		/// Gets a temporary bitmap of specified size to rotate post effects in.
 		/// </summary>
 		/// <param name="bitmapSize">Size of bitmap to get.</param>
 		/// <returns>Pointer to the temporary bitmap.</returns>
 		BITMAP * GetTempEffectBitmap(BITMAP *bitmap) const;
+		*/
 #pragma endregion
 
 #pragma region Post Pixel Glow Handling
@@ -190,15 +198,16 @@ namespace RTE {
 		std::array<std::list<PostEffect>, c_MaxScreenCount> m_ScreenRelativeEffects; //!< List of screen relative effects for each player in online multiplayer.
 		std::array<std::mutex, c_MaxScreenCount> ScreenRelativeEffectsMutex; //!< Mutex for the ScreenRelativeEffects list when accessed by multiple threads in online multiplayer.
 
-		BITMAP *m_YellowGlow; //!< Bitmap for the yellow dot glow effect.
-		BITMAP *m_RedGlow; //!< Bitmap for the red dot glow effect.
-		BITMAP *m_BlueGlow; //!< Bitmap for the blue dot glow effect.
+		std::shared_ptr<Texture> m_YellowGlow; //!< Bitmap for the yellow dot glow effect.
+		std::shared_ptr<Texture> m_RedGlow; //!< Bitmap for the red dot glow effect.
+		std::shared_ptr<Texture> m_BlueGlow; //!< Bitmap for the blue dot glow effect.
 
 		size_t m_YellowGlowHash; //!< Hash value for the yellow dot glow effect bitmap.
 		size_t m_RedGlowHash; //!< Hash value for the red dot glow effect bitmap.
 		size_t m_BlueGlowHash; //!< Hash value for the blue dot glow effect bitmap.
 
-		std::unordered_map<int, BITMAP *> m_TempEffectBitmaps; //!< Stores temporary bitmaps to rotate post effects in for quick access.
+		//TODO: remove
+		std::unordered_map<int, std::shared_ptr<Texture>> m_TempEffectBitmaps; //!< Stores temporary bitmaps to rotate post effects in for quick access.
 
 	private:
 
@@ -233,7 +242,7 @@ namespace RTE {
 		/// </summary>
 		/// <param name="which">Which of the dot glow colors to get, see the DotGlowColor enumerator.</param>
 		/// <returns>The requested glow dot BITMAP.</returns>
-		BITMAP * GetDotGlowEffect(DotGlowColor whichColor) const;
+		std::shared_ptr<Texture> GetDotGlowEffect(DotGlowColor whichColor) const;
 
 		/// <summary>
 		/// Gets the hash value of a specific standard dot glow effect for making pixels glow.

@@ -22,6 +22,8 @@
 
 #define g_MovableMan MovableMan::Instance()
 
+struct SDL_Renderer;
+
 namespace RTE
 {
 
@@ -801,7 +803,7 @@ public:
 //                  The absolute position of the target bitmap's upper left corner in the scene.
 // Return value:    None.
 
-    void DrawMatter(BITMAP *pTargetBitmap, Vector& targetPos);
+    void DrawMatter(SDL_Renderer* renderer, Vector& targetPos);
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -812,7 +814,7 @@ public:
 // Arguments:       A pointer to a BITMAP to draw on.
 // Return value:    None.
 
-    void UpdateDrawMOIDs(BITMAP *pTargetBitmap);
+    void UpdateDrawMOIDs(SDL_Renderer* renderer);
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -824,7 +826,7 @@ public:
 //                  The absolute position of the target bitmap's upper left corner in the scene.
 // Return value:    None.
 
-    void Draw(BITMAP *pTargetBitmap, const Vector &targetPos = Vector());
+    void Draw(SDL_Renderer* renderer, const Vector &targetPos = Vector());
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -838,7 +840,7 @@ public:
 //                  get drawn.
 // Return value:    None.
 
-    void DrawHUD(BITMAP *pTargetBitmap, const Vector &targetPos = Vector(), int which = 0, bool playerControlled = false);
+    void DrawHUD(SDL_Renderer* renderer, const Vector &targetPos = Vector(), int which = 0, bool playerControlled = false);
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
