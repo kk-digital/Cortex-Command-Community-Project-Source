@@ -25,10 +25,6 @@ namespace RTE {
 		return render(pRenderer, SDL_Rect{x, y, w, h});
 	}
 
-	int Texture::render(SDL_Renderer *pRenderer, SDL_Point pos) {
-		return render(pRenderer, SDL_Rect{pos.x, pos.y, w, h});
-	}
-
 	int Texture::render(SDL_Renderer *pRenderer, const SDL_Rect &dest) {
 		return SDL_RenderCopy(pRenderer, m_Texture.get(), nullptr, &dest);
 	}
@@ -39,10 +35,19 @@ namespace RTE {
 		                        angle, nullptr, SDL_FLIP_NONE);
 	}
 
+	int Texture::render(SDL_Renderer *pRenderer, int x, int y, double angle) {
+		return render(pRenderer, SDL_Rect{x, y, w, h}, angle);
+	}
+
 	int Texture::render(SDL_Renderer *pRenderer, const SDL_Rect &dest,
 	                    int flip) {
 		return SDL_RenderCopyEx(pRenderer, m_Texture.get(), nullptr, &dest, 0,
 		                        nullptr, static_cast<SDL_RendererFlip>(flip));
+	}
+
+	int Texture::render(SDL_Renderer *pRenderer, int x, int y, double angle,
+	                    int flip) {
+		return render(pRenderer, SDL_Rect{x, y, w, h}, angle, flip);
 	}
 
 	int Texture::render(SDL_Renderer *pRenderer, const SDL_Rect &dest,
@@ -73,7 +78,12 @@ namespace RTE {
 		m_Pitch = 0;
 	}
 
-	uint32_t Texture::getPixel(int x, int y) { return m_PixelsRO[y * w + x]; }
+	uint32_t Texture::getPixel(int x, int y) {
+		if (x < w && y < h)
+			return m_PixelsRO[y * w + x];
+
+		return 0x00FFFFFF;
+	}
 
 	uint32_t Texture::getPixel(SDL_Point pos) { return getPixel(pos.x, pos.y); }
 

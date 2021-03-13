@@ -43,7 +43,6 @@ namespace RTE {
 
 		~Texture() { Reset(); }
 
-
 		/// <summary>
 		/// Render the texture to the screen.
 		/// </summary>
@@ -61,21 +60,6 @@ namespace RTE {
 		/// SDL_GetError
 		/// </returns>
 		int render(SDL_Renderer *pRenderer, int x, int y);
-
-		/// <summary>
-		/// Render the texture to the screen.
-		/// </summary>
-		/// <param name="pRenderer">
-		/// Render context to be rendered to.
-		/// </param>
-		/// <param name="pos">
-		/// SDL_Point as position to draw the texture to.
-		/// </param>
-		/// <returns>
-		/// 0 or a negative number which represents an error that can be read by
-		/// SDL_GetError
-		/// </returns>
-		int render(SDL_Renderer *pRenderer, SDL_Point pos);
 
 		/// <summary>
 		/// Render the texture to the screen.
@@ -133,6 +117,27 @@ namespace RTE {
 		int render(SDL_Renderer *pRenderer, const SDL_Rect &dest, double angle);
 
 		/// <summary>
+		/// Render the texture to the screen rotated by angle around the center.
+		/// </summary>
+		/// <param name="pRenderer">
+		/// Render context to be rendered to.
+		/// </param>
+		/// <param name="x">
+		/// x position to draw the texture to.
+		/// </param>
+		/// <param name="y">
+		/// y position to draw the texture to.
+		/// </param>
+		/// <param name="angle">
+		/// The angle the texture should be drawn at.
+		/// </param>
+		/// <returns>
+		/// 0 or a negative number which represents an error that can be read by
+		/// SDL_GetError
+		/// </returns>
+		int render(SDL_Renderer *pRenderer, int x, int y, double angle);
+
+		/// <summary>
 		/// Render the texture to the screen and flip horizontally or vertically
 		/// according to flip.
 		/// </summary>
@@ -153,6 +158,58 @@ namespace RTE {
 		/// SDL_GetError
 		/// </returns>
 		int render(SDL_Renderer *pRenderer, const SDL_Rect &dest, int flip);
+
+		/// <summary>
+		/// Render the texture to the screen and flip horizontally or vertically
+		/// according to flip.
+		/// </summary>
+		/// <param name="pRenderer">
+		/// Render context to be rendered to.
+		/// </param>
+		/// <param name="x">
+		/// x position to draw the texture to.
+		/// </param>
+		/// <param name="y">
+		/// y position to draw the texture to.
+		/// </param>
+		/// <param name="flip">
+		/// One or more of <a
+		/// href="https://wiki.libsdl.org/SDL_RendererFlip">SDL_RenderFlip</a>,
+		/// multiple values may be bitwise or'd together.
+		/// </param>
+		/// <returns>
+		/// 0 or a negative number which represents an error that can be read by
+		/// SDL_GetError
+		/// </returns>
+		int render(SDL_Renderer *pRenderer, int x, int y, int flip);
+
+		/// <summary>
+		/// Render the texture to the screen rotated by angle around the center
+		/// and flipped horizontally or vertically according to flip.
+		/// </summary>
+		/// <param name="pRenderer">
+		/// Render context to be rendered to.
+		/// </param>
+		/// <param name="x">
+		/// x position to draw the texture to.
+		/// </param>
+		/// <param name="y">
+		/// y position to draw the texture to.
+		/// </param>
+		/// <param name="angle">
+		/// The angle the texture should be drawn at.
+		/// </param>
+		/// <param name="flip">
+		/// One or more of <a href="https://wiki.libsdl.org/SDL_RendererFlip">
+		/// SDL_RenderFlip</a>,
+		/// multiple values may be bitwise or'd together.
+		/// </param>
+		/// <returns>
+		/// 0 or a negative number which represents an error that can be read by
+		/// SDL_GetError
+		/// </returns>
+		int render(SDL_Renderer *pRenderer, int x, int y, double angle,
+		           int flip);
 
 		/// <summary>
 		/// Render the texture to the screen rotated by angle around the center
@@ -179,7 +236,6 @@ namespace RTE {
 		/// </returns>
 		int render(SDL_Renderer *pRenderer, const SDL_Rect &dest, double angle,
 		           int flip);
-
 		/// <summary>
 		/// Render the texture to the screen rotated by angle around center
 		/// and flipped horizontally or vertically according to flip.
@@ -234,7 +290,8 @@ namespace RTE {
 		void unlock();
 
 		/// <summary>
-		/// Get the color of the pixel at (x,y)
+		/// Get the color of the pixel at (x,y). If (x,y) is outside the texture
+		/// this returns 0xFFFFFF00, i.e. fully transparent white.
 		/// </summary>
 		/// <param name="x">
 		/// x position of the pixel to get.
@@ -248,7 +305,7 @@ namespace RTE {
 		uint32_t getPixel(int x, int y);
 
 		/// <summary>
-		/// Get the color of the pixel at (pos.x,pos.y)
+		/// Get the color of the pixel at (pos.x,pos.y). If pos is outside the Texture this returns 0xFFFFFF00, i.e. fully transparent white.
 		/// </summary>
 		/// <param name="pos">
 		/// Position of the pixel to get.
