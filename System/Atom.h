@@ -5,6 +5,8 @@
 #include "Material.h"
 #include "SceneMan.h"
 
+#include "System/SDLTexture.h"
+
 namespace RTE {
 
 	class SLTerrain;
@@ -253,7 +255,7 @@ namespace RTE {
 		/// <param name="sprite">The bitmap to check against. Ownership IS NOT transferred!</param>
 		/// <param name="spriteCenter">Where on the bitmap the center of the object is. This atom's offset will be applied automatically before checking for its normal.</param>
 		/// <returns>Whether normal was successfully derived from the bitmap. If not, then a provisional one is derived from the offset.</returns>
-		bool CalculateNormal(BITMAP *sprite, Vector spriteCenter);
+		bool CalculateNormal(std::shared_ptr<Texture> sprite, Vector spriteCenter);
 #pragma endregion
 
 #pragma region Collision

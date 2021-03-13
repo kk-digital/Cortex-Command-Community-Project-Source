@@ -3,6 +3,8 @@
 
 #include "Vector.h"
 
+#include "SDLTexture.h"
+
 namespace RTE {
 
 #pragma region Graphical Primitive
@@ -46,7 +48,7 @@ namespace RTE {
 		/// </summary>
 		/// <param name="drawScreen">Bitmap to draw on.</param>
 		/// <param name="targetPos">Position of graphical primitive.</param>
-		virtual void Draw(BITMAP *drawScreen, const Vector &targetPos) = 0;
+		virtual void Draw(SDL_Renderer* renderer, const Vector &targetPos) = 0;
 	};
 #pragma endregion
 
@@ -77,7 +79,7 @@ namespace RTE {
 		/// </summary>
 		/// <param name="drawScreen">Bitmap to draw on.</param>
 		/// <param name="targetPos">Position of graphical primitive.</param>
-		void Draw(BITMAP *drawScreen, const Vector &targetPos) override;
+		void Draw(SDL_Renderer* renderer, const Vector &targetPos) override;
 	};
 #pragma endregion
 
@@ -116,7 +118,7 @@ namespace RTE {
 		/// </summary>
 		/// <param name="drawScreen">Bitmap to draw on.</param>
 		/// <param name="targetPos">Position of graphical primitive.</param>
-		void Draw(BITMAP *drawScreen, const Vector &targetPos) override;
+		void Draw(SDL_Renderer* renderer, const Vector &targetPos) override;
 	};
 #pragma endregion
 
@@ -154,7 +156,7 @@ namespace RTE {
 		/// </summary>
 		/// <param name="drawScreen">Bitmap to draw on.</param>
 		/// <param name="targetPos">Position of graphical primitive.</param>
-		void Draw(BITMAP *drawScreen, const Vector &targetPos) override;
+		void Draw(SDL_Renderer* renderer, const Vector &targetPos) override;
 	};
 #pragma endregion
 
@@ -185,7 +187,7 @@ namespace RTE {
 		/// </summary>
 		/// <param name="drawScreen">Bitmap to draw on.</param>
 		/// <param name="targetPos">Position of graphical primitive.</param>
-		void Draw(BITMAP *drawScreen, const Vector &targetPos) override;
+		void Draw(SDL_Renderer* renderer, const Vector &targetPos) override;
 	};
 #pragma endregion
 
@@ -216,7 +218,7 @@ namespace RTE {
 		/// </summary>
 		/// <param name="drawScreen">Bitmap to draw on.</param>
 		/// <param name="targetPos">Position of graphical primitive.</param>
-		void Draw(BITMAP *drawScreen, const Vector &targetPos) override;
+		void Draw(SDL_Renderer* renderer, const Vector &targetPos) override;
 	};
 #pragma endregion
 
@@ -252,7 +254,7 @@ namespace RTE {
 		/// </summary>
 		/// <param name="drawScreen">Bitmap to draw on.</param>
 		/// <param name="targetPos">Position of graphical primitive.</param>
-		void Draw(BITMAP *drawScreen, const Vector &targetPos) override;
+		void Draw(SDL_Renderer* renderer, const Vector &targetPos) override;
 	};
 #pragma endregion
 
@@ -288,7 +290,7 @@ namespace RTE {
 		/// </summary>
 		/// <param name="drawScreen">Bitmap to draw on.</param>
 		/// <param name="targetPos">Position of graphical primitive.</param>
-		void Draw(BITMAP *drawScreen, const Vector &targetPos) override;
+		void Draw(SDL_Renderer* renderer, const Vector &targetPos) override;
 	};
 #pragma endregion
 
@@ -322,7 +324,7 @@ namespace RTE {
 		/// </summary>
 		/// <param name="drawScreen">Bitmap to draw on.</param>
 		/// <param name="targetPos">Position of graphical primitive.</param>
-		void Draw(BITMAP *drawScreen, const Vector &targetPos) override;
+		void Draw(SDL_Renderer* renderer, const Vector &targetPos) override;
 	};
 #pragma endregion
 
@@ -356,7 +358,7 @@ namespace RTE {
 		/// </summary>
 		/// <param name="drawScreen">Bitmap to draw on.</param>
 		/// <param name="targetPos">Position of graphical primitive.</param>
-		void Draw(BITMAP *drawScreen, const Vector &targetPos) override;
+		void Draw(SDL_Renderer* renderer, const Vector &targetPos) override;
 	};
 #pragma endregion
 
@@ -392,7 +394,7 @@ namespace RTE {
 		/// </summary>
 		/// <param name="drawScreen">Bitmap to draw on.</param>
 		/// <param name="targetPos">Position of graphical primitive.</param>
-		void Draw(BITMAP *drawScreen, const Vector &targetPos) override;
+		void Draw(SDL_Renderer* renderer, const Vector &targetPos) override;
 	};
 #pragma endregion
 
@@ -427,7 +429,7 @@ namespace RTE {
 		/// </summary>
 		/// <param name="drawScreen">Bitmap to draw on.</param>
 		/// <param name="targetPos">Position of graphical primitive.</param>
-		void Draw(BITMAP *drawScreen, const Vector &targetPos) override;
+		void Draw(SDL_Renderer* renderer, const Vector &targetPos) override;
 	};
 #pragma endregion
 
@@ -463,7 +465,7 @@ namespace RTE {
 		/// </summary>
 		/// <param name="drawScreen">Bitmap to draw on.</param>
 		/// <param name="targetPos">Position of graphical primitive.</param>
-		void Draw(BITMAP *drawScreen, const Vector &targetPos) override;
+		void Draw(SDL_Renderer* renderer, const Vector &targetPos) override;
 	};
 #pragma endregion
 
@@ -499,7 +501,7 @@ namespace RTE {
 		/// </summary>
 		/// <param name="drawScreen">Bitmap to draw on.</param>
 		/// <param name="targetPos">Position of graphical primitive.</param>
-		void Draw(BITMAP *drawScreen, const Vector &targetPos) override;
+		void Draw(SDL_Renderer* renderer, const Vector &targetPos) override;
 	};
 #pragma endregion
 
@@ -535,11 +537,12 @@ namespace RTE {
 		/// </summary>
 		/// <param name="drawScreen">Bitmap to draw on.</param>
 		/// <param name="targetPos">Position of graphical primitive.</param>
-		void Draw(BITMAP *drawScreen, const Vector &targetPos) override;
+		void Draw(SDL_Renderer* renderer, const Vector &targetPos) override;
 	};
 #pragma endregion
 
 #pragma region Bitmap Primitive
+	//TODO Ohnooo
 	/// <summary>
 	/// Class used to schedule drawing of bitmap primitives created from Lua.
 	/// </summary>
@@ -547,7 +550,7 @@ namespace RTE {
 
 	public:
 
-		BITMAP *m_Bitmap; //!< Bitmap to draw.
+		std::shared_ptr<Texture> m_Bitmap; //!< Bitmap to draw.
 		float m_RotAngle; //!< Angle to rotate bitmap in radians.
 		bool m_HFlipped; //!< Whether the Bitmap to draw should be horizontally flipped.
 		bool m_VFlipped; //!< Whether the Bitmap to draw should be vertically flipped.
@@ -561,7 +564,7 @@ namespace RTE {
 		/// <param name="rotAngle">Angle to rotate bitmap in radians.</param>
 		/// <param name="hFlipped">Whether the bitmap to draw should be horizontally flipped.</param>
 		/// <param name="vFlipped">Whether the bitmap to draw should be vertically flipped.</param>
-		BitmapPrimitive(int player, const Vector &centerPos, BITMAP *bitmap, float rotAngle, bool hFlipped, bool vFlipped) :
+		BitmapPrimitive(int player, const Vector &centerPos, std::shared_ptr<Texture> bitmap, float rotAngle, bool hFlipped, bool vFlipped) :
 			m_Bitmap(bitmap), m_RotAngle(rotAngle), m_HFlipped(hFlipped), m_VFlipped(vFlipped) {
 
 			m_StartPos = centerPos;
@@ -573,7 +576,7 @@ namespace RTE {
 		/// </summary>
 		/// <param name="drawScreen">Bitmap to draw on.</param>
 		/// <param name="targetPos">Position of graphical primitive.</param>
-		void Draw(BITMAP *drawScreen, const Vector &targetPos) override;
+		void Draw(SDL_Renderer* renderer, const Vector &targetPos) override;
 	};
 #pragma endregion
 }
