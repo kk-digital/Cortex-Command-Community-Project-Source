@@ -18,7 +18,9 @@
 #include "Gib.h"
 #include "PostProcessMan.h"
 #include "SoundContainer.h"
+#include "SDLTexture.h"
 
+struct SDL_Renderer;
 namespace RTE
 {
 
@@ -602,7 +604,7 @@ ClassInfoGetters
 //                  indicator arrows or hovering HUD text and so on.
 // Return value:    None.
 
-    void Draw(BITMAP *pTargetBitmap, const Vector &targetPos = Vector(), DrawMode mode = g_DrawColor, bool onlyPhysical = false) const override;
+    void Draw(SDL_Renderer* renderer, const Vector &targetPos = Vector(), DrawMode mode = g_DrawColor, bool onlyPhysical = false) const override;
 
 
     /// <summary>
@@ -949,27 +951,29 @@ protected:
     bool m_NoSetDamageMultiplier; //!< Whether or not the damage multiplier for this MOSRotating was set.
 
     // Intermediary drawing bitmap used to flip rotating bitmaps. Owned!
-    BITMAP *m_pFlipBitmap;
-    BITMAP *m_pFlipBitmapS;
+	std::shared_ptr<Texture> m_pFlipBitmap;
+    std::shared_ptr<Texture> m_pFlipBitmapS;
+
+	//TODO: AH FUCK
     // Intermediary drawing bitmap used to draw sihouettes and other effects. Not owned; points to the shared static bitmaps
-    BITMAP *m_pTempBitmap;
+    std::shared_ptr<Texture> m_pTempBitmap;
     // Temp drawing bitmaps shared between all MOSRotatings
-    static BITMAP *m_spTempBitmap16;
-    static BITMAP *m_spTempBitmap32;
-    static BITMAP *m_spTempBitmap64;
-    static BITMAP *m_spTempBitmap128;
-    static BITMAP *m_spTempBitmap256;
-    static BITMAP *m_spTempBitmap512;
+    static std::shared_ptr<Texture> m_spTempBitmap16;
+    static std::shared_ptr<Texture> m_spTempBitmap32;
+    static std::shared_ptr<Texture> m_spTempBitmap64;
+    static std::shared_ptr<Texture> m_spTempBitmap128;
+    static std::shared_ptr<Texture> m_spTempBitmap256;
+    static std::shared_ptr<Texture> m_spTempBitmap512;
 
     // Intermediary drawing bitmap used to draw MO silhouettes. Not owned; points to the shared static bitmaps
-    BITMAP *m_pTempBitmapS;
+	std::shared_ptr<Texture> m_pTempBitmapS;
     // Temp drawing bitmaps shared between all MOSRotatings
-    static BITMAP *m_spTempBitmapS16;
-    static BITMAP *m_spTempBitmapS32;
-    static BITMAP *m_spTempBitmapS64;
-    static BITMAP *m_spTempBitmapS128;
-    static BITMAP *m_spTempBitmapS256;
-    static BITMAP *m_spTempBitmapS512;
+    static std::shared_ptr<Texture> m_spTempBitmapS16;
+    static std::shared_ptr<Texture> m_spTempBitmapS32;
+    static std::shared_ptr<Texture> m_spTempBitmapS64;
+    static std::shared_ptr<Texture> m_spTempBitmapS128;
+    static std::shared_ptr<Texture> m_spTempBitmapS256;
+    static std::shared_ptr<Texture> m_spTempBitmapS512;
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Private member variable and method declarations
