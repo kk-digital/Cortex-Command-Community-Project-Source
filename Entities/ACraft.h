@@ -17,7 +17,7 @@
 #include "Actor.h"
 #include "LimbPath.h"
 
-struct BITMAP;
+struct SDL_Renderer;
 
 namespace RTE
 {

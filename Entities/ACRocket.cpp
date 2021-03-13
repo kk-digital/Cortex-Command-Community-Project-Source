@@ -21,7 +21,7 @@
 #include "AEmitter.h"
 
 #include "GUI/GUI.h"
-#include "GUI/AllegroBitmap.h"
+#include "GUI/SDLGUITexture.h"
 
 namespace RTE {
 
@@ -1003,12 +1003,12 @@ void ACRocket::ResetEmissionTimers()
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #ifdef DEBUG_BUILD
-void ACRocket::Draw(BITMAP *pTargetBitmap, const Vector &targetPos, DrawMode mode, bool onlyPhysical) const {
-    ACraft::Draw(pTargetBitmap, targetPos, mode, onlyPhysical);
+void ACRocket::Draw(SDL_Renderer* renderer, const Vector &targetPos, DrawMode mode, bool onlyPhysical) const {
+    ACraft::Draw(renderer, targetPos, mode, onlyPhysical);
 
     if (mode == g_DrawColor) {
-        m_pRFootGroup->Draw(pTargetBitmap, targetPos, true, 13);
-        m_pLFootGroup->Draw(pTargetBitmap, targetPos, true, 13);
+        m_pRFootGroup->Draw(renderer, targetPos, true, 13);
+        m_pLFootGroup->Draw(renderer, targetPos, true, 13);
     }
 }
 #endif

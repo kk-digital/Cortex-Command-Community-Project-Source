@@ -18,7 +18,7 @@
 #include "LimbPath.h"
 #include "Leg.h"
 
-struct BITMAP;
+struct SDL_Renderer;
 
 namespace RTE
 {
@@ -445,7 +445,7 @@ int FirearmActivationDelay() const;
 //                  indicator arrows or hovering HUD text and so on.
 // Return value:    None.
 
-	void Draw(BITMAP *pTargetBitmap, const Vector &targetPos = Vector(), DrawMode mode = g_DrawColor, bool onlyPhysical = false) const override;
+	void Draw(SDL_Renderer* renderer, const Vector &targetPos = Vector(), DrawMode mode = g_DrawColor, bool onlyPhysical = false) const override;
 #endif
 
 
@@ -460,7 +460,7 @@ int FirearmActivationDelay() const;
 //                  get drawn etc.
 // Return value:    None.
 
-	void DrawHUD(BITMAP *pTargetBitmap, const Vector &targetPos = Vector(), int whichScreen = 0, bool playerControlled = false) override;
+	void DrawHUD(SDL_Renderer* renderer, const Vector &targetPos = Vector(), int whichScreen = 0, bool playerControlled = false) override;
 
 
 	/// <summary>

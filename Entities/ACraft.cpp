@@ -25,7 +25,7 @@
 #include "SettingsMan.h"
 
 #include "GUI/GUI.h"
-#include "GUI/AllegroBitmap.h"
+#include "GUI/SDLGUITexture.h"
 
 namespace RTE {
 
@@ -980,7 +980,7 @@ void ACraft::Update()
 // Description:     Draws this Actor's current graphical HUD overlay representation to a
 //                  BITMAP of choice.
 
-void ACraft::DrawHUD(BITMAP *pTargetBitmap, const Vector &targetPos, int whichScreen, bool playerControlled)
+void ACraft::DrawHUD(SDL_Renderer* renderer, const Vector &targetPos, int whichScreen, bool playerControlled)
 {
     if (!m_HUDVisible)
         return;
@@ -997,7 +997,7 @@ void ACraft::DrawHUD(BITMAP *pTargetBitmap, const Vector &targetPos, int whichSc
             return;
     }
 
-    Actor::DrawHUD(pTargetBitmap, targetPos, whichScreen);
+    Actor::DrawHUD(renderer, targetPos, whichScreen);
 
     GUIFont *pSymbolFont = g_FrameMan.GetLargeFont();
     GUIFont *pSmallFont = g_FrameMan.GetSmallFont();
@@ -1036,9 +1036,9 @@ void ACraft::DrawHUD(BITMAP *pTargetBitmap, const Vector &targetPos, int whichSc
                 exitRadius = RotateOffset(exit->GetVelocity().GetPerpendicular().SetMagnitude(exit->GetRadius()));
                 exitCorner = m_Pos - targetPos + RotateOffset(exit->GetOffset()) + exitRadius;
                 arrowVec = RotateOffset(exit->GetVelocity().SetMagnitude(exit->GetRange()));
-                g_FrameMan.DrawLine(pTargetBitmap, exitCorner, exitCorner + arrowVec, 120, 120, EXITLINESPACING, m_ExitLinePhase);
+                g_FrameMan.DrawLine(exitCorner, exitCorner + arrowVec, 120, 120, EXITLINESPACING, m_ExitLinePhase);
                 exitCorner -= exitRadius * 2;
-                g_FrameMan.DrawLine(pTargetBitmap, exitCorner, exitCorner + arrowVec, 120, 120, EXITLINESPACING, m_ExitLinePhase);
+                g_FrameMan.DrawLine(exitCorner, exitCorner + arrowVec, 120, 120, EXITLINESPACING, m_ExitLinePhase);
             }
         }
     }

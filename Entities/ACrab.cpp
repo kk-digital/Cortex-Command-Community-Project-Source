@@ -25,7 +25,8 @@
 #include "Scene.h"
 
 #include "GUI/GUI.h"
-#include "GUI/AllegroBitmap.h"
+#include "GUI/SDLGUITexture.h"
+#include "SDLHelper.h"
 
 namespace RTE {
 
@@ -2336,7 +2337,7 @@ void ACrab::Update()
         if (m_AimState != AIMUP)
             m_AimTmr.SetElapsedSimTimeMS(150);
         m_AimState = AIMUP;
-        m_AimAngle += m_Controller.IsState(AIM_SHARP) ? MIN(m_AimTmr.GetElapsedSimTimeMS() * 0.00005, 0.05) : MIN(m_AimTmr.GetElapsedSimTimeMS() * 0.00015, 0.1);
+        m_AimAngle += m_Controller.IsState(AIM_SHARP) ? std::min(m_AimTmr.GetElapsedSimTimeMS() * 0.00005, 0.05) : std::min(m_AimTmr.GetElapsedSimTimeMS() * 0.00015, 0.1);
     }
     else if (m_Controller.IsState(AIM_DOWN))
     {
@@ -2344,7 +2345,7 @@ void ACrab::Update()
         if (m_AimState != AIMDOWN)
             m_AimTmr.SetElapsedSimTimeMS(150);
         m_AimState = AIMDOWN;
-        m_AimAngle -= m_Controller.IsState(AIM_SHARP) ? MIN(m_AimTmr.GetElapsedSimTimeMS() * 0.00005, 0.05) : MIN(m_AimTmr.GetElapsedSimTimeMS() * 0.00015, 0.1);
+        m_AimAngle -= m_Controller.IsState(AIM_SHARP) ? std::min(m_AimTmr.GetElapsedSimTimeMS() * 0.00005, 0.05) : std::min(m_AimTmr.GetElapsedSimTimeMS() * 0.00015, 0.1);
     }
     // Analog aim
     else if (m_Controller.GetAnalogAim().GetMagnitude() > 0.1)
@@ -2865,14 +2866,14 @@ void ACrab::Update()
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #ifdef DEBUG_BUILD
-void ACrab::Draw(BITMAP *pTargetBitmap, const Vector &targetPos, DrawMode mode, bool onlyPhysical) const {
-    Actor::Draw(pTargetBitmap, targetPos, mode, onlyPhysical);
+void ACrab::Draw(SDL_Renderer* renderer, const Vector &targetPos, DrawMode mode, bool onlyPhysical) const {
+    Actor::Draw(renderer, targetPos, mode, onlyPhysical);
 
     if (mode == g_DrawColor && !onlyPhysical) {
-        m_pLFGFootGroup->Draw(pTargetBitmap, targetPos, true, 13);
-        m_pLBGFootGroup->Draw(pTargetBitmap, targetPos, true, 13);
-        m_pRFGFootGroup->Draw(pTargetBitmap, targetPos, true, 13);
-        m_pRBGFootGroup->Draw(pTargetBitmap, targetPos, true, 13);
+        m_pLFGFootGroup->Draw(renderer, targetPos, true, 13);
+        m_pLBGFootGroup->Draw(renderer, targetPos, true, 13);
+        m_pRFGFootGroup->Draw(renderer, targetPos, true, 13);
+        m_pRBGFootGroup->Draw(renderer, targetPos, true, 13);
     }
 }
 #endif
@@ -2884,7 +2885,7 @@ void ACrab::Draw(BITMAP *pTargetBitmap, const Vector &targetPos, DrawMode mode, 
 // Description:     Draws this Actor's current graphical HUD overlay representation to a
 //                  BITMAP of choice.
 
-void ACrab::DrawHUD(BITMAP *pTargetBitmap, const Vector &targetPos, int whichScreen, bool playerControlled)
+void ACrab::DrawHUD(SDL_Renderer* renderer, const Vector &targetPos, int whichScreen, bool playerControlled)
 {
     if (!m_HUDVisible)
         return;
@@ -2901,7 +2902,7 @@ void ACrab::DrawHUD(BITMAP *pTargetBitmap, const Vector &targetPos, int whichScr
             return;
     }
 
-    Actor::DrawHUD(pTargetBitmap, targetPos, whichScreen);
+    Actor::DrawHUD(renderer, targetPos, whichScreen);
 /*
 // TODO: REMOVE< THIS IS TEMP
     // Draw the AI paths
@@ -2930,7 +2931,7 @@ void ACrab::DrawHUD(BITMAP *pTargetBitmap, const Vector &targetPos, int whichScr
 
     // Device aiming reticule
     if (m_Controller.IsState(AIM_SHARP) && m_pTurret && m_pTurret->IsAttached() && m_pTurret->HasMountedDevice())
-        m_pTurret->GetMountedDevice()->DrawHUD(pTargetBitmap, targetPos, whichScreen, m_Controller.IsPlayerControlled());
+        m_pTurret->GetMountedDevice()->DrawHUD(renderer, targetPos, whichScreen, m_Controller.IsPlayerControlled());
 
     //////////////////////////////////////
     // Draw stat info HUD
@@ -2939,10 +2940,13 @@ void ACrab::DrawHUD(BITMAP *pTargetBitmap, const Vector &targetPos, int whichScr
     GUIFont *pSymbolFont = g_FrameMan.GetLargeFont();
     GUIFont *pSmallFont = g_FrameMan.GetSmallFont();
 
+	SDL_Rect viewport;
+	SDL_RenderGetViewport(renderer, &viewport);
+
     // Only show extra HUD if this guy is controlled by the same player that this screen belongs to
     if (m_Controller.IsPlayerControlled() && g_ActivityMan.GetActivity()->ScreenOfPlayer(m_Controller.GetPlayer()) == whichScreen && pSmallFont && pSymbolFont)
     {
-        AllegroBitmap allegroBitmap(pTargetBitmap);
+        SDLGUITexture targetTexture;
 
         Vector drawPos = m_Pos - targetPos;
 
@@ -2951,20 +2955,20 @@ void ACrab::DrawHUD(BITMAP *pTargetBitmap, const Vector &targetPos, int whichScr
         {
             // Spans vertical scene seam
             int sceneWidth = g_SceneMan.GetSceneWidth();
-            if (g_SceneMan.SceneWrapsX() && pTargetBitmap->w < sceneWidth)
+            if (g_SceneMan.SceneWrapsX() && viewport.w < sceneWidth)
             {
-                if ((targetPos.m_X < 0) && (m_Pos.m_X > (sceneWidth - pTargetBitmap->w)))
+                if ((targetPos.m_X < 0) && (m_Pos.m_X > (sceneWidth - viewport.w)))
                     drawPos.m_X -= sceneWidth;
-                else if (((targetPos.m_X + pTargetBitmap->w) > sceneWidth) && (m_Pos.m_X < pTargetBitmap->w))
+                else if (((targetPos.m_X + viewport.w) > sceneWidth) && (m_Pos.m_X < viewport.w))
                     drawPos.m_X += sceneWidth;
             }
             // Spans horizontal scene seam
             int sceneHeight = g_SceneMan.GetSceneHeight();
-            if (g_SceneMan.SceneWrapsY() && pTargetBitmap->h < sceneHeight)
+            if (g_SceneMan.SceneWrapsY() && viewport.h < sceneHeight)
             {
-                if ((targetPos.m_Y < 0) && (m_Pos.m_Y > (sceneHeight - pTargetBitmap->h)))
+                if ((targetPos.m_Y < 0) && (m_Pos.m_Y > (sceneHeight - viewport.h)))
                     drawPos.m_Y -= sceneHeight;
-                else if (((targetPos.m_Y + pTargetBitmap->h) > sceneHeight) && (m_Pos.m_Y < pTargetBitmap->h))
+                else if (((targetPos.m_Y + viewport.h) > sceneHeight) && (m_Pos.m_Y < viewport.h))
                     drawPos.m_Y += sceneHeight;
             }
         }
@@ -2978,15 +2982,27 @@ void ACrab::DrawHUD(BITMAP *pTargetBitmap, const Vector &targetPos, int whichScr
             // Do the blinky blink
             if ((str[0] == -29 || str[0] == -30) && m_IconBlinkTimer.AlternateSim(250))
                 str[0] = -28;
-            pSymbolFont->DrawAligned(&allegroBitmap, drawPos.m_X - 11, drawPos.m_Y + m_HUDStack, str, GUIFont::Centre);
+            pSymbolFont->DrawAligned(&targetTexture, drawPos.m_X - 11, drawPos.m_Y + m_HUDStack, str, GUIFont::Centre);
 
             float jetTimeRatio = m_JetTimeLeft / m_JetTimeTotal;
 // TODO: Don't hardcode this shit
-            char gaugeColor = jetTimeRatio > 0.6 ? 149 : (jetTimeRatio > 0.3 ? 77 : 13);
-            rectfill(pTargetBitmap, drawPos.m_X, drawPos.m_Y + m_HUDStack + 6, drawPos.m_X + (16 * jetTimeRatio), drawPos.m_Y + m_HUDStack + 7, gaugeColor);
-//                    rect(pTargetBitmap, drawPos.m_X, drawPos.m_Y + m_HUDStack - 2, drawPos.m_X + 24, drawPos.m_Y + m_HUDStack - 4, 238);
-//                    std::snprintf(str, sizeof(str), "%.0f Kg", mass);
-//                    pSmallFont->DrawAligned(&allegroBitmap, drawPos.m_X - 0, drawPos.m_Y + m_HUDStack + 3, str, GUIFont::Left);
+			uint32_t gaugeColor =
+				jetTimeRatio > 0.6
+				    ? 0X74B33AFF
+				    : (jetTimeRatio > 0.3 ? 0xF6CD33FF : 0xEA1507);
+			SDL_FRect jetGaugeRect{drawPos.m_X, drawPos.m_Y + m_HUDStack + 6,
+				                   drawPos.m_Y + (16 * jetTimeRatio),
+				                   drawPos.m_Y + m_HUDStack + 7};
+			SDL_SetRenderDrawColor(renderer, gaugeColor&0xFF000000, gaugeColor&0x00FF0000, gaugeColor&0x0000FF00, 0xFF);
+			SDL_RenderFillRectF(renderer, &jetGaugeRect);
+			SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+			//                    rect(pTargetBitmap, drawPos.m_X, drawPos.m_Y +
+			//                    m_HUDStack - 2, drawPos.m_X + 24, drawPos.m_Y
+			//                    + m_HUDStack - 4, 238); std::snprintf(str,
+			//                    sizeof(str), "%.0f Kg", mass);
+			//                    pSmallFont->DrawAligned(&allegroBitmap,
+			//                    drawPos.m_X - 0, drawPos.m_Y + m_HUDStack + 3,
+			//                    str, GUIFont::Left);
 
             m_HUDStack += -10;
         }
@@ -2999,14 +3015,14 @@ void ACrab::DrawHUD(BITMAP *pTargetBitmap, const Vector &targetPos, int whichScr
             if (pHeldFirearm)
             {
                 str[0] = -56; str[1] = 0;
-                pSymbolFont->DrawAligned(&allegroBitmap, drawPos.m_X - 10, drawPos.m_Y + m_HUDStack, str, GUIFont::Left);
+                pSymbolFont->DrawAligned(&targetTexture, drawPos.m_X - 10, drawPos.m_Y + m_HUDStack, str, GUIFont::Left);
                 if (pHeldFirearm->IsReloading())
                     std::snprintf(str, sizeof(str), "%s", "Reloading...");
                 else if (pHeldFirearm->GetRoundInMagCount() >= 0)
                     std::snprintf(str, sizeof(str), "%i", pHeldFirearm->GetRoundInMagCount());
                 else
                     std::snprintf(str, sizeof(str), "%s", "INF");
-                pSmallFont->DrawAligned(&allegroBitmap, drawPos.m_X - 0, drawPos.m_Y + m_HUDStack + 3, str, GUIFont::Left);
+                pSmallFont->DrawAligned(&targetTexture, drawPos.m_X - 0, drawPos.m_Y + m_HUDStack + 3, str, GUIFont::Left);
 
                 m_HUDStack += -10;
             }
@@ -3014,7 +3030,7 @@ void ACrab::DrawHUD(BITMAP *pTargetBitmap, const Vector &targetPos, int whichScr
         else
         {
             std::snprintf(str, sizeof(str), "NO TURRET!");
-            pSmallFont->DrawAligned(&allegroBitmap, drawPos.m_X + 2, drawPos.m_Y + m_HUDStack + 3, str, GUIFont::Centre);
+            pSmallFont->DrawAligned(&targetTexture, drawPos.m_X + 2, drawPos.m_Y + m_HUDStack + 3, str, GUIFont::Centre);
             m_HUDStack += -9;
         }
 
