@@ -20,9 +20,7 @@
 #include "Controller.h"
 #include "Icon.h"
 
-struct SDL_Renderer;
-struct SDL_Texture;
-
+#include "System/SDLTexture.h"
 
 namespace RTE
 {
@@ -609,7 +607,7 @@ protected:
     };
 
     // The cursor
-    static BITMAP *s_pCursor;
+    static std::shared_ptr<Texture> s_pCursor;
 //    static BITMAP *s_pCursorGlow;
 
     // Controller which controls this menu. Not owned
@@ -672,7 +670,7 @@ protected:
     // The thickness of the pie menu circle, in pixels
     int m_Thickness;
     // The intermediary bitmap used to first draw the menu background, which will be blitted to the final draw target surface
-    BITMAP *m_pBGBitmap;
+	std::shared_ptr<Texture> m_pBGBitmap;
     // Whether we need to redraw the BG bitmap
     bool m_RedrawBG;
     // Position of the cursor on the circle, in radians, counterclockwise from straight out to rhe right

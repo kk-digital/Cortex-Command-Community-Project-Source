@@ -19,8 +19,7 @@
 #include "Controller.h"
 #include "Scene.h"
 
-struct SDL_Renderer;
-struct SDL_Texture;
+#include "System/SDLTexture.h"
 
 namespace RTE
 {
@@ -282,7 +281,7 @@ protected:
     // Not owned by this.
     Scene::Area *m_pPickedArea;
     // The cursor image shared by all pickers
-    static BITMAP *s_pCursor;
+    static std::shared_ptr<Texture> s_pCursor;
     // Screen position of the cursor
     Vector m_CursorPos;
 

@@ -17,9 +17,7 @@
 #include "ActivityMan.h"
 #include "Timer.h"
 
-struct SDL_Renderer;
-struct SDL_Texture;
-
+#include "System/SDLTexture.h"
 
 namespace RTE
 {
@@ -208,7 +206,7 @@ public:
 // Arguments:       The bitmap to draw on.
 // Return value:    None.
 
-	void Draw(BITMAP *drawBitmap) const;
+	void Draw(SDL_Renderer* renderer) const;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -227,7 +225,7 @@ public:
 //                  What size factor from 'normal' should the circle's diameter be drawn.
 // Return value:    Whether all segments of the line were drawn with the segment params.
 
-	bool DrawScreenLineToSitePoint(BITMAP *drawBitmap,
+	bool DrawScreenLineToSitePoint(SDL_Renderer* renderer,
 		const Vector &screenPoint,
 		const Vector &planetPoint,
 		int color,
@@ -370,7 +368,7 @@ protected:
 //                  The color to draw the line in. Use makecol(r, g, b) to create the color
 // Return value:    None.
 
-    void DrawGlowLine(BITMAP *drawBitmap, const Vector &start, const Vector &end, int color) const;
+    void DrawGlowLine(SDL_Renderer* renderer, const Vector &start, const Vector &end, int color) const;
 
 
 
@@ -502,8 +500,8 @@ protected:
     GUILabel *m_pQuitConfirmLabel;
     GUIButton *m_pQuitConfirmButton;
 
-	BITMAP *m_pScenePreviewBitmap;
-	BITMAP *m_pDefaultPreviewBitmap;
+	std::shared_ptr<Texture> m_pScenePreviewBitmap;
+	std::shared_ptr<Texture> m_pDefaultPreviewBitmap;
 
     // The current set of Scenes being displayed - not owned, nor are the scenes
     std::list<Scene *> *m_pScenes;

@@ -19,9 +19,7 @@
 #include "Vector.h"
 #include "Controller.h"
 
-struct SDL_Renderer;
-struct SDL_Texture;
-
+#include "System/SDLTexture.h"
 
 namespace RTE
 {
@@ -266,7 +264,7 @@ public:
 //                  The absolute position of the target bitmap's upper left corner in the scene.
 // Return value:    None.
 
-	void Draw(SDL_Renderer* renderer, Vector &targetPos = Vector()) const;
+	void Draw(SDL_Renderer* renderer, const Vector &targetPos = Vector()) const;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -367,7 +365,7 @@ protected:
     // Grid snapping enabled
     bool m_GridSnapping;
     // The zooming bitmaps owned by this; source gets the area from the screen, destination is the zoomed in view
-    BITMAP *m_pZoomSource;
+	std::shared_ptr<Texture> m_pZoomSource;
     // The zoom factor of the magnifying window. 0 means no zoom window
     int m_ZoomFactor;
     // Current cursor position, in absolute scene coordinates

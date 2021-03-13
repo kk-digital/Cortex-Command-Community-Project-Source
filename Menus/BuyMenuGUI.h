@@ -19,8 +19,7 @@
 #include "Controller.h"
 #include "Loadout.h"
 
-struct BITMAP;
-
+#include "System/SDLTexture.h"
 
 namespace RTE
 {
@@ -346,7 +345,7 @@ public:
 // Arguments:       The bitmap to draw on.
 // Return value:    None.
 
-    void Draw(BITMAP *drawBitmap) const;
+    void Draw(SDL_Renderer* renderer) const;
 
 
 
@@ -820,7 +819,7 @@ protected:
     // Purchase has been made
     bool m_PurchaseMade;
     // The cursor image shared by all buy menus
-    static BITMAP *s_pCursor;
+    static std::shared_ptr<Texture> s_pCursor;
     // Screen position of the cursor
     Vector m_CursorPos;
 

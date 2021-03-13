@@ -21,8 +21,7 @@
 #include "Box.h"
 #include "Controller.h"
 
-struct BITMAP;
-
+#include "System/SDLTexture.h"
 
 namespace RTE
 {

@@ -19,9 +19,7 @@
 #include "Vector.h"
 #include "Controller.h"
 
-struct SDL_Renderer;
-struct SDL_Texture;
-
+#include "System/SDLTexture.h"
 
 namespace RTE
 {
@@ -389,9 +387,9 @@ protected:
     // The cost of the path from the current position of the brain to the sky
     float m_BrainSkyPathCost;
     // Valid brain path line dots
-    static BITMAP *s_pValidPathDot;
+    static std::shared_ptr<Texture> s_pValidPathDot;
     // Invalid brain path line dots
-    static BITMAP *s_pInvalidPathDot;
+    static std::shared_ptr<Texture> s_pInvalidPathDot;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////

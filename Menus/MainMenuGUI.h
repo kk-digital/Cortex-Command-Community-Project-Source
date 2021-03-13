@@ -18,8 +18,7 @@
 #include "Timer.h"
 #include "Box.h"
 
-struct SDL_Renderer;
-struct SDL_Texture;
+#include "System/SDLTexture.h"
 
 
 namespace RTE
@@ -688,8 +687,8 @@ protected:
 	GUILabel *m_VersionLabel; //!< CCCP version number.
 
     // Controller diagram bitmaps
-    BITMAP **m_aDPadBitmaps;
-    BITMAP **m_aDualAnalogBitmaps;
+	std::vector<std::shared_ptr<Texture>> m_aDPadBitmaps;
+	std::vector<std::shared_ptr<Texture>> m_aDualAnalogBitmaps;
     // Controller diagram panel
     GUICollectionBox *m_pRecommendationBox;
     GUICollectionBox *m_pRecommendationDiagram;
