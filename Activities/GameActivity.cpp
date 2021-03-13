@@ -108,8 +108,8 @@ void GameActivity::Clear()
     {
         m_Deliveries[team].clear();
         m_LandingZoneArea[team].Reset();
-		m_aLZCursor[team] = 0;
-		m_aObjCursor[team] = 0;
+		m_aLZCursor[team].clear();
+		m_aObjCursor[team].clear();
     }
 
     m_Objectives.clear();
@@ -1011,7 +1011,7 @@ int GameActivity::Start()
     // Start the game timer
     m_GameTimer.Reset();
 
-    if (!(m_aLZCursor[0]))
+    if (m_aLZCursor[0].empty())
     {
         ContentFile cursorFile("Base.rte/GUIs/Indicators/LZArrowRedL.png");
         m_aLZCursor[0] = cursorFile.GetAsAnimation(LZCURSORFRAMECOUNT);
@@ -1023,7 +1023,7 @@ int GameActivity::Start()
 		m_aLZCursor[3] = cursorFile.GetAsAnimation(LZCURSORFRAMECOUNT);
     }
 
-    if (!(m_aObjCursor[0]))
+    if (m_aObjCursor[0].empty())
     {
         ContentFile cursorFile("Base.rte/GUIs/Indicators/ObjArrowRed.png");
         m_aObjCursor[0] = cursorFile.GetAsAnimation(OBJARROWFRAMECOUNT);
@@ -2191,11 +2191,9 @@ void GameActivity::DrawGUI(SDL_Renderer* renderer, const Vector &targetPos, int 
 		                               : (sceneWidth - renderSize.w);
 	// These handle arranging the left and right stacks of arrows, so they don't
 	// pile up on top of each other
-	int cursorW,cursorH;
-	SDL_QueryTexture(m_aObjCursor[cursor][frame], nullptr, nullptr, &cursorW, &cursorH);
 
 	cursor = team;
-	float leftStackY = halfScreenHeight - cursorH * 2;
+	float leftStackY = halfScreenHeight - m_aObjCursor[cursor][frame]->h * 2;
 	float rightStackY = leftStackY;
 
 	// Draw the objective points this player should care about
@@ -2268,7 +2266,7 @@ void GameActivity::DrawGUI(SDL_Renderer* renderer, const Vector &targetPos, int 
 					itr->Draw(renderer, m_aObjCursor[cursor][frame],
 						      onScreenEdgePos, ARROWRIGHT);
 					// Stack cursor moves down an arrowheight
-					rightStackY += cursorH;
+					rightStackY += m_aObjCursor[cursor][frame]->h;
 				} else if (objScenePos.m_X < nearestBoxItr->GetCorner().m_X) {
 					// Make the edge position approach the center of the
 					// vertical edge of the screen the farther away the
@@ -2286,7 +2284,7 @@ void GameActivity::DrawGUI(SDL_Renderer* renderer, const Vector &targetPos, int 
 					itr->Draw(renderer, m_aObjCursor[cursor][frame],
 						      onScreenEdgePos, ARROWLEFT);
 					// Stack cursor moves down an arrowheight
-					leftStackY += cursorH;
+					leftStackY += m_aObjCursor[cursor][frame]->h;
 				} else if (objScenePos.m_Y < nearestBoxItr->GetCorner().m_Y)
 					itr->Draw(renderer, m_aObjCursor[cursor][frame],
 						      nearestBoxItr->GetWithinBox(objScenePos) -
@@ -2606,25 +2604,13 @@ void GameActivity::DrawDeliveryCursors(SDL_Renderer *renderer,
 			landZone = m_LandingZone[player] - targetPos;
 			// Cursor
 
-			int cursorW,cursorH;
-			SDL_QueryTexture(m_aLZCursor[cursor][frame], nullptr, nullptr,
-				             &cursorW, &cursorH);
-			SDL_Rect renderDest{static_cast<int>(landZone.m_X) - halfWidth,
-				            static_cast<int>(landZone.m_Y) - 48, cursorW,
-				            cursorH};
+			m_aLZCursor[cursor][frame]->render(
+				renderer, landZone.m_X - halfWidth, landZone.m_Y - 48);
 
-			SDL_RenderCopy(renderer, m_aLZCursor[cursor][frame], nullptr, &renderDest);
-
-
-			SDL_Rect renderDestFlip{
-				renderDest.x-cursorW,
-				renderDest.y,
-				cursorW,
-				cursorH
-			};
-
-			SDL_RenderCopyEx(renderer, m_aLZCursor[cursor][frame], nullptr,
-				             &renderDestFlip, 0, nullptr, SDL_FLIP_HORIZONTAL);
+			m_aLZCursor[cursor][frame]->render(
+				renderer,
+				landZone.m_X + halfWidth - m_aLZCursor[cursor][frame]->w,
+				landZone.m_Y - 48);
 
 			// Text
 			pSmallFont->DrawAligned(
@@ -2648,22 +2634,12 @@ void GameActivity::DrawDeliveryCursors(SDL_Renderer *renderer,
 					                    ? g_SceneMan.GetSceneWidth()
 					                    : -g_SceneMan.GetSceneWidth());
 				// Cursor
-				int cursorW, cursorH;
-				SDL_QueryTexture(m_aLZCursor[cursor][frame], nullptr, nullptr,
-					             &cursorW, &cursorH);
-				SDL_Rect renderDest{wrappedX - halfWidth,
-					                static_cast<int>(landZone.m_Y) - 48,
-					                cursorW, cursorH};
-
-				SDL_RenderCopy(renderer, m_aLZCursor[cursor][frame], nullptr,
-					           &renderDest);
-
-				SDL_Rect renderDestFlip{renderDest.x - cursorW, renderDest.y,
-					                    cursorW, cursorH};
-
-				SDL_RenderCopyEx(renderer, m_aLZCursor[cursor][frame], nullptr,
-					             &renderDestFlip, 0, nullptr,
-					             SDL_FLIP_HORIZONTAL);
+				m_aLZCursor[cursor][frame]->render(
+					renderer, wrappedX - halfWidth, landZone.m_Y - 48);
+				m_aLZCursor[cursor][frame]->render(
+					renderer,
+					wrappedX + halfWidth - m_aLZCursor[cursor][frame]->w,
+					landZone.m_Y - 48, SDL_FLIP_HORIZONTAL);
 
 				// Text
 				pSmallFont->DrawAligned(
@@ -2693,21 +2669,13 @@ void GameActivity::DrawDeliveryCursors(SDL_Renderer *renderer,
 			int halfWidth = 24;
 			landZone = itr->landingZone - targetPos;
 			// Cursor
-			int cursorW, cursorH;
-			SDL_QueryTexture(m_aLZCursor[cursor][frame], nullptr, nullptr,
-				             &cursorW, &cursorH);
-			SDL_Rect renderDest{static_cast<int>(landZone.m_X) - halfWidth,
-				                static_cast<int>(landZone.m_Y) - 48, cursorW,
-				                cursorH};
+			m_aLZCursor[cursor][frame]->render(
+				renderer, landZone.m_X - halfWidth, landZone.m_Y - 48);
 
-			SDL_RenderCopy(renderer, m_aLZCursor[cursor][frame], nullptr,
-				           &renderDest);
-
-			SDL_Rect renderDestFlip{renderDest.x - cursorW, renderDest.y,
-				                    cursorW, cursorH};
-
-			SDL_RenderCopyEx(renderer, m_aLZCursor[cursor][frame], nullptr,
-				             &renderDestFlip, 0, nullptr, SDL_FLIP_HORIZONTAL);
+			m_aLZCursor[cursor][frame]->render(
+				renderer,
+				landZone.m_X + halfWidth - m_aLZCursor[cursor][frame]->w,
+				landZone.m_Y - 48);
 			// Text
 			pSmallFont->DrawAligned(&pBitmapInt, landZone.m_X,
 				                    landZone.m_Y - 38, "ETA:", GUIFont::Centre);
@@ -2731,22 +2699,12 @@ void GameActivity::DrawDeliveryCursors(SDL_Renderer *renderer,
 					                    ? g_SceneMan.GetSceneWidth()
 					                    : -g_SceneMan.GetSceneWidth());
 				// Cursor
-				int cursorW, cursorH;
-				SDL_QueryTexture(m_aLZCursor[cursor][frame], nullptr, nullptr,
-					             &cursorW, &cursorH);
-				SDL_Rect renderDest{wrappedX - halfWidth,
-					                static_cast<int>(landZone.m_Y) - 48,
-					                cursorW, cursorH};
+				m_aLZCursor[cursor][frame]->render(renderer, wrappedX - halfWidth, landZone.m_Y - 48);
 
-				SDL_RenderCopy(renderer, m_aLZCursor[cursor][frame], nullptr,
-					           &renderDest);
-
-				SDL_Rect renderDestFlip{renderDest.x - cursorW, renderDest.y,
-					                    cursorW, cursorH};
-
-				SDL_RenderCopyEx(renderer, m_aLZCursor[cursor][frame], nullptr,
-					             &renderDestFlip, 0, nullptr,
-					             SDL_FLIP_HORIZONTAL);
+				m_aLZCursor[cursor][frame]->render(
+					renderer,
+					wrappedX + halfWidth - m_aLZCursor[cursor][frame]->w,
+					landZone.m_Y - 48, SDL_FLIP_HORIZONTAL);
 				// Text
 				pSmallFont->DrawAligned(&pBitmapInt, wrappedX,
 					                    landZone.m_Y - 38,
@@ -2992,7 +2950,7 @@ void GameActivity::DisableAIs(bool disable, int whichTeam)
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Simply draws this' arrow relative to a point on a bitmap.
 
-void GameActivity::ObjectivePoint::Draw(SDL_Renderer* renderer, SDL_Texture* pArrowTexture, const Vector &arrowPoint, ObjectiveArrowDir arrowDir)
+void GameActivity::ObjectivePoint::Draw(SDL_Renderer* renderer, std::shared_ptr<Texture> pArrowTexture, const Vector &arrowPoint, ObjectiveArrowDir arrowDir)
 {
     if (!renderer || !pArrowTexture)
         return;
@@ -3001,10 +2959,8 @@ void GameActivity::ObjectivePoint::Draw(SDL_Renderer* renderer, SDL_Texture* pAr
     int x = arrowPoint.GetFloorIntX();
     int y = arrowPoint.GetFloorIntY();
 
-	SDL_Rect arrowDim;
-	SDL_QueryTexture(pArrowTexture, nullptr, nullptr, &arrowDim.w, &arrowDim.h);
-    int halfWidth = arrowDim.w / 2;
-    int halfHeight = arrowDim.h / 2;
+    int halfWidth = pArrowTexture->w / 2;
+    int halfHeight = pArrowTexture->h / 2;
 
 	SDL_Rect viewport;
 	SDL_RenderGetViewport(renderer, &viewport);
@@ -3024,10 +2980,10 @@ void GameActivity::ObjectivePoint::Draw(SDL_Renderer* renderer, SDL_Texture* pAr
         if (x > viewport.w - halfWidth)
             x = viewport.w - halfWidth - 1.0;
 
-        if (y > viewport.h - arrowDim.h)
-            y = viewport.h - arrowDim.h;
-        else if (y < arrowDim.h)
-            y = arrowDim.h;
+        if (y > viewport.h - pArrowTexture->h)
+            y = viewport.h - pArrowTexture->h;
+        else if (y < pArrowTexture->h)
+            y = pArrowTexture->h;
     }
     else if (y < halfHeight || y > viewport.h - halfHeight)
     {
@@ -3036,44 +2992,33 @@ void GameActivity::ObjectivePoint::Draw(SDL_Renderer* renderer, SDL_Texture* pAr
         if (y > viewport.h - halfHeight)
             y = viewport.h - halfHeight - 1.0;
 
-        if (x > viewport.w - arrowDim.w)
-            x = viewport.w - arrowDim.w;
-        else if (x < arrowDim.w)
-            x = arrowDim.w;
+        if (x > viewport.w - pArrowTexture->w)
+            x = viewport.w - pArrowTexture->w;
+        else if (x < pArrowTexture->w)
+            x = pArrowTexture->w;
     }
 
     // Draw the arrow and text descritpion of the Object so the point of the arrow ends up on the arrowPoint
     if (arrowDir == ARROWDOWN)
     {
-		SDL_Point pos{x-halfWidth, y-arrowDim.h};
-		SDL_Rect destination{arrowDim+pos};
-		SDL_RenderCopy(renderer, pArrowTexture, NULL, &destination);
-        g_FrameMan.GetLargeFont()->DrawAligned(&sdlGUITexture, x, y - arrowDim.h - textSpace, m_Description, GUIFont::Centre, GUIFont::Bottom);
+		pArrowTexture->render(renderer, x - halfWidth, y - pArrowTexture->h);
+        g_FrameMan.GetLargeFont()->DrawAligned(&sdlGUITexture, x, y - pArrowTexture->h - textSpace, m_Description, GUIFont::Centre, GUIFont::Bottom);
     }
     else if (arrowDir == ARROWLEFT)
     {
-		SDL_Point pos{x, y-halfHeight};
-		SDL_Rect destination{arrowDim + pos};
-		SDL_RenderCopyEx(renderer, pArrowTexture, NULL, &destination, 64.0,
-			             nullptr, SDL_FLIP_NONE);
-		g_FrameMan.GetLargeFont()->DrawAligned(&sdlGUITexture, x + arrowDim.w + textSpace, y, m_Description, GUIFont::Left, GUIFont::Middle);
+		pArrowTexture->render(renderer, x, y - halfHeight);
+		g_FrameMan.GetLargeFont()->DrawAligned(&sdlGUITexture, x + pArrowTexture->w + textSpace, y, m_Description, GUIFont::Left, GUIFont::Middle);
     }
     else if (arrowDir == ARROWRIGHT)
     {
 
-		SDL_Point pos{x - arrowDim.w, y - halfHeight};
-		SDL_Rect destination{arrowDim+pos};
-		SDL_RenderCopyEx(renderer, pArrowTexture, NULL, &destination, -64.0,
-			             nullptr, SDL_FLIP_NONE);
-        g_FrameMan.GetLargeFont()->DrawAligned(&sdlGUITexture, x - arrowDim.w - textSpace, y, m_Description, GUIFont::Right, GUIFont::Middle);
+		pArrowTexture->render(renderer, x - pArrowTexture->w, y - halfHeight, -64.0);
+        g_FrameMan.GetLargeFont()->DrawAligned(&sdlGUITexture, x - pArrowTexture->w - textSpace, y, m_Description, GUIFont::Right, GUIFont::Middle);
     }
     else if (arrowDir == ARROWUP)
     {
-		SDL_Point pos{x - halfWidth, y};
-		SDL_Rect destination{arrowDim + pos};
-		SDL_RenderCopyEx(renderer, pArrowTexture, NULL, &destination, -128.0,
-			             nullptr, SDL_FLIP_NONE);
-        g_FrameMan.GetLargeFont()->DrawAligned(&sdlGUITexture, x, y + arrowDim.h + textSpace, m_Description, GUIFont::Centre, GUIFont::Top);
+		pArrowTexture->render(renderer, x - halfWidth, y, -128.0);
+        g_FrameMan.GetLargeFont()->DrawAligned(&sdlGUITexture, x, y + pArrowTexture->h + textSpace, m_Description, GUIFont::Centre, GUIFont::Top);
     }
 }
 

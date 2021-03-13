@@ -19,9 +19,8 @@
 #include "ActivityMan.h"
 #include "Scene.h"
 #include "Actor.h"
+#include "System/SDLTexture.h"
 
-struct SDL_Renderer;
-struct SDL_Texture;
 
 namespace RTE
 {
@@ -945,7 +944,7 @@ protected:
         //                  Which orientation to draw the arrow in, relative to the point.
         // Return value:    None.
 
-        void Draw(SDL_Renderer* renderer, SDL_Texture *pArrowTexture, const Vector &arrowPoint, ObjectiveArrowDir arrowDir = ARROWDOWN);
+        void Draw(SDL_Renderer* renderer, std::shared_ptr<Texture> pArrowTexture, const Vector &arrowPoint, ObjectiveArrowDir arrowDir = ARROWDOWN);
 
 
         // The description of this objective point
@@ -1116,9 +1115,9 @@ protected:
 	bool m_BuyMenuEnabled;
 
     // The cursor animations for the LZ indicators
-    SDL_Texture **m_aLZCursor[4];
+	std::array<std::vector<std::shared_ptr<Texture>>,4> m_aLZCursor;
     // The cursor animations for the objective indications
-    SDL_Texture **m_aObjCursor[4];
+	std::array<std::vector<std::shared_ptr<Texture>>,4> m_aObjCursor;
 
     // Time it takes for a delivery to be made, in ms
     long m_DeliveryDelay;
