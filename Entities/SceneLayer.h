@@ -343,7 +343,7 @@ ClassInfoGetters
 // Arguments:       None.
 // Return value:    None.
 
-	virtual void UnlockTexture();
+	virtual void UnlockTexture() {m_pMainTexture->unlock();}
 
 	//////////////////////////////////////////////////////////////////////////////////////////
 	// Method:          GetPixel
@@ -355,7 +355,7 @@ ClassInfoGetters
 	// Arguments:       The X and Y coordinates of which pixel to get.
 	// Return value:    An unsigned char specifying the requested pixel's value.
 
-    uint32_t GetPixel(const int pixelX, const int pixelY);
+    uint32_t GetPixel(const int pixelX, const int pixelY) {return m_pMainTexture->getPixel(pixelX, pixelY);}
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -368,7 +368,9 @@ ClassInfoGetters
 //                  The value to set the pixel to.
 // Return value:    None.
 
-    void SetPixel(const int pixelX, const int pixelY, const uint32_t value);
+    void SetPixel(const int pixelX, const int pixelY, const uint32_t value){
+		m_pMainTexture->setPixel(pixelX, pixelY, value);
+	}
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -503,8 +505,6 @@ protected:
 
 	std::shared_ptr<Texture> m_pMainTexture;
 
-    // Whether main bitmap is owned by this
-    bool m_MainBitmapOwned;
     bool m_DrawTrans;
     Vector m_Offset;
     // The original scrollinfo with special encoded info that is then made into the actual scroll ratios
