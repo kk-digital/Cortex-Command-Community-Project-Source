@@ -4,8 +4,9 @@
 #include "ContentFile.h"
 #include "Constants.h"
 
+#include "System/SDLTexture.h"
+
 //struct DATAFILE; // DataFile loading not implemented.
-struct BITMAP;
 
 namespace RTE {
 
@@ -114,7 +115,7 @@ namespace RTE {
 		/// Gets the BITMAP that visually represents this DataModule, for use in menus.
 		/// </summary>
 		/// <returns>BITMAP pointer that might have the icon. 0 is very possible.</returns>
-		BITMAP * GetIcon() const { return m_Icon; }
+		std::shared_ptr<Texture> GetIcon() const { return m_Icon; }
 
 		/// <summary>
 		/// Returns crab-to-human spawn ration for this tech.
@@ -210,7 +211,7 @@ namespace RTE {
 		/// Gets the entire Material mapping array local to this DataModule.
 		/// </summary>
 		/// <returns>A pointer to the entire local mapping array, 256 unsigned chars. Ownership is NOT transferred!</returns>
-		const unsigned char * GetAllMaterialMappings() const { return m_MaterialMappings.data(); }
+		const std::array<uint32_t, c_PaletteEntriesNumber> GetAllMaterialMappings() const { return m_MaterialMappings; }
 
 		/// <summary>
 		/// Adds a Material mapping local to a DataModule.
@@ -262,13 +263,13 @@ namespace RTE {
 		int m_ModuleID; //!< ID number assigned to this upon loading, for internal use only, don't reflect in ini's.
 
 		ContentFile m_IconFile; //!< File to the icon/symbol bitmap.
-		BITMAP *m_Icon; //!< Bitmap with the icon loaded from above file.
+		std::shared_ptr<Texture> m_Icon; //!< Bitmap with the icon loaded from above file.
 
 		float m_CrabToHumanSpawnRatio; //!< Crab-to-human Spawn ratio to replace value from Constants.lua.
 
 		std::list<const Entity *> m_EntityList; //!< A list of loaded entities solely for the purpose of enumeration presets from Lua.
 		std::list<std::string> m_GroupRegister; //!< List of all Entity groups ever registered in this, all uniques.
-		std::array<unsigned char, c_PaletteEntriesNumber> m_MaterialMappings; //!< Material mappings local to this DataModule.
+		std::array<uint32_t, c_PaletteEntriesNumber> m_MaterialMappings; //!< Material mappings local to this DataModule.
 
 		/// <summary>
 		/// Ordered list of all owned Entity instances, ordered by the sequence of their reading - really now with overwriting?.
