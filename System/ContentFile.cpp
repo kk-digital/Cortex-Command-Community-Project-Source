@@ -210,14 +210,16 @@ namespace RTE {
 
 		// Copy the pixels from the surface for accessing pixel colors
 		Texture returnTexture;
-		// Create a Texture from the loaded Image with STATIC ACCESS (!) that
-		// lives in vram
 		if (!streamingAccess) {
+			// Create a Texture from the loaded Image with STATIC ACCESS (!)
+			// that lives in vram
 			returnTexture.m_Texture.reset(SDL_CreateTextureFromSurface(
 			    g_FrameMan.GetRenderer(), tempSurface.get()));
 		} else {
+			// Create a Texture with STREAMING ACCESS that lives in vram
 			returnTexture.m_Texture.reset(SDL_CreateTexture(
-			    g_FrameMan.GetRenderer(), SDL_PIXELFORMAT_RGBA32,
+			    g_FrameMan.GetRenderer(),
+			    returnTexture.getNativeAlphaFormat(g_FrameMan.GetRenderer()),
 			    SDL_TEXTUREACCESS_STREAMING, tempSurface->w, tempSurface->h));
 		}
 
@@ -229,9 +231,17 @@ namespace RTE {
 		Uint32 format;
 		int w, h;
 
+		// Get the format, access, width and height of the created Texture, to
+		// fill in the member Variables
 		SDL_QueryTexture(returnTexture.m_Texture.get(), &format, &access, &w,
 		                 &h);
 
+		returnTexture.m_Access=access;
+		returnTexture.m_Format=format;
+		returnTexture.w = w;
+		returnTexture.h = h;
+
+		// Resize the pixels vector so we don't write out of bounds
 		returnTexture.m_PixelsRO.resize(w * h);
 
 		// Make a copy of the pixeldata to retain it for read access
@@ -249,12 +259,15 @@ namespace RTE {
 			// Copy the pixels from the read access array to the texture
 			// Do not modify the following line unless you know exactly what
 			// you're doing
-			std::memcpy(returnTexture.m_PixelsWO,
-			            returnTexture.m_PixelsRO.data(),
-			            returnTexture.m_Pitch * h);
+			SDL_ConvertPixels(w, h, returnTexture.m_Format,
+			                  returnTexture.m_PixelsRO.data(),
+			                  w * sizeof(uint32_t), returnTexture.m_Format,
+			                  returnTexture.m_PixelsWO, returnTexture.m_Pitch);
 
 			returnTexture.unlock();
 		}
+		// Set the blend mode to blend so that alpha is actually used
+		returnTexture.setBlendMode(SDL_BLENDMODE_BLEND);
 
 		return returnTexture;
 	}
