@@ -19,6 +19,8 @@
 #include "Box.h"
 #include "Material.h"
 
+#include "System/SDLTexture.h"
+
 namespace RTE
 {
 
@@ -331,8 +333,7 @@ ClassInfoGetters
 // Return value:    None.
 
     void Destroy(bool notInherited = false) override;
-	//TODO: replace by opaque rendering fncs
-/*
+
 //////////////////////////////////////////////////////////////////////////////////////////
 // Virtual method:  LockBitmaps
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -343,7 +344,7 @@ ClassInfoGetters
 // Arguments:       None.
 // Return value:    None.
 
-	void LockBitmaps() override { SceneLayer::LockBitmaps(); acquire_bitmap(m_pMainBitmap); }
+	void LockTexture() override { SceneLayer::LockTexture(); m_pMainTexture->lock();}
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -356,7 +357,7 @@ ClassInfoGetters
 // Arguments:       None.
 // Return value:    None.
 
-	void UnlockBitmaps() override { SceneLayer::UnlockBitmaps(); release_bitmap(m_pMainBitmap); }
+	void UnlockTexture() override { SceneLayer::UnlockTexture(); m_pMainTexture->unlock(); }
 
 	// TODO: these are evil because theyre used to blit. Replace by opaque blitting functions
 
@@ -367,7 +368,7 @@ ClassInfoGetters
 // Arguments:       None.
 // Return value:    A pointer to the foreground color bitmap.
 
-    BITMAP * GetFGColorBitmap() { return m_pFGColor->GetBitmap(); }
+	std::shared_ptr<Texture> GetFGColorTexture() { return m_pFGColor->GetTexture(); }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -377,7 +378,7 @@ ClassInfoGetters
 // Arguments:       None.
 // Return value:    A pointer to the foreground color bitmap.
 
-    BITMAP * GetBGColorBitmap() { return m_pBGColor->GetBitmap(); }
+	std::shared_ptr<Texture> GetBGColorTexture() { return m_pBGColor->GetTexture(); }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -387,40 +388,36 @@ ClassInfoGetters
 // Arguments:       None.
 // Return value:    A pointer to the material bitmap.
 
-    BITMAP * GetMaterialBitmap() { return m_pMainBitmap; }
-	*/
+	std::shared_ptr<Texture> GetMaterialTexture() { return m_pMainTexture; }
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          GetFGColorPixel
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Gets a specific pixel from the foreground color bitmap of this.
-//                  LockBitmaps() must be called before using this method.
 // Arguments:       The X and Y coordinates of which pixel to get.
 // Return value:    An unsigned char specifying the requested pixel's BG Color.
 
-    unsigned char GetFGColorPixel(const int pixelX, const int pixelY) const;
+    uint32_t GetFGColorPixel(const int pixelX, const int pixelY) const;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          GetBGColorPixel
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Gets a specific pixel from the background color bitmap of this.
-//                  LockBitmaps() must be called before using this method.
 // Arguments:       The X and Y coordinates of which pixel to get.
 // Return value:    An unsigned char specifying the requested pixel's BG Color.
 
-    unsigned char GetBGColorPixel(const int pixelX, const int pixelY) const;
+    uint32_t GetBGColorPixel(const int pixelX, const int pixelY) const;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          GetMaterialPixel
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Gets a specific pixel from the material bitmap of this SceneLayer.
-//                  LockBitmaps() must be called before using this method.
 // Arguments:       The X and Y coordinates of which pixel to get.
 // Return value:    An unsigned char specifying the requested pixel's material index.
 
-    unsigned char GetMaterialPixel(const int pixelX, const int pixelY) const;
+    uint32_t GetMaterialPixel(const int pixelX, const int pixelY) const;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -437,39 +434,39 @@ ClassInfoGetters
 // Method:          SetFGColorPixel
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Sets a specific pixel on the FG Color bitmap of this SLTerrain to a
-//                  specific color. LockBitmaps() must be called before using this
+//                  specific color. LockTexture() must be called before using this
 //                  method.
 // Arguments:       The X and Y coordinates of which pixel to set.
 //                  The color index to set the pixel to.
 // Return value:    None.
 
-    void SetFGColorPixel(const int pixelX, const int pixelY, const int color);
+    void SetFGColorPixel(const int pixelX, const int pixelY, const uint32_t color);
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          SetBGColorPixel
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Sets a specific pixel on the BG Color bitmap of this SLTerrain to a
-//                  specific color. LockBitmaps() must be called before using this
+//                  specific color. LockTexture() must be called before using this
 //                  method.
 // Arguments:       The X and Y coordinates of which pixel to set.
 //                  The color index to set the pixel to.
 // Return value:    None.
 
-    void SetBGColorPixel(const int pixelX, const int pixelY, const int color);
+    void SetBGColorPixel(const int pixelX, const int pixelY, const uint32_t color);
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          SetMaterialPixel
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Sets a specific pixel on the material bitmap of this SLTerrain to a
-//                  specific material. LockMaterialBitmap() must be called before using this
+//                  specific material. LockMaterialTexture() must be called before using this
 //                  method.
 // Arguments:       The X and Y coordinates of which pixel to set.
 //                  The material index to set the pixel to.
 // Return value:    None.
 
-    void SetMaterialPixel(const int pixelX, const int pixelY, const unsigned char material);
+    void SetMaterialPixel(const int pixelX, const int pixelY, const uint32_t material);
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -478,8 +475,7 @@ ClassInfoGetters
 // Description:     Gets the structural bitmap of this Terrain.
 // Arguments:       None.
 // Return value:    A pointer to the material bitmap.
-// TODO probably replace
-    // BITMAP * GetStructuralBitmap() { return m_pStructural; }
+	std::shared_ptr<Texture> GetStructuralBitmap() { return m_pStructural; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -712,13 +708,7 @@ protected:
     bool m_DrawMaterial;
 
     // Intermediate test layers, differnt sizes for efficiency
-	// TODO probably unneccessary
-    static std::unique_ptr<Texture> m_spTempBitmap16;
-    static std::unique_ptr<Texture> m_spTempBitmap32;
-    static std::unique_ptr<Texture> m_spTempBitmap64;
-    static std::unique_ptr<Texture> m_spTempBitmap128;
-    static std::unique_ptr<Texture> m_spTempBitmap256;
-    static std::unique_ptr<Texture> m_spTempBitmap512;
+	static Texture s_TempRenderTarget;
 
 	// Indicates, that before processing frostings-related properties for this terrain
 	// derived list with frostings must be cleared to avoid duplication when loading scenes
