@@ -650,6 +650,7 @@ namespace RTE {
 	public:
 		//! Move assignment operator
 		Texture &operator=(Texture &&texture);
+		operator bool() const {return m_Texture.get();}
 	};
 } // namespace RTE
 
