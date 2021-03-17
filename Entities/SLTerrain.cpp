@@ -21,17 +21,17 @@
 #include "MOSprite.h"
 #include "Atom.h"
 
+#include "FrameMan.h"
+
+#include "System/SDLHelper.h"
+#include <SDL2/SDL2_rotozoom.h>
+
 namespace RTE {
 
 ConcreteClassInfo(SLTerrain, SceneLayer, 0)
 
 const string SLTerrain::TerrainFrosting::c_ClassName = "TerrainFrosting";
-BITMAP * SLTerrain::m_spTempBitmap16 = 0;
-BITMAP * SLTerrain::m_spTempBitmap32 = 0;
-BITMAP * SLTerrain::m_spTempBitmap64 = 0;
-BITMAP * SLTerrain::m_spTempBitmap128 = 0;
-BITMAP * SLTerrain::m_spTempBitmap256 = 0;
-BITMAP * SLTerrain::m_spTempBitmap512 = 0;
+
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -133,6 +133,8 @@ int SLTerrain::TerrainFrosting::Save(Writer &writer) const
 }
 
 
+Texture SLTerrain::s_TempRenderTarget;
+
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          Clear
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -169,20 +171,6 @@ int SLTerrain::Create()
         m_pFGColor = new SceneLayer();
     if (!m_pBGColor)
         m_pBGColor = new SceneLayer();
-
-    // Can't create these earlier in the static declaration because allegro_init needs to be called before create_bitmap
-    if (!m_spTempBitmap16)
-        m_spTempBitmap16 = create_bitmap_ex(8, 16, 16);
-    if (!m_spTempBitmap32)
-        m_spTempBitmap32 = create_bitmap_ex(8, 32, 32);
-    if (!m_spTempBitmap64)
-        m_spTempBitmap64 = create_bitmap_ex(8, 64, 64);
-    if (!m_spTempBitmap128)
-        m_spTempBitmap128 = create_bitmap_ex(8, 128, 128);
-    if (!m_spTempBitmap256)
-        m_spTempBitmap256 = create_bitmap_ex(8, 256, 256);
-    if (!m_spTempBitmap512)
-        m_spTempBitmap512 = create_bitmap_ex(8, 512, 512);
 
     return 0;
 }
@@ -291,8 +279,9 @@ int SLTerrain::LoadData()
 
     // Create blank foreground layer
     m_pFGColor->Destroy();
-    BITMAP *pFGBitmap = create_bitmap_ex(8, m_pMainBitmap->w, m_pMainBitmap->h);
-    if (!pFGBitmap || m_pFGColor->Create(pFGBitmap, true, m_Offset, m_WrapX, m_WrapY, m_ScrollRatio))
+
+    Texture pFGTexture = Texture(g_FrameMan.GetRenderer(), m_pMainTexture->w, m_pMainTexture->h, SDL_TEXTUREACCESS_STREAMING);
+    if (!pFGTexture.m_Texture.get() || m_pFGColor->Create(pFGTexture, true, m_Offset, m_WrapX, m_WrapY, m_ScrollRatio))
     {
         RTEAbort("Failed to create terrain's foreground layer's bitmap!");
         return -1;
@@ -300,18 +289,16 @@ int SLTerrain::LoadData()
 
     // Create blank background layer
     m_pBGColor->Destroy();
-    BITMAP *pBGBitmap = create_bitmap_ex(8, m_pMainBitmap->w, m_pMainBitmap->h);
-    if (!pBGBitmap || m_pBGColor->Create(pBGBitmap, true, m_Offset, m_WrapX, m_WrapY, m_ScrollRatio))
+    Texture pBGTexture = Texture(g_FrameMan.GetRenderer(), m_pMainTexture->w, m_pMainTexture->h, SDL_TEXTUREACCESS_STREAMING);
+    if (!pBGTexture.m_Texture.get() || m_pBGColor->Create(pBGTexture, true, m_Offset, m_WrapX, m_WrapY, m_ScrollRatio))
     {
         RTEAbort("Failed to create terrain's background layer's bitmap!");
         return -1;
     }
 
     // Structural integrity calc buffer bitmap
-    destroy_bitmap(m_pStructural);
-    m_pStructural = create_bitmap_ex(8, m_pMainBitmap->w, m_pMainBitmap->h);
-    RTEAssert(m_pStructural, "Failed to allocate BITMAP in Terrain::Create");
-    clear_bitmap(m_pStructural);
+    m_pStructural.reset(new Texture(g_FrameMan.GetRenderer(), m_pMainTexture->w, m_pMainTexture->h, SDL_TEXTUREACCESS_STREAMING));
+    RTEAssert(m_pStructural.get(), "Failed to allocate BITMAP in Terrain::Create");
 
     ///////////////////////////////////////////////
     // Load and texturize the FG color bitmap, based on the materials defined in the recently loaded (main) material layer!
@@ -319,43 +306,40 @@ int SLTerrain::LoadData()
     int xPos, yPos, matIndex, pixelColor;
 
     // Temporary references for all the materials' textures and colors, since we'll access them a lot
-    BITMAP *apTexBitmaps[256];
-    int aColors[256];
+	std::array<std::shared_ptr<Texture>,256> apTexBitmaps;
+	std::array<int,256> aColors;
     // Null em out so we can tell which ones we've already got once so far
-    for (matIndex = 0; matIndex < 256; ++matIndex)
-    {
-        apTexBitmaps[matIndex] = 0;
-        aColors[matIndex] = 0;
-    }
+	apTexBitmaps.fill(0);
+	aColors.fill(0);
 
     // Get the background texture
-    BITMAP *m_pBGTexture = m_BGTextureFile.GetAsBitmap();
+	std::shared_ptr<Texture> m_pBGTexture = m_BGTextureFile.GetAsTexture();
     // Get the material palette for quicker access
     Material **apMaterials = g_SceneMan.GetMaterialPalette();
     // Get the Material palette ID mappings local to the DataModule this SLTerrain is loaded from
-    const unsigned char *materialMappings = g_PresetMan.GetDataModule(m_BitmapFile.GetDataModuleID())->GetAllMaterialMappings();
-    Material *pMaterial = 0;
+    const std::array<uint32_t, c_PaletteEntriesNumber> materialMappings = g_PresetMan.GetDataModule(m_TextureFile.GetDataModuleID())->GetAllMaterialMappings();
+    Material *pMaterial = nullptr;
 
     // Lock all involved bitmaps
-    acquire_bitmap(m_pMainBitmap);
-    acquire_bitmap(pFGBitmap);
-    acquire_bitmap(pBGBitmap);
-    acquire_bitmap(m_pBGTexture);
+    m_pMainTexture->lock();
+	m_pFGColor->LockTexture();
+	m_pBGColor->LockTexture();
+	m_pBGTexture->lock();
 
     // Go through each pixel on the main bitmap, which contains all the material pixels loaded from the bitmap
     // Place texture pixels on the FG layer corresponding to the materials on the main material bitmap
-    for (xPos = 0; xPos < m_pMainBitmap->w; ++xPos)
+    for (xPos = 0; xPos < m_pMainTexture->w; ++xPos)
     {
-        for (yPos = 0; yPos < m_pMainBitmap->h; ++yPos)
+        for (yPos = 0; yPos < m_pMainTexture->h; ++yPos)
         {
             // Read which material the current pixel represents
-            matIndex = _getpixel(m_pMainBitmap, xPos, yPos);
+            matIndex = m_pMainTexture->getPixel(xPos, yPos);
             // Map any materials defined in this data module but initially collided with other material ID's and thus were displaced to other ID's
             if (materialMappings[matIndex] != 0)
             {
                 // Assign the mapping and put it onto the material bitmap too
                 matIndex = materialMappings[matIndex];
-                _putpixel(m_pMainBitmap, xPos, yPos, matIndex);
+                m_pMainTexture->setPixel(xPos, yPos, matIndex);
             }
 
             // Validate the material, or default to default material
@@ -369,7 +353,7 @@ int SLTerrain::LoadData()
             {
                 // Get, and acquire the texture bitmap if material has any
                 if (apTexBitmaps[matIndex] = pMaterial->GetTexture())
-                    acquire_bitmap(apTexBitmaps[matIndex]);
+                    apTexBitmaps[matIndex]->lock();
             }
 
             // If actually no texture for the material, then use the material's solid color instead
@@ -385,21 +369,21 @@ int SLTerrain::LoadData()
             else
             {
 //                acquire_bitmap(apTexBitmaps[matIndex]);
-                pixelColor = _getpixel(apTexBitmaps[matIndex], xPos % apTexBitmaps[matIndex]->w, yPos % apTexBitmaps[matIndex]->h);
+                pixelColor = apTexBitmaps[matIndex]->getPixel(xPos % apTexBitmaps[matIndex]->w, yPos % apTexBitmaps[matIndex]->h);
             }
 
             // Draw the correct color pixel on the foreground
-            _putpixel(pFGBitmap, xPos, yPos, pixelColor);
+            m_pFGColor->SetPixel(xPos, yPos, pixelColor);
 
             // Draw background texture on the background where this is stuff on the foreground
             if (m_pBGTexture && pixelColor != g_MaskColor)
             {
-                pixelColor = _getpixel(m_pBGTexture, xPos % m_pBGTexture->w, yPos % m_pBGTexture->h);
-                _putpixel(pBGBitmap, xPos, yPos, pixelColor);
+                pixelColor = m_pBGTexture->getPixel(xPos % m_pBGTexture->w, yPos % m_pBGTexture->h);
+                m_pBGColor->SetPixel(xPos, yPos, pixelColor);
             }
             // Put a keycolor pixel in the bg otherwise
             else
-                _putpixel(pBGBitmap, xPos, yPos, g_MaskColor);
+                m_pBGColor->SetPixel(xPos, yPos, g_AlphaZero);
         }
     }
 
@@ -408,7 +392,7 @@ int SLTerrain::LoadData()
 
     bool targetFound = false, applyingFrosting = false;
     int targetId, frostingId, thickness, thicknessGoal;
-    BITMAP *pFrostingTex = 0;
+	std::shared_ptr<Texture> pFrostingTex;
     for (list<TerrainFrosting>::iterator tfItr = m_TerrainFrostings.begin(); tfItr != m_TerrainFrostings.end(); ++tfItr)
     {
         targetId = (*tfItr).GetTargetMaterial().GetIndex();
@@ -416,19 +400,19 @@ int SLTerrain::LoadData()
         // Try to get the color texture of the frosting material. If fail, we'll use the color isntead
         pFrostingTex = (*tfItr).GetFrostingMaterial().GetTexture();
         if (pFrostingTex)
-            acquire_bitmap(pFrostingTex);
+            pFrostingTex->lock();
 
         // Loop through all columns
-        for (xPos = 0; xPos < m_pMainBitmap->w; ++xPos)
+        for (xPos = 0; xPos < m_pMainTexture->w; ++xPos)
         {
             // Get the thickness for this column
             thicknessGoal = (*tfItr).GetThicknessSample();
 
             // Work upward from the bottom of each column
-            for (yPos = m_pMainBitmap->h - 1; yPos >= 0; --yPos)
+            for (yPos = m_pMainTexture->h - 1; yPos >= 0; --yPos)
             {
                 // Read which material the current pixel represents
-                matIndex = _getpixel(m_pMainBitmap, xPos, yPos);
+                matIndex = m_pMainTexture->getPixel(xPos, yPos);
 
                 // We've encountered the target material! Prepare to apply frosting as soon as it ends!
                 if (!targetFound && matIndex == targetId)
@@ -448,14 +432,14 @@ int SLTerrain::LoadData()
                 {
                     // Get the color either from the frosting material's texture or the solid color
                     if (pFrostingTex)
-                        pixelColor = _getpixel(pFrostingTex, xPos % pFrostingTex->w, yPos % pFrostingTex->h);
+                        pixelColor = pFrostingTex->getPixel(xPos % pFrostingTex->w, yPos % pFrostingTex->h);
                     else
                         pixelColor = (*tfItr).GetFrostingMaterial().GetColor().GetIndex();
 
                     // Put the frosting pixel color on the FG color layer
-                    _putpixel(pFGBitmap, xPos, yPos, pixelColor);
+                    m_pFGColor->SetPixel(xPos, yPos, pixelColor);
                     // Put the material ID pixel on the material layer
-                    _putpixel(m_pMainBitmap, xPos, yPos, frostingId);
+                    m_pMainTexture->setPixel(xPos, yPos, materialMappings[frostingId]);
 
                     // Keep track of the applied thickness
                     thickness++;
@@ -466,19 +450,19 @@ int SLTerrain::LoadData()
         }
 
         if (pFrostingTex)
-            release_bitmap(pFrostingTex);
+            pFrostingTex->unlock();
     }
 
     // Release all involved bitmaps
-    release_bitmap(m_pMainBitmap);
-    release_bitmap(pFGBitmap);
-    release_bitmap(pBGBitmap);
-    release_bitmap(m_pBGTexture);
+    m_pMainTexture->unlock();
+	m_pFGColor->UnlockTexture();
+	m_pBGColor->UnlockTexture();
+    m_pBGTexture->unlock();
 
     for (matIndex = 0; matIndex < 256; ++matIndex)
     {
         if (apTexBitmaps[matIndex])
-            release_bitmap(apTexBitmaps[matIndex]);
+            apTexBitmaps[matIndex]->unlock();
     }
 
     ///////////////////////////////////////////////
@@ -699,7 +683,6 @@ void SLTerrain::Destroy(bool notInherited)
 {
     delete m_pFGColor;
     delete m_pBGColor;
-    destroy_bitmap(m_pStructural);
 
     for (list<TerrainDebris *>::iterator tdItr = m_TerrainDebris.begin(); tdItr != m_TerrainDebris.end(); ++tdItr)
     {
@@ -724,7 +707,7 @@ void SLTerrain::Destroy(bool notInherited)
 // Description:     Gets a specific pixel from the foreground color bitmap of this.
 //                  LockBitmaps() must be called before using this method.
 
-unsigned char SLTerrain::GetFGColorPixel(const int pixelX, const int pixelY) const
+uint32_t SLTerrain::GetFGColorPixel(const int pixelX, const int pixelY) const
 {
     int posX = pixelX;
     int posY = pixelY;
@@ -733,15 +716,15 @@ unsigned char SLTerrain::GetFGColorPixel(const int pixelX, const int pixelY) con
 
     // If it's still below or to the sides out of bounds after
     // wrapping what is supposed to be wrapped, shit is out of bounds.
-    if (posX < 0 || posX >= m_pMainBitmap->w || posY >= m_pMainBitmap->h)
-        return g_MaskColor;
+    if (posX < 0 || posX >= m_pMainTexture->w || posY >= m_pMainTexture->h)
+        return g_AlphaZero;
 
     // If above terrain bitmap, return key color.
     if (posY < 0)
-        return g_MaskColor;
+        return g_AlphaZero;
 
-//    RTEAssert(m_pMainBitmap->m_LockCount > 0, "Trying to access unlocked terrain bitmap");
-    return _getpixel(m_pFGColor->GetBitmap(), posX, posY);
+//    RTEAssert(m_pMainTexture->m_LockCount > 0, "Trying to access unlocked terrain bitmap");
+    return m_pFGColor->GetPixel(posX, posY);
 }
 
 
@@ -751,7 +734,7 @@ unsigned char SLTerrain::GetFGColorPixel(const int pixelX, const int pixelY) con
 // Description:     Gets a specific pixel from the background color bitmap of this.
 //                  LockBitmaps() must be called before using this method.
 
-unsigned char SLTerrain::GetBGColorPixel(const int pixelX, const int pixelY) const
+uint32_t SLTerrain::GetBGColorPixel(const int pixelX, const int pixelY) const
 {
     int posX = pixelX;
     int posY = pixelY;
@@ -760,15 +743,15 @@ unsigned char SLTerrain::GetBGColorPixel(const int pixelX, const int pixelY) con
 
     // If it's still below or to the sides out of bounds after
     // wrapping what is supposed to be wrapped, shit is out of bounds.
-    if (posX < 0 || posX >= m_pMainBitmap->w || posY >= m_pMainBitmap->h)
-        return g_MaskColor;
+    if (posX < 0 || posX >= m_pMainTexture->w || posY >= m_pMainTexture->h)
+        return g_AlphaZero;
 
     // If above terrain bitmap, return key color.
     if (posY < 0)
-        return g_MaskColor;
+        return g_AlphaZero;
 
-//    RTEAssert(m_pMainBitmap->m_LockCount > 0, "Trying to access unlocked terrain bitmap");
-    return _getpixel(m_pBGColor->GetBitmap(), posX, posY);
+//    RTEAssert(m_pMainTexture->m_LockCount > 0, "Trying to access unlocked terrain bitmap");
+    return m_pBGColor->GetPixel(posX, posY);
 }
 
 
@@ -778,7 +761,7 @@ unsigned char SLTerrain::GetBGColorPixel(const int pixelX, const int pixelY) con
 // Description:     Gets a specific pixel from the material bitmap of this SceneLayer.
 //                  LockMaterialBitmap() must be called before using this method.
 
-unsigned char SLTerrain::GetMaterialPixel(const int pixelX, const int pixelY) const
+uint32_t SLTerrain::GetMaterialPixel(const int pixelX, const int pixelY) const
 {
     int posX = pixelX;
     int posY = pixelY;
@@ -787,7 +770,7 @@ unsigned char SLTerrain::GetMaterialPixel(const int pixelX, const int pixelY) co
 
     // If it's still below or to the sides out of bounds after
     // wrapping what is supposed to be wrapped, shit is out of bounds.
-    if (posX < 0 || posX >= m_pMainBitmap->w || posY >= m_pMainBitmap->h)
+    if (posX < 0 || posX >= m_pMainTexture->w || posY >= m_pMainTexture->h)
 //        return g_MaterialOutOfBounds;
         return g_MaterialAir;
 
@@ -795,8 +778,8 @@ unsigned char SLTerrain::GetMaterialPixel(const int pixelX, const int pixelY) co
     if (posY < 0)
         return g_MaterialAir;
 
-//    RTEAssert(m_pMainBitmap->m_LockCount > 0, "Trying to access unlocked terrain bitmap");
-    return _getpixel(m_pMainBitmap, posX, posY);
+//    RTEAssert(m_pMainTexture->m_LockCount > 0, "Trying to access unlocked terrain bitmap");
+    return m_pMainTexture->getPixel(posX, posY);
 }
 
 
@@ -807,26 +790,26 @@ unsigned char SLTerrain::GetMaterialPixel(const int pixelX, const int pixelY) co
 
 bool SLTerrain::IsAirPixel(const int pixelX, const int pixelY) const
 {
-    int posX = pixelX;
-    int posY = pixelY;
+	int posX = pixelX;
+	int posY = pixelY;
 
-    WrapPosition(posX, posY);
+	WrapPosition(posX, posY);
 
-    // If it's still below or to the sides out of bounds after
-    // wrapping what is supposed to be wrapped, shit is out of bounds.
-    if (posX < 0 || posX >= m_pMainBitmap->w || posY >= m_pMainBitmap->h)
-//        return g_MaterialOutOfBounds;
-        return true;
+	// If it's still below or to the sides out of bounds after
+	// wrapping what is supposed to be wrapped, shit is out of bounds.
+	if (posX < 0 || posX >= m_pMainTexture->w || posY >= m_pMainTexture->h)
+		//        return g_MaterialOutOfBounds;
+		return true;
 
-    // If above terrain bitmap, return air material.
-    if (posY < 0)
-        return true;
+	// If above terrain bitmap, return air material.
+	if (posY < 0)
+		return true;
 
-	int checkPixel = _getpixel(m_pMainBitmap, posX, posY);
-//    RTEAssert(m_pMainBitmap->m_LockCount > 0, "Trying to access unlocked terrain bitmap");
-    return checkPixel == g_MaterialAir || checkPixel == g_MaterialCavity;
+	uint32_t checkPixel = m_pMainTexture->getPixel(posX, posY);
+	//    RTEAssert(m_pMainTexture->m_LockCount > 0, "Trying to access unlocked
+	//    terrain bitmap");
+	return checkPixel == g_MaterialAir || checkPixel == g_MaterialCavity;
 }
-
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          SetFGColorPixel
@@ -835,7 +818,7 @@ bool SLTerrain::IsAirPixel(const int pixelX, const int pixelY) const
 //                  specific color. LockBitmaps() must be called before using this
 //                  method.
 
-void SLTerrain::SetFGColorPixel(const int pixelX, const int pixelY, const int color)
+void SLTerrain::SetFGColorPixel(const int pixelX, const int pixelY, const uint32_t color)
 {
     int posX = pixelX;
     int posY = pixelY;
@@ -845,13 +828,13 @@ void SLTerrain::SetFGColorPixel(const int pixelX, const int pixelY, const int co
     // If it's still below or to the sides out of bounds after
     // wrapping what is supposed to be wrapped, shit is out of bounds.
     if (posX < 0 ||
-       posX >= m_pMainBitmap->w ||
+       posX >= m_pMainTexture->w ||
        posY < 0 ||
-       posY >= m_pMainBitmap->h)
+       posY >= m_pMainTexture->h)
        return;
 
 //    RTEAssert(m_pFGColor->GetBitmap()->m_LockCount > 0, "Trying to access unlocked terrain bitmap");
-    _putpixel(m_pFGColor->GetBitmap(), posX, posY, color);
+    m_pFGColor->SetPixel(posX, posY, color);
 }
 
 
@@ -862,7 +845,7 @@ void SLTerrain::SetFGColorPixel(const int pixelX, const int pixelY, const int co
 //                  specific color. LockBitmaps() must be called before using this
 //                  method.
 
-void SLTerrain::SetBGColorPixel(const int pixelX, const int pixelY, const int color)
+void SLTerrain::SetBGColorPixel(const int pixelX, const int pixelY, const uint32_t color)
 {
     int posX = pixelX;
     int posY = pixelY;
@@ -872,13 +855,13 @@ void SLTerrain::SetBGColorPixel(const int pixelX, const int pixelY, const int co
     // If it's still below or to the sides out of bounds after
     // wrapping what is supposed to be wrapped, shit is out of bounds.
     if (posX < 0 ||
-       posX >= m_pMainBitmap->w ||
+       posX >= m_pMainTexture->w ||
        posY < 0 ||
-       posY >= m_pMainBitmap->h)
+       posY >= m_pMainTexture->h)
        return;
 
 //    RTEAssert(m_pBGColor->GetBitmap()->m_LockCount > 0, "Trying to access unlocked terrain bitmap");
-    _putpixel(m_pBGColor->GetBitmap(), posX, posY, color);
+    m_pBGColor->SetPixel(posX, posY, color);
 }
 
 
@@ -889,7 +872,7 @@ void SLTerrain::SetBGColorPixel(const int pixelX, const int pixelY, const int co
 //                  specific material. LockMaterialBitmap() must be called before using this
 //                  method.
 
-void SLTerrain::SetMaterialPixel(const int pixelX, const int pixelY, const unsigned char material)
+void SLTerrain::SetMaterialPixel(const int pixelX, const int pixelY, const uint32_t material)
 {
     int posX = pixelX;
     int posY = pixelY;
@@ -899,12 +882,12 @@ void SLTerrain::SetMaterialPixel(const int pixelX, const int pixelY, const unsig
     // If it's still below or to the sides out of bounds after
     // wrapping what is supposed to be wrapped, shit is out of bounds.
     if (posX < 0 ||
-       posX >= m_pMainBitmap->w ||
+       posX >= m_pMainTexture->w ||
        posY < 0 ||
-       posY >= m_pMainBitmap->h)
+       posY >= m_pMainTexture->h)
        return;
-//    RTEAssert(m_pMainBitmap->m_LockCount > 0, "Trying to access unlocked terrain bitmap");
-    _putpixel(m_pMainBitmap, posX, posY, material);
+//    RTEAssert(m_pMainTexture->m_LockCount > 0, "Trying to access unlocked terrain bitmap");
+    m_pMainTexture->setPixel(posX, posY, material);
 }
 
 
@@ -915,7 +898,7 @@ void SLTerrain::SetMaterialPixel(const int pixelX, const int pixelY, const unsig
 //                  which overlap with it. Erases them from the terrain and can optionally
 //                  generate MOPixel:s based on the erased or 'dislodged' terrain pixels.
 
-deque<MOPixel *> SLTerrain::EraseSilhouette(BITMAP *pSprite,
+deque<MOPixel *> SLTerrain::EraseSilhouette(std::shared_ptr<Texture> pSprite,
                                             Vector pos,
                                             Vector pivot,
                                             Matrix rotation,
@@ -926,41 +909,25 @@ deque<MOPixel *> SLTerrain::EraseSilhouette(BITMAP *pSprite,
 {
 // TODO: OPTIMIZE THIS, IT'S A TIME HOG. MAYBE JSUT STAMP THE OUTLINE AND SAMPLE SOME RANDOM PARTICLES?
 
-    RTEAssert(pSprite, "Null BITMAP passed to SLTerrain::EraseSilhouette");
+    RTEAssert(pSprite.get(), "Null BITMAP passed to SLTerrain::EraseSilhouette");
 
     deque<MOPixel *> MOPDeque;
 
-    // This will point to the chosen intermediate test bitmap
-    BITMAP *pTempBitmap = 0;
+	// Create temporary SDL_Surfaces from Sprite and Surface (this is very fast
+	// because the pixels are not copied)
+	std::unique_ptr<SDL_Surface, sdl_deleter> tempSpriteSurface{
+		SDL_CreateRGBSurfaceWithFormatFrom(
+		    pSprite->m_PixelsRO.data(), pSprite->w, pSprite->h, 32,
+		    pSprite->w * sizeof(uint32_t), pSprite->m_Format)};
 
-    // Find the maximum possible sized bitmap that the passed-in sprite will need
+	std::unique_ptr<SDL_Surface, sdl_deleter>
+		rotozoomedSprite{rotozoomSurface(tempSpriteSurface.get(),
+		                                 rotation.GetDegAngle(), scale, false)};
 
-    int halfWidth = pSprite->w / 2;
-    int halfHeight = pSprite->h / 2;
-    double SinA = sin(rotation.GetRadAngle());
-    double CosA = cos(rotation.GetRadAngle());
-    int maxWidth = (pSprite->w + abs(pivot.m_X - halfWidth)) * scale;
-    int maxHeight = (pSprite->h + abs(pivot.m_Y - halfHeight)) * scale;
-    int maxDiameter = sqrt((float)(maxWidth * maxWidth + maxHeight * maxHeight)) * 2;
+	//TODO: All of the below should be possible to do using some clever blitting
+	// Find the maximum possible sized bitmap that the passed-in sprite will need
+
     int skipCount = skipMOP;
-
-    // Choose an appropriate size
-    if (maxDiameter  >= 256)
-        pTempBitmap = m_spTempBitmap512;
-    if (maxDiameter  >= 128)
-        pTempBitmap = m_spTempBitmap256;
-    else if (maxDiameter  >= 64)
-        pTempBitmap = m_spTempBitmap128;
-    else if (maxDiameter >= 32)
-        pTempBitmap = m_spTempBitmap64;
-    else if (maxDiameter >= 16)
-        pTempBitmap = m_spTempBitmap32;
-    else
-        pTempBitmap = m_spTempBitmap16;
-
-    // Clear and draw the source sprite onto the test bitmap
-    clear_bitmap(pTempBitmap);
-    pivot_scaled_sprite(pTempBitmap, pSprite, pTempBitmap->w / 2, pTempBitmap->h / 2, pivot.m_X, pivot.m_Y,  ftofix(rotation.GetAllegroAngle()), ftofix(scale));
 
     // Do the test of intersection between color pixels of the test bitmap and non-air pixels of the terrain
     // Generate and collect MOPixels that represent the terrain overlap and clear the same pixels out of the terrain
@@ -968,13 +935,16 @@ deque<MOPixel *> SLTerrain::EraseSilhouette(BITMAP *pSprite,
     MOPixel *pPixel = 0;
 	Material const * sceneMat = g_SceneMan.GetMaterialFromID(g_MaterialAir); 
 	Material const * spawnMat = g_SceneMan.GetMaterialFromID(g_MaterialAir);
-    halfWidth = pTempBitmap->w / 2;
-    halfHeight = pTempBitmap->h / 2;
-    unsigned char testPixel = 0, matPixel = 0, colorPixel = 0;
+    int halfWidth = rotozoomedSprite->w / 2;
+    int halfHeight = rotozoomedSprite->h / 2;
+    uint32_t testPixel = 0, matPixel = 0, colorPixel = 0;
 
-    for (testY = 0; testY < pTempBitmap->h; ++testY)
+	m_pMainTexture->lock();
+	m_pFGColor->LockTexture();
+
+    for (testY = 0; testY < rotozoomedSprite->h; ++testY)
     {
-        for (testX = 0; testX < pTempBitmap->w; ++testX)
+        for (testX = 0; testX < rotozoomedSprite->w; ++testX)
         {
             terrX = pos.m_X - halfWidth + testX;
             terrY = pos.m_Y - halfHeight + testY;
@@ -983,33 +953,33 @@ deque<MOPixel *> SLTerrain::EraseSilhouette(BITMAP *pSprite,
             if (terrX < 0) {
                 if (m_WrapX)
                     while (terrX < 0)
-                        terrX += m_pMainBitmap->w;
+                        terrX += m_pMainTexture->w;
                 else
                     continue;
             }
             if (terrY < 0) {
                 if (m_WrapY)
                     while (terrY < 0)
-                        terrY += m_pMainBitmap->h;
+                        terrY += m_pMainTexture->h;
                 else
                     continue;
             }
-            if (terrX >= m_pMainBitmap->w) {
+            if (terrX >= m_pMainTexture->w) {
                 if (m_WrapX)
-                    terrX %= m_pMainBitmap->w;
+                    terrX %= m_pMainTexture->w;
                 else
                     continue;
             }
-            if (terrY >= m_pMainBitmap->h) {
+            if (terrY >= m_pMainTexture->h) {
                 if (m_WrapY)
-                    terrY %= m_pMainBitmap->h;
+                    terrY %= m_pMainTexture->h;
                 else
                     continue;
             }
 
-            testPixel = getpixel(pTempBitmap, testX, testY);
-            matPixel = getpixel(m_pMainBitmap, terrX, terrY);
-            colorPixel = getpixel(m_pFGColor->GetBitmap(), terrX, terrY);
+            testPixel =  static_cast<uint32_t*>(rotozoomedSprite->pixels)[testX + testY*rotozoomedSprite->w];
+            matPixel = m_pMainTexture->getPixel(terrX, terrY);
+            colorPixel = m_pFGColor->GetPixel(terrX, terrY);
 
             if (testPixel != g_MaskColor)
             {
@@ -1034,19 +1004,19 @@ deque<MOPixel *> SLTerrain::EraseSilhouette(BITMAP *pSprite,
 
                 // Clear the terrain pixels
                 if (matPixel != g_MaterialAir)
-                    putpixel(m_pMainBitmap, terrX, terrY, g_MaterialAir);
-				if (colorPixel != g_MaskColor)
+                    m_pMainTexture->setPixel(terrX, terrY, g_MaterialAir);
+				if (colorPixel != g_AlphaZero)
 				{
-					putpixel(m_pFGColor->GetBitmap(), terrX, terrY, g_MaskColor);
-					g_SceneMan.RegisterTerrainChange(terrX, terrY, 1, 1, g_MaskColor, false);
+					m_pFGColor->SetPixel(terrX, terrY, g_AlphaZero);
+					g_SceneMan.RegisterTerrainChange(terrX, terrY, 1, 1, g_AlphaZero, false);
 				}
             }
-        }    
+        }
     }
 
     // Add a box to the updated areas list to show there's been change to the materials layer
 // TODO: improve fit/tightness of box here
-    m_UpdatedMateralAreas.push_back(Box(pos - pivot, maxWidth, maxHeight));
+    m_UpdatedMateralAreas.push_back(Box(pos - pivot, rotozoomedSprite->w, rotozoomedSprite->h));
 
     return MOPDeque;
 }
@@ -1093,101 +1063,178 @@ void SLTerrain::ApplyMovableObject(MovableObject *pMObject)
     // Determine whether a sprite or just a pixel-based MO
     MOSprite *pMOSprite = dynamic_cast<MOSprite *>(pMObject);
 
+
     // Sprite, so try to integrate it into the terrain, with terrain on top
     if (pMOSprite)
     {
-        deque<MOPixel *> MOPDeque;
 
-        // This will point to the chosen intermediate test bitmap
-        BITMAP *pTempBitmap = 0;
-        // Temporary bitmap holder, doesn't own
-        BITMAP *pSprite = pMOSprite->GetSpriteFrame();
+		int spriteDiameter{static_cast<int>(pMObject->GetDiameter())};
 
-        float diameter = pMOSprite->GetDiameter();
-        // Choose an appropriate size
-        if (diameter >= 256)
-            pTempBitmap = m_spTempBitmap512;
-        if (diameter >= 128)
-            pTempBitmap = m_spTempBitmap256;
-        else if (diameter >= 64)
-            pTempBitmap = m_spTempBitmap128;
-        else if (diameter >= 32)
-            pTempBitmap = m_spTempBitmap64;
-        else if (diameter >= 16)
-            pTempBitmap = m_spTempBitmap32;
-        else
-            pTempBitmap = m_spTempBitmap16;
+		SDL_Renderer *renderer = g_FrameMan.GetRenderer();
+
+		//Preserve the active rendering context
+		uint8_t r, g, b, a;
+
+		SDL_Texture *activeTarget{
+			SDL_GetRenderTarget(g_FrameMan.GetRenderer())};
+		SDL_GetRenderDrawColor(g_FrameMan.GetRenderer(), &r, &g, &b, &a);
+
+
+		// if neccessary resize the temporary render Target
+		if(spriteDiameter>s_TempRenderTarget.w)
+			s_TempRenderTarget = std::move(Texture(renderer, spriteDiameter, spriteDiameter, SDL_TEXTUREACCESS_TARGET));
+		SDL_Rect targetArea{0,0,spriteDiameter,spriteDiameter};
 
         // The position of the upper left corner of the temporary bitmap in the scene
-        Vector bitmapScroll = pMOSprite->GetPos().GetFloored() - Vector(pTempBitmap->w / 2, pTempBitmap->w / 2);
+        Vector bitmapScroll = pMObject->GetPos().GetFloored() - Vector(pMObject->GetDiameter() / 2, pMObject->GetDiameter() / 2);
+
+		GetFGColorTexture()->lock(SDL_Rect{static_cast<int>(bitmapScroll.m_X),
+			                               static_cast<int>(bitmapScroll.m_Y),
+			                               spriteDiameter, spriteDiameter});
 
 		Box notUsed;
-		
-        // COLOR
-        // Clear and draw the source sprite onto the temp bitmap
-        clear_to_color(pTempBitmap, g_MaskColor);
-        // Draw the actor and then the scene foreground to temp bitmap
-        pMOSprite->Draw(pTempBitmap, bitmapScroll, g_DrawColor, true);
-        m_pFGColor->Draw(pTempBitmap, notUsed, bitmapScroll);
-        // Finally draw temporary bitmap to the Scene
-        masked_blit(pTempBitmap, GetFGColorBitmap(), 0, 0, bitmapScroll.m_X, bitmapScroll.m_Y, pTempBitmap->w, pTempBitmap->h);
+
+		SDL_SetRenderTarget(renderer, s_TempRenderTarget.m_Texture.get());
+
+		pMOSprite->Draw(renderer, bitmapScroll, g_DrawColor, true);
+
+		m_pFGColor->Draw(renderer, notUsed, bitmapScroll);
+
+		SDL_RenderReadPixels(renderer, nullptr,
+			                 GetFGColorTexture()->getFormat(),
+			                 GetFGColorTexture()->getPixelsRW(),
+			                 GetFGColorTexture()->w * sizeof(uint32_t));
+
+		GetFGColorTexture()->unlock();
+
 
 		// Register terrain change
-		g_SceneMan.RegisterTerrainChange(bitmapScroll.m_X, bitmapScroll.m_Y, pTempBitmap->w, pTempBitmap->h, g_MaskColor, false);
+		g_SceneMan.RegisterTerrainChange(bitmapScroll.m_X, bitmapScroll.m_Y, spriteDiameter, spriteDiameter, g_MaskColor, false);
 
 
 // TODO: centralize seam drawing!
         // Draw over seams
         if (g_SceneMan.SceneWrapsX())
         {
-            if (bitmapScroll.m_X < 0)
-                masked_blit(pTempBitmap, GetFGColorBitmap(), 0, 0, bitmapScroll.m_X + g_SceneMan.GetSceneWidth(), bitmapScroll.m_Y, pTempBitmap->w, pTempBitmap->h);
-            else if (bitmapScroll.m_X + pTempBitmap->w > g_SceneMan.GetSceneWidth())
-                masked_blit(pTempBitmap, GetFGColorBitmap(), 0, 0, bitmapScroll.m_X - g_SceneMan.GetSceneWidth(), bitmapScroll.m_Y, pTempBitmap->w, pTempBitmap->h);
+            if (bitmapScroll.m_X < 0){
+				GetFGColorTexture()->lock(SDL_Rect{static_cast<int>(bitmapScroll.m_X)+g_SceneMan.GetSceneWidth(), static_cast<int>(bitmapScroll.m_Y), spriteDiameter, spriteDiameter});
+			} else if (bitmapScroll.m_X + spriteDiameter >
+				       g_SceneMan.GetSceneWidth()) {
+				GetFGColorTexture()->lock(SDL_Rect{static_cast<int>(bitmapScroll.m_X)-g_SceneMan.GetSceneWidth(), static_cast<int>(bitmapScroll.m_Y), spriteDiameter, spriteDiameter});
+			}
+			SDL_RenderReadPixels(renderer, nullptr, GetFGColorTexture()->getFormat(), GetFGColorTexture()->getPixelsRW(), GetFGColorTexture()->w*sizeof(uint32_t));
+			GetFGColorTexture()->unlock();
         }
         if (g_SceneMan.SceneWrapsY())
         {
-            if (bitmapScroll.m_Y < 0)
-                masked_blit(pTempBitmap, GetFGColorBitmap(), 0, 0, bitmapScroll.m_X, bitmapScroll.m_Y + g_SceneMan.GetSceneHeight(), pTempBitmap->w, pTempBitmap->h);
-            else if (bitmapScroll.m_Y + pTempBitmap->h > g_SceneMan.GetSceneHeight())
-                masked_blit(pTempBitmap, GetFGColorBitmap(), 0, 0, bitmapScroll.m_X, bitmapScroll.m_Y - g_SceneMan.GetSceneHeight(), pTempBitmap->w, pTempBitmap->h);
-        }
+            if (bitmapScroll.m_Y < 0){
+				GetFGColorTexture()->lock(SDL_Rect{static_cast<int>(bitmapScroll.m_X), static_cast<int>(bitmapScroll.m_Y) + g_SceneMan.GetSceneHeight(), spriteDiameter, spriteDiameter});
+			}
+            else if (bitmapScroll.m_Y + spriteDiameter > g_SceneMan.GetSceneHeight()){
+				GetFGColorTexture()->lock(SDL_Rect{static_cast<int>(bitmapScroll.m_X), static_cast<int>(bitmapScroll.m_Y) - g_SceneMan.GetSceneHeight(), spriteDiameter, spriteDiameter});
+			}
+			SDL_RenderReadPixels(renderer, nullptr,
+				                 GetFGColorTexture()->getFormat(),
+				                 GetFGColorTexture()->getPixelsRW(),
+				                 GetFGColorTexture()->w * sizeof(uint32_t));
+			GetFGColorTexture()->unlock();
+		}
 
-        // Material
-        clear_to_color(pTempBitmap, g_MaterialAir);
-        // Draw the actor and then the scene material layer to temp bitmap
-        pMOSprite->Draw(pTempBitmap, bitmapScroll, g_DrawMaterial, true);
-        SceneLayer::Draw(pTempBitmap, notUsed, bitmapScroll);
-        // Finally draw temporary bitmap to the Scene
-        masked_blit(pTempBitmap, GetMaterialBitmap(), 0, 0, bitmapScroll.m_X, bitmapScroll.m_Y, pTempBitmap->w, pTempBitmap->h);
+		SDL_PixelFormat *globalFormat{SDL_AllocFormat(SDL_PIXELFORMAT_RGBA32)};
+		uint8_t air_r, air_g, air_b, air_a;
+		SDL_GetRGBA(g_MaterialAir, globalFormat, &air_r, &air_g, &air_b,
+			        &air_a);
+		SDL_FreeFormat(globalFormat);
+
+		SDL_SetRenderDrawColor(renderer, air_r, air_g, air_b, air_a);
+		SDL_RenderClear(renderer);
+		// Draw the actor and then the scene material layer to temp bitmap
+        pMOSprite->Draw(renderer, bitmapScroll, g_DrawMaterial, true);
+        SceneLayer::Draw(renderer, notUsed, bitmapScroll);
+
+		GetMaterialTexture()->lock(SDL_Rect{static_cast<int>(bitmapScroll.m_X), static_cast<int>(bitmapScroll.m_Y), spriteDiameter, spriteDiameter});
+
+		SDL_RenderReadPixels(renderer, nullptr,
+			                 GetMaterialTexture()->getFormat(),
+			                 GetMaterialTexture()->getPixelsRW(),
+			                 GetMaterialTexture()->w * sizeof(uint32_t));
+
+		GetMaterialTexture()->unlock();
         // Add a box to the updated areas list to show there's been change to the materials layer
-        m_UpdatedMateralAreas.push_back(Box(bitmapScroll, pTempBitmap->w, pTempBitmap->h));
+        m_UpdatedMateralAreas.push_back(Box(bitmapScroll, spriteDiameter, spriteDiameter));
 // TODO: centralize seam drawing!
         // Draw over seams
         if (g_SceneMan.SceneWrapsX())
         {
-            if (bitmapScroll.m_X < 0)
-                masked_blit(pTempBitmap, GetMaterialBitmap(), 0, 0, bitmapScroll.m_X + g_SceneMan.GetSceneWidth(), bitmapScroll.m_Y, pTempBitmap->w, pTempBitmap->h);
-            else if (bitmapScroll.m_X + pTempBitmap->w > g_SceneMan.GetSceneWidth())
-                masked_blit(pTempBitmap, GetMaterialBitmap(), 0, 0, bitmapScroll.m_X - g_SceneMan.GetSceneWidth(), bitmapScroll.m_Y, pTempBitmap->w, pTempBitmap->h);
-        }
-        if (g_SceneMan.SceneWrapsY())
+            if (bitmapScroll.m_X < 0){
+				GetFGColorTexture()->lock(
+					SDL_Rect{static_cast<int>(bitmapScroll.m_X) +
+					             g_SceneMan.GetSceneWidth(),
+					         static_cast<int>(bitmapScroll.m_Y), spriteDiameter,
+					         spriteDiameter});
+			} else if (bitmapScroll.m_X + spriteDiameter >
+				       g_SceneMan.GetSceneWidth()) {
+				GetFGColorTexture()->lock(
+					SDL_Rect{static_cast<int>(bitmapScroll.m_X) -
+					             g_SceneMan.GetSceneWidth(),
+					         static_cast<int>(bitmapScroll.m_Y), spriteDiameter,
+					         spriteDiameter});
+			}
+			SDL_RenderReadPixels(renderer, nullptr,
+				                 GetFGColorTexture()->getFormat(),
+				                 GetFGColorTexture()->getPixelsRW(),
+				                 GetFGColorTexture()->w * sizeof(uint32_t));
+			GetFGColorTexture()->unlock();
+		}
+		if (g_SceneMan.SceneWrapsY())
         {
-            if (bitmapScroll.m_Y < 0)
-                masked_blit(pTempBitmap, GetMaterialBitmap(), 0, 0, bitmapScroll.m_X, bitmapScroll.m_Y + g_SceneMan.GetSceneHeight(), pTempBitmap->w, pTempBitmap->h);
-            else if (bitmapScroll.m_Y + pTempBitmap->h > g_SceneMan.GetSceneHeight())
-                masked_blit(pTempBitmap, GetMaterialBitmap(), 0, 0, bitmapScroll.m_X, bitmapScroll.m_Y - g_SceneMan.GetSceneHeight(), pTempBitmap->w, pTempBitmap->h);
-        }
+			if (bitmapScroll.m_Y < 0) {
+				GetFGColorTexture()->lock(
+					SDL_Rect{static_cast<int>(bitmapScroll.m_X),
+					         static_cast<int>(bitmapScroll.m_Y) +
+					             g_SceneMan.GetSceneHeight(),
+					         spriteDiameter, spriteDiameter});
+			} else if (bitmapScroll.m_Y + spriteDiameter >
+				       g_SceneMan.GetSceneHeight()) {
+				GetFGColorTexture()->lock(
+					SDL_Rect{static_cast<int>(bitmapScroll.m_X),
+					         static_cast<int>(bitmapScroll.m_Y) -
+					             g_SceneMan.GetSceneHeight(),
+					         spriteDiameter, spriteDiameter});
+			}
+			SDL_RenderReadPixels(renderer, nullptr,
+				                 GetFGColorTexture()->getFormat(),
+				                 GetFGColorTexture()->getPixelsRW(),
+				                 GetFGColorTexture()->w * sizeof(uint32_t));
+			GetFGColorTexture()->unlock();
+		}
+
+		SDL_SetRenderTarget(renderer, activeTarget);
+		SDL_SetRenderDrawColor(renderer, r, g, b, a);
     }
-    // Not a big sprite, so just draw the representations
+    // MOPixel, so update single pixel
     else
     {
-        pMObject->Draw(GetFGColorBitmap(), Vector(), g_DrawColor, true);
-		// Register terrain change
-		g_SceneMan.RegisterTerrainChange(pMObject->GetPos().m_X, pMObject->GetPos().m_Y, 1, 1, g_DrawColor, false);
+		MOPixel* pPixel{dynamic_cast<MOPixel *>(pMObject)};
+		if (pPixel) {
+			Color c{pPixel->GetColor()};
+			GetFGColorTexture()->lock();
+			GetFGColorTexture()->setPixel(pPixel->GetPos().GetFloorIntX(),
+				                          pPixel->GetPos().GetFloorIntY(),
+				                          c.GetR(), c.GetG(), c.GetB(), 255);
+			GetFGColorTexture()->unlock();
+			// Register terrain change
+			g_SceneMan.RegisterTerrainChange(pPixel->GetPos().m_X,
+				                             pPixel->GetPos().m_Y, 1, 1,
+				                             g_DrawColor, false);
 
-        pMObject->Draw(GetMaterialBitmap(), Vector(), g_DrawMaterial, true);
-    }
+			uint32_t mat = pPixel->GetAtom()->GetMaterial()->GetSettleMaterial();
+			GetMaterialTexture()->lock();
+			GetMaterialTexture()->setPixel(pPixel->GetPos().GetFloorIntX(),pPixel->GetPos().GetFloorIntY(), mat);
+			GetMaterialTexture()->unlock();
+
+		}
+	}
 }
 
 
@@ -1225,21 +1272,21 @@ void SLTerrain::ApplyTerrainObject(TerrainObject *pTObject)
     // Do duplicate drawing if the terrain object straddles a wrapping border
     if (loc.m_X < 0)
     {
-        draw_sprite(m_pMainBitmap, pTObject->GetMaterialBitmap(), loc.m_X + m_pMainBitmap->w, loc.m_Y);
+        draw_sprite(m_pMainTexture, pTObject->GetMaterialBitmap(), loc.m_X + m_pMainTexture->w, loc.m_Y);
         draw_sprite(m_pFGColor->GetBitmap(), pTObject->GetFGColorBitmap(), loc.m_X + m_pFGColor->GetBitmap()->w, loc.m_Y);
         if (pTObject->HasBGColor())
             draw_sprite(m_pBGColor->GetBitmap(), pTObject->GetBGColorBitmap(), loc.m_X + m_pBGColor->GetBitmap()->w, loc.m_Y);
     }
-    else if (loc.m_X >= m_pMainBitmap->w - pTObject->GetFGColorBitmap()->w)
+    else if (loc.m_X >= m_pMainTexture->w - pTObject->GetFGColorBitmap()->w)
     {
-        draw_sprite(m_pMainBitmap, pTObject->GetMaterialBitmap(), loc.m_X - m_pMainBitmap->w, loc.m_Y);
+        draw_sprite(m_pMainTexture, pTObject->GetMaterialBitmap(), loc.m_X - m_pMainTexture->w, loc.m_Y);
         draw_sprite(m_pFGColor->GetBitmap(), pTObject->GetFGColorBitmap(), loc.m_X - m_pFGColor->GetBitmap()->w, loc.m_Y);
         if (pTObject->HasBGColor())
             draw_sprite(m_pBGColor->GetBitmap(), pTObject->GetBGColorBitmap(), loc.m_X - m_pBGColor->GetBitmap()->w, loc.m_Y);
     }
 
     // Regular drawing
-    draw_sprite(m_pMainBitmap, pTObject->GetMaterialBitmap(), loc.m_X, loc.m_Y);
+    draw_sprite(m_pMainTexture, pTObject->GetMaterialBitmap(), loc.m_X, loc.m_Y);
     draw_sprite(m_pFGColor->GetBitmap(), pTObject->GetFGColorBitmap(), loc.m_X, loc.m_Y);
 	if (pTObject->HasBGColor())
 	{
@@ -1296,11 +1343,11 @@ bool SLTerrain::IsBoxBuried(const Box &checkBox) const
 
 void SLTerrain::CleanAirBox(Box box, bool wrapsX, bool wrapsY)
 {
-    acquire_bitmap(m_pMainBitmap);
+    acquire_bitmap(m_pMainTexture);
     acquire_bitmap(m_pFGColor->GetBitmap());
 
-    int width = m_pMainBitmap->w;
-    int height = m_pMainBitmap->h;
+    int width = m_pMainTexture->w;
+    int height = m_pMainTexture->h;
     unsigned char matPixel;
 
 	for (int y = box.m_Corner.m_Y; y < box.m_Corner.m_Y + box.m_Height; ++y) {
@@ -1312,26 +1359,26 @@ void SLTerrain::CleanAirBox(Box box, bool wrapsX, bool wrapsY)
 			if (wrapsX)
 			{
 				if (wrapX < 0)
-					wrapX = wrapX + m_pMainBitmap->w;
+					wrapX = wrapX + m_pMainTexture->w;
 
-				if (wrapX >= m_pMainBitmap->w)
-					wrapX = wrapX - m_pMainBitmap->w;
+				if (wrapX >= m_pMainTexture->w)
+					wrapX = wrapX - m_pMainTexture->w;
 			}
 
 			if (wrapsY)
 			{
 				if (wrapY < 0)
-					wrapY = wrapY + m_pMainBitmap->h;
+					wrapY = wrapY + m_pMainTexture->h;
 
-				if (wrapY >= m_pMainBitmap->h)
-					wrapY = wrapY - m_pMainBitmap->h;
+				if (wrapY >= m_pMainTexture->h)
+					wrapY = wrapY - m_pMainTexture->h;
 			}
 
 			if (wrapX >= 0 && wrapY >=0 && wrapX < width && wrapY < height)
 			{
-				matPixel = _getpixel(m_pMainBitmap, wrapX, wrapY);
+				matPixel = _getpixel(m_pMainTexture, wrapX, wrapY);
 				if (matPixel == g_MaterialCavity) {
-					_putpixel(m_pMainBitmap, wrapX, wrapY, g_MaterialAir);
+					_putpixel(m_pMainTexture, wrapX, wrapY, g_MaterialAir);
 					matPixel = g_MaterialAir;
 				}
 				if (matPixel == g_MaterialAir)
@@ -1341,7 +1388,7 @@ void SLTerrain::CleanAirBox(Box box, bool wrapsX, bool wrapsY)
         }
     }
 
-    release_bitmap(m_pMainBitmap);
+    release_bitmap(m_pMainTexture);
     release_bitmap(m_pFGColor->GetBitmap());
 }
 
@@ -1354,18 +1401,18 @@ void SLTerrain::CleanAirBox(Box box, bool wrapsX, bool wrapsY)
 
 void SLTerrain::CleanAir()
 {
-    acquire_bitmap(m_pMainBitmap);
+    acquire_bitmap(m_pMainTexture);
     acquire_bitmap(m_pFGColor->GetBitmap());
 
-    int width = m_pMainBitmap->w;
-    int height = m_pMainBitmap->h;
+    int width = m_pMainTexture->w;
+    int height = m_pMainTexture->h;
     unsigned char matPixel;
 
     for (int y = 0; y < height; ++y) {
         for (int x = 0; x < width; ++x) {
-            matPixel = _getpixel(m_pMainBitmap, x, y);
+            matPixel = _getpixel(m_pMainTexture, x, y);
             if (matPixel == g_MaterialCavity) {
-                _putpixel(m_pMainBitmap, x, y, g_MaterialAir);
+                _putpixel(m_pMainTexture, x, y, g_MaterialAir);
                 matPixel = g_MaterialAir;
             }
             if (matPixel == g_MaterialAir)
@@ -1373,7 +1420,7 @@ void SLTerrain::CleanAir()
         }
     }
 
-    release_bitmap(m_pMainBitmap);
+    release_bitmap(m_pMainTexture);
     release_bitmap(m_pFGColor->GetBitmap());
 }
 
@@ -1386,7 +1433,7 @@ void SLTerrain::CleanAir()
 
 void SLTerrain::ClearAllMaterial()
 {
-    clear_to_color(m_pMainBitmap, g_MaskColor);
+    clear_to_color(m_pMainTexture, g_MaskColor);
     clear_to_color(m_pFGColor->GetBitmap(), g_MaterialAir);
 }
 
