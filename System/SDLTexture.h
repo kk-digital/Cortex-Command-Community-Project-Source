@@ -398,6 +398,7 @@ namespace RTE {
 		int renderFillColor(SDL_Renderer *renderer, const SDL_Rect &source,
 		                    const SDL_Rect &dest, uint32_t color, double angle,
 		                    int flip);
+
 		/// <summary>
 		/// Lock the Texture for write access. This is only available for
 		/// streaming access Textures.
@@ -426,6 +427,16 @@ namespace RTE {
 		/// texture)
 		/// </summary>
 		void unlock();
+
+		/// <summary>
+		/// Get the width of the Texture
+		/// </summary>
+		int getW() const {return w;}
+
+		/// <summary>
+		/// Get the width of the Texture
+		/// </summary>
+		int getH() const {return h;}
 
 		/// <summary>
 		/// Get the pixel format of the Texture
@@ -546,12 +557,6 @@ namespace RTE {
 		/// </param>
 		int setColorMod(uint8_t r, uint8_t g, uint8_t b);
 
-	public:
-		//! Width of the texture
-		int w;
-		//! Height of the texture
-		int h;
-
 	private:
 		//! Deleter struct for unique_ptr
 		struct sdl_texture_deleter {
@@ -560,6 +565,11 @@ namespace RTE {
 
 		//! Internal SDL_Texture
 		std::unique_ptr<SDL_Texture, sdl_texture_deleter> m_Texture;
+
+		//! Width of the texture
+		int w;
+		//! Height of the texture
+		int h;
 
 		//! Texture Access specifier
 		int m_Access;

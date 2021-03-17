@@ -357,7 +357,7 @@ namespace RTE {
 		m_Amask=fmt->Amask;
 	}
 
-	Texture &Texture::operator=(Texture &&texture) {
+	Texture &Texture::operator=(Texture &&texture){
 		if (&texture == this)
 			return *this;
 
