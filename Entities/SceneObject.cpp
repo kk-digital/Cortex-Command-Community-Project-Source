@@ -17,6 +17,8 @@
 #include "ActivityMan.h"
 #include "SceneMan.h"
 
+#include "System/SDLHelper.h"
+
 namespace RTE {
 
 AbstractClassInfo(SceneObject, Entity)
@@ -363,7 +365,7 @@ string SceneObject::GetGoldValueString(int nativeModule, float foreignMult, floa
 // Virtual method:  DrawTeamMark
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Draws team sign this terrain object belongs to.
-void SceneObject::DrawTeamMark(BITMAP *pTargetBitmap, const Vector &targetPos) const
+void SceneObject::DrawTeamMark(SDL_Renderer* renderer, const Vector &targetPos) const
 {
     // Only do HUD if on a team
     if (m_Team < 0)
@@ -376,32 +378,34 @@ void SceneObject::DrawTeamMark(BITMAP *pTargetBitmap, const Vector &targetPos) c
     {
         // Spans vertical scene seam
         int sceneWidth = g_SceneMan.GetSceneWidth();
-        if (g_SceneMan.SceneWrapsX() && pTargetBitmap->w < sceneWidth)
+		SDL_Rect viewport;
+		SDL_RenderGetViewport(renderer, &viewport);
+        if (g_SceneMan.SceneWrapsX() && viewport.w < sceneWidth)
         {
-            if ((targetPos.m_X < 0) && (m_Pos.m_X > (sceneWidth - pTargetBitmap->w)))
+            if ((targetPos.m_X < 0) && (m_Pos.m_X > (sceneWidth - viewport.w)))
                 drawPos.m_X -= sceneWidth;
-            else if (((targetPos.m_X + pTargetBitmap->w) > sceneWidth) && (m_Pos.m_X < pTargetBitmap->w))
+            else if (((targetPos.m_X + viewport.w) > sceneWidth) && (m_Pos.m_X < viewport.w))
                 drawPos.m_X += sceneWidth;
         }
         // Spans horizontal scene seam
         int sceneHeight = g_SceneMan.GetSceneHeight();
-        if (g_SceneMan.SceneWrapsY() && pTargetBitmap->h < sceneHeight)
+        if (g_SceneMan.SceneWrapsY() && viewport.h < sceneHeight)
         {
-            if ((targetPos.m_Y < 0) && (m_Pos.m_Y > (sceneHeight - pTargetBitmap->h)))
+            if ((targetPos.m_Y < 0) && (m_Pos.m_Y > (sceneHeight - viewport.h)))
                 drawPos.m_Y -= sceneHeight;
-            else if (((targetPos.m_Y + pTargetBitmap->h) > sceneHeight) && (m_Pos.m_Y < pTargetBitmap->h))
+            else if (((targetPos.m_Y + viewport.h) > sceneHeight) && (m_Pos.m_Y < viewport.h))
                 drawPos.m_Y += sceneHeight;
         }
     }
 
     // Get the Icon bitmaps of this Actor's team, if any
-	BITMAP * teamIcon = g_ActivityMan.GetActivity()->GetTeamIcon(m_Team)->GetBitmaps8()[0];
+	std::shared_ptr<Texture> teamIcon = g_ActivityMan.GetActivity()->GetTeamIcon(m_Team)->GetTextures()[0];
 
     // Now draw the Icon if we can
     if (teamIcon)
     {
         // Make team icon blink faster as the health goes down
-        masked_blit(teamIcon, pTargetBitmap, 0, 0, drawPos.m_X - teamIcon->h / 2, drawPos.m_Y - teamIcon->h * 2, teamIcon->w, teamIcon->h);
+		teamIcon->render(renderer, drawPos.m_X - teamIcon->h / 2, drawPos.m_Y - teamIcon->h * 2);
     }
 }
 
