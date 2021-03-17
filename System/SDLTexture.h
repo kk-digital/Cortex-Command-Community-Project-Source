@@ -17,6 +17,7 @@ namespace RTE {
 	/// </summary>
 	class Texture {
 		friend class SceneLayer;
+		friend class SLTerrain;
 		friend class ContentFile;
 
 	public:
@@ -78,13 +79,13 @@ namespace RTE {
 		int render(SDL_Renderer *pRenderer, const SDL_Rect &dest);
 
 		/// <summary>
-		/// Render a portion of the texture to the screen.
+		/// Render the texture to the screen.
 		/// </summary>
 		/// <param name="pRenderer">
 		/// Render context to be rendered to.
 		/// </param>
-		/// <param name="src">
-		/// SDL_Rect designating the area of the texture that will be drawn.
+		/// <param name="source">
+		/// SDL_Rect designating the area of the Texture to be drawn
 		/// </param>
 		/// <param name="dest">
 		/// SDL_Rect designating the area the texture will be drawn to. The
@@ -94,7 +95,7 @@ namespace RTE {
 		/// 0 or a negative number which represents an error that can be read by
 		/// SDL_GetError
 		/// </returns>
-		int render(SDL_Renderer *pRenderer, const SDL_Rect &src,
+		int render(SDL_Renderer *pRenderer, const SDL_Rect &source,
 		           const SDL_Rect &dest);
 
 		/// <summary>
@@ -266,6 +267,138 @@ namespace RTE {
 		           const SDL_Point &center, int flip);
 
 		/// <summary>
+		/// Render the silhouette of the texture to the screen.
+		/// </summary>
+		/// <param name="pRenderer">
+		/// Render context to be rendered to.
+		/// </param>
+		/// <param name="x">
+		/// x position to draw the texture to.
+		/// </param>
+		/// <param name="y">
+		/// y position to draw the texture to.
+		/// </param>
+		/// <param name="color">
+		/// The color that the silhouette should be rendered
+		/// </param>
+		/// <returns>
+		/// 0 or a negative number which represents an error that can be read by
+		/// SDL_GetError
+		/// </returns>
+		int renderFillColor(SDL_Renderer *renderer, int x, int y,
+		                    uint32_t color);
+
+		/// <summary>
+		/// Render the silhouette of the texture to the screen.
+		/// </summary>
+		/// <param name="pRenderer">
+		/// Render context to be rendered to.
+		/// </param>
+		/// <param name="source">
+		/// A Rectangle inside the texture to be rendered
+		/// </param>
+		/// <param name="dest">
+		/// The Rectangle describing the area that the texture will be rendered
+		/// to, stretched to fit
+		/// </param>
+		/// <param name="color">
+		/// The color that the silhouette should be rendered
+		/// </param>
+		/// <returns>
+		/// 0 or a negative number which represents an error that can be read by
+		/// SDL_GetError
+		/// </returns>
+		int renderFillColor(SDL_Renderer *renderer, const SDL_Rect &source,
+		                    const SDL_Rect &dest, uint32_t color);
+
+		/// <summary>
+		/// Render the silhouette of the texture to the screen rotated by angle.
+		/// </summary>
+		/// <param name="pRenderer">
+		/// Render context to be rendered to.
+		/// </param>
+		/// <param name="x">
+		/// x position to draw the texture to.
+		/// </param>
+		/// <param name="y">
+		/// y position to draw the texture to.
+		/// </param>
+		/// <param name="color">
+		/// The color that the silhouette should be rendered
+		/// </param>
+		/// <param name="angle">
+		/// The angle the texture should be rotated by
+		/// </param>
+		/// <returns>
+		/// 0 or a negative number which represents an error that can be read by
+		/// SDL_GetError
+		/// </returns>
+		int renderFillColor(SDL_Renderer *renderer, int x, int y,
+		                    uint32_t color, double angle);
+
+		/// <summary>
+		/// Render the silhouette of the texture to the screen rotated by angle
+		/// and flipped horizontally or vertically according to flip.
+		/// </summary>
+		/// <param name="pRenderer">
+		/// Render context to be rendered to.
+		/// </param>
+		/// <param name="x">
+		/// x position to draw the texture to.
+		/// </param>
+		/// <param name="y">
+		/// y position to draw the texture to.
+		/// </param>
+		/// <param name="color">
+		/// The color that the silhouette should be rendered
+		/// </param>
+		/// <param name="angle">
+		/// The angle the texture should be rotated by
+		/// </param>
+		/// <param name="flip">
+		/// One or more of <a
+		/// href="https://wiki.libsdl.org/SDL_RendererFlip">SDL_RenderFlip</a>,
+		/// multiple values may be bitwise or'd together.
+		/// </param>
+		/// <returns>
+		/// 0 or a negative number which represents an error that can be read by
+		/// SDL_GetError
+		/// </returns>
+		int renderFillColor(SDL_Renderer *renderer, int x, int y,
+		                    uint32_t color, double angle, int flip);
+
+		/// <summary>
+		/// Render the silhouette of the texture to the screen rotated by angle
+		/// and flipped horizontally or vertically according to flip.
+		/// </summary>
+		/// <param name="pRenderer">
+		/// Render context to be rendered to.
+		/// </param>
+		/// <param name="source">
+		/// The area of the Texture to draw.
+		/// </param>
+		/// <param name="dest">
+		/// The area to draw to, the texture will be stretched as needed.
+		/// </param>
+		/// <param name="color">
+		/// The color that the silhouette should be rendered
+		/// </param>
+		/// <param name="angle">
+		/// The angle the texture should be rotated by
+		/// </param>
+		/// <param name="flip">
+		/// One or more of <a
+		/// href="https://wiki.libsdl.org/SDL_RendererFlip">SDL_RenderFlip</a>,
+		/// multiple values may be bitwise or'd together.
+		/// </param>
+		/// <returns>
+		/// 0 or a negative number which represents an error that can be read by
+		/// SDL_GetError
+		/// </returns>
+		int renderFillColor(SDL_Renderer *renderer, const SDL_Rect &source,
+		                    const SDL_Rect &dest, uint32_t color, double angle,
+		                    int flip);
+		/// <summary>
 		/// Lock the Texture for write access. This is only available for
 		/// streaming access Textures.
 		/// </summary>
@@ -276,18 +409,31 @@ namespace RTE {
 		int lock();
 
 		/// <summary>
-		/// Lock a region of the Texture. This is only available for streaming
+		/// Safely Lock a region of the Texture. This is only available for streaming
 		/// Textures
 		/// </summary>
 		/// <param name="region">
-		/// An SDL_Rect designating the area to be locked.
+		/// An SDL_Rect designating the area to be locked. This will be clipped
+		/// should the region fall outside the texture
 		/// </param>
 		int lock(const SDL_Rect &region);
 
 		/// <summary>
-		/// Unlock the Texture. (It is safe to call this on an unlocked texture)
+		/// Unlock the Texture and update pixels in vram if neccessary.
+		/// If a region of the Texture was locked, it is assumed that all pixels
+		/// in that are were modified.
+		/// (It is safe to call this on an unlocked
+		/// texture)
 		/// </summary>
 		void unlock();
+
+		/// <summary>
+		/// Get the pixel format of the Texture
+		/// </summary>
+		/// <returns>
+		/// An uint32_t representing one of SDL_PixelFormatEnum
+		/// </returns>
+		uint32_t getFormat(){return m_Format;}
 
 		/// <summary>
 		/// Get the color of the pixel at (x,y). If (x,y) is outside the texture
@@ -305,7 +451,31 @@ namespace RTE {
 		uint32_t getPixel(int x, int y);
 
 		/// <summary>
-		/// Get the color of the pixel at (pos.x,pos.y). If pos is outside the Texture this returns 0xFFFFFF00, i.e. fully transparent white.
+		/// Returns the bitmask for red in a 32bit color of the textures pixel format
+		/// </summary>
+		uint32_t getRmask() {return m_Rmask;}
+
+		/// <summary>
+		/// Returns the bitmask for green in a 32bit color of the textures pixel
+		/// format
+		/// </summary>
+		uint32_t getGmask() {return m_Gmask;}
+
+		/// <summary>
+		/// Returns the bitmask for blue in a 32bit color of the textures pixel
+		/// format
+		/// </summary>
+		uint32_t getBmask() {return m_Bmask;}
+
+		/// <summary>
+		/// Returns the bitmask for alpha in a 32bit color of the textures pixel
+		/// format
+		/// </summary>
+		uint32_t getAmask() {return m_Amask;}
+
+		/// <summary>
+		/// Get the color of the pixel at (pos.x,pos.y). If pos is outside the
+		/// Texture this returns 0xFFFFFF00, i.e. fully transparent white.
 		/// </summary>
 		/// <param name="pos">
 		/// Position of the pixel to get.
@@ -314,6 +484,7 @@ namespace RTE {
 		/// A uint32_t in the pixel format of the texture
 		/// </returns>
 		uint32_t getPixel(SDL_Point pos);
+
 
 		/// <summary>
 		/// Get the alpha value that will be multiplied onto all render
@@ -393,16 +564,56 @@ namespace RTE {
 		//! Texture Access specifier
 		int m_Access;
 
+		//! Pixel Format specifier
+		uint32_t m_Format;
+		uint32_t m_Rmask;
+		uint32_t m_Gmask;
+		uint32_t m_Bmask;
+		uint32_t m_Amask;
+
 		//! READ ONLY pixel array
 		std::vector<uint32_t> m_PixelsRO;
 		//! WRITE ONLY pixel array. Only accessible while Texture is locked
 		void *m_PixelsWO;
 
+		//! Non NULL if locked with lock(SDL_Rect);
+		std::unique_ptr<SDL_Rect> m_LockedRect;
+
 		//! Size of one row of pixels in Memory, only meaningful while Texture
 		//! is locked
 		int m_Pitch;
 
+		// static Texture used for rendering silhouettes, will be created as
+		// needed, and must be able to contain the largest texture loaded
+		static std::unique_ptr<Texture> fillTarget;
+
 	private:
+		/// <summary>
+		/// Set a pixel at (x,y) to color
+		/// </summary>
+		/// <param name="x">
+		/// x coordinate of pixel to set
+		/// </param>
+		/// <param name="y">
+		/// y coordinate of pixel to set
+		/// </param>
+		/// <param name="color">
+		/// Color to set the pixel to in the format of the texture
+		/// </param>
+		void setPixel(int x, int y, uint32_t color);
+
+		void setPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b,
+		              uint8_t a) {
+			setPixel(x, y,
+			         (r & m_Rmask) | (g & m_Gmask) | (b & m_Bmask) |
+			             (a & m_Amask));
+		}
+
+		/// <summary>
+		/// Get the raw Pixels of the Texture for RW ops, offset by the locked area
+		/// </summary>
+		uint32_t * getPixelsRW();
+
 		/// <summary>
 		/// Clear the texture and reset member variables
 		/// </summary>
@@ -413,9 +624,28 @@ namespace RTE {
 		/// </summary>
 		Texture() { Reset(); }
 
-		// No copying of textures allowed
-		Texture(Texture &copy) = delete;
-		Texture &operator=(const Texture &copy) = delete;
+		/// <summary>
+		/// Create an empty Texture with dimensions width x height
+		/// </summary>
+		/// <param name="width">
+		/// Width of the new Texture
+		/// </param>
+		/// <param name="height">
+		/// Height of the new Texture
+		/// </param>
+		/// <param name="access">
+		/// TextureAccess of the Texture defaults to render target
+		/// </param>
+		Texture(SDL_Renderer *renderer, int width, int height, int access = 2);
+
+		uint32_t getNativeAlphaFormat(SDL_Renderer* renderer);
+		void setRGBAMasks();
+
+
+		// Copying only allowed for friends of this class but needs to specify rendering context
+		Texture(const Texture &copy) = delete;
+		Texture &operator=(const Texture &copy)=delete;
+		Texture(SDL_Renderer* renderer, const Texture &texture);
 
 	public:
 		//! Move assignment operator
