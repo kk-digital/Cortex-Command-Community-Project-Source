@@ -85,7 +85,7 @@ int SceneLayer::Create(ContentFile textureFile,
 	m_pMainTexture = m_TextureFile.GetAsTexture(false, "", true);
 	RTEAssert(m_pMainTexture.get(), "Failed to load SDL_Texture in SceneLayer::Create");
 
-	Create(m_pMainTexture, drawTrans, offset, wrapX, wrapY, scrollInfo);
+	Create(*m_pMainTexture, drawTrans, offset, wrapX, wrapY, scrollInfo);
 
     // Establisht he scaled dimensions of this
     m_ScaledDimensions.SetXY(m_pMainTexture->w * m_ScaleFactor.m_X, m_pMainTexture->h * m_ScaleFactor.m_Y);
@@ -99,7 +99,7 @@ int SceneLayer::Create(ContentFile textureFile,
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Makes the SceneLayer object ready for use.
 
-	int SceneLayer::Create(std::shared_ptr<Texture> pTexture,
+	int SceneLayer::Create(Texture &texture,
                        bool drawTrans,
                        Vector offset,
                        bool wrapX,
@@ -107,11 +107,11 @@ int SceneLayer::Create(ContentFile textureFile,
                        Vector scrollInfo)
 {
 
-	RTEAssert(pTexture.get(), "Null bitmap passed in when creating SceneLayer");
+	RTEAssert(!texture.m_PixelsRO.empty(), "Null bitmap passed in when creating SceneLayer");
 
-	RTEAssert(pTexture->m_Access == SDL_TEXTUREACCESS_STREAMING,
+	RTEAssert(texture.m_Access == SDL_TEXTUREACCESS_STREAMING,
 		      "Non streaming access texture passed in when creating SceneLayer")
-		*m_pMainTexture = std::move(*pTexture);
+		*m_pMainTexture = std::move(texture);
 
     m_DrawTrans = drawTrans;
     m_Offset = offset;
@@ -184,7 +184,7 @@ int SceneLayer::Create(const SceneLayer &reference)
     // Deep copy the bitmap
     if (reference.m_pMainTexture)
     {
-		*m_pMainTexture = *reference.m_pMainTexture;
+		m_pMainTexture.reset(new Texture(g_FrameMan.GetRenderer(), *reference.m_pMainTexture));
     }
     // If no bitmap to copy, has to load the data (LoadData) to create this in the copied to SL
     m_DrawTrans = reference.m_DrawTrans;
