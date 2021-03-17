@@ -79,7 +79,7 @@ void MovableObject::Clear()
     m_ScriptPresetName.clear();
     m_ScriptObjectName.clear();
     m_ScreenEffectFile.Reset();
-    m_pScreenEffect = 0;
+    m_pScreenEffect.reset();
 	m_EffectRotAngle = 0;
 	m_InheritEffectRotAngle = false;
 	m_RandomizeEffectRotAngle = false;
@@ -336,7 +336,7 @@ int MovableObject::ReadProperty(const std::string_view &propName, Reader &reader
 		if (LoadScript(scriptPath) == -2) { reader.ReportError("Duplicate script path " + scriptPath); }
 	} else if (propName == "ScreenEffect") {
         reader >> m_ScreenEffectFile;
-        m_pScreenEffect = m_ScreenEffectFile.GetAsBitmap();
+        m_pScreenEffect = m_ScreenEffectFile.GetAsTexture();
 		m_ScreenEffectHash = m_ScreenEffectFile.GetHash();
     }
     else if (propName == "EffectStartTime")
