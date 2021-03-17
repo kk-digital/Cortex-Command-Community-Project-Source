@@ -15,6 +15,8 @@
 #include "PresetMan.h"
 #include "AEmitter.h"
 
+#include "System/SDLHelper.h"
+
 namespace RTE {
 
 AbstractClassInfo(MOSprite, MovableObject)
@@ -29,7 +31,7 @@ AbstractClassInfo(MOSprite, MovableObject)
 void MOSprite::Clear()
 {
     m_SpriteFile.Reset();
-    m_aSprite = 0;
+    m_aSprite.clear();
     m_FrameCount = 1;
     m_SpriteOffset.Reset();
     m_Frame = 0;
@@ -62,10 +64,9 @@ int MOSprite::Create()
         return -1;
 
     // Post-process reading
-    delete [] m_aSprite;
     m_aSprite = m_SpriteFile.GetAsAnimation(m_FrameCount);
 
-    if (m_aSprite && m_aSprite[0])
+    if (!m_aSprite.empty() && m_aSprite[0].get())
     {
         // Set default sprite offset
         if (m_SpriteOffset.IsZero())
@@ -74,8 +75,8 @@ int MOSprite::Create()
             m_SpriteOffset.m_Y = -m_aSprite[0]->h / 2;
         }
         // Calc maximum dimensions from the Pos, based on the sprite
-        float maxX = MAX(fabs(m_SpriteOffset.m_X), fabs(m_aSprite[0]->w + m_SpriteOffset.m_X));
-        float maxY = MAX(fabs(m_SpriteOffset.m_Y), fabs(m_aSprite[0]->h + m_SpriteOffset.m_Y));
+        float maxX =std::max(fabs(m_SpriteOffset.m_X), fabs(m_aSprite[0]->w + m_SpriteOffset.m_X));
+        float maxY =std::max(fabs(m_SpriteOffset.m_Y), fabs(m_aSprite[0]->h + m_SpriteOffset.m_Y));
         m_SpriteRadius = sqrt((float)(maxX * maxX) + (maxY * maxY));
         m_SpriteDiameter = m_SpriteRadius * 2.0F;
     }
@@ -102,15 +103,15 @@ int MOSprite::Create(ContentFile spriteFile,
 
     m_SpriteFile = spriteFile;
     m_FrameCount = frameCount;
-    delete [] m_aSprite;
+	m_aSprite.clear();
     m_aSprite = m_SpriteFile.GetAsAnimation(m_FrameCount);
     m_SpriteOffset = Vector(-m_aSprite[0]->w / 2, -m_aSprite[0]->h / 2);
 
     m_HFlipped = false;
 
     // Calc maximum dimensions from the Pos, based on the sprite
-    float maxX = MAX(fabs(m_SpriteOffset.m_X), fabs(m_aSprite[0]->w + m_SpriteOffset.m_X));
-    float maxY = MAX(fabs(m_SpriteOffset.m_Y), fabs(m_aSprite[0]->h + m_SpriteOffset.m_Y));
+    float maxX =std::max(fabs(m_SpriteOffset.m_X), fabs(m_aSprite[0]->w + m_SpriteOffset.m_X));
+    float maxY =std::max(fabs(m_SpriteOffset.m_Y), fabs(m_aSprite[0]->h + m_SpriteOffset.m_Y));
     m_SpriteRadius = sqrt((float)(maxX * maxX) + (maxY * maxY));
     m_SpriteDiameter = m_SpriteRadius * 2.0F;
 
@@ -127,7 +128,7 @@ int MOSprite::Create(const MOSprite &reference)
 {
     MovableObject::Create(reference);
 
-    if (!reference.m_aSprite)
+    if (reference.m_aSprite.empty())
         return -1;
 
     m_SpriteFile = reference.m_SpriteFile;
@@ -135,13 +136,8 @@ int MOSprite::Create(const MOSprite &reference)
     m_FrameCount = reference.m_FrameCount;
     m_Frame = reference.m_Frame;
     // Allocate a new array of pointers (owned by this),
-    // and copy the pointers' values themselves over by shallow copy (the BITMAPs are not owned by this)
-    delete [] m_aSprite;
-    m_aSprite = new BITMAP *[m_FrameCount];
-    for (int i = 0; i < m_FrameCount; ++i)
-    {
-        m_aSprite[i] = reference.m_aSprite[i];
-    }
+    // and copy the pointers' values themselves over by shallow copy
+	m_aSprite = reference.m_aSprite;
 
     m_SpriteOffset = reference.m_SpriteOffset;
     m_SpriteAnimMode = reference.m_SpriteAnimMode;
@@ -309,7 +305,6 @@ int MOSprite::Save(Writer &writer) const
 void MOSprite::Destroy(bool notInherited)
 {
     //  Delete only the array of pointers, not the BITMAP:s themselves... owned by static contentfile maps
-    delete[] m_aSprite;
 //    delete m_pEntryWound; Not doing this anymore since we're not owning
 //    delete m_pExitWound;
 
@@ -413,9 +408,10 @@ bool MOSprite::IsOnScenePoint(Vector &scenePoint) const
         Vector spritePoint = scenePoint - m_Pos;
         spritePoint.FlipX(m_HFlipped);
         // Check over overlap
-        int pixel = getpixel(m_aSprite[m_Frame], spritePoint.m_X - m_SpriteOffset.m_X, spritePoint.m_Y - m_SpriteOffset.m_Y);
-        // Check that it isn't outside the bitmap, and not of the key color
-        if (pixel != -1 && pixel != g_MaskColor)
+
+        uint32_t pixel = m_aSprite[m_Frame]->getPixel(spritePoint.m_X - m_SpriteOffset.m_X, spritePoint.m_Y - m_SpriteOffset.m_Y);
+        // Check that it isn't outside the sprite or transparent
+        if (pixel&0xFF000000)
            return true;
     }
 
@@ -517,7 +513,7 @@ void MOSprite::Update() {
 // Description:     Draws this MOSprite's current graphical representation to a
 //                  BITMAP of choice.
 
-void MOSprite::Draw(BITMAP *pTargetBitmap,
+void MOSprite::Draw(SDL_Renderer* renderer,
                     const Vector &targetPos,
                     DrawMode mode,
                     bool onlyPhysical) const
@@ -542,19 +538,21 @@ void MOSprite::Draw(BITMAP *pTargetBitmap,
     // Only bother with wrap drawing if the scene actually wraps around
     if (g_SceneMan.SceneWrapsX())
     {
+		SDL_Rect viewport;
+		SDL_RenderGetViewport(renderer, &viewport);
         // See if need to double draw this across the scene seam if we're being drawn onto a scenewide bitmap
         if (targetPos.IsZero() && m_WrapDoubleDraw)
         {
             if (spritePos.m_X < m_aSprite[m_Frame]->w)
             {
                 aDrawPos[passes] = spritePos;
-                aDrawPos[passes].m_X += pTargetBitmap->w;
+                aDrawPos[passes].m_X += viewport.w;
                 passes++;
             }
-            else if (spritePos.m_X > pTargetBitmap->w - m_aSprite[m_Frame]->w)
+            else if (spritePos.m_X > viewport.w - m_aSprite[m_Frame]->w)
             {
                 aDrawPos[passes] = spritePos;
-                aDrawPos[passes].m_X -= pTargetBitmap->w;
+                aDrawPos[passes].m_X -= viewport.w;
                 passes++;
             }
         }
@@ -567,7 +565,7 @@ void MOSprite::Draw(BITMAP *pTargetBitmap,
                 aDrawPos[passes].m_X -= g_SceneMan.GetSceneWidth();
                 passes++;
             }
-            if (targetPos.m_X + pTargetBitmap->w > g_SceneMan.GetSceneWidth())
+            if (targetPos.m_X + viewport.w > g_SceneMan.GetSceneWidth())
             {
                 aDrawPos[passes] = aDrawPos[0];
                 aDrawPos[passes].m_X += g_SceneMan.GetSceneWidth();

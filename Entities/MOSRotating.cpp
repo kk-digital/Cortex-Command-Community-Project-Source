@@ -27,20 +27,6 @@ namespace RTE {
 
 ConcreteClassInfo(MOSRotating, MOSprite, 500)
 
-BITMAP * MOSRotating::m_spTempBitmap16 = 0;
-BITMAP * MOSRotating::m_spTempBitmap32 = 0;
-BITMAP * MOSRotating::m_spTempBitmap64 = 0;
-BITMAP * MOSRotating::m_spTempBitmap128 = 0;
-BITMAP * MOSRotating::m_spTempBitmap256 = 0;
-BITMAP * MOSRotating::m_spTempBitmap512 = 0;
-
-BITMAP * MOSRotating::m_spTempBitmapS16 = 0;
-BITMAP * MOSRotating::m_spTempBitmapS32 = 0;
-BITMAP * MOSRotating::m_spTempBitmapS64 = 0;
-BITMAP * MOSRotating::m_spTempBitmapS128 = 0;
-BITMAP * MOSRotating::m_spTempBitmapS256 = 0;
-BITMAP * MOSRotating::m_spTempBitmapS512 = 0;
-
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          Clear
@@ -109,75 +95,6 @@ int MOSRotating::Create()
 
     m_SpriteCenter.SetXY(m_aSprite[m_Frame]->w / 2, m_aSprite[m_Frame]->h / 2);
     m_SpriteCenter += m_SpriteOffset;
-
-/* Allocated in lazy fashion as needed when drawing flipped
-    if (!m_pFlipBitmap && m_aSprite[0])
-        m_pFlipBitmap = create_bitmap_ex(8, m_aSprite[0]->w, m_aSprite[0]->h);
-*/
-/* Not anymore; points to shared static bitmaps
-    if (!m_pTempBitmap && m_aSprite[0])
-        m_pTempBitmap = create_bitmap_ex(8, m_aSprite[0]->w, m_aSprite[0]->h);
-*/
-
-    // Can't create these earlier in the static declaration because allegro_init needs to be called before create_bitmap
-    if (!m_spTempBitmap16)
-        m_spTempBitmap16 = create_bitmap_ex(8, 16, 16);
-    if (!m_spTempBitmap32)
-        m_spTempBitmap32 = create_bitmap_ex(8, 32, 32);
-    if (!m_spTempBitmap64)
-        m_spTempBitmap64 = create_bitmap_ex(8, 64, 64);
-    if (!m_spTempBitmap128)
-        m_spTempBitmap128 = create_bitmap_ex(8, 128, 128);
-    if (!m_spTempBitmap256)
-        m_spTempBitmap256 = create_bitmap_ex(8, 256, 256);
-    if (!m_spTempBitmap512)
-        m_spTempBitmap512 = create_bitmap_ex(8, 512, 512);
-
-    // Can't create these earlier in the static declaration because allegro_init needs to be called before create_bitmap
-    if (!m_spTempBitmapS16)
-        m_spTempBitmapS16 = create_bitmap_ex(c_MOIDLayerBitDepth, 16, 16);
-    if (!m_spTempBitmapS32)
-        m_spTempBitmapS32 = create_bitmap_ex(c_MOIDLayerBitDepth, 32, 32);
-    if (!m_spTempBitmapS64)
-        m_spTempBitmapS64 = create_bitmap_ex(c_MOIDLayerBitDepth, 64, 64);
-    if (!m_spTempBitmapS128)
-        m_spTempBitmapS128 = create_bitmap_ex(c_MOIDLayerBitDepth, 128, 128);
-    if (!m_spTempBitmapS256)
-        m_spTempBitmapS256 = create_bitmap_ex(c_MOIDLayerBitDepth, 256, 256);
-    if (!m_spTempBitmapS512)
-        m_spTempBitmapS512 = create_bitmap_ex(c_MOIDLayerBitDepth, 512, 512);
-
-    // Choose an appropriate size for this' diameter
-    if (m_SpriteDiameter >= 256)
-	{
-        m_pTempBitmap = m_spTempBitmap512;
-        m_pTempBitmapS = m_spTempBitmapS512;
-	}
-    else if (m_SpriteDiameter >= 128)
-	{
-        m_pTempBitmap = m_spTempBitmap256;
-        m_pTempBitmapS = m_spTempBitmapS256;
-	}
-    else if (m_SpriteDiameter >= 64)
-	{
-        m_pTempBitmap = m_spTempBitmap128;
-        m_pTempBitmapS = m_spTempBitmapS128;
-	}
-    else if (m_SpriteDiameter >= 32)
-	{
-        m_pTempBitmap = m_spTempBitmap64;
-        m_pTempBitmapS = m_spTempBitmapS64;
-	}
-    else if (m_SpriteDiameter >= 16)
-	{
-        m_pTempBitmap = m_spTempBitmap32;
-        m_pTempBitmapS = m_spTempBitmapS32;
-	}
-    else
-	{
-		m_pTempBitmap = m_spTempBitmap16;
-		m_pTempBitmapS = m_spTempBitmapS16;
-	}
 
     return 0;
 }
@@ -545,12 +462,6 @@ void MOSRotating::Destroy(bool notInherited)
     for (list<Attachable *>::iterator aItr = m_Attachables.begin(); aItr != m_Attachables.end(); ++aItr)
         delete (*aItr);
 
-    destroy_bitmap(m_pFlipBitmap);
-    destroy_bitmap(m_pFlipBitmapS);
-
-// Not anymore; point to shared static bitmaps
-//    destroy_bitmap(m_pTempBitmap);
-
     if (!notInherited)
         MOSprite::Destroy();
     Clear();
@@ -603,7 +514,7 @@ bool MOSRotating::HitsMOs() const
 
 int MOSRotating::GetDrawPriority() const
 {
-    return INT_MAX;
+    return std::numeric_limits<int>::max();
 }
 
 /*
@@ -789,9 +700,6 @@ bool MOSRotating::ParticlePenetration(HitData &hd)
         int error, dom, sub, domSteps, subSteps;
         bool inside = false, exited = false, subStepped = false;
 
-        // Lock all bitmaps involved outside the loop.
-        acquire_bitmap(m_aSprite[m_Frame]);
-
         bounds[X] = m_aSprite[m_Frame]->w;
         bounds[Y] = m_aSprite[m_Frame]->h;
 
@@ -854,10 +762,8 @@ bool MOSRotating::ParticlePenetration(HitData &hd)
                 break;
             }
 
-            RTEAssert(is_inside_bitmap(m_aSprite[m_Frame], intPos[X], intPos[Y], 0), "Particle penetration test is outside of sprite!");
-
             // Check if we are inside the sprite.
-            if (_getpixel(m_aSprite[m_Frame], intPos[X], intPos[Y]) != g_MaskColor)
+            if (m_aSprite[m_Frame]->getPixel(intPos[X], intPos[Y])&0xFF000000)
             {
                 inside = true;
                 // Break if the particle can't force its way through any further.
@@ -887,7 +793,6 @@ bool MOSRotating::ParticlePenetration(HitData &hd)
             error += delta2[sub];
         }
         // Unlock all bitmaps involved outside the loop.
-        release_bitmap(m_aSprite[m_Frame]);
 
         if (m_pEntryWound)
         {
@@ -1189,8 +1094,8 @@ bool MOSRotating::IsOnScenePoint(Vector &scenePoint) const {
     if (WithinBox(scenePoint, m_Pos.m_X - m_SpriteRadius, m_Pos.m_Y - m_SpriteRadius, m_Pos.m_X + m_SpriteRadius, m_Pos.m_Y + m_SpriteRadius)) {
         Vector spritePoint = scenePoint - m_Pos;
         spritePoint = UnRotateOffset(spritePoint);
-        int pixel = getpixel(m_aSprite[m_Frame], static_cast<int>(spritePoint.m_X - m_SpriteOffset.m_X), static_cast<int>(spritePoint.m_Y - m_SpriteOffset.m_Y));
-        if (pixel != -1 && pixel != g_MaskColor) {
+        int pixel = m_aSprite[m_Frame]->getPixel(spritePoint.m_X - m_SpriteOffset.m_X, spritePoint.m_Y - m_SpriteOffset.m_Y);
+        if (pixel&0xFF000000) {
             return true;
         }
     }
