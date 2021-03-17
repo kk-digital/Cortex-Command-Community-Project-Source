@@ -157,7 +157,7 @@ ClassInfoGetters
 // Arguments:       None.
 // Return value:    A Vector describing the bitmap offset, in pixels.
 
-	const Vector & GetBitmapOffset() const { return m_BitmapOffset; }
+	const Vector & GetTextureOffset() const { return m_TextureOffset; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -167,7 +167,7 @@ ClassInfoGetters
 // Arguments:       None.
 // Return value:    Width of 'material' bitmap.
 
-	const int GetBitmapWidth() const { return m_pMaterial->w; }
+	const int GetTextureWidth() const { return m_pMaterial->w; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -177,7 +177,7 @@ ClassInfoGetters
 // Arguments:       None.
 // Return value:    Height of 'material' bitmap.
 
-	const int GetBitmapHeight() const { return m_pMaterial->h; }
+	const int GetTextureHeight() const { return m_pMaterial->h; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -213,7 +213,7 @@ ClassInfoGetters
 // Return value:    A pointer to the material BITMAP object. Ownership is not
 //                  transferred.
 
-	std::shared_ptr<Texture> GetMaterialBitmap() const { return m_pMaterial; }
+	std::shared_ptr<Texture> GetMaterialTexture() const { return m_pMaterial; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -293,7 +293,7 @@ ClassInfoGetters
 // Arguments:       None.
 // Return value:    Returns true if this module should be drawn as part of terrain on minimap.
 
-	bool const GetDisplayAsTerrain() { return m_DisplayAsTerrain; }
+	bool const GetDisplayAsTerrain() const { return m_DisplayAsTerrain; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -314,7 +314,7 @@ protected:
 
     // Offset from the position of this to the top left corner of the bitmap.
     // The inverson of this should point to a corner or pattern in the bitmaps which will snap well with a 24px grid
-    Vector m_BitmapOffset;
+    Vector m_TextureOffset;
     // Whether the offset has been defined and shuoldn't be automatically set
     bool m_OffsetDefined;
 

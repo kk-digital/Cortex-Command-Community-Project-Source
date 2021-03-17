@@ -18,8 +18,7 @@
 #include "Arm.h"
 #include "Leg.h"
 #include "LimbPath.h"
-
-struct BITMAP;
+#include "System/SDLTexture.h"
 
 namespace RTE
 {
@@ -335,7 +334,7 @@ ClassInfoGetters
 // Return value:    A pointer to the bitmap of with the head of this. Ownership is NOT
 //                  transferred!
 
-    BITMAP *GetHeadBitmap() const;
+	std::shared_ptr<Texture> GetHeadTexture() const;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -718,7 +717,7 @@ ClassInfoGetters
 // Return value:    A good identifyable graphical representation of this in a BITMAP, if
 //                  available. If not, 0 is returned. Ownership is NOT TRANSFERRED!
 
-    BITMAP * GetGraphicalIcon() override { return GetHeadBitmap(); }
+	std::shared_ptr<Texture> GetGraphicalIcon() override { return GetHeadTexture(); }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -783,7 +782,7 @@ ClassInfoGetters
 //                  indicator arrows or hovering HUD text and so on.
 // Return value:    None.
 
-    void Draw(BITMAP *pTargetBitmap, const Vector &targetPos = Vector(), DrawMode mode = g_DrawColor, bool onlyPhysical = false) const override;
+    void Draw(SDL_Renderer* renderer, const Vector &targetPos = Vector(), DrawMode mode = g_DrawColor, bool onlyPhysical = false) const override;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -797,7 +796,7 @@ ClassInfoGetters
 //                  get drawn etc.
 // Return value:    None.
 
-    void DrawHUD(BITMAP *pTargetBitmap, const Vector &targetPos = Vector(), int whichScreen = 0, bool playerControlled = false) override;
+    void DrawHUD(SDL_Renderer* renderer, const Vector &targetPos = Vector(), int whichScreen = 0, bool playerControlled = false) override;
 
 
     /// <summary>
@@ -904,7 +903,7 @@ protected:
 //                  reticule should be drawn, to indicate force in the throw.
 // Return value:    None.
 
-	void DrawThrowingReticule(BITMAP *pTargetBitmap, const Vector &targetPos = Vector(), double amount = 1.0) const;
+	void DrawThrowingReticule(SDL_Renderer* renderer, const Vector &targetPos = Vector(), double amount = 1.0) const;
 
 
     // Member variables
@@ -962,7 +961,7 @@ protected:
     int m_GoldInInventoryChunk;
     // For timing throws
     Timer m_ThrowTmr;
-    
+
     long m_ThrowPrepTime; //!< The duration it takes this AHuman to fully charge a throw.
 
     ////////////////

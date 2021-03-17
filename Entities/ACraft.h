@@ -518,7 +518,7 @@ enum
 //                  get drawn etc.
 // Return value:    None.
 
-    void DrawHUD(BITMAP *pTargetBitmap, const Vector &targetPos = Vector(), int whichScreen = 0, bool playerControlled = false) override;
+    void DrawHUD(SDL_Renderer* renderer, const Vector &targetPos = Vector(), int whichScreen = 0, bool playerControlled = false) override;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
