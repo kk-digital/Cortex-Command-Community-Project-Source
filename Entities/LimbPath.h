@@ -611,7 +611,7 @@ ClassInfoGetters
 //                  The color to draw the path's pixels as.
 // Return value:    None.
 
-	void Draw(SDL_Renderer* renderer, const Vector &targetPos = Vector(), unsigned char color = 34) const;
+	void Draw(SDL_Renderer* renderer, const Vector &targetPos = Vector(), uint32_t color = 0x984F31FF) const;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////

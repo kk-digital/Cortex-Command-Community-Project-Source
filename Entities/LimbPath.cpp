@@ -15,6 +15,8 @@
 #include "PresetMan.h"
 #include "SLTerrain.h"
 
+#include "System/SDLHelper.h"
+
 namespace RTE {
 
 ConcreteClassInfo(LimbPath, Entity, 20)
@@ -556,8 +558,9 @@ bool LimbPath::RestartFree(Vector &limbPos, MOID MOIDToIgnore, int ignoreTeam)
     bool found = false;
     float result = 0;
 
-    g_SceneMan.GetTerrain()->LockBitmaps();
-    acquire_bitmap(g_SceneMan.GetMOIDBitmap());
+	// TODO: Figure out what this does here
+    // g_SceneMan.GetTerrain()->LockTexture();
+    // acquire_bitmap(g_SceneMan.GetMOIDTexture());
     
     if (IsStaticPoint())
 	{
@@ -633,8 +636,8 @@ bool LimbPath::RestartFree(Vector &limbPos, MOID MOIDToIgnore, int ignoreTeam)
             found = true;
         }
     }
-    release_bitmap(g_SceneMan.GetMOIDBitmap());
-    g_SceneMan.GetTerrain()->UnlockBitmaps();
+    // release_bitmap(g_SceneMan.GetMOIDBitmap());
+    // g_SceneMan.GetTerrain()->UnlockBitmaps();
 
     if (found)
     {
@@ -656,21 +659,29 @@ bool LimbPath::RestartFree(Vector &limbPos, MOID MOIDToIgnore, int ignoreTeam)
 // Description:     Draws this LimbPath's current graphical debug representation to a
 //                  BITMAP of choice.
 
-void LimbPath::Draw(BITMAP *pTargetBitmap,
+void LimbPath::Draw(SDL_Renderer* renderer,
                     const Vector &targetPos,
-                    unsigned char color) const
+                    uint32_t color) const
 {
-    acquire_bitmap(pTargetBitmap);
     Vector prevPoint = m_JointPos.GetFloored() + (m_Start * m_Rotation) - targetPos;
     Vector nextPoint = prevPoint;
     for (deque<Vector>::const_iterator itr = m_Segments.begin(); itr != m_Segments.end(); ++itr)
     {
         nextPoint += (*itr) * m_Rotation;
-        line(pTargetBitmap, prevPoint.m_X, prevPoint.m_Y, nextPoint.m_X, nextPoint.m_Y, color);
-        prevPoint += (*itr) * m_Rotation;
+
+		uint8_t r,g,b,a;
+		SDL_GetRenderDrawColor(renderer, &r, &g, &b, &a);
+
+		SDL_SetRenderDrawColor(renderer, (color >> 24) & 0xFF,
+			                   (color >> 16) & 0xFF, (color >> 8) & 0xFF,
+			                   (color)&0xFF);
+		SDL_RenderDrawLine(renderer, prevPoint.m_X, prevPoint.m_Y,
+			               nextPoint.m_X, nextPoint.m_Y);
+		SDL_SetRenderDrawColor(renderer, r, g, b, a);
+
+		prevPoint += (*itr) * m_Rotation;
     }
 
-    release_bitmap(pTargetBitmap);
 }
 
 } // namespace RTE
