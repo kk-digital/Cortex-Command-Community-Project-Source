@@ -1,6 +1,9 @@
 #include "MOPixel.h"
 #include "Atom.h"
 #include "PostProcessMan.h"
+#include "Managers/FrameMan.h"
+
+#include "System/SDLHelper.h"
 
 namespace RTE {
 
@@ -206,13 +209,13 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void MOPixel::Draw(BITMAP *targetBitmap, const Vector &targetPos, DrawMode mode, bool onlyPhysical) const {
+	void MOPixel::Draw(SDL_Renderer* renderer, const Vector &targetPos, DrawMode mode, bool onlyPhysical) const {
 		// Don't draw color if this isn't a drawing frame
 		if (!g_TimerMan.DrawnSimUpdate() && mode == g_DrawColor) {
 			return;
 		}
 
-		unsigned char drawColor = 0;
+		uint32_t drawColor = 0;
 
 		switch (mode) {
 			case g_DrawMaterial:
@@ -235,9 +238,15 @@ namespace RTE {
 				break;
 		}
 
-		acquire_bitmap(targetBitmap);
-		putpixel(targetBitmap, m_Pos.GetFloorIntX() - targetPos.m_X, m_Pos.GetFloorIntY() - targetPos.m_Y, drawColor);
-		release_bitmap(targetBitmap);
+		uint8_t r,g,b,a;
+		SDL_GetRenderDrawColor(renderer, &r, &g, &b, &a);
+		SDL_SetRenderDrawColor(renderer, (drawColor>>24)&0xFF, (drawColor>>16)&0xFF,(drawColor>>8)&0xFF, (drawColor)&0xFF);
+
+		SDL_RenderDrawPoint(renderer,
+		                    m_Pos.GetFloorIntX() - targetPos.GetFloorIntX(),
+		                    m_Pos.GetFloorIntY() - targetPos.GetFloorIntY());
+
+		SDL_SetRenderDrawColor(renderer, r, g, b, a);
 
 		if (mode == g_DrawMOID) {
 			g_SceneMan.RegisterMOIDDrawing(m_Pos - targetPos, 1);
