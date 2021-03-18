@@ -4,11 +4,16 @@
 // Forward declarations
 
 struct SDL_Texture;
-void SDL_DestroyTexture(SDL_Texture *p);
+struct SDL_PixelFormat;
 
 struct SDL_Renderer;
 struct SDL_Point;
 struct SDL_Rect;
+
+extern "C" {
+void SDL_DestroyTexture(SDL_Texture *p);
+void SDL_FreeFormat(SDL_PixelFormat *p);
+}
 
 namespace RTE {
 	/// <summary>
@@ -410,8 +415,8 @@ namespace RTE {
 		int lock();
 
 		/// <summary>
-		/// Safely Lock a region of the Texture. This is only available for streaming
-		/// Textures
+		/// Safely Lock a region of the Texture. This is only available for
+		/// streaming Textures
 		/// </summary>
 		/// <param name="region">
 		/// An SDL_Rect designating the area to be locked. This will be clipped
@@ -431,12 +436,12 @@ namespace RTE {
 		/// <summary>
 		/// Get the width of the Texture
 		/// </summary>
-		int getW() const {return w;}
+		int getW() const { return w; }
 
 		/// <summary>
 		/// Get the width of the Texture
 		/// </summary>
-		int getH() const {return h;}
+		int getH() const { return h; }
 
 		/// <summary>
 		/// Get the pixel format of the Texture
@@ -444,7 +449,7 @@ namespace RTE {
 		/// <returns>
 		/// An uint32_t representing one of SDL_PixelFormatEnum
 		/// </returns>
-		uint32_t getFormat(){return m_Format;}
+		uint32_t getFormat() { return m_Format; }
 
 		/// <summary>
 		/// Get the color of the pixel at (x,y). If (x,y) is outside the texture
@@ -462,27 +467,28 @@ namespace RTE {
 		uint32_t getPixel(int x, int y);
 
 		/// <summary>
-		/// Returns the bitmask for red in a 32bit color of the textures pixel format
+		/// Returns the bitmask for red in a 32bit color of the textures pixel
+		/// format
 		/// </summary>
-		uint32_t getRmask() {return m_Rmask;}
+		uint32_t getRmask() { return m_Rmask; }
 
 		/// <summary>
 		/// Returns the bitmask for green in a 32bit color of the textures pixel
 		/// format
 		/// </summary>
-		uint32_t getGmask() {return m_Gmask;}
+		uint32_t getGmask() { return m_Gmask; }
 
 		/// <summary>
 		/// Returns the bitmask for blue in a 32bit color of the textures pixel
 		/// format
 		/// </summary>
-		uint32_t getBmask() {return m_Bmask;}
+		uint32_t getBmask() { return m_Bmask; }
 
 		/// <summary>
 		/// Returns the bitmask for alpha in a 32bit color of the textures pixel
 		/// format
 		/// </summary>
-		uint32_t getAmask() {return m_Amask;}
+		uint32_t getAmask() { return m_Amask; }
 
 		/// <summary>
 		/// Get the color of the pixel at (pos.x,pos.y). If pos is outside the
@@ -495,7 +501,6 @@ namespace RTE {
 		/// A uint32_t in the pixel format of the texture
 		/// </returns>
 		uint32_t getPixel(SDL_Point pos);
-
 
 		/// <summary>
 		/// Get the alpha value that will be multiplied onto all render
@@ -562,9 +567,13 @@ namespace RTE {
 		struct sdl_texture_deleter {
 			void operator()(SDL_Texture *p) { SDL_DestroyTexture(p); }
 		};
+		struct sdl_format_deleter {
+			void operator()(SDL_PixelFormat *p) { SDL_FreeFormat(p); }
+		};
 
 		//! Internal SDL_Texture
 		std::unique_ptr<SDL_Texture, sdl_texture_deleter> m_Texture;
+
 
 		//! Width of the texture
 		int w;
@@ -574,6 +583,9 @@ namespace RTE {
 		//! Texture Access specifier
 		int m_Access;
 
+		//! Internal SDL_PixelFormat to avoid repeated allocation on every
+		//! setPixel
+		std::unique_ptr<SDL_PixelFormat, sdl_format_deleter> m_PixelFormat;
 		//! Pixel Format specifier
 		uint32_t m_Format;
 		uint32_t m_Rmask;
@@ -608,21 +620,16 @@ namespace RTE {
 		/// y coordinate of pixel to set
 		/// </param>
 		/// <param name="color">
-		/// Color to set the pixel to in the format of the texture
+		/// Color to set the pixel to in RGBA32
 		/// </param>
 		void setPixel(int x, int y, uint32_t color);
 
-		void setPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b,
-		              uint8_t a) {
-			setPixel(x, y,
-			         (r & m_Rmask) | (g & m_Gmask) | (b & m_Bmask) |
-			             (a & m_Amask));
-		}
-
+		void setPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 		/// <summary>
-		/// Get the raw Pixels of the Texture for RW ops, offset by the locked area
+		/// Get the raw Pixels of the Texture for RW ops, offset by the locked
+		/// area
 		/// </summary>
-		uint32_t * getPixelsRW();
+		uint32_t *getPixelsRW();
 
 		/// <summary>
 		/// Clear the texture and reset member variables
@@ -648,19 +655,19 @@ namespace RTE {
 		/// </param>
 		Texture(SDL_Renderer *renderer, int width, int height, int access = 2);
 
-		uint32_t getNativeAlphaFormat(SDL_Renderer* renderer);
+		uint32_t getNativeAlphaFormat(SDL_Renderer *renderer);
 		void setRGBAMasks();
 
-
-		// Copying only allowed for friends of this class but needs to specify rendering context
 		Texture(const Texture &copy) = delete;
-		Texture &operator=(const Texture &copy)=delete;
-		Texture(SDL_Renderer* renderer, const Texture &texture);
+		Texture &operator=(const Texture &copy) = delete;
+		// Copying only allowed for friends of this class but needs to specify
+		// rendering context
+		Texture(SDL_Renderer *renderer, const Texture &texture);
 
 	public:
 		//! Move assignment operator
 		Texture &operator=(Texture &&texture);
-		operator bool() const {return m_Texture.get();}
+		operator bool() const { return m_Texture.get(); }
 	};
 } // namespace RTE
 

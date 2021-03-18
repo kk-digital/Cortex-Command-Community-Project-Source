@@ -1,5 +1,7 @@
 #include "SDLTexture.h"
 #include "SDLHelper.h"
+
+#include "Constants.h"
 namespace RTE {
 	std::unique_ptr<Texture> Texture::fillTarget;
 
@@ -9,6 +11,7 @@ namespace RTE {
 		w = texture.w;
 		h = texture.h;
 		m_Format = texture.m_Format;
+		m_PixelFormat = std::move(texture.m_PixelFormat);
 		m_Rmask = texture.m_Rmask;
 		m_Gmask = texture.m_Gmask;
 		m_Bmask = texture.m_Bmask;
@@ -26,6 +29,7 @@ namespace RTE {
 		h = texture.h;
 
 		m_Format = getNativeAlphaFormat(renderer);
+		m_PixelFormat.reset(SDL_AllocFormat(m_Format));
 		setRGBAMasks();
 
 		m_Texture.reset(SDL_CreateTexture(renderer, m_Format, texture.m_Access,
@@ -41,11 +45,13 @@ namespace RTE {
 			                  w * sizeof(uint32_t));
 		}
 	}
+
 	Texture::Texture(SDL_Renderer *renderer, int width, int height,
 	                 int access) :
 	    w{width},
 	    h{height}, m_Access{access} {
 		m_Format = getNativeAlphaFormat(renderer);
+		m_PixelFormat.reset(SDL_AllocFormat(m_Format));
 		setRGBAMasks();
 		m_PixelsWO = nullptr;
 		m_Pitch = 0;
@@ -60,6 +66,7 @@ namespace RTE {
 		w = 0;
 		h = 0;
 		m_Access = SDL_TEXTUREACCESS_STATIC;
+		m_PixelFormat.reset();
 		m_Format = SDL_PIXELFORMAT_UNKNOWN;
 		m_Rmask = 0;
 		m_Gmask = 0;
@@ -276,19 +283,32 @@ namespace RTE {
 	}
 
 	uint32_t Texture::getPixel(int x, int y) {
-		if (!m_PixelsRO.empty() && x < w && y < h)
-			return m_PixelsRO[y * w + x];
+		if (!m_PixelsRO.empty() && x < w && y < h) {
+			uint8_t r,g,b,a;
+			SDL_GetRGBA(m_PixelsRO[y * w + x], m_PixelFormat.get(), &r, &g, &b, &a);
+			return (static_cast<uint32_t>(r)<<3)|(static_cast<uint32_t>(g)<<2)|(static_cast<uint32_t>(b)<<1)|(a);
+		}
 
-		return m_Rmask|m_Gmask|m_Bmask;
+		return 0xFFFFFF00;
 	}
 
 	uint32_t Texture::getPixel(SDL_Point pos) { return getPixel(pos.x, pos.y); }
 
-	void Texture::setPixel(int x, int y, uint32_t color) {
+	void Texture::setPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b,
+	                       uint8_t a) {
 		if (m_PixelsWO && x < w && y < h) {
+			uint32_t color = SDL_MapRGBA(m_PixelFormat.get(), r, g, b, a);
 			static_cast<uint32_t *>(m_PixelsWO)[x + y * w] = color;
 			m_PixelsRO[x + y * w] = color;
 		}
+	}
+
+	void Texture::setPixel(int x, int y, uint32_t color) {
+		setPixel(x, y,
+				 (color & static_cast<uint32_t>(g_ColorMask::Red)) >> 3,
+		         (color & static_cast<int>(g_ColorMask::Green)) >> 2,
+		         (color & static_cast<uint32_t>(g_ColorMask::Blue)) >> 1,
+		         (color & static_cast<uint32_t>(g_ColorMask::Alpha)));
 	}
 
 	int Texture::setAlphaMod(uint8_t alpha) {
@@ -317,14 +337,7 @@ namespace RTE {
 
 		SDL_GetTextureColorMod(m_Texture.get(), &r, &g, &b);
 
-		uint32_t format;
-		SDL_QueryTexture(m_Texture.get(), &format, nullptr, nullptr, nullptr);
-
-		SDL_PixelFormat *pixelFormat{SDL_AllocFormat(format)};
-
-		uint32_t colorMod{SDL_MapRGB(pixelFormat, r, g, b)};
-
-		SDL_FreeFormat(pixelFormat);
+		uint32_t colorMod{SDL_MapRGB(m_PixelFormat.get(), r, g, b)};
 
 		return colorMod;
 	}
@@ -349,15 +362,14 @@ namespace RTE {
 		return SDL_PIXELFORMAT_UNKNOWN;
 	}
 
-	void Texture::setRGBAMasks(){
-		SDL_PixelFormat* fmt{SDL_AllocFormat(m_Format)};
-		m_Rmask=fmt->Rmask;
-		m_Gmask=fmt->Gmask;
-		m_Bmask=fmt->Bmask;
-		m_Amask=fmt->Amask;
+	void Texture::setRGBAMasks() {
+		m_Rmask = m_PixelFormat->Rmask;
+		m_Gmask = m_PixelFormat->Gmask;
+		m_Bmask = m_PixelFormat->Bmask;
+		m_Amask = m_PixelFormat->Amask;
 	}
 
-	Texture &Texture::operator=(Texture &&texture){
+	Texture &Texture::operator=(Texture &&texture) {
 		if (&texture == this)
 			return *this;
 
