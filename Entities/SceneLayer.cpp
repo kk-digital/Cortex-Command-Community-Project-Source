@@ -88,7 +88,7 @@ int SceneLayer::Create(ContentFile textureFile,
 	Create(*m_pMainTexture, drawTrans, offset, wrapX, wrapY, scrollInfo);
 
     // Establisht he scaled dimensions of this
-    m_ScaledDimensions.SetXY(m_pMainTexture->w * m_ScaleFactor.m_X, m_pMainTexture->h * m_ScaleFactor.m_Y);
+    m_ScaledDimensions.SetXY(m_pMainTexture->getW() * m_ScaleFactor.m_X, m_pMainTexture->getH() * m_ScaleFactor.m_Y);
 
     return 0;
 }
@@ -125,11 +125,11 @@ int SceneLayer::Create(ContentFile textureFile,
         if (m_ScrollInfo.m_X == -1.0 || m_ScrollInfo.m_X == 1.0)
             m_ScrollRatio.m_X = 1.0;
         else if (m_ScrollInfo.m_X == g_FrameMan.GetPlayerScreenWidth())
-            m_ScrollRatio.m_X = m_pMainTexture->w - g_FrameMan.GetPlayerScreenWidth();
-        else if (m_pMainTexture->w == g_FrameMan.GetPlayerScreenWidth())
+            m_ScrollRatio.m_X = m_pMainTexture->getW() - g_FrameMan.GetPlayerScreenWidth();
+        else if (m_pMainTexture->getW() == g_FrameMan.GetPlayerScreenWidth())
             m_ScrollRatio.m_X = 1.0f / (float)(m_ScrollInfo.m_X - g_FrameMan.GetPlayerScreenWidth());
         else
-            m_ScrollRatio.m_X = (float)(m_pMainTexture->w - g_FrameMan.GetPlayerScreenWidth()) /
+            m_ScrollRatio.m_X = (float)(m_pMainTexture->getW() - g_FrameMan.GetPlayerScreenWidth()) /
                                 (float)(m_ScrollInfo.m_X - g_FrameMan.GetPlayerScreenWidth());
 
     if (m_WrapY)
@@ -138,32 +138,32 @@ int SceneLayer::Create(ContentFile textureFile,
         if (m_ScrollInfo.m_Y == -1.0 || m_ScrollInfo.m_Y == 1.0)
             m_ScrollRatio.m_Y = 1.0;
         else if (m_ScrollInfo.m_Y == g_FrameMan.GetPlayerScreenHeight())
-            m_ScrollRatio.m_Y = m_pMainTexture->h - g_FrameMan.GetPlayerScreenHeight();
-        else if (m_pMainTexture->h == g_FrameMan.GetPlayerScreenHeight())
+            m_ScrollRatio.m_Y = m_pMainTexture->getH() - g_FrameMan.GetPlayerScreenHeight();
+        else if (m_pMainTexture->getH() == g_FrameMan.GetPlayerScreenHeight())
             m_ScrollRatio.m_Y = 1.0f / (float)(m_ScrollInfo.m_Y - g_FrameMan.GetPlayerScreenHeight());
         else
-            m_ScrollRatio.m_Y = (float)(m_pMainTexture->h - g_FrameMan.GetPlayerScreenHeight()) /
+            m_ScrollRatio.m_Y = (float)(m_pMainTexture->getH() - g_FrameMan.GetPlayerScreenHeight()) /
                                 (float)(m_ScrollInfo.m_Y - g_FrameMan.GetPlayerScreenHeight());
 
     // Establish the scaled dimensions of this
-    m_ScaledDimensions.SetXY(m_pMainTexture->w * m_ScaleFactor.m_X, m_pMainTexture->h * m_ScaleFactor.m_Y);
+    m_ScaledDimensions.SetXY(m_pMainTexture->getW() * m_ScaleFactor.m_X, m_pMainTexture->getH() * m_ScaleFactor.m_Y);
 
     // Sampled color at the edges of the layer that can be used to fill gap if the layer isn't large enough to cover a target bitmap
 	m_FillLeftColor =
 		m_WrapX ? g_AlphaZero
 		: m_pMainTexture->getPixel(0 ,
-								   (m_pMainTexture->h / 2));
+								   (m_pMainTexture->getH() / 2));
 	m_FillRightColor =
 		m_WrapX
 		    ? g_AlphaZero
-		: m_pMainTexture->getPixel(m_pMainTexture->w -1, (m_pMainTexture->h / 2));
+		: m_pMainTexture->getPixel(m_pMainTexture->getW() -1, (m_pMainTexture->getH() / 2));
 	m_FillUpColor = m_WrapY ? g_MaskColor
-		: m_pMainTexture->getPixel((m_pMainTexture->w / 2) - 1,0);
+		: m_pMainTexture->getPixel((m_pMainTexture->getW() / 2) - 1,0);
 
 	m_FillDownColor =
 		m_WrapY
 		    ? g_AlphaZero
-		: m_pMainTexture->getPixel((m_pMainTexture->w / 2)-1, m_pMainTexture->h-1);
+		: m_pMainTexture->getPixel((m_pMainTexture->getW() / 2)-1, m_pMainTexture->getH()-1);
 
 	return 0;
 }
@@ -235,19 +235,19 @@ int SceneLayer::LoadData()
 	// the layer isn't large enough to cover a target bitmap
 	m_FillLeftColor =
 		m_WrapX ? g_AlphaZero
-		        : m_pMainTexture->getPixel(0, (m_pMainTexture->h / 2) - 1);
+		        : m_pMainTexture->getPixel(0, (m_pMainTexture->getH() / 2) - 1);
 	m_FillRightColor = m_WrapX
 		                   ? g_AlphaZero
-		                   : m_pMainTexture->getPixel(m_pMainTexture->w - 1,
-		                                              m_pMainTexture->h / 2);
+		                   : m_pMainTexture->getPixel(m_pMainTexture->getW() - 1,
+		                                              m_pMainTexture->getH() / 2);
 	m_FillUpColor =
 		m_WrapY ? g_AlphaZero
-		        : m_pMainTexture->getPixel((m_pMainTexture->w / 2) - 1, 0);
+		        : m_pMainTexture->getPixel((m_pMainTexture->getW() / 2) - 1, 0);
 
 	m_FillDownColor =
 		m_WrapY ? g_MaskColor
-		        : m_pMainTexture->getPixel((m_pMainTexture->w / 2) - 1,
-		                                   m_pMainTexture->h - 1);
+		        : m_pMainTexture->getPixel((m_pMainTexture->getW() / 2) - 1,
+		                                   m_pMainTexture->getH() - 1);
 
 	return 0;
 }
@@ -266,7 +266,7 @@ int SceneLayer::SaveData(string bitmapPath)
     // Save out the bitmap
     if (m_pMainTexture)
     {
-		SDL_Surface *savePNG = SDL_CreateRGBSurfaceWithFormatFrom(m_pMainTexture->m_PixelsRO.data(), m_pMainTexture->w, m_pMainTexture->h, 32, m_pMainTexture->w * sizeof(uint32_t), m_pMainTexture->m_Format);
+		SDL_Surface *savePNG = SDL_CreateRGBSurfaceWithFormatFrom(m_pMainTexture->m_PixelsRO.data(), m_pMainTexture->getW(), m_pMainTexture->getH(), 32, m_pMainTexture->getW() * sizeof(uint32_t), m_pMainTexture->m_Format);
 		if(!savePNG){
 			return -1;
 		}
@@ -380,7 +380,7 @@ void SceneLayer::SetScaleFactor(const Vector newScale)
     m_ScaleFactor = newScale;
     m_ScaleInverse.SetXY(1.0f / newScale.m_X, 1.0f / newScale.m_Y);
     if (m_pMainTexture)
-        m_ScaledDimensions.SetXY(m_pMainTexture->w * newScale.m_X, m_pMainTexture->h * newScale.m_Y);
+        m_ScaledDimensions.SetXY(m_pMainTexture->getW() * newScale.m_X, m_pMainTexture->getH() * newScale.m_Y);
 }
 
 
@@ -393,8 +393,8 @@ void SceneLayer::SetScaleFactor(const Vector newScale)
 bool SceneLayer::ForceBounds(int &posX, int &posY, bool scaled) const
 {
     bool wrapped = false;
-    int width = scaled ? m_ScaledDimensions.GetFloorIntX() : m_pMainTexture->w;
-    int height = scaled ? m_ScaledDimensions.GetFloorIntY() : m_pMainTexture->h;
+    int width = scaled ? m_ScaledDimensions.GetFloorIntX() : m_pMainTexture->getW();
+    int height = scaled ? m_ScaledDimensions.GetFloorIntY() : m_pMainTexture->getH();
 
     if (posX < 0) {
         if (m_WrapX)
@@ -471,8 +471,8 @@ bool SceneLayer::ForceBounds(Vector &pos, bool scaled) const
 bool SceneLayer::WrapPosition(int &posX, int &posY, bool scaled) const
 {
     bool wrapped = false;
-    int width = scaled ? m_ScaledDimensions.GetFloorIntX() : m_pMainTexture->w;
-    int height = scaled ? m_ScaledDimensions.GetFloorIntY() : m_pMainTexture->h;
+    int width = scaled ? m_ScaledDimensions.GetFloorIntX() : m_pMainTexture->getW();
+    int height = scaled ? m_ScaledDimensions.GetFloorIntY() : m_pMainTexture->getH();
 
     if (m_WrapX) {
         if (posX < 0) {
@@ -598,12 +598,12 @@ void SceneLayer::Draw(SDL_Renderer * renderer, Box& targetBox, const Vector &scr
 	SDL_RenderSetClipRect(renderer, &clipRect);
 
 	// See if this SceneLayer is wider AND higher than the target bitmap; then use simple wrapping logic - oterhwise need to tile
-    if (m_pMainTexture->w >= viewportDimensions.w && m_pMainTexture->h >= viewportDimensions.h)
+    if (m_pMainTexture->getW() >= viewportDimensions.w && m_pMainTexture->getH() >= viewportDimensions.h)
     {
 		source.x = offsetX;
 		source.y = offsetY;
-		source.w = m_pMainTexture->w -offsetX;
-		source.h = m_pMainTexture->h - offsetY;
+		source.w = m_pMainTexture->getW() -offsetX;
+		source.h = m_pMainTexture->getH() - offsetY;
 
 		dest.x = targetBox.GetCorner().m_X;
 		dest.y = targetBox.GetCorner().m_Y;
@@ -615,9 +615,9 @@ void SceneLayer::Draw(SDL_Renderer * renderer, Box& targetBox, const Vector &scr
 		source.x = 0;
 		source.y = offsetY;
 		source.w = offsetX;
-		source.h = m_pMainTexture->h - offsetY;
+		source.h = m_pMainTexture->getH() - offsetY;
 
-        dest.x       = targetBox.GetCorner().m_X + m_pMainTexture->w - offsetX;
+        dest.x       = targetBox.GetCorner().m_X + m_pMainTexture->getW() - offsetX;
         dest.y       = targetBox.GetCorner().m_Y;
 		dest.w = source.w;
 		dest.h = source.h;
@@ -626,10 +626,10 @@ void SceneLayer::Draw(SDL_Renderer * renderer, Box& targetBox, const Vector &scr
 
         source.x     = offsetX;
         source.y     = 0;
-        source.w     = m_pMainTexture->w - offsetX;
+        source.w     = m_pMainTexture->getW() - offsetX;
         source.h     = offsetY;
         dest.x       = targetBox.GetCorner().m_X;
-        dest.y       = targetBox.GetCorner().m_Y + m_pMainTexture->h - offsetY;
+        dest.y       = targetBox.GetCorner().m_Y + m_pMainTexture->getH() - offsetY;
 		dest.w = source.w;
 		dest.h = source.h;
 		m_pMainTexture->render(renderer, source, dest);
@@ -638,8 +638,8 @@ void SceneLayer::Draw(SDL_Renderer * renderer, Box& targetBox, const Vector &scr
         source.y     = 0;
         source.w     = offsetX;
         source.h     = offsetY;
-        dest.x       = targetBox.GetCorner().m_X + m_pMainTexture->w - offsetX;
-        dest.y       = targetBox.GetCorner().m_Y + m_pMainTexture->h - offsetY;
+        dest.x       = targetBox.GetCorner().m_X + m_pMainTexture->getW() - offsetX;
+        dest.y       = targetBox.GetCorner().m_Y + m_pMainTexture->getH() - offsetY;
 		dest.w = source.w;
 		dest.h = source.h;
 		m_pMainTexture->render(renderer, source, dest);
@@ -672,21 +672,21 @@ void SceneLayer::Draw(SDL_Renderer * renderer, Box& targetBox, const Vector &scr
             {
                 source.x     = 0;
                 source.y     = 0;
-                source.w     = m_pMainTexture->w;
-                source.h     = m_pMainTexture->h;
+                source.w     = m_pMainTexture->getW();
+                source.h     = m_pMainTexture->getH();
                 // If the unwrapped and untiled direction can't cover the target area, place it in the middle of the target bitmap, and leave the excess perimeter on each side untouched
-                dest.x       = (!m_WrapX && screenLargerThanSceneX) ? ((viewportDimensions.w / 2) - (m_pMainTexture->w / 2)) : (targetBox.GetCorner().m_X + tiledOffsetX - offsetX);
-                dest.y       = (!m_WrapY && screenLargerThanSceneY) ? ((viewportDimensions.h / 2) - (m_pMainTexture->h / 2)) : (targetBox.GetCorner().m_Y + tiledOffsetY - offsetY);
+                dest.x       = (!m_WrapX && screenLargerThanSceneX) ? ((viewportDimensions.w / 2) - (m_pMainTexture->getW() / 2)) : (targetBox.GetCorner().m_X + tiledOffsetX - offsetX);
+                dest.y       = (!m_WrapY && screenLargerThanSceneY) ? ((viewportDimensions.h / 2) - (m_pMainTexture->getH() / 2)) : (targetBox.GetCorner().m_Y + tiledOffsetY - offsetY);
 				dest.w = source.w;
 				dest.h = source.h;
 				m_pMainTexture->render(renderer, source, dest);
 
-                tiledOffsetX += m_pMainTexture->w;
+                tiledOffsetX += m_pMainTexture->getW();
             }
             // Only tile if we're supposed to wrap widthwise
             while (m_WrapX && toCoverX > tiledOffsetX);
 
-            tiledOffsetY += m_pMainTexture->h;
+            tiledOffsetY += m_pMainTexture->getH();
         }
         // Only tile if we're supposed to wrap heightwise
         while (m_WrapY && toCoverY > tiledOffsetY);
@@ -711,7 +711,7 @@ void SceneLayer::Draw(SDL_Renderer * renderer, Box& targetBox, const Vector &scr
 				SDL_GetRGBA(m_FillRightColor, format, &r, &g, &b, &a);
 				SDL_SetRenderDrawColor(renderer, r, g, b, a);
 				SDL_Rect target{
-					static_cast<int>(targetBox.GetCorner().m_X-offsetX)+m_pMainTexture->w,
+					static_cast<int>(targetBox.GetCorner().m_X-offsetX)+m_pMainTexture->getW(),
 					static_cast<int>(targetBox.GetCorner().m_Y),
 					static_cast<int>(targetBox.GetWidth()+offsetX),
 					static_cast<int>(-offsetY)
@@ -739,10 +739,10 @@ void SceneLayer::Draw(SDL_Renderer * renderer, Box& targetBox, const Vector &scr
 				SDL_Rect target{
 					static_cast<int>(targetBox.GetCorner().m_X),
 					static_cast<int>(targetBox.GetCorner().m_Y - offsetY) +
-					    m_pMainTexture->h,
+					    m_pMainTexture->getH(),
 					static_cast<int>(targetBox.GetWidth()),
 					static_cast<int>(targetBox.GetHeight() + offsetY -
-					                 m_pMainTexture->h)};
+					                 m_pMainTexture->getH())};
 				SDL_RenderDrawRect(renderer, &target);
 			}
         }
@@ -834,8 +834,8 @@ void SceneLayer::DrawScaled(SDL_Renderer *renderer, Box &targetBox, const Vector
         // Upper left
         source.x     = 0;
         source.y     = 0;
-        source.w     = m_pMainTexture->w;
-        source.h     = m_pMainTexture->h;
+        source.w     = m_pMainTexture->getW();
+        source.h     = m_pMainTexture->getH();
         dest.x       = targetBox.GetCorner().m_X - offsetX;
         dest.y       = targetBox.GetCorner().m_Y - offsetY;
         dest.w       = source.w * m_ScaleFactor.m_X + 1;
@@ -846,7 +846,7 @@ void SceneLayer::DrawScaled(SDL_Renderer *renderer, Box &targetBox, const Vector
         source.x     = 0;
         source.y     = 0;
         source.w     = sourceOffset.m_X;
-        source.h     = m_pMainTexture->h;
+        source.h     = m_pMainTexture->getH();
         dest.x       = targetBox.GetCorner().m_X + m_ScaledDimensions.m_X - offsetX;
         dest.y       = targetBox.GetCorner().m_Y - offsetY;
         dest.w       = source.w * m_ScaleFactor.m_X + 1;
@@ -856,7 +856,7 @@ void SceneLayer::DrawScaled(SDL_Renderer *renderer, Box &targetBox, const Vector
         // Lower left
         source.x     = 0;
         source.y     = 0;
-        source.w     = m_pMainTexture->w;
+        source.w     = m_pMainTexture->getW();
         source.h     = sourceOffset.m_Y;
         dest.x       = targetBox.GetCorner().m_X - offsetX;
         dest.y       = targetBox.GetCorner().m_Y + m_ScaledDimensions.m_Y - offsetY;
@@ -903,8 +903,8 @@ void SceneLayer::DrawScaled(SDL_Renderer *renderer, Box &targetBox, const Vector
             {
                 source.x     = 0;
                 source.y     = 0;
-                source.w     = m_pMainTexture->w;
-                source.h     = m_pMainTexture->h;
+                source.w     = m_pMainTexture->getW();
+                source.h     = m_pMainTexture->getH();
                 // If the unwrapped and untiled direction can't cover the target area, place it in the middle of the target bitmap, and leave the excess perimeter on each side untouched
                 dest.x       = (!m_WrapX && screenLargerThanSceneX) ? ((viewportDimensions.w / 2) - (m_ScaledDimensions.m_X / 2)) : (targetBox.GetCorner().m_X + tiledOffsetX - offsetX);
                 dest.y       = (!m_WrapY && screenLargerThanSceneY) ? ((viewportDimensions.h / 2) - (m_ScaledDimensions.m_Y / 2)) : (targetBox.GetCorner().m_Y + tiledOffsetY - offsetY);
@@ -930,7 +930,7 @@ void SceneLayer::DrawScaled(SDL_Renderer *renderer, Box &targetBox, const Vector
             if (m_FillLeftColor != g_MaskColor && offsetX != 0)
                 rectfill(pTargetBitmap, targetBox.GetCorner().m_X, targetBox.GetCorner().m_Y, targetBox.GetCorner().m_X - offsetX, targetBox.GetCorner().m_Y + targetBox.GetHeight(), m_FillLeftColor);
             if (m_FillRightColor != g_MaskColor)
-                rectfill(pTargetBitmap, (targetBox.GetCorner().m_X - offsetX) + m_pMainTexture->w, targetBox.GetCorner().m_Y, targetBox.GetCorner().m_X + targetBox.GetWidth(), targetBox.GetCorner().m_Y + targetBox.GetHeight(), m_FillRightColor);
+                rectfill(pTargetBitmap, (targetBox.GetCorner().m_X - offsetX) + m_pMainTexture->getW(), targetBox.GetCorner().m_Y, targetBox.GetCorner().m_X + targetBox.GetWidth(), targetBox.GetCorner().m_Y + targetBox.GetHeight(), m_FillRightColor);
         }
 
         if (!m_WrapY && !screenLargerThanSceneY && m_ScrollRatio.m_Y < 0)
@@ -938,7 +938,7 @@ void SceneLayer::DrawScaled(SDL_Renderer *renderer, Box &targetBox, const Vector
             if (m_FillUpColor != g_MaskColor && offsetY != 0)
                 rectfill(pTargetBitmap, targetBox.GetCorner().m_X, targetBox.GetCorner().m_Y, targetBox.GetCorner().m_X + targetBox.GetWidth(), targetBox.GetCorner().m_Y - offsetY, m_FillUpColor);
             if (m_FillDownColor != g_MaskColor)
-                rectfill(pTargetBitmap, targetBox.GetCorner().m_X, (targetBox.GetCorner().m_Y - offsetY) + m_pMainTexture->h, targetBox.GetCorner().m_X + targetBox.GetWidth(), targetBox.GetCorner().m_Y + targetBox.GetHeight(), m_FillDownColor);
+                rectfill(pTargetBitmap, targetBox.GetCorner().m_X, (targetBox.GetCorner().m_Y - offsetY) + m_pMainTexture->getH(), targetBox.GetCorner().m_X + targetBox.GetWidth(), targetBox.GetCorner().m_Y + targetBox.GetHeight(), m_FillDownColor);
         }
 */
     }
@@ -971,11 +971,11 @@ void SceneLayer::InitScrollRatios()
         if (m_ScrollInfo.m_X == -1.0 || m_ScrollInfo.m_X == 1.0)
             m_ScrollRatio.m_X = 1.0;
         else if (m_ScrollInfo.m_X == g_FrameMan.GetPlayerScreenWidth())
-            m_ScrollRatio.m_X = m_pMainTexture->w - g_FrameMan.GetPlayerScreenWidth();
-        else if (m_pMainTexture->w == g_FrameMan.GetPlayerScreenWidth())
+            m_ScrollRatio.m_X = m_pMainTexture->getW() - g_FrameMan.GetPlayerScreenWidth();
+        else if (m_pMainTexture->getW() == g_FrameMan.GetPlayerScreenWidth())
             m_ScrollRatio.m_X = 1.0f / (float)(m_ScrollInfo.m_X - g_FrameMan.GetPlayerScreenWidth());
         else
-            m_ScrollRatio.m_X = (float)(m_pMainTexture->w - g_FrameMan.GetPlayerScreenWidth()) /
+            m_ScrollRatio.m_X = (float)(m_pMainTexture->getW() - g_FrameMan.GetPlayerScreenWidth()) /
                                 (float)(m_ScrollInfo.m_X - g_FrameMan.GetPlayerScreenWidth());
     }
 
@@ -986,16 +986,16 @@ void SceneLayer::InitScrollRatios()
         if (m_ScrollInfo.m_Y == -1.0 || m_ScrollInfo.m_Y == 1.0)
             m_ScrollRatio.m_Y = 1.0;
         else if (m_ScrollInfo.m_Y == g_FrameMan.GetPlayerScreenHeight())
-            m_ScrollRatio.m_Y = m_pMainTexture->h - g_FrameMan.GetPlayerScreenHeight();
-        else if (m_pMainTexture->h == g_FrameMan.GetPlayerScreenHeight())
+            m_ScrollRatio.m_Y = m_pMainTexture->getH() - g_FrameMan.GetPlayerScreenHeight();
+        else if (m_pMainTexture->getH() == g_FrameMan.GetPlayerScreenHeight())
             m_ScrollRatio.m_Y = 1.0f / (float)(m_ScrollInfo.m_Y - g_FrameMan.GetPlayerScreenHeight());
         else
-            m_ScrollRatio.m_Y = (float)(m_pMainTexture->h - g_FrameMan.GetPlayerScreenHeight()) /
+            m_ScrollRatio.m_Y = (float)(m_pMainTexture->getH() - g_FrameMan.GetPlayerScreenHeight()) /
                                 (float)(m_ScrollInfo.m_Y - g_FrameMan.GetPlayerScreenHeight());
     }
 
     // Establish the scaled dimensions of this
-    m_ScaledDimensions.SetXY(m_pMainTexture->w * m_ScaleFactor.m_X, m_pMainTexture->h * m_ScaleFactor.m_Y);
+    m_ScaledDimensions.SetXY(m_pMainTexture->getW() * m_ScaleFactor.m_X, m_pMainTexture->getH() * m_ScaleFactor.m_Y);
 }
 
 
@@ -1008,11 +1008,11 @@ void SceneLayer::UpdateScrollRatiosForNetworkPlayer(int player)
 		if (m_ScrollInfo.m_X == -1.0 || m_ScrollInfo.m_X == 1.0)
 			m_ScrollRatio.m_X = 1.0;
 		else if (m_ScrollInfo.m_X == g_FrameMan.GetPlayerFrameBufferWidth(player))
-			m_ScrollRatio.m_X = m_pMainTexture->w - g_FrameMan.GetPlayerFrameBufferWidth(player);
-		else if (m_pMainTexture->w == g_FrameMan.GetPlayerFrameBufferWidth(player))
+			m_ScrollRatio.m_X = m_pMainTexture->getW() - g_FrameMan.GetPlayerFrameBufferWidth(player);
+		else if (m_pMainTexture->getW() == g_FrameMan.GetPlayerFrameBufferWidth(player))
 			m_ScrollRatio.m_X = 1.0f / (float)(m_ScrollInfo.m_X - g_FrameMan.GetPlayerFrameBufferWidth(player));
 		else
-			m_ScrollRatio.m_X = (float)(m_pMainTexture->w - g_FrameMan.GetPlayerFrameBufferWidth(player)) /
+			m_ScrollRatio.m_X = (float)(m_pMainTexture->getW() - g_FrameMan.GetPlayerFrameBufferWidth(player)) /
 			(float)(m_ScrollInfo.m_X - g_FrameMan.GetPlayerFrameBufferWidth(player));
 	}
 
@@ -1023,16 +1023,16 @@ void SceneLayer::UpdateScrollRatiosForNetworkPlayer(int player)
 		if (m_ScrollInfo.m_Y == -1.0 || m_ScrollInfo.m_Y == 1.0)
 			m_ScrollRatio.m_Y = 1.0;
 		else if (m_ScrollInfo.m_Y == g_FrameMan.GetPlayerFrameBufferHeight(player))
-			m_ScrollRatio.m_Y = m_pMainTexture->h - g_FrameMan.GetPlayerFrameBufferHeight(player);
-		else if (m_pMainTexture->h == g_FrameMan.GetPlayerFrameBufferHeight(player))
+			m_ScrollRatio.m_Y = m_pMainTexture->getH() - g_FrameMan.GetPlayerFrameBufferHeight(player);
+		else if (m_pMainTexture->getH() == g_FrameMan.GetPlayerFrameBufferHeight(player))
 			m_ScrollRatio.m_Y = 1.0f / (float)(m_ScrollInfo.m_Y - g_FrameMan.GetPlayerFrameBufferHeight(player));
 		else
-			m_ScrollRatio.m_Y = (float)(m_pMainTexture->h - g_FrameMan.GetPlayerFrameBufferHeight(player)) /
+			m_ScrollRatio.m_Y = (float)(m_pMainTexture->getH() - g_FrameMan.GetPlayerFrameBufferHeight(player)) /
 			(float)(m_ScrollInfo.m_Y - g_FrameMan.GetPlayerFrameBufferHeight(player));
 	}
 
 	// Establish the scaled dimensions of this
-	m_ScaledDimensions.SetXY(m_pMainTexture->w * m_ScaleFactor.m_X, m_pMainTexture->h * m_ScaleFactor.m_Y);
+	m_ScaledDimensions.SetXY(m_pMainTexture->getW() * m_ScaleFactor.m_X, m_pMainTexture->getH() * m_ScaleFactor.m_Y);
 }
 
 
