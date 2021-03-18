@@ -23,6 +23,7 @@
 #include "SceneMan.h"
 #include "Scene.h"
 #include "SettingsMan.h"
+#include "Managers/FrameMan.h"
 
 #include "GUI/GUI.h"
 #include "GUI/SDLGUITexture.h"
@@ -1046,7 +1047,7 @@ void ACraft::DrawHUD(SDL_Renderer* renderer, const Vector &targetPos, int whichS
     // Only show extra HUD if this guy is controlled by a player
     if (m_Controller.IsPlayerControlled() && pSmallFont && pSymbolFont)
     {
-        AllegroBitmap pBitmapInt(pTargetBitmap);
+        // SDLGUITexture pBitmapInt;
 /*
         // AI Mode select GUI HUD
         if (m_Controller && m_Controller.IsState(PIE_MENU_ACTIVE))

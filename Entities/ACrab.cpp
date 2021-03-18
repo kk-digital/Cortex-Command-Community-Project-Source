@@ -24,6 +24,8 @@
 #include "PieMenuGUI.h"
 #include "Scene.h"
 
+#include "Managers/FrameMan.h"
+
 #include "GUI/GUI.h"
 #include "GUI/SDLGUITexture.h"
 #include "SDLHelper.h"
