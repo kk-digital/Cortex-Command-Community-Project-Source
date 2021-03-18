@@ -17,6 +17,9 @@
 #include "ThrownDevice.h"
 #include "MOPixel.h"
 #include "Actor.h"
+#include "Managers/FrameMan.h"
+
+#include <SDL2/SDL2_gfxPrimitives.h>
 
 namespace RTE {
 
@@ -723,7 +726,7 @@ void HDFirearm::Update()
                 {
                     roundsFired = 1;
                     // Wind back the last fire timer appropriately for the first round, but not farther back than 0
-                    m_LastFireTmr.SetElapsedSimTimeMS(MAX(m_LastFireTmr.GetElapsedSimTimeMS() - mspr, 0));
+                    m_LastFireTmr.SetElapsedSimTimeMS(std::max(m_LastFireTmr.GetElapsedSimTimeMS() - mspr, 0.0));
                 }
                 // How many rounds are going to fly since holding down activation. Make sure gun can't be fired faster by tapping activation fast
                 if (m_LastFireTmr.GetElapsedSimTimeMS() > (m_ActivationTimer.GetElapsedSimTimeMS() - m_ActivationDelay))
@@ -1067,15 +1070,15 @@ float HDFirearm::EstimateDigStrenght()
 // Description:     Draws this HDFirearm's current graphical representation to a
 //                  BITMAP of choice.
 
-void HDFirearm::Draw(BITMAP *pTargetBitmap, const Vector &targetPos, DrawMode mode, bool onlyPhysical) const {
+void HDFirearm::Draw(SDL_Renderer* renderer, const Vector &targetPos, DrawMode mode, bool onlyPhysical) const {
     if (m_pFlash && m_FireFrame && !m_pFlash->IsDrawnAfterParent() && mode == g_DrawColor && !onlyPhysical) {
-        m_pFlash->Draw(pTargetBitmap, targetPos, mode, onlyPhysical);
+        m_pFlash->Draw(renderer, targetPos, mode, onlyPhysical);
     }
 
-    HeldDevice::Draw(pTargetBitmap, targetPos, mode, onlyPhysical);
+    HeldDevice::Draw(renderer, targetPos, mode, onlyPhysical);
 
     if (m_pFlash && m_FireFrame && m_pFlash->IsDrawnAfterParent() && mode == g_DrawColor && !onlyPhysical) {
-        m_pFlash->Draw(pTargetBitmap, targetPos, mode, onlyPhysical);
+        m_pFlash->Draw(renderer, targetPos, mode, onlyPhysical);
     }
 
     // Fudge the muzzle pos forward a little bit so the glow aligns nicely
@@ -1094,7 +1097,7 @@ void HDFirearm::Draw(BITMAP *pTargetBitmap, const Vector &targetPos, DrawMode mo
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Draws an aiming aid in front of this HeldDevice.
 
-void HDFirearm::DrawHUD(BITMAP *pTargetBitmap, const Vector &targetPos, int whichScreen, bool playerControlled)
+void HDFirearm::DrawHUD(SDL_Renderer* renderer, const Vector &targetPos, int whichScreen, bool playerControlled)
 {
     if (!m_HUDVisible)
         return;
@@ -1107,7 +1110,7 @@ void HDFirearm::DrawHUD(BITMAP *pTargetBitmap, const Vector &targetPos, int whic
             return;
     }
 
-    HeldDevice::DrawHUD(pTargetBitmap, targetPos, whichScreen);
+    HeldDevice::DrawHUD(renderer, targetPos, whichScreen);
 
     // Don't bother if the aim distance is really short, or not held
     if (!m_Parent || m_SharpAim < 0.15)
@@ -1155,12 +1158,22 @@ void HDFirearm::DrawHUD(BITMAP *pTargetBitmap, const Vector &targetPos, int whic
         g_SceneMan.WrapPosition(aimPoint3);
         g_SceneMan.WrapPosition(aimPoint4);
 
-        acquire_bitmap(pTargetBitmap);
-        putpixel(pTargetBitmap, aimPoint1.m_X, aimPoint1.m_Y, g_YellowGlowColor);
-        putpixel(pTargetBitmap, aimPoint2.m_X, aimPoint2.m_Y, g_YellowGlowColor);
-        putpixel(pTargetBitmap, aimPoint3.m_X, aimPoint3.m_Y, g_YellowGlowColor);
-        putpixel(pTargetBitmap, aimPoint4.m_X, aimPoint4.m_Y, g_YellowGlowColor);
-        release_bitmap(pTargetBitmap);
+		std::array<SDL_Point,4> drawPoints{
+			SDL_Point{aimPoint1.GetFloorIntX(), aimPoint1.GetFloorIntY()},
+			SDL_Point{aimPoint2.GetFloorIntX(), aimPoint2.GetFloorIntY()},
+			SDL_Point{aimPoint3.GetFloorIntX(), aimPoint3.GetFloorIntY()},
+			SDL_Point{aimPoint4.GetFloorIntX(), aimPoint4.GetFloorIntY()}
+		};
+		uint8_t r,g,b,a;
+		SDL_GetRenderDrawColor(renderer, &r, &g, &b, &a);
+		SDL_SetRenderDrawColor(renderer, (g_YellowGlowColor >> 24) & 0xFF,
+			                   (g_YellowGlowColor >> 16) & 0xFF,
+			                   (g_YellowGlowColor >> 8) & 0xFF,
+			                   g_YellowGlowColor & 0xFF);
+
+		SDL_RenderDrawPoints(renderer, drawPoints.data(),4);
+
+		SDL_SetRenderDrawColor(renderer, r, g, b, a);
     }
     else
     {
@@ -1188,10 +1201,19 @@ void HDFirearm::DrawHUD(BITMAP *pTargetBitmap, const Vector &targetPos, int whic
         g_SceneMan.WrapPosition(aimPoint2);
         g_SceneMan.WrapPosition(aimPoint3);
 
-        acquire_bitmap(pTargetBitmap);
-        putpixel(pTargetBitmap, aimPoint2.m_X, aimPoint2.m_Y, g_YellowGlowColor);
-        putpixel(pTargetBitmap, aimPoint3.m_X, aimPoint3.m_Y, g_YellowGlowColor);
-        release_bitmap(pTargetBitmap);
+		std::array<SDL_Point, 4> drawPoints{
+			SDL_Point{aimPoint2.GetFloorIntX(), aimPoint2.GetFloorIntY()},
+			SDL_Point{aimPoint3.GetFloorIntX(), aimPoint3.GetFloorIntY()}};
+		uint8_t r, g, b, a;
+		SDL_GetRenderDrawColor(renderer, &r, &g, &b, &a);
+		SDL_SetRenderDrawColor(renderer, (g_YellowGlowColor >> 24) & 0xFF,
+			                   (g_YellowGlowColor >> 16) & 0xFF,
+			                   (g_YellowGlowColor >> 8) & 0xFF,
+			                   g_YellowGlowColor & 0xFF);
+
+		SDL_RenderDrawPoints(renderer, drawPoints.data(), 4);
+
+		SDL_SetRenderDrawColor(renderer, r, g, b, a);
     }
 }
 
