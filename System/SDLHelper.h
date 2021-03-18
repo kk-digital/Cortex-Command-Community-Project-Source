@@ -40,6 +40,7 @@ SDL_Point operator-(const SDL_Point &lhs, const SDL_Point &rhs) {
 /// </summary>
 struct sdl_deleter {
 	void operator()(SDL_Surface *p) { SDL_FreeSurface(p); }
+	void operator()(SDL_PixelFormat *p) { SDL_FreeFormat(p); }
 	void operator()(SDL_Texture *p) { SDL_DestroyTexture(p); }
 	void operator()(SDL_Renderer *p) { SDL_DestroyRenderer(p); }
 	void operator()(SDL_Window *p) { SDL_DestroyWindow(p); }
