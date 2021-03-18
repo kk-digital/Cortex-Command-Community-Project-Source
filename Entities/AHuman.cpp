@@ -28,7 +28,10 @@
 #include "Managers/FrameMan.h"
 
 #include "GUI/GUI.h"
-#include "GUI/AllegroBitmap.h"
+#include "GUI/SDLGUITexture.h"
+
+#include "System/SDLHelper.h"
+#include <SDL2/SDL2_gfxPrimitives.h>
 
 namespace RTE {
 
@@ -4320,7 +4323,7 @@ void AHuman::DrawThrowingReticule(SDL_Renderer* renderer, const Vector &targetPo
 //    Matrix aimMatrix(m_AimAngle);
 //    aimMatrix.SetXFlipped(m_HFlipped);
 
-    acquire_bitmap(pTargetBitmap);
+	std::vector<SDL_Point> drawPoints(pointCount);
 
     for (int i = 0; i < pointCount * amount; ++i) {
         points[i].FlipX(m_HFlipped);
@@ -4333,10 +4336,17 @@ void AHuman::DrawThrowingReticule(SDL_Renderer* renderer, const Vector &targetPo
         // Put the flickering glows on the reticule dots, in absolute scene coordinates
 		g_PostProcessMan.RegisterGlowDotEffect(points[i], YellowDot, 55 + RandomNum(0, 100));
 
-        putpixel(pTargetBitmap, points[i].GetFloorIntX() - targetPos.GetFloorIntX(), points[i].GetFloorIntY() - targetPos.GetFloorIntY(), g_YellowGlowColor);
+		drawPoints[i]=SDL_Point{points[i].GetFloorIntX() - targetPos.GetFloorIntX(), points[i].GetFloorIntY() - targetPos.GetFloorIntY()};
     }
-
-    release_bitmap(pTargetBitmap);
+	uint8_t r,g,b,a;
+	SDL_GetRenderDrawColor(renderer, &r, &g, &b, &a);
+	SDL_SetRenderDrawColor(renderer,
+						   (g_YellowGlowColor & 0xFF000000) >> 3,
+		                   (g_YellowGlowColor & 0x00FF0000) >> 2,
+		                   (g_YellowGlowColor & 0x0000FF00) >> 1,
+		                   (g_YellowGlowColor & 0x000000FF));
+	SDL_RenderDrawPoints(renderer, drawPoints.data(), pointCount);
+	SDL_SetRenderDrawColor(renderer, r, g, b, a);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -4454,7 +4464,9 @@ void AHuman::DrawHUD(SDL_Renderer* renderer, const Vector &targetPos, int whichS
     // Only show extra HUD if this guy is controlled by the same player that this screen belongs to
     if (m_Controller.IsPlayerControlled() && g_ActivityMan.GetActivity()->ScreenOfPlayer(m_Controller.GetPlayer()) == whichScreen && pSmallFont && pSymbolFont)
     {
-        AllegroBitmap allegroBitmap(pTargetBitmap);
+        SDLGUITexture allegroBitmap{};
+		SDL_Rect viewport;
+		SDL_RenderGetViewport(renderer, &viewport);
 /*
         // Device aiming reticule
         if (m_Controller.IsState(AIM_SHARP) &&
@@ -4468,20 +4480,20 @@ void AHuman::DrawHUD(SDL_Renderer* renderer, const Vector &targetPos, int whichS
         {
             // Spans vertical scene seam
             int sceneWidth = g_SceneMan.GetSceneWidth();
-            if (g_SceneMan.SceneWrapsX() && pTargetBitmap->w < sceneWidth)
+            if (g_SceneMan.SceneWrapsX() && viewport.w < sceneWidth)
             {
-                if ((targetPos.m_X < 0) && (m_Pos.m_X > (sceneWidth - pTargetBitmap->w)))
+                if ((targetPos.m_X < 0) && (m_Pos.m_X > (sceneWidth - viewport.w)))
                     drawPos.m_X -= sceneWidth;
-                else if (((targetPos.m_X + pTargetBitmap->w) > sceneWidth) && (m_Pos.m_X < pTargetBitmap->w))
+                else if (((targetPos.m_X + viewport.w) > sceneWidth) && (m_Pos.m_X < viewport.w))
                     drawPos.m_X += sceneWidth;
             }
             // Spans horizontal scene seam
             int sceneHeight = g_SceneMan.GetSceneHeight();
-            if (g_SceneMan.SceneWrapsY() && pTargetBitmap->h < sceneHeight)
+            if (g_SceneMan.SceneWrapsY() && viewport.h < sceneHeight)
             {
-                if ((targetPos.m_Y < 0) && (m_Pos.m_Y > (sceneHeight - pTargetBitmap->h)))
+                if ((targetPos.m_Y < 0) && (m_Pos.m_Y > (sceneHeight - viewport.h)))
                     drawPos.m_Y -= sceneHeight;
-                else if (((targetPos.m_Y + pTargetBitmap->h) > sceneHeight) && (m_Pos.m_Y < pTargetBitmap->h))
+                else if (((targetPos.m_Y + viewport.h) > sceneHeight) && (m_Pos.m_Y < viewport.h))
                     drawPos.m_Y += sceneHeight;
             }
         }
@@ -4511,11 +4523,29 @@ void AHuman::DrawHUD(SDL_Renderer* renderer, const Vector &targetPos, int whichS
 
             float jetTimeRatio = m_JetTimeLeft / m_JetTimeTotal;
 // TODO: Don't hardcode this shit
-            int gaugeColor = jetTimeRatio > 0.6F ? 149 : (jetTimeRatio > 0.3F ? 77 : 13);
-            rectfill(pTargetBitmap, drawPos.GetFloorIntX(), drawPos.GetFloorIntY() + m_HUDStack + 6, drawPos.GetFloorIntX() + (16 * jetTimeRatio), drawPos.GetFloorIntY() + m_HUDStack + 7, gaugeColor);
-//                    rect(pTargetBitmap, drawPos.m_X, drawPos.m_Y + m_HUDStack - 2, drawPos.m_X + 24, drawPos.m_Y + m_HUDStack - 4, 238);
-//                    std::snprintf(str, sizeof(str), "%.0f Kg", mass);
-//                    pSmallFont->DrawAligned(&allegroBitmap, drawPos.m_X - 0, drawPos.m_Y + m_HUDStack + 3, str, GUIFont::Left);
+			uint32_t gaugeColor =
+				jetTimeRatio > 0.6F ? 0x74B33AFF : (jetTimeRatio > 0.3F ? 0xF6CD33FF : 0xEA1507);
+			SDL_Rect guageRect{
+				drawPos.GetFloorIntX(), drawPos.GetFloorIntY() + m_HUDStack + 6,
+				static_cast<int>(drawPos.GetFloorIntX() + (16 * jetTimeRatio)),
+				drawPos.GetFloorIntY() + m_HUDStack + 7};
+
+			uint8_t r,g,b,a;
+			SDL_GetRenderDrawColor(renderer, &r, &g, &b, &a);
+			SDL_SetRenderDrawColor(renderer, (gaugeColor & 0xFF000000) >> 3,
+				                   (gaugeColor & 0x00FF0000) >> 2,
+				                   (gaugeColor & 0x0000FF00) >> 1,
+				                   (gaugeColor & 0x000000FF));
+			SDL_RenderFillRect(renderer, &guageRect);
+			SDL_SetRenderDrawColor(renderer, r, g, b, a);
+
+			//                    rect(pTargetBitmap, drawPos.m_X, drawPos.m_Y +
+			//                    m_HUDStack - 2, drawPos.m_X + 24, drawPos.m_Y
+			//                    + m_HUDStack - 4, 238); std::snprintf(str,
+			//                    sizeof(str), "%.0f Kg", mass);
+			//                    pSmallFont->DrawAligned(&allegroBitmap,
+			//                    drawPos.m_X - 0, drawPos.m_Y + m_HUDStack + 3,
+			//                    str, GUIFont::Left);
 
             m_HUDStack += -10;
         }
