@@ -13,12 +13,13 @@
 
 #include "HeldDevice.h"
 #include "MovableMan.h"
+#include "Managers/FrameMan.h"
 #include "AtomGroup.h"
 #include "Arm.h"
 #include "Actor.h"
 
 #include "GUI/GUI.h"
-#include "GUI/AllegroBitmap.h"
+#include "GUI/SDLGUITexture.h"
 
 
 namespace RTE {
@@ -485,12 +486,12 @@ void HeldDevice::Update()
 // Description:     Draws this HeldDevice's current graphical representation to a
 //                  BITMAP of choice.
 
-void HeldDevice::Draw(BITMAP *pTargetBitmap,
+void HeldDevice::Draw(SDL_Renderer* renderer,
                       const Vector &targetPos,
                       DrawMode mode,
                       bool onlyPhysical) const
 {
-    Attachable::Draw(pTargetBitmap, targetPos, mode, onlyPhysical);
+    Attachable::Draw(renderer, targetPos, mode, onlyPhysical);
 /*
     // Draw suporting hand if applicable.
     if (m_Supported) {
@@ -510,8 +511,8 @@ void HeldDevice::Draw(BITMAP *pTargetBitmap,
 #ifdef DEBUG_BUILD
     if (mode == g_DrawColor && !onlyPhysical)
     {
-        m_pAtomGroup->Draw(pTargetBitmap, targetPos, false, 122);
-        m_pDeepGroup->Draw(pTargetBitmap, targetPos, false, 13);
+        m_pAtomGroup->Draw(renderer, targetPos, false, 122);
+        m_pDeepGroup->Draw(renderer, targetPos, false, 13);
     }
 #endif
 */
@@ -524,12 +525,15 @@ void HeldDevice::Draw(BITMAP *pTargetBitmap,
 // Description:     Draws this Actor's current graphical HUD overlay representation to a
 //                  BITMAP of choice.
 
-void HeldDevice::DrawHUD(BITMAP *pTargetBitmap, const Vector &targetPos, int whichScreen, bool playerControlled)
+void HeldDevice::DrawHUD(SDL_Renderer* renderer, const Vector &targetPos, int whichScreen, bool playerControlled)
 {
     if (!m_HUDVisible)
         return;
 
-    Attachable::DrawHUD(pTargetBitmap, targetPos, whichScreen);
+    Attachable::DrawHUD(renderer, targetPos, whichScreen);
+
+	SDL_Rect viewport;
+	SDL_RenderGetViewport(renderer, &viewport);
 
     if (!m_Parent && !IsUnPickupable())
     {
@@ -547,20 +551,20 @@ void HeldDevice::DrawHUD(BITMAP *pTargetBitmap, const Vector &targetPos, int whi
         {
             // Spans vertical scene seam
             int sceneWidth = g_SceneMan.GetSceneWidth();
-            if (g_SceneMan.SceneWrapsX() && pTargetBitmap->w < sceneWidth)
+            if (g_SceneMan.SceneWrapsX() && viewport.w < sceneWidth)
             {
-                if ((targetPos.m_X < 0) && (m_Pos.m_X > (sceneWidth - pTargetBitmap->w)))
+                if ((targetPos.m_X < 0) && (m_Pos.m_X > (sceneWidth - viewport.w)))
                     drawPos.m_X -= sceneWidth;
-                else if (((targetPos.m_X + pTargetBitmap->w) > sceneWidth) && (m_Pos.m_X < pTargetBitmap->w))
+                else if (((targetPos.m_X + viewport.w) > sceneWidth) && (m_Pos.m_X < viewport.w))
                     drawPos.m_X += sceneWidth;
             }
             // Spans horizontal scene seam
             int sceneHeight = g_SceneMan.GetSceneHeight();
-            if (g_SceneMan.SceneWrapsY() && pTargetBitmap->h < sceneHeight)
+            if (g_SceneMan.SceneWrapsY() && viewport.h < sceneHeight)
             {
-                if ((targetPos.m_Y < 0) && (m_Pos.m_Y > (sceneHeight - pTargetBitmap->h)))
+                if ((targetPos.m_Y < 0) && (m_Pos.m_Y > (sceneHeight - viewport.h)))
                     drawPos.m_Y -= sceneHeight;
-                else if (((targetPos.m_Y + pTargetBitmap->h) > sceneHeight) && (m_Pos.m_Y < pTargetBitmap->h))
+                else if (((targetPos.m_Y + viewport.h) > sceneHeight) && (m_Pos.m_Y < viewport.h))
                     drawPos.m_Y += sceneHeight;
             }
         }
@@ -570,7 +574,7 @@ void HeldDevice::DrawHUD(BITMAP *pTargetBitmap, const Vector &targetPos, int whi
         GUIFont *pSymbolFont = g_FrameMan.GetLargeFont();
         GUIFont *pTextFont = g_FrameMan.GetSmallFont();
         if (pSymbolFont && pTextFont) {
-            AllegroBitmap pBitmapInt(pTargetBitmap);
+            SDLGUITexture pBitmapInt{};
             if (m_BlinkTimer.GetElapsedSimTimeMS() < 300) {
                 str[0] = -42;
                 str[1] = 0;
