@@ -15,6 +15,7 @@
 #include "HDFirearm.h"
 #include "ThrownDevice.h"
 #include "PresetMan.h"
+#include "System/SDLHelper.h"
 
 namespace RTE {
 
@@ -32,7 +33,7 @@ void Arm::Clear()
     m_pHeldMO = nullptr;
     m_GripStrength = 0;
     m_HandFile.Reset();
-    m_pHand = nullptr;
+    m_pHand.reset();
     m_MaxLength = 0;
     m_HandOffset.Reset();
     m_TargetPosition.Reset();
@@ -77,8 +78,8 @@ int Arm::Create(const Arm &reference) {
 
     m_GripStrength = reference.m_GripStrength;
     m_HandFile = reference.m_HandFile;
-    m_pHand = m_HandFile.GetAsBitmap();
-    RTEAssert(m_pHand, "Failed to load hand bitmap in Arm::Create")
+    m_pHand = m_HandFile.GetAsTexture();
+    RTEAssert(m_pHand.get(), "Failed to load hand bitmap in Arm::Create")
 
     m_MaxLength = reference.m_MaxLength;
     m_HandOffset = reference.m_HandOffset;
@@ -110,7 +111,7 @@ int Arm::ReadProperty(const std::string_view &propName, Reader &reader) {
         reader >> m_GripStrength;
     } else if (propName == "Hand") {
         reader >> m_HandFile;
-        m_pHand = m_HandFile.GetAsBitmap();
+        m_pHand = m_HandFile.GetAsTexture();
     } else if (propName == "MaxLength") {
         reader >> m_MaxLength;
     } else if (propName == "IdleOffset") {
@@ -436,36 +437,37 @@ void Arm::UpdateArmFrame() {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Arm::Draw(BITMAP *pTargetBitmap, const Vector &targetPos, DrawMode mode, bool onlyPhysical) const {
-    Attachable::Draw(pTargetBitmap, targetPos, mode, onlyPhysical);
+void Arm::Draw(SDL_Renderer* renderer, const Vector &targetPos, DrawMode mode, bool onlyPhysical) const {
+    Attachable::Draw(renderer, targetPos, mode, onlyPhysical);
 
     if (!onlyPhysical && (mode == g_DrawColor || mode == g_DrawWhite || mode == g_DrawTrans) && (!m_Parent || m_pHeldMO || (!m_pHeldMO && !m_DidReach))) {
-        DrawHand(pTargetBitmap, targetPos, mode);
-        if (m_pHeldMO && m_pHeldMO->IsDrawnAfterParent()) { m_pHeldMO->Draw(pTargetBitmap, targetPos, mode, onlyPhysical); }
+        DrawHand(renderer, targetPos, mode);
+        if (m_pHeldMO && m_pHeldMO->IsDrawnAfterParent()) { m_pHeldMO->Draw(renderer, targetPos, mode, onlyPhysical); }
     }
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Arm::DrawHand(BITMAP *targetBitmap, const Vector &targetPos, DrawMode mode) const {
+void Arm::DrawHand(SDL_Renderer* renderer, const Vector &targetPos, DrawMode mode) const {
     Vector handPos(m_JointPos + m_HandOffset + (m_Recoiled ? m_RecoilOffset : Vector()) - targetPos);
-    handPos.m_X -= static_cast<float>((m_pHand->w / 2) + 1);
-    handPos.m_Y -= static_cast<float>((m_pHand->h / 2) + 1);
+    handPos.m_X -= static_cast<float>((m_pHand->getW() / 2) + 1);
+    handPos.m_Y -= static_cast<float>((m_pHand->getH() / 2) + 1);
 
     if (!m_HFlipped) {
         if (mode == g_DrawWhite) {
-            draw_character_ex(targetBitmap, m_pHand, handPos.GetFloorIntX(), handPos.GetFloorIntY(), g_WhiteColor, -1);
+			m_pHand->renderFillColor(renderer, handPos.GetFloorIntX(), handPos.GetFloorIntY(), g_WhiteColor);
         } else {
-            draw_sprite(targetBitmap, m_pHand, handPos.GetFloorIntX(), handPos.GetFloorIntY());
+			m_pHand->render(renderer, handPos.GetFloorIntX(), handPos.GetFloorIntY());
         }
     } else {
-        //TODO this draw_character_ex won't draw flipped. It should draw onto a temp bitmap and then draw that flipped. Maybe it can reuse a temp bitmap from MOSR, maybe not?
         if (mode == g_DrawWhite) {
-            draw_character_ex(targetBitmap, m_pHand, handPos.GetFloorIntX(), handPos.GetFloorIntY(), g_WhiteColor, -1);
-        } else {
-            draw_sprite_h_flip(targetBitmap, m_pHand, handPos.GetFloorIntX(), handPos.GetFloorIntY());
-        }
-    }
+			m_pHand->renderFillColor(renderer, handPos.GetFloorIntX(),
+				                     handPos.GetFloorIntY(), g_WhiteColor, SDL_FLIP_HORIZONTAL);
+		} else {
+			m_pHand->render(renderer, handPos.GetFloorIntX(),
+				            handPos.GetFloorIntY(), SDL_FLIP_HORIZONTAL);
+		}
+	}
 }
 
 } // namespace RTE
