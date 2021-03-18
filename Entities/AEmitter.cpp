@@ -609,7 +609,7 @@ void AEmitter::Draw(SDL_Renderer* renderer,
     if (m_EmitEnabled && (!m_FlashOnlyOnBurst || m_BurstTriggered) && m_pFlash && m_pFlash->GetScreenEffect() && mode == g_DrawColor && !onlyPhysical)
     {
         // Fudge the emission pos forward a little bit so the glow aligns nicely
-        Vector emitPos(m_pFlash->GetScreenEffect()->w / 4, 0);
+        Vector emitPos(m_pFlash->GetScreenEffect()->getW() / 4, 0);
         emitPos.RadRotate(m_HFlipped ? c_PI + m_Rotation.GetRadAngle() - m_EmitAngle.GetRadAngle() : m_Rotation.GetRadAngle() + m_EmitAngle.GetRadAngle());
         emitPos = m_Pos + RotateOffset(m_EmissionOffset) + emitPos;
         if(!g_SceneMan.ObscuredPoint(emitPos))
