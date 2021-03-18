@@ -160,8 +160,9 @@ namespace RTE {
 		// Set the render target to the fillTexture thatll be used to
 		// generate the background color
 		SDL_SetRenderTarget(renderer, fillTarget->m_Texture.get());
-		SDL_SetRenderDrawColor(renderer, color & 0x00FF0000, color & 0x0000FF00,
-		                       color & 0x000000FF, color & 0xFF000000);
+		SDL_SetRenderDrawColor(renderer, (color >> 24) & 0xFF,
+		                       (color >> 16) & 0xFF, (color >> 8) & 0xFF,
+		                       (color)&0xFF);
 
 		// Clear the target to the desired color
 		SDL_RenderClear(renderer);
@@ -226,8 +227,8 @@ namespace RTE {
 		// Set the render target to the fillTexture thatll be used to
 		// generate the background color
 		SDL_SetRenderTarget(renderer, fillTarget->m_Texture.get());
-		SDL_SetRenderDrawColor(renderer, color & m_Rmask, color & m_Gmask,
-		                       color & m_Bmask, color & m_Amask);
+		SDL_SetRenderDrawColor(renderer, (color>>24)&0xFF, (color>>16)&0xFF,
+		                       (color>>8)&0xFF, (color)&0xFF);
 
 		// Clear the target to the desired color
 		SDL_RenderClear(renderer);
@@ -286,7 +287,7 @@ namespace RTE {
 		if (!m_PixelsRO.empty() && x < w && y < h) {
 			uint8_t r,g,b,a;
 			SDL_GetRGBA(m_PixelsRO[y * w + x], m_PixelFormat.get(), &r, &g, &b, &a);
-			return (static_cast<uint32_t>(r)<<3)|(static_cast<uint32_t>(g)<<2)|(static_cast<uint32_t>(b)<<1)|(a);
+			return (static_cast<uint32_t>(r)<<24)|(static_cast<uint32_t>(g)<<16)|(static_cast<uint32_t>(b)<<8)|(a);
 		}
 
 		return 0xFFFFFF00;
@@ -305,10 +306,10 @@ namespace RTE {
 
 	void Texture::setPixel(int x, int y, uint32_t color) {
 		setPixel(x, y,
-				 (color & static_cast<uint32_t>(g_ColorMask::Red)) >> 3,
-		         (color & static_cast<int>(g_ColorMask::Green)) >> 2,
-		         (color & static_cast<uint32_t>(g_ColorMask::Blue)) >> 1,
-		         (color & static_cast<uint32_t>(g_ColorMask::Alpha)));
+				 (color >> 24)&0xFF,
+		         (color >> 16)&0xFF,
+		         (color >> 8)&0xFF,
+		         (color)&0xFF);
 	}
 
 	int Texture::setAlphaMod(uint8_t alpha) {
