@@ -303,7 +303,8 @@ int SLTerrain::LoadData()
     ///////////////////////////////////////////////
     // Load and texturize the FG color bitmap, based on the materials defined in the recently loaded (main) material layer!
 
-    int xPos, yPos, matIndex, pixelColor;
+    int xPos, yPos, matIndex;
+	uint32_t pixelColor;
 
     // Temporary references for all the materials' textures and colors, since we'll access them a lot
 	std::array<std::shared_ptr<Texture>,256> apTexTextures;
@@ -1083,7 +1084,6 @@ void SLTerrain::ApplyMovableObject(MovableObject *pMObject)
 		// if neccessary resize the temporary render Target
 		if(spriteDiameter>s_TempRenderTarget.w)
 			s_TempRenderTarget = std::move(Texture(renderer, spriteDiameter, spriteDiameter, SDL_TEXTUREACCESS_TARGET));
-		SDL_Rect targetArea{0,0,spriteDiameter,spriteDiameter};
 
         // The position of the upper left corner of the temporary bitmap in the scene
         Vector bitmapScroll = pMObject->GetPos().GetFloored() - Vector(pMObject->GetDiameter() / 2, pMObject->GetDiameter() / 2);
@@ -1429,11 +1429,11 @@ bool SLTerrain::IsBoxBuried(const Box &checkBox) const
 
 void SLTerrain::CleanAirBox(Box box, bool wrapsX, bool wrapsY)
 {
-    acquire_bitmap(m_pMainTexture);
-    acquire_bitmap(m_pFGColor->GetBitmap());
+	m_pMainTexture->lock();
+	m_pFGColor->GetTexture()->lock();
 
-    int width = m_pMainTexture->w;
-    int height = m_pMainTexture->h;
+    int width = m_pMainTexture->getW();
+    int height = m_pMainTexture->getH();
     unsigned char matPixel;
 
 	for (int y = box.m_Corner.m_Y; y < box.m_Corner.m_Y + box.m_Height; ++y) {
@@ -1462,20 +1462,20 @@ void SLTerrain::CleanAirBox(Box box, bool wrapsX, bool wrapsY)
 
 			if (wrapX >= 0 && wrapY >=0 && wrapX < width && wrapY < height)
 			{
-				matPixel = _getpixel(m_pMainTexture, wrapX, wrapY);
+				matPixel = m_pMainTexture->getPixel(wrapX, wrapY);
 				if (matPixel == g_MaterialCavity) {
-					_putpixel(m_pMainTexture, wrapX, wrapY, g_MaterialAir);
+					m_pMainTexture->setPixel(wrapX, wrapY, g_MaterialAir);
 					matPixel = g_MaterialAir;
 				}
 				if (matPixel == g_MaterialAir)
-					_putpixel(m_pFGColor->GetTexture(), wrapX, wrapY, g_MaskColor);
+					m_pFGColor->GetTexture()->setPixel(wrapX, wrapY, g_MaskColor);
 			}
 
         }
     }
 
-    release_bitmap(m_pMainTexture);
-    release_bitmap(m_pFGColor->GetTexture());
+	m_pMainTexture->unlock();
+    m_pFGColor->GetTexture()->unlock();
 }
 
 
@@ -1487,8 +1487,8 @@ void SLTerrain::CleanAirBox(Box box, bool wrapsX, bool wrapsY)
 
 void SLTerrain::CleanAir()
 {
-    acquire_bitmap(m_pMainTexture);
-    acquire_bitmap(m_pFGColor->GetTexture());
+	m_pMainTexture->lock();
+	m_pFGColor->GetTexture()->lock();
 
     int width = m_pMainTexture->getW();
     int height = m_pMainTexture->getH();
@@ -1496,18 +1496,18 @@ void SLTerrain::CleanAir()
 
     for (int y = 0; y < height; ++y) {
         for (int x = 0; x < width; ++x) {
-            matPixel = _getpixel(m_pMainTexture, x, y);
+            matPixel = m_pMainTexture->getPixel(x, y);
             if (matPixel == g_MaterialCavity) {
-                _putpixel(m_pMainTexture, x, y, g_MaterialAir);
+                m_pMainTexture->setPixel(x, y, g_MaterialAir);
                 matPixel = g_MaterialAir;
             }
             if (matPixel == g_MaterialAir)
-                _putpixel(m_pFGColor->GetTexture(), x, y, g_MaskColor);
+                m_pFGColor->GetTexture()->setPixel(x, y, g_MaskColor);
         }
     }
 
-    release_bitmap(m_pMainTexture);
-    release_bitmap(m_pFGColor->GetTexture());
+	m_pMainTexture->unlock();
+	m_pFGColor->GetTexture()->unlock();
 }
 
 
@@ -1519,8 +1519,18 @@ void SLTerrain::CleanAir()
 
 void SLTerrain::ClearAllMaterial()
 {
-    clear_to_color(m_pMainTexture, g_MaskColor);
-    clear_to_color(m_pFGColor->GetTexture(), g_MaterialAir);
+	m_pMainTexture->lock(
+		SDL_Rect{0, 0, m_pMainTexture->getW(), m_pMainTexture->getH()});
+	std::fill(m_pMainTexture->m_PixelsRO.begin(),
+		      m_pMainTexture->m_PixelsRO.end(), 0);
+	m_pMainTexture->unlock();
+
+	m_pFGColor->GetTexture()->lock(SDL_Rect{0, 0,
+		                                    m_pFGColor->GetTexture()->getW(),
+		                                    m_pFGColor->GetTexture()->getH()});
+	m_pFGColor->GetTexture()->m_PixelsRO.assign(
+		m_pFGColor->GetTexture()->m_PixelsRO.size(), g_MaterialAir);
+	m_pFGColor->GetTexture()->unlock();
 }
 
 
