@@ -91,7 +91,7 @@ namespace RTE {
 		MOSprite::RestDetection();
 
 		// If we seem to be about to settle, make sure we're not still flying in the air
-		if ((m_ToSettle || IsAtRest()) && g_SceneMan.OverAltitude(m_Pos, (m_aSprite[m_Frame]->h / 2) + 3, 2)) {
+		if ((m_ToSettle || IsAtRest()) && g_SceneMan.OverAltitude(m_Pos, (m_aSprite[m_Frame]->getH() / 2) + 3, 2)) {
 			m_RestTimer.Reset();
 			m_ToSettle = false;
 		}
@@ -144,7 +144,7 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void MOSParticle::Draw(BITMAP *targetBitmap, const Vector &targetPos, DrawMode mode, bool onlyPhysical) const {
+	void MOSParticle::Draw(SDL_Renderer* renderer, const Vector &targetPos, DrawMode mode, bool onlyPhysical) const {
 		Vector spritePos(m_Pos + m_SpriteOffset - targetPos);
 
 		int spriteX = 0;
@@ -152,35 +152,43 @@ namespace RTE {
 
 		switch (mode) {
 			case g_DrawMaterial:
-				draw_character_ex(targetBitmap, m_aSprite[m_Frame], spritePos.GetFloorIntX(), spritePos.GetFloorIntY(), m_SettleMaterialDisabled ? GetMaterial()->GetIndex() : GetMaterial()->GetSettleMaterial(), -1);
+				m_aSprite[m_Frame]->renderFillColor(
+				    renderer, spritePos.GetFloorIntX(),
+				    spritePos.GetFloorIntY(),
+				    m_SettleMaterialDisabled
+				        ? GetMaterial()->GetIndex()
+				        : GetMaterial()->GetSettleMaterial());
 				break;
 			case g_DrawAir:
-				draw_character_ex(targetBitmap, m_aSprite[m_Frame], spritePos.GetFloorIntX(), spritePos.GetFloorIntY(), g_MaterialAir, -1);
+				m_aSprite[m_Frame]->renderFillColor(
+				    renderer, spritePos.GetFloorIntX(),
+				    spritePos.GetFloorIntY(), g_MaterialAir);
 				break;
 			case g_DrawMask:
-				draw_character_ex(targetBitmap, m_aSprite[m_Frame], spritePos.GetFloorIntX(), spritePos.GetFloorIntY(), g_MaskColor, -1);
+				m_aSprite[m_Frame]->renderFillColor(
+				    renderer, spritePos.GetFloorIntX(),
+				    spritePos.GetFloorIntY(), g_MaskColor);
 				break;
 			case g_DrawWhite:
-				draw_character_ex(targetBitmap, m_aSprite[m_Frame], spritePos.GetFloorIntX(), spritePos.GetFloorIntY(), g_WhiteColor, -1);
+				m_aSprite[m_Frame]->renderFillColor(renderer, spritePos.GetFloorIntX(), spritePos.GetFloorIntY(), g_WhiteColor);
 				break;
 			case g_DrawMOID:
 				spriteX = spritePos.GetFloorIntX();
 				spriteY = spritePos.GetFloorIntY();
-				draw_character_ex(targetBitmap, m_aSprite[m_Frame], spriteX, spriteY, m_MOID, -1);
-				g_SceneMan.RegisterMOIDDrawing(spriteX, spriteY, spriteX + m_aSprite[m_Frame]->w, spriteY + m_aSprite[m_Frame]->h);
+				m_aSprite[m_Frame]->renderFillColor(renderer, spriteX, spriteY, m_MOID);
+				g_SceneMan.RegisterMOIDDrawing(spriteX, spriteY, spriteX + m_aSprite[m_Frame]->getW(), spriteY + m_aSprite[m_Frame]->getH());
 				break;
 			case g_DrawNoMOID:
-				draw_character_ex(targetBitmap, m_aSprite[m_Frame], spritePos.GetFloorIntX(), spritePos.GetFloorIntY(), g_NoMOID, -1);
+				m_aSprite[m_Frame]->renderFillColor(renderer, spritePos.GetFloorIntX(), spritePos.GetFloorIntY(), g_NoMOID);
 				break;
 			case g_DrawTrans:
-				draw_trans_sprite(targetBitmap, m_aSprite[m_Frame], spritePos.GetFloorIntX(), spritePos.GetFloorIntY());
+				m_aSprite[m_Frame]->render(renderer, spritePos.GetFloorIntX(), spritePos.GetFloorIntY());
 				break;
 			case g_DrawAlpha:
-				set_alpha_blender();
-				draw_trans_sprite(targetBitmap, m_aSprite[m_Frame], spritePos.GetFloorIntX(), spritePos.GetFloorIntY());
+				m_aSprite[m_Frame]->render(renderer, spritePos.GetFloorIntX(), spritePos.GetFloorIntY());
 				break;
 			default:
-				draw_sprite(targetBitmap, m_aSprite[m_Frame], spritePos.GetFloorIntX(), spritePos.GetFloorIntY());
+				m_aSprite[m_Frame]->render(renderer, spritePos.GetFloorIntX(), spritePos.GetFloorIntY());
 				break;
 		}
 		
