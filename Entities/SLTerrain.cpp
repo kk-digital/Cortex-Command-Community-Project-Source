@@ -914,6 +914,7 @@ deque<MOPixel *> SLTerrain::EraseSilhouette(std::shared_ptr<Texture> pSprite,
 
     deque<MOPixel *> MOPDeque;
 
+	// TODO: this might be doable without using rendering instead
 	// Create temporary SDL_Surfaces from Sprite and Surface (this is very fast
 	// because the pixels are not copied)
 	std::unique_ptr<SDL_Surface, sdl_deleter> tempSpriteSurface{
