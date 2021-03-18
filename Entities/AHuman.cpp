@@ -25,6 +25,7 @@
 #include "PieMenuGUI.h"
 #include "Scene.h"
 #include "SettingsMan.h"
+#include "Managers/FrameMan.h"
 
 #include "GUI/GUI.h"
 #include "GUI/AllegroBitmap.h"
@@ -617,7 +618,7 @@ void AHuman::SetBGLeg(Leg *newLeg) {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-BITMAP *AHuman::GetHeadBitmap() const {
+std::shared_ptr<Texture> AHuman::GetHeadTexture() const {
     return (m_pHead && m_pHead->IsAttached()) ? m_pHead->GetSpriteFrame(0) : nullptr;
 }
 
@@ -4304,7 +4305,7 @@ void AHuman::Update()
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Draws an aiming aid in front of this HeldDevice for throwing.
 
-void AHuman::DrawThrowingReticule(BITMAP *pTargetBitmap, const Vector &targetPos, double amount) const
+void AHuman::DrawThrowingReticule(SDL_Renderer* renderer, const Vector &targetPos, double amount) const
 {
     const int pointCount = 9;
     Vector points[pointCount];
@@ -4344,18 +4345,18 @@ void AHuman::DrawThrowingReticule(BITMAP *pTargetBitmap, const Vector &targetPos
 // Description:     Draws this AHuman's current graphical representation to a
 //                  BITMAP of choice.
 
-void AHuman::Draw(BITMAP *pTargetBitmap, const Vector &targetPos, DrawMode mode, bool onlyPhysical) const {
-    Actor::Draw(pTargetBitmap, targetPos, mode, onlyPhysical);
+void AHuman::Draw(SDL_Renderer* renderer, const Vector &targetPos, DrawMode mode, bool onlyPhysical) const {
+    Actor::Draw(renderer, targetPos, mode, onlyPhysical);
 
     DrawMode realMode = (mode == g_DrawColor && m_FlashWhiteMS) ? g_DrawWhite : mode;
     // Note: For some reason the ordering of the attachables list can get messed up. The most important thing here is that the FGArm is on top of everything else.
-    if (m_pHead && m_pHead->IsDrawnAfterParent()) { m_pHead->Draw(pTargetBitmap, targetPos, realMode, onlyPhysical); }
-    if (m_pFGArm) { m_pFGArm->Draw(pTargetBitmap, targetPos, realMode, onlyPhysical); }
+    if (m_pHead && m_pHead->IsDrawnAfterParent()) { m_pHead->Draw(renderer, targetPos, realMode, onlyPhysical); }
+    if (m_pFGArm) { m_pFGArm->Draw(renderer, targetPos, realMode, onlyPhysical); }
 
     //TODO simplify this complex if check when arm is cleaned up like turret so all it can hold are HeldDevices and children
     // Draw background Arm's hand after the HeldDevice of FGArm is drawn if the FGArm is holding a weapon.
     if (m_pFGArm && m_pBGArm && !onlyPhysical && mode == g_DrawColor && m_pBGArm->DidReach() && m_pFGArm->HoldsHeldDevice() && !m_pFGArm->HoldsThrownDevice() && !m_pFGArm->GetHeldDevice()->IsReloading() && !m_pFGArm->GetHeldDevice()->IsShield()) {
-        m_pBGArm->DrawHand(pTargetBitmap, targetPos, realMode);
+        m_pBGArm->DrawHand(renderer, targetPos, realMode);
     }
     
 #ifdef DEBUG_BUILD
@@ -4381,7 +4382,7 @@ void AHuman::Draw(BITMAP *pTargetBitmap, const Vector &targetPos, DrawMode mode,
 // Description:     Draws this Actor's current graphical HUD overlay representation to a
 //                  BITMAP of choice.
 
-void AHuman::DrawHUD(BITMAP *pTargetBitmap, const Vector &targetPos, int whichScreen, bool playerControlled) {
+void AHuman::DrawHUD(SDL_Renderer* renderer, const Vector &targetPos, int whichScreen, bool playerControlled) {
     if (!m_HUDVisible)
         return;
 
@@ -4395,7 +4396,7 @@ void AHuman::DrawHUD(BITMAP *pTargetBitmap, const Vector &targetPos, int whichSc
 		return;
     }
 
-    Actor::DrawHUD(pTargetBitmap, targetPos, whichScreen);
+    Actor::DrawHUD(renderer, targetPos, whichScreen);
 
 #ifdef DEBUG_BUILD
     // Limbpath debug drawing
@@ -4434,13 +4435,13 @@ void AHuman::DrawHUD(BITMAP *pTargetBitmap, const Vector &targetPos, int whichSc
 
     // Device aiming reticule
 	if (m_Controller.IsState(AIM_SHARP) && m_pFGArm && m_pFGArm->IsAttached() && m_pFGArm->HoldsHeldDevice()) {
-		m_pFGArm->GetHeldDevice()->DrawHUD(pTargetBitmap, targetPos, whichScreen, m_Controller.IsPlayerControlled());
+		m_pFGArm->GetHeldDevice()->DrawHUD(renderer, targetPos, whichScreen, m_Controller.IsPlayerControlled());
 	}
         
 
     // Throwing reticule
 	if (m_ArmsState == THROWING_PREP) {
-		DrawThrowingReticule(pTargetBitmap, targetPos, std::min(m_ThrowTmr.GetElapsedSimTimeMS() / m_ThrowPrepTime, 1.0));
+		DrawThrowingReticule(renderer, targetPos, std::min(m_ThrowTmr.GetElapsedSimTimeMS() / m_ThrowPrepTime, 1.0));
 	}
 
     //////////////////////////////////////

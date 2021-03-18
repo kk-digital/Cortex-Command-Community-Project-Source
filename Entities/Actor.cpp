@@ -11,10 +11,11 @@
 //////////////////////////////////////////////////////////////////////////////////////////
 // Inclusions of header files
 
+#include "Actor.h"
 #include "UInputMan.h"
 #include "ActivityMan.h"
+#include "Managers/FrameMan.h"
 #include "GameActivity.h"
-#include "Actor.h"
 #include "ACrab.h"
 #include "ACraft.h"
 #include "AtomGroup.h"
@@ -31,20 +32,21 @@
 #include "PerformanceMan.h"
 
 #include "GUI/GUI.h"
-#include "GUI/AllegroBitmap.h"
+#include "GUI/SDLGUITexture.h"
+#include <SDL2/SDL2_gfxPrimitives.h>
 
 namespace RTE {
 
 ConcreteClassInfo(Actor, MOSRotating, 20);
 
-BITMAP **Actor::m_apNoTeamIcon;
-BITMAP *Actor::m_apAIIcons[AIMODE_COUNT];
-BITMAP **Actor::m_apSelectArrow;
-BITMAP **Actor::m_apAlarmExclamation;
+	std::vector<std::shared_ptr<Texture>> Actor::m_apNoTeamIcon;
+	std::array<std::shared_ptr<Texture>, Actor::AIMODE_COUNT> Actor::m_apAIIcons;
+	std::vector<std::shared_ptr<Texture>> Actor::m_apSelectArrow;
+	std::vector<std::shared_ptr<Texture>> Actor::m_apAlarmExclamation;
 bool Actor::m_sIconsLoaded = false;
 
 #define ARROWTIME 1000
-	
+
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -264,28 +266,28 @@ int Actor::Create(const Actor &reference)
         m_apNoTeamIcon = noTeamFile.GetAsAnimation(2);
 
         ContentFile iconFile("Base.rte/GUIs/PieIcons/Blank000.png");
-        m_apAIIcons[AIMODE_NONE] = iconFile.GetAsBitmap();
-        m_apAIIcons[AIMODE_BOMB] = iconFile.GetAsBitmap();
+        m_apAIIcons[AIMODE_NONE] = iconFile.GetAsTexture();
+        m_apAIIcons[AIMODE_BOMB] = iconFile.GetAsTexture();
         iconFile.SetDataPath("Base.rte/GUIs/PieIcons/Eye000.png");
-        m_apAIIcons[AIMODE_SENTRY] = iconFile.GetAsBitmap();
+        m_apAIIcons[AIMODE_SENTRY] = iconFile.GetAsTexture();
         iconFile.SetDataPath("Base.rte/GUIs/PieIcons/Cycle000.png");
-        m_apAIIcons[AIMODE_PATROL] = iconFile.GetAsBitmap();
+        m_apAIIcons[AIMODE_PATROL] = iconFile.GetAsTexture();
         iconFile.SetDataPath("Base.rte/GUIs/PieIcons/GoTo000.png");
-        m_apAIIcons[AIMODE_GOTO] = iconFile.GetAsBitmap();
+        m_apAIIcons[AIMODE_GOTO] = iconFile.GetAsTexture();
         iconFile.SetDataPath("Base.rte/GUIs/PieIcons/Brain000.png");
-        m_apAIIcons[AIMODE_BRAINHUNT] = iconFile.GetAsBitmap();
+        m_apAIIcons[AIMODE_BRAINHUNT] = iconFile.GetAsTexture();
         iconFile.SetDataPath("Base.rte/GUIs/PieIcons/Dig000.png");
-        m_apAIIcons[AIMODE_GOLDDIG] = iconFile.GetAsBitmap();
+        m_apAIIcons[AIMODE_GOLDDIG] = iconFile.GetAsTexture();
         iconFile.SetDataPath("Base.rte/GUIs/PieIcons/Return000.png");
-        m_apAIIcons[AIMODE_RETURN] = iconFile.GetAsBitmap();
+        m_apAIIcons[AIMODE_RETURN] = iconFile.GetAsTexture();
         iconFile.SetDataPath("Base.rte/GUIs/PieIcons/Land000.png");
-        m_apAIIcons[AIMODE_STAY] = iconFile.GetAsBitmap();
+        m_apAIIcons[AIMODE_STAY] = iconFile.GetAsTexture();
         iconFile.SetDataPath("Base.rte/GUIs/PieIcons/Launch000.png");
-        m_apAIIcons[AIMODE_DELIVER] = iconFile.GetAsBitmap();
+        m_apAIIcons[AIMODE_DELIVER] = iconFile.GetAsTexture();
         iconFile.SetDataPath("Base.rte/GUIs/PieIcons/Death000.png");
-        m_apAIIcons[AIMODE_SCUTTLE] = iconFile.GetAsBitmap();
+        m_apAIIcons[AIMODE_SCUTTLE] = iconFile.GetAsTexture();
         iconFile.SetDataPath("Base.rte/GUIs/PieIcons/Follow000.png");
-        m_apAIIcons[AIMODE_SQUAD] = iconFile.GetAsBitmap();
+        m_apAIIcons[AIMODE_SQUAD] = iconFile.GetAsTexture();
 
         ContentFile arrowFile("Base.rte/GUIs/Indicators/SelectArrow.png");
         m_apSelectArrow = arrowFile.GetAsAnimation(4);
@@ -900,9 +902,9 @@ void Actor::DropAllInventory()
 			pObject->SetAngularVel((pObject->GetAngularVel() * 0.35F) + (pObject->GetAngularVel() * 0.65F / pObject->GetMass()) * RandomNum());
 			// Make it rotate away in the appropriate direction depending on which side of the object it is on
 			// If the object is far to the relft or right of the center, make it always rotate outwards to some degree
-			if (gibROffset.m_X > m_aSprite[0]->w / 3)
+			if (gibROffset.m_X > m_aSprite[0]->getW() / 3)
 			{
-				float offCenterRatio = gibROffset.m_X / (m_aSprite[0]->w / 2);
+				float offCenterRatio = gibROffset.m_X / (m_aSprite[0]->getW() / 2);
 				angularVel = fabs(pObject->GetAngularVel() * 0.5F);
 				angularVel += fabs(pObject->GetAngularVel() * 0.5F * offCenterRatio);
 				pObject->SetAngularVel(angularVel * (gibROffset.m_X > 0.0F ? -1 : 1));
@@ -988,9 +990,9 @@ void Actor::GibThis(const Vector &impactImpulse, MovableObject *movableObjectToI
         pObject->SetAngularVel((pObject->GetAngularVel() * 0.35F) + (pObject->GetAngularVel() * 0.65F / pObject->GetMass()) * RandomNum());
         // Make it rotate away in the appropriate direction depending on which side of the object it is on
         // If the object is far to the relft or right of the center, make it always rotate outwards to some degree
-        if (gibROffset.m_X > m_aSprite[0]->w / 3)
+        if (gibROffset.m_X > m_aSprite[0]->getW() / 3)
         {
-            float offCenterRatio = gibROffset.m_X / (m_aSprite[0]->w / 2);
+            float offCenterRatio = gibROffset.m_X / (m_aSprite[0]->getW() / 2);
             angularVel = fabs(pObject->GetAngularVel() * 0.5F);
             angularVel += fabs(pObject->GetAngularVel() * 0.5F * offCenterRatio);
             pObject->SetAngularVel(angularVel * (gibROffset.m_X > 0 ? -1 : 1));
@@ -1145,7 +1147,7 @@ bool Actor::OnMOHit(MovableObject *pOtherMO)
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Gets the icon bitmap associated with this' current AI mode and team.
 
-BITMAP * Actor::GetAIModeIcon()
+std::shared_ptr<Texture> Actor::GetAIModeIcon()
 {
     return m_apAIIcons[m_AIMode];
 }
@@ -1158,7 +1160,7 @@ BITMAP * Actor::GetAIModeIcon()
 // Arguments:       None.
 // Return value:    The furthest set AI MO waypoint of this.
 
-MOID Actor::GetAIMOWaypointID() 
+MOID Actor::GetAIMOWaypointID()
 {
 	if (g_MovableMan.ValidMO(m_pMOMoveTarget))
 		return m_pMOMoveTarget->GetID();
@@ -1628,13 +1630,13 @@ void Actor::Update()
 // Description:     Draws this Actor's current graphical representation to a
 //                  BITMAP of choice.
 
-void Actor::Draw(BITMAP *pTargetBitmap,
+void Actor::Draw(SDL_Renderer* renderer,
                  const Vector &targetPos,
                  DrawMode mode,
                  bool onlyPhysical) const
 {
     // Make it draw white if is going to be drawn as color
-    MOSRotating::Draw(pTargetBitmap, targetPos, mode == g_DrawColor && m_FlashWhiteMS ? g_DrawWhite : mode, onlyPhysical);
+    MOSRotating::Draw(renderer, targetPos, mode == g_DrawColor && m_FlashWhiteMS ? g_DrawWhite : mode, onlyPhysical);
 }
 
 
@@ -1644,7 +1646,7 @@ void Actor::Draw(BITMAP *pTargetBitmap,
 // Description:     Draws this Actor's current graphical HUD overlay representation to a
 //                  BITMAP of choice.
 
-void Actor::DrawHUD(BITMAP *pTargetBitmap, const Vector &targetPos, int whichScreen, bool playerControlled)
+void Actor::DrawHUD(SDL_Renderer* renderer, const Vector &targetPos, int whichScreen, bool playerControlled)
 {
     if (!m_HUDVisible)
         return;
@@ -1674,16 +1676,18 @@ void Actor::DrawHUD(BITMAP *pTargetBitmap, const Vector &targetPos, int whichScr
     // Adjust the draw position to work if drawn to a target screen bitmap that is straddling a scene seam
     if (!targetPos.IsZero())
     {
+		SDL_Rect viewport;
+		SDL_RenderGetViewport(renderer, &viewport);
         // Spans vertical scene seam
         int sceneWidth = g_SceneMan.GetSceneWidth();
-        if (g_SceneMan.SceneWrapsX() && pTargetBitmap->w < sceneWidth)
+        if (g_SceneMan.SceneWrapsX() && viewport.w < sceneWidth)
         {
-            if ((targetPos.m_X < 0) && (m_Pos.m_X > (sceneWidth - pTargetBitmap->w)))
+            if ((targetPos.m_X < 0) && (m_Pos.m_X > (sceneWidth - viewport.w)))
             {
                 drawPos.m_X -= sceneWidth;
                 cpuPos.m_X -= sceneWidth;
             }
-            else if (((targetPos.m_X + pTargetBitmap->w) > sceneWidth) && (m_Pos.m_X < pTargetBitmap->w))
+            else if (((targetPos.m_X + viewport.w) > sceneWidth) && (m_Pos.m_X < viewport.w))
             {
                 drawPos.m_X += sceneWidth;
                 cpuPos.m_X += sceneWidth;
@@ -1691,14 +1695,14 @@ void Actor::DrawHUD(BITMAP *pTargetBitmap, const Vector &targetPos, int whichScr
         }
         // Spans horizontal scene seam
         int sceneHeight = g_SceneMan.GetSceneHeight();
-        if (g_SceneMan.SceneWrapsY() && pTargetBitmap->h < sceneHeight)
+        if (g_SceneMan.SceneWrapsY() && viewport.h < sceneHeight)
         {
-            if ((targetPos.m_Y < 0) && (m_Pos.m_Y > (sceneHeight - pTargetBitmap->h)))
+            if ((targetPos.m_Y < 0) && (m_Pos.m_Y > (sceneHeight - viewport.h)))
             {
                 drawPos.m_Y -= sceneHeight;
                 cpuPos.m_Y -= sceneHeight;
             }
-            else if (((targetPos.m_Y + pTargetBitmap->h) > sceneHeight) && (m_Pos.m_Y < pTargetBitmap->h))
+            else if (((targetPos.m_Y + viewport.h) > sceneHeight) && (m_Pos.m_Y < viewport.h))
             {
                 drawPos.m_Y += sceneHeight;
                 cpuPos.m_Y += sceneHeight;
@@ -1710,16 +1714,20 @@ void Actor::DrawHUD(BITMAP *pTargetBitmap, const Vector &targetPos, int whichScr
     if (m_Controller.IsPlayerControlled() && m_NewControlTmr.GetElapsedSimTimeMS() < ARROWTIME)
     {
 		// Draw the appropriate selection arrow color based on player team
-        draw_sprite(pTargetBitmap, m_apSelectArrow[m_Team], cpuPos.m_X, EaseOut(drawPos.m_Y + m_HUDStack - 60, drawPos.m_Y + m_HUDStack - 20, m_NewControlTmr.GetElapsedSimTimeMS() / (float)ARROWTIME));
+		m_apSelectArrow[m_Team]->render(renderer, cpuPos.m_X, EaseOut(drawPos.m_Y + m_HUDStack - 60, drawPos.m_Y + m_HUDStack - 20, m_NewControlTmr.GetElapsedRealTimeMS()/(float)ARROWTIME));
     }
 
     // Draw the alarm exclamation mark if we are alarmed!
     if (m_AlarmTimer.SimTimeLimitProgress() < 0.25)
-        draw_sprite(pTargetBitmap, m_apAlarmExclamation[m_AgeTimer.AlternateSim(100)], cpuPos.m_X - 3, EaseOut(drawPos.m_Y + m_HUDStack - 10, drawPos.m_Y + m_HUDStack - 25, m_AlarmTimer.SimTimeLimitProgress() / 0.25f));
+		m_apAlarmExclamation[m_AgeTimer.AlternateSim(100)]->render(
+			renderer, cpuPos.m_X - 3,
+			EaseOut(drawPos.m_Y + m_HUDStack - 10,
+			        drawPos.m_Y + m_HUDStack - 25,
+			        m_AlarmTimer.SimTimeLimitProgress() / 0.25f));
 
-    if (pSmallFont && pSymbolFont)
+	if (pSmallFont && pSymbolFont)
     {
-        AllegroBitmap bitmapInt(pTargetBitmap);
+        SDLGUITexture bitmapInt;
 
         if (!m_Controller.IsState(PIE_MENU_ACTIVE))
         {
@@ -1739,30 +1747,36 @@ void Actor::DrawHUD(BITMAP *pTargetBitmap, const Vector &targetPos, int whichScr
 						m_pControllerIcon = g_UInputMan.GetDeviceIcon(DEVICE_GAMEPAD_4);
 					if (m_pControllerIcon)
 					{
-						BITMAP **apControllerBitmaps = 0;
-						apControllerBitmaps = m_pControllerIcon->GetBitmaps8();
-
-						masked_blit(apControllerBitmaps[0], pTargetBitmap, 0, 0, drawPos.m_X - apControllerBitmaps[0]->w - 2 + 10, drawPos.m_Y + m_HUDStack - (apControllerBitmaps[0]->h / 2) + 8, apControllerBitmaps[0]->w, apControllerBitmaps[0]->h);
+						m_pControllerIcon->GetTextures()[0]->render(
+							renderer,
+							drawPos.m_X - m_pControllerIcon->GetTextures()[0]->getW() - 2 +
+							    10,
+							drawPos.m_Y + m_HUDStack -
+							    (m_pControllerIcon->GetTextures()[0]->getH() / 2) + 8);
 					}
 				}
 
                 // Get the Icon bitmaps of this Actor's team, if any
-                BITMAP **apIconBitmaps = 0;
+				std::vector<std::shared_ptr<Texture>> apIconTextures;
                 if (m_pTeamIcon)
-                    apIconBitmaps = m_pTeamIcon->GetBitmaps8();
+                    apIconTextures = m_pTeamIcon->GetTextures();
 
                 // Team Icon could not be found, or of no team, so use the static noteam Icon instead
-                if (!apIconBitmaps)
-                    apIconBitmaps = m_apNoTeamIcon;
+                if (apIconTextures.empty())
+                    apIconTextures = m_apNoTeamIcon;
 
                 // Now draw the Icon if we can
-                if (apIconBitmaps && m_pTeamIcon && m_pTeamIcon->GetFrameCount() > 0)
+                if (!apIconTextures.empty() && m_pTeamIcon && m_pTeamIcon->GetFrameCount() > 0)
                 {
                     // Make team icon blink faster as the health goes down
                     int f = m_HeartBeat.AlternateReal(200 + 800 * (m_Health / 100)) ? 0 : 1;
-                    f = MIN(f, m_pTeamIcon ? m_pTeamIcon->GetFrameCount() - 1 : 1);
-                    masked_blit(apIconBitmaps[f], pTargetBitmap, 0, 0, drawPos.m_X - apIconBitmaps[f]->w - 2, drawPos.m_Y + m_HUDStack - (apIconBitmaps[f]->h / 2) + 8, apIconBitmaps[f]->w, apIconBitmaps[f]->h);
-                }
+					f = std::min(
+						f, m_pTeamIcon ? m_pTeamIcon->GetFrameCount() - 1 : 1);
+					apIconTextures[f]->render(
+						renderer, drawPos.m_X - apIconTextures[f]->getW() - 2,
+						drawPos.m_Y + m_HUDStack - (apIconTextures[f]->getH() / 2) +
+						    8);
+				}
             }
             // Draw death icon
             else
@@ -1828,7 +1842,7 @@ void Actor::DrawHUD(BITMAP *pTargetBitmap, const Vector &targetPos, int whichScr
 
     // AI mode state debugging
 #ifdef DEBUG_BUILD
-    AllegroBitmap bitmapInt(pTargetBitmap);
+    SDLGUITexture bitmapInt;
 
     // Obstacle state
     if (m_ObstacleState == PROCEEDING)
@@ -1885,21 +1899,21 @@ void Actor::DrawHUD(BITMAP *pTargetBitmap, const Vector &targetPos, int whichScr
             for (; vItr != m_Waypoints.rend(); ++vItr)
             {
                 // Draw the line
-                g_FrameMan.DrawLine(pTargetBitmap, (*vLast).first - targetPos, (*vItr).first - targetPos, g_YellowGlowColor, 0, AILINEDOTSPACING, 0, true);
+                g_FrameMan.DrawLine((*vLast).first - targetPos, (*vItr).first - targetPos, g_YellowGlowColor, 0, AILINEDOTSPACING, 0, true);
                 vLast = vItr;
 
                 // Draw the points
                 waypoint = (*vItr).first - targetPos;
-                circlefill(pTargetBitmap, waypoint.m_X, waypoint.m_Y, 2, g_YellowGlowColor);
+                filledCircleColor(renderer, waypoint.m_X, waypoint.m_Y, 2, g_YellowGlowColor);
                 // Add pixel glow area around it, in scene coordinates
 				g_PostProcessMan.RegisterGlowArea((*vItr).first, 5);
             }
 
             // Draw line from the last movetarget on the current path to the first waypoint in queue after that
             if (!m_MovePath.empty())
-                g_FrameMan.DrawLine(pTargetBitmap, m_MovePath.back() - targetPos, m_Waypoints.front().first - targetPos, g_YellowGlowColor, 0, AILINEDOTSPACING, 0, true);
+                g_FrameMan.DrawLine(m_MovePath.back() - targetPos, m_Waypoints.front().first - targetPos, g_YellowGlowColor, 0, AILINEDOTSPACING, 0, true);
             else
-                g_FrameMan.DrawLine(pTargetBitmap, m_MoveTarget - targetPos, m_Waypoints.front().first - targetPos, g_YellowGlowColor, 0, AILINEDOTSPACING, 0, true);
+                g_FrameMan.DrawLine(m_MoveTarget - targetPos, m_Waypoints.front().first - targetPos, g_YellowGlowColor, 0, AILINEDOTSPACING, 0, true);
         }
 
         // Draw the current movepath, but backwards so the dot spacing can be even and they don't crawl as the guy approaches
@@ -1910,15 +1924,15 @@ void Actor::DrawHUD(BITMAP *pTargetBitmap, const Vector &targetPos, int whichScr
             for (; lItr != m_MovePath.rend(); ++lItr)
             {
                 // Draw these backwards so the skip phase works
-                skipPhase = g_FrameMan.DrawLine(pTargetBitmap, (*lLast) - targetPos, (*lItr) - targetPos, g_YellowGlowColor, 0, AILINEDOTSPACING, skipPhase, true);
+                skipPhase = g_FrameMan.DrawLine((*lLast) - targetPos, (*lItr) - targetPos, g_YellowGlowColor, 0, AILINEDOTSPACING, skipPhase, true);
                 lLast = lItr;
             }
 
             // Draw the line between the current position and to the start of the movepath, backwards so the dotted lines doesn't crawl
-            skipPhase = g_FrameMan.DrawLine(pTargetBitmap, m_MovePath.front() - targetPos, m_Pos - targetPos, g_YellowGlowColor, 0, AILINEDOTSPACING, skipPhase, true);
+            skipPhase = g_FrameMan.DrawLine(m_MovePath.front() - targetPos, m_Pos - targetPos, g_YellowGlowColor, 0, AILINEDOTSPACING, skipPhase, true);
             // Draw the first destination/waypoint point
             waypoint = m_MovePath.back() - targetPos;
-            circlefill(pTargetBitmap, waypoint.m_X, waypoint.m_Y, 2, g_YellowGlowColor);
+			filledCircleColor(renderer, waypoint.m_X, waypoint.m_Y, 2, g_YellowGlowColor);
             // Add pixel glow area around it, in scene coordinates
 			g_PostProcessMan.RegisterGlowArea(m_MovePath.back(), 5);
         }
@@ -1926,10 +1940,10 @@ void Actor::DrawHUD(BITMAP *pTargetBitmap, const Vector &targetPos, int whichScr
         else
         {
             // Draw it backwards so the dotted lines doesn't crawl
-            skipPhase = g_FrameMan.DrawLine(pTargetBitmap, m_MoveTarget - targetPos, m_Pos - targetPos, g_YellowGlowColor, 0, AILINEDOTSPACING, skipPhase, true);            
+            skipPhase = g_FrameMan.DrawLine(m_MoveTarget - targetPos, m_Pos - targetPos, g_YellowGlowColor, 0, AILINEDOTSPACING, skipPhase, true);
             // Draw the first destination/waypoint point
             waypoint = m_MoveTarget - targetPos;
-            circlefill(pTargetBitmap, waypoint.m_X, waypoint.m_Y, 2, g_YellowGlowColor);
+			filledCircleColor(renderer, waypoint.m_X, waypoint.m_Y, 2, g_YellowGlowColor);
             // Add pixel glow area around it, in scene coordinates
 			g_PostProcessMan.RegisterGlowArea(m_MoveTarget, 5);
         }
@@ -1938,11 +1952,12 @@ void Actor::DrawHUD(BITMAP *pTargetBitmap, const Vector &targetPos, int whichScr
     // AI Mode team roster HUD lines
     if (/*m_Controller.IsState(PIE_MENU_ACTIVE) || */m_Controller.IsState(ACTOR_NEXT_PREP) || m_Controller.IsState(ACTOR_PREV_PREP))
     {
-        int prevColor = m_Controller.IsState(ACTOR_PREV_PREP) ? 122 : (m_Team == Activity::TeamOne ? 13 : 147);
-        int nextColor = m_Controller.IsState(ACTOR_NEXT_PREP) ? 122 : (m_Team == Activity::TeamOne ? 13 : 147);
-        int prevSpacing = m_Controller.IsState(ACTOR_PREV_PREP) ? 3 : 9;
-        int nextSpacing = m_Controller.IsState(ACTOR_NEXT_PREP) ? 3 : 9;
-        int altColor = m_Team == Activity::TeamOne ? 11 : 160;
+		// TODO: set these colors corretly magic numbers bad
+        uint32_t prevColor = m_Controller.IsState(ACTOR_PREV_PREP) ? 122 : (m_Team == Activity::TeamOne ? 13 : 147);
+        uint32_t nextColor = m_Controller.IsState(ACTOR_NEXT_PREP) ? 122 : (m_Team == Activity::TeamOne ? 13 : 147);
+        uint32_t prevSpacing = m_Controller.IsState(ACTOR_PREV_PREP) ? 3 : 9;
+        uint32_t nextSpacing = m_Controller.IsState(ACTOR_NEXT_PREP) ? 3 : 9;
+        uint32_t altColor = m_Team == Activity::TeamOne ? 11 : 160;
 
         Actor *pPrevAdj = 0;
         Actor *pNextAdj = 0;
@@ -1955,7 +1970,7 @@ void Actor::DrawHUD(BITMAP *pTargetBitmap, const Vector &targetPos, int whichScr
             RTEAssert(selfRItr != pRoster->rend(), "Actor couldn't find self in Team roster!");
             list<Actor *>::iterator selfItr = find(pRoster->begin(), pRoster->end(), this);
             RTEAssert(selfItr != pRoster->end(), "Actor couldn't find self in Team roster!");
-            
+
             // Find the adjacent actors
             if (selfItr != pRoster->end())
             {
@@ -1992,25 +2007,25 @@ void Actor::DrawHUD(BITMAP *pTargetBitmap, const Vector &targetPos, int whichScr
                     // Only draw both lines if they're not pointing to the same thing
                     if (pPrevAdj != pNextAdj)
                     {
-                        g_FrameMan.DrawLine(pTargetBitmap, cpuPos, pPrevAdj->GetCPUPos() - targetPos, prevColor, prevColor, prevSpacing, 0, true);
-                        g_FrameMan.DrawLine(pTargetBitmap, cpuPos, pNextAdj->GetCPUPos() - targetPos, nextColor, nextColor, nextSpacing, 0, true);
+                        g_FrameMan.DrawLine(cpuPos, pPrevAdj->GetCPUPos() - targetPos, prevColor, prevColor, prevSpacing, 0, true);
+                        g_FrameMan.DrawLine(cpuPos, pNextAdj->GetCPUPos() - targetPos, nextColor, nextColor, nextSpacing, 0, true);
                     }
                     // If only one other available Actor, only draw one yellow line to it
                     else
-                        g_FrameMan.DrawLine(pTargetBitmap, cpuPos, pNextAdj->GetCPUPos() - targetPos, 122, 122, 3, 0, true);
+                        g_FrameMan.DrawLine(cpuPos, pNextAdj->GetCPUPos() - targetPos, 122, 122, 3, 0, true);
 
                     // Prev selected icon
                     iconPos = pPrevAdj->GetCPUPos() - targetPos;
-                    draw_sprite(pTargetBitmap, pPrevAdj->GetAIModeIcon(), iconPos.m_X - 6, iconPos.m_Y - 6);
+					pPrevAdj->GetAIModeIcon()->render(renderer, iconPos.m_X - 6, iconPos.m_Y - 6);
 
                     // Next selected icon
                     iconPos = pNextAdj->GetCPUPos() - targetPos;
-                    draw_sprite(pTargetBitmap, pNextAdj->GetAIModeIcon(), iconPos.m_X - 6, iconPos.m_Y - 6);
+					pNextAdj->GetAIModeIcon()->render(renderer, iconPos.m_X - 6, iconPos.m_Y - 6);
                 }
 
                 // Self selected icon
                 iconPos = cpuPos;
-                draw_sprite(pTargetBitmap, GetAIModeIcon(), iconPos.m_X - 6, iconPos.m_Y - 6);
+				GetAIModeIcon()->render(renderer, iconPos.m_X - 6, iconPos.m_Y - 6);
 /* Too many lines, confusing!
                 // Again get the next and previous actors in the list
                 if (++prevItr == pRoster->rend())
