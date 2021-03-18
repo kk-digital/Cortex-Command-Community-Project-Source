@@ -5,8 +5,8 @@ namespace RTE {
 
 #pragma region Type Definitions
 	// TODO: Look into not using distinctive types for IDs.
-	typedef int MOID; //!< Distinctive type definition for MovableObject IDs.
-	typedef int MID; //!< Distinctive type definition for Material IDs.
+	typedef uint32_t MOID; //!< Distinctive type definition for MovableObject IDs.
+	typedef uint32_t MID; //!< Distinctive type definition for Material IDs.
 #pragma endregion
 
 #pragma region Game Version
@@ -29,42 +29,43 @@ namespace RTE {
 	static constexpr unsigned short c_MOIDLayerBitDepth = 16; //!< Bit depth of MOID layer bitmap.
 	static constexpr unsigned short c_GoldMaterialID = 2; //!< Index of gold material in the material palette.
 
-	enum ColorKeys {
-		g_MaskColor = 0xFFFF00FF, //!< Mask color for all 8bpp bitmaps (palette index 0 (255,0,255)). This color is fully transparent.
+	//! ColorKeys in RGBA32 (0xRRGGBBAA)
+	enum ColorKeys : uint32_t{
+		g_MaskColor = 0xFF00FFFF, //!< Mask color for all 8bpp bitmaps (palette index 0 (255,0,255)). This color is fully transparent.
 		//g_MOIDMaskColor = 0, //!< Mask color for 8bpp MOID layer bitmaps (palette index 0 (255,0,255)). This color is fully transparent.
-		g_MOIDMaskColor = 0xFFFF00FF, //!< Mask color for 16bpp MOID layer bitmaps (255,0,255). This color is fully transparent.
+		g_MOIDMaskColor = 0xFF00FFFF, //!< Mask color for 16bpp MOID layer bitmaps (255,0,255). This color is fully transparent.
 		g_AlphaZero = 0x0,
 		//g_MOIDMaskColor = 0xFF00FF, //!< Mask color for 32bpp MOID layer bitmaps (255,0,255). This color is fully transparent.
-		g_BlackColor = 0xFF000000,
+		g_BlackColor = 0x000000FF,
 		g_WhiteColor = 0xFFFFFFFF,
-		g_RedColor = 0xFFEA1507,
-		g_YellowGlowColor = 0xFFF9F338,
-		g_NoMOID = 0xFF2F2020
+		g_RedColor = 0xEA1507FF,
+		g_YellowGlowColor = 0xF9F338FF,
+		g_NoMOID = 0x2F2020FF
 	};
 
 	enum class g_ColorMask: uint32_t {
-		Red = 0x00FF0000,
-		Green = 0x0000FF00,
-		Blue = 0x000000FF,
-		Alpha = 0xFF000000
+		Red = 0xFF000000,
+		Green = 0x00FF0000,
+		Blue = 0x0000FF00,
+		Alpha = 0x000000FF
 	};
 
 	enum DotGlowColor { NoDot = 0, YellowDot, RedDot, BlueDot };
 	enum TransparencyPreset { LessTrans = 0, HalfTrans, MoreTrans };
 
 	// GUI colors
-	#define c_GUIColorWhite makecol(255, 255, 255)
-	#define c_GUIColorYellow makecol(255, 255, 128)
-	#define c_GUIColorRed makecol(255, 100, 100)
-	#define c_GUIColorGreen makecol(128, 255, 128)
-	#define c_GUIColorLightBlue makecol(109, 117, 170)
-	#define c_GUIColorBlue makecol(59, 65, 83)
-	#define c_GUIColorDarkBlue makecol(12, 20, 39)
-	#define c_GUIColorGray makecol(232, 232, 248)
+	#define c_GUIColorWhite 0xFFFFFFFF
+	#define c_GUIColorYellow 0xFFFF80FF
+	#define c_GUIColorRed 0xFF6464FF
+	#define c_GUIColorGreen 0x80FF80FF
+	#define c_GUIColorLightBlue 0x6D75AAFF
+	#define c_GUIColorBlue 0x3B4153FF
+	#define c_GUIColorDarkBlue 0x0C1427FF
+	#define c_GUIColorGray 0xE8E8F8FF
 
-	#define c_PlayerSlotColorDefault makecol(161, 109, 20)
-	#define c_PlayerSlotColorHovered makecol(203, 130, 56)
-	#define c_PlayerSlotColorDisabled makecol(104, 67, 15)
+	#define c_PlayerSlotColorDefault 0xA16D14FF
+	#define c_PlayerSlotColorHovered 0xCB8238FF
+	#define c_PlayerSlotColorDisabled 0x68430FFF
 #pragma endregion
 
 #pragma region Math Constants
