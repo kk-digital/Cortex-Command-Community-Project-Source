@@ -44,7 +44,7 @@ enum LayerDrawMode
     g_LayerMOID
 };
 
-enum
+enum : uint32_t
 {
     REGULAR_MAT_OFFSET = 8,
     g_MaterialAir = 0,
