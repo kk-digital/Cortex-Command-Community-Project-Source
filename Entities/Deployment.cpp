@@ -22,13 +22,16 @@
 #include "ActivityMan.h"
 #include "DataModule.h"
 
+#include "SDLHelper.h"
+#include <SDL2/SDL2_gfxPrimitives.h>
+
 namespace RTE {
 
 ConcreteClassInfo(Deployment, SceneObject, 0)
 
 
-BITMAP **Deployment::m_apArrowLeftBitmap = 0;
-BITMAP **Deployment::m_apArrowRightBitmap = 0;
+std::vector<std::shared_ptr<Texture>> Deployment::m_apArrowLeftBitmap;
+	std::vector<std::shared_ptr<Texture>> Deployment::m_apArrowRightBitmap;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -58,12 +61,12 @@ int Deployment::Create()
     if (SceneObject::Create() < 0)
         return -1;
 
-	if (!m_apArrowLeftBitmap)
+	if (m_apArrowLeftBitmap.empty())
 	{
 		ContentFile arrowFile("Base.rte/GUIs/DeploymentIcons/ArrowLeft.png");
 		m_apArrowLeftBitmap = arrowFile.GetAsAnimation(1);
 	}
-	if (!m_apArrowRightBitmap)
+	if (m_apArrowRightBitmap.empty())
 	{
 		ContentFile arrowFile("Base.rte/GUIs/DeploymentIcons/ArrowRight.png");
 		m_apArrowRightBitmap = arrowFile.GetAsAnimation(1);
@@ -87,12 +90,12 @@ int Deployment::Create(string loadoutName, const Icon &icon, float spawnRadius)
 	m_ID = 0;
 	m_HFlipped = false;
 
-	if (!m_apArrowLeftBitmap)
+	if (m_apArrowLeftBitmap.empty())
 	{
 		ContentFile arrowFile("Base.rte/GUIs/DeploymentIcons/ArrowLeft.png");
 		m_apArrowLeftBitmap = arrowFile.GetAsAnimation(1);
 	}
-	if (!m_apArrowRightBitmap)
+	if (m_apArrowRightBitmap.empty())
 	{
 		ContentFile arrowFile("Base.rte/GUIs/DeploymentIcons/ArrowRight.png");
 		m_apArrowRightBitmap = arrowFile.GetAsAnimation(1);
@@ -630,7 +633,7 @@ float Deployment::GetTotalValue(int nativeModule, float foreignMult, float nativ
 
 bool Deployment::IsOnScenePoint(Vector &scenePoint) const
 {
-    if (!m_Icon.GetBitmaps8() || !(m_Icon.GetBitmaps8()[0]))
+    if (m_Icon.GetTextures().empty() || !(m_Icon.GetTextures()[0]))
         return false;
 // TODO: TAKE CARE OF WRAPPING
 /*
@@ -677,13 +680,13 @@ bool Deployment::IsOnScenePoint(Vector &scenePoint) const
         }
     }
 */
-    BITMAP *pBitmap = m_Icon.GetBitmaps8()[0];
-    Vector bitmapPos = m_Pos - Vector(pBitmap->w / 2, pBitmap->h / 2);
-    if (WithinBox(scenePoint, bitmapPos, pBitmap->w, pBitmap->h))
+	std::shared_ptr<Texture> pTexture = m_Icon.GetTextures()[0];
+    Vector bitmapPos = m_Pos - Vector(pTexture->getW() / 2, pTexture->getH() / 2);
+    if (WithinBox(scenePoint, bitmapPos, pTexture->getW(), pTexture->getH()))
     {
         // Scene point on the bitmap
         Vector bitmapPoint = scenePoint - bitmapPos;
-        if (getpixel(pBitmap, bitmapPoint.m_X, bitmapPoint.m_Y) != g_MaskColor)
+        if (pTexture->getPixel(bitmapPoint.m_X, bitmapPoint.m_Y) != g_MaskColor)
            return true;
     }
 
@@ -697,35 +700,39 @@ bool Deployment::IsOnScenePoint(Vector &scenePoint) const
 // Description:     Draws this Deployment's current graphical representation to a
 //                  BITMAP of choice.
 
-void Deployment::Draw(BITMAP *pTargetBitmap, const Vector &targetPos, DrawMode mode, bool onlyPhysical) const
+void Deployment::Draw(SDL_Renderer* renderer, const Vector &targetPos, DrawMode mode, bool onlyPhysical) const
 {
-    if (!m_Icon.GetBitmaps8() || !(m_Icon.GetBitmaps8()[0]))
+    if (m_Icon.GetTextures().empty() || !(m_Icon.GetTextures()[0]))
         RTEAbort("Deployment's Icon bitmaps are null when drawing!");
 
-	if (!m_apArrowLeftBitmap || !m_apArrowRightBitmap)
+	if (m_apArrowLeftBitmap.empty() || m_apArrowRightBitmap.empty())
 		RTEAbort("Deployment's Arrow bitmaps are null when drawing!");
 
+	SDL_Rect viewport;
+	SDL_RenderGetViewport(renderer, &viewport);
+
 	{
-		BITMAP *pBitmap = m_Icon.GetBitmaps8()[0];
+		std::shared_ptr<Texture> pTexture = m_Icon.GetTextures()[0];
 
 		// Take care of wrapping situations
 		Vector aDrawPos[4];
-		aDrawPos[0] = m_Pos - Vector(pBitmap->w / 2, pBitmap->h / 2) - targetPos;
+		aDrawPos[0] = m_Pos - Vector(pTexture->getW() / 2, pTexture->getH() / 2) - targetPos;
 		int passes = 1;
+
 
 		// See if need to double draw this across the scene seam if we're being drawn onto a scenewide bitmap
 		if (targetPos.IsZero())
 		{
-			if (aDrawPos[0].m_X < pBitmap->w)
+			if (aDrawPos[0].m_X < pTexture->getW())
 			{
 				aDrawPos[passes] = aDrawPos[0];
-				aDrawPos[passes].m_X += pTargetBitmap->w;
+				aDrawPos[passes].m_X += viewport.w;
 				passes++;
 			}
-			else if (aDrawPos[0].m_X > pTargetBitmap->w - pBitmap->w)
+			else if (aDrawPos[0].m_X > viewport.w - pTexture->getW())
 			{
 				aDrawPos[passes] = aDrawPos[0];
-				aDrawPos[passes].m_X -= pTargetBitmap->w;
+				aDrawPos[passes].m_X -= viewport.w;
 				passes++;
 			}
 		}
@@ -741,7 +748,7 @@ void Deployment::Draw(BITMAP *pTargetBitmap, const Vector &targetPos, DrawMode m
 					aDrawPos[passes].m_X -= sceneWidth;
 					passes++;
 				}
-				if (targetPos.m_X + pTargetBitmap->w > sceneWidth)
+				if (targetPos.m_X + viewport.w > sceneWidth)
 				{
 					aDrawPos[passes] = aDrawPos[0];
 					aDrawPos[passes].m_X += sceneWidth;
@@ -755,55 +762,55 @@ void Deployment::Draw(BITMAP *pTargetBitmap, const Vector &targetPos, DrawMode m
 		{
 			if (mode == g_DrawColor)
 			{
-				masked_blit(pBitmap, pTargetBitmap, 0, 0, aDrawPos[i].GetFloorIntX(), aDrawPos[i].GetFloorIntY(), pBitmap->w, pBitmap->h);
+				pTexture->render(renderer, aDrawPos[i].GetFloorIntX(), aDrawPos[i].GetFloorIntY());
 				// Draw the spawn radius circle too
-				circle(pTargetBitmap, aDrawPos[i].GetFloorIntX() + (pBitmap->w / 2), aDrawPos[i].GetFloorIntY() + (pBitmap->h / 2), m_SpawnRadius, c_GUIColorGray);
+				circleColor(renderer, aDrawPos[i].GetFloorIntX() + (pTexture->getW() / 2), aDrawPos[i].GetFloorIntY() + (pTexture->getH() / 2), m_SpawnRadius, c_GUIColorGray);
 			}
 			else if (mode == g_DrawLess)
 			{
-				masked_blit(pBitmap, pTargetBitmap, 0, 0, aDrawPos[i].GetFloorIntX(), aDrawPos[i].GetFloorIntY(), pBitmap->w, pBitmap->h);
+				pTexture->render(renderer, aDrawPos[i].GetFloorIntX(), aDrawPos[i].GetFloorIntY());
 			}
 			else if (mode == g_DrawTrans)
 			{
-				draw_trans_sprite(pTargetBitmap, pBitmap, aDrawPos[i].GetFloorIntX(), aDrawPos[i].GetFloorIntY());
+				pTexture->render(renderer, aDrawPos[i].GetFloorIntX(), aDrawPos[i].GetFloorIntY());
 				// Draw the spawn radius circle too
-				circle(pTargetBitmap, aDrawPos[i].GetFloorIntX() + (pBitmap->w / 2), aDrawPos[i].GetFloorIntY() + (pBitmap->h / 2), m_SpawnRadius, c_GUIColorGray);
+				circleColor(renderer, aDrawPos[i].GetFloorIntX() + (pTexture->getW() / 2), aDrawPos[i].GetFloorIntY() + (pTexture->getH() / 2), m_SpawnRadius, c_GUIColorGray);
 			}
 		}
 	}
 
 	{
 		// Draw direction arrow
-		BITMAP * pBitmap = 0;
+		std::shared_ptr<Texture> pTexture;
 		Vector offset;
 		if (m_HFlipped)
 		{
-			pBitmap = m_apArrowLeftBitmap[0];
+			pTexture = m_apArrowLeftBitmap[0];
 			offset = Vector(-14, 0);
 		}
 		else {
-			pBitmap = m_apArrowRightBitmap[0];
+			pTexture = m_apArrowRightBitmap[0];
 			offset = Vector(14, 0);
 		}
 
 		// Take care of wrapping situations
 		Vector aDrawPos[4];
-		aDrawPos[0] = m_Pos - Vector(pBitmap->w / 2, pBitmap->h / 2) - targetPos + offset;
+		aDrawPos[0] = m_Pos - Vector(pTexture->getW() / 2, pTexture->getH() / 2) - targetPos + offset;
 		int passes = 1;
 
 		// See if need to double draw this across the scene seam if we're being drawn onto a scenewide bitmap
 		if (targetPos.IsZero())
 		{
-			if (aDrawPos[0].m_X < pBitmap->w)
+			if (aDrawPos[0].m_X < pTexture->getW())
 			{
 				aDrawPos[passes] = aDrawPos[0];
-				aDrawPos[passes].m_X += pTargetBitmap->w;
+				aDrawPos[passes].m_X += viewport.w;
 				passes++;
 			}
-			else if (aDrawPos[0].m_X > pTargetBitmap->w - pBitmap->w)
+			else if (aDrawPos[0].m_X > viewport.w - pTexture->getW())
 			{
 				aDrawPos[passes] = aDrawPos[0];
-				aDrawPos[passes].m_X -= pTargetBitmap->w;
+				aDrawPos[passes].m_X -= viewport.w;
 				passes++;
 			}
 		}
@@ -819,7 +826,7 @@ void Deployment::Draw(BITMAP *pTargetBitmap, const Vector &targetPos, DrawMode m
 					aDrawPos[passes].m_X -= sceneWidth;
 					passes++;
 				}
-				if (targetPos.m_X + pTargetBitmap->w > sceneWidth)
+				if (targetPos.m_X + viewport.w > sceneWidth)
 				{
 					aDrawPos[passes] = aDrawPos[0];
 					aDrawPos[passes].m_X += sceneWidth;
@@ -833,15 +840,15 @@ void Deployment::Draw(BITMAP *pTargetBitmap, const Vector &targetPos, DrawMode m
 		{
 			if (mode == g_DrawColor)
 			{
-				masked_blit(pBitmap, pTargetBitmap, 0, 0, aDrawPos[i].GetFloorIntX(), aDrawPos[i].GetFloorIntY(), pBitmap->w, pBitmap->h);
+				pTexture->render(renderer, aDrawPos[i].GetFloorIntX(), aDrawPos[i].GetFloorIntY());
 			}
 			else if (mode == g_DrawLess)
 			{
-				masked_blit(pBitmap, pTargetBitmap, 0, 0, aDrawPos[i].GetFloorIntX(), aDrawPos[i].GetFloorIntY(), pBitmap->w, pBitmap->h);
+				pTexture->render(renderer, aDrawPos[i].GetFloorIntX(), aDrawPos[i].GetFloorIntY());
 			}
 			else if (mode == g_DrawTrans)
 			{
-				draw_trans_sprite(pTargetBitmap, pBitmap, aDrawPos[i].GetFloorIntX(), aDrawPos[i].GetFloorIntY());
+				pTexture->render(renderer, aDrawPos[i].GetFloorIntX(), aDrawPos[i].GetFloorIntY());
 			}
 		}
 	}
