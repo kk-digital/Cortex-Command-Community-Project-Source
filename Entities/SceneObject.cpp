@@ -405,7 +405,7 @@ void SceneObject::DrawTeamMark(SDL_Renderer* renderer, const Vector &targetPos) 
     if (teamIcon)
     {
         // Make team icon blink faster as the health goes down
-		teamIcon->render(renderer, drawPos.m_X - teamIcon->h / 2, drawPos.m_Y - teamIcon->h * 2);
+		teamIcon->render(renderer, drawPos.m_X - teamIcon->getH()/ 2, drawPos.m_Y - teamIcon->getH() * 2);
     }
 }
 
