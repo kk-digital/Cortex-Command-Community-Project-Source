@@ -2,6 +2,11 @@
 #include "SDLHelper.h"
 
 #include "Constants.h"
+
+void sdl_rect_deleter::operator()(SDL_Rect *p) { delete p; }
+void sdl_format_deleter::operator()(SDL_PixelFormat *p) { SDL_FreeFormat(p); }
+void sdl_texture_deleter::operator()(SDL_Texture *p) { SDL_DestroyTexture(p); }
+
 namespace RTE {
 	std::unique_ptr<Texture> Texture::fillTarget;
 
@@ -143,6 +148,8 @@ namespace RTE {
 		    SDL_BLENDFACTOR_ZERO, SDL_BLENDFACTOR_SRC_ALPHA,
 		    SDL_BLENDOPERATION_ADD, SDL_BLENDFACTOR_SRC_ALPHA,
 		    SDL_BLENDFACTOR_ZERO, SDL_BLENDOPERATION_ADD)};
+		SDL_BlendMode activeBlendMode;
+		SDL_GetTextureBlendMode(m_Texture.get(), &activeBlendMode);
 
 		// If neccessary extend the dimensions of the target to at least match
 		// the size of this texture
@@ -183,6 +190,8 @@ namespace RTE {
 		// Reset the render draw color
 		SDL_SetRenderDrawColor(renderer, r, g, b, a);
 
+		SDL_SetTextureBlendMode(m_Texture.get(), activeBlendMode);
+
 		// Render the texture area from the intermediate target to the screen
 		return SDL_RenderCopy(renderer, fillTarget->m_Texture.get(),
 		                      &dimensions, &dest);
@@ -210,6 +219,9 @@ namespace RTE {
 		    SDL_BLENDFACTOR_ZERO, SDL_BLENDFACTOR_SRC_ALPHA,
 		    SDL_BLENDOPERATION_ADD, SDL_BLENDFACTOR_SRC_ALPHA,
 		    SDL_BLENDFACTOR_ZERO, SDL_BLENDOPERATION_ADD)};
+
+		SDL_BlendMode activeBlendMode;
+		SDL_GetTextureBlendMode(m_Texture.get(), &activeBlendMode);
 
 		// If neccessary extend the dimensions of the target to at least match
 		// the size of this texture
@@ -248,6 +260,8 @@ namespace RTE {
 
 		// Reset the render draw color
 		SDL_SetRenderDrawColor(renderer, r, g, b, a);
+
+		SDL_SetTextureBlendMode(m_Texture.get(), activeBlendMode);
 
 		// Render the texture area from the intermediate target to the screen
 		return SDL_RenderCopyEx(renderer, fillTarget->m_Texture.get(),
@@ -345,6 +359,10 @@ namespace RTE {
 		uint32_t colorMod{SDL_MapRGB(m_PixelFormat.get(), r, g, b)};
 
 		return colorMod;
+	}
+
+	int Texture::setColorMod(uint8_t r, uint8_t g, uint8_t b){
+		return SDL_SetTextureColorMod(m_Texture.get(), r, g, b);
 	}
 
 	uint32_t *Texture::getPixelsRW() {

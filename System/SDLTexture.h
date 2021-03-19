@@ -2,7 +2,6 @@
 #define _SDLSYSTEMTEXTURE_
 
 // Forward declarations
-
 struct SDL_Texture;
 struct SDL_PixelFormat;
 
@@ -10,10 +9,16 @@ struct SDL_Renderer;
 struct SDL_Point;
 struct SDL_Rect;
 
-extern "C" {
-void SDL_DestroyTexture(SDL_Texture *p);
-void SDL_FreeFormat(SDL_PixelFormat *p);
-}
+//! Deleter structs for unique_ptr
+struct sdl_texture_deleter {
+	void operator()(SDL_Texture *p);
+};
+struct sdl_format_deleter {
+	void operator()(SDL_PixelFormat *p);
+};
+struct sdl_rect_deleter {
+	void operator()(SDL_Rect *p);
+};
 
 namespace RTE {
 	/// <summary>
@@ -637,13 +642,6 @@ namespace RTE {
 		int setColorMod(uint8_t r, uint8_t g, uint8_t b);
 
 	private:
-		//! Deleter struct for unique_ptr
-		struct sdl_texture_deleter {
-			void operator()(SDL_Texture *p) { SDL_DestroyTexture(p); }
-		};
-		struct sdl_format_deleter {
-			void operator()(SDL_PixelFormat *p) { SDL_FreeFormat(p); }
-		};
 
 		//! Internal SDL_Texture
 		std::unique_ptr<SDL_Texture, sdl_texture_deleter> m_Texture;
@@ -673,7 +671,7 @@ namespace RTE {
 		void *m_PixelsWO;
 
 		//! Non NULL if locked with lock(SDL_Rect);
-		std::unique_ptr<SDL_Rect> m_LockedRect;
+		std::unique_ptr<SDL_Rect, sdl_rect_deleter> m_LockedRect;
 
 		//! Size of one row of pixels in Memory, only meaningful while Texture
 		//! is locked
