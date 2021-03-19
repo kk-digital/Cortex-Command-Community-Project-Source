@@ -532,12 +532,12 @@ namespace RTE {
 	// Description:     Draws this PEmitter's current graphical representation to a
 	//                  BITMAP of choice.
 
-	void PEmitter::Draw(BITMAP *pTargetBitmap,
+	void PEmitter::Draw(SDL_Renderer* renderer,
 		const Vector &targetPos,
 		DrawMode mode,
 		bool onlyPhysical) const
 	{
-		MOSParticle::Draw(pTargetBitmap, targetPos, mode, onlyPhysical);
+		MOSParticle::Draw(renderer, targetPos, mode, onlyPhysical);
 	}
 
 } // namespace RTE
