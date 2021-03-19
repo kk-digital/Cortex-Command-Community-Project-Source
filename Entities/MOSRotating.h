@@ -950,31 +950,6 @@ protected:
 	float m_DamageMultiplier; //!< Damage multiplier for this MOSRotating.
     bool m_NoSetDamageMultiplier; //!< Whether or not the damage multiplier for this MOSRotating was set.
 
-    // Intermediary drawing bitmap used to flip rotating bitmaps. Owned!
-	std::shared_ptr<Texture> m_pFlipBitmap;
-    std::shared_ptr<Texture> m_pFlipBitmapS;
-
-	//TODO: AH FUCK
-    // Intermediary drawing bitmap used to draw sihouettes and other effects. Not owned; points to the shared static bitmaps
-    std::shared_ptr<Texture> m_pTempBitmap;
-    // Temp drawing bitmaps shared between all MOSRotatings
-    static std::shared_ptr<Texture> m_spTempBitmap16;
-    static std::shared_ptr<Texture> m_spTempBitmap32;
-    static std::shared_ptr<Texture> m_spTempBitmap64;
-    static std::shared_ptr<Texture> m_spTempBitmap128;
-    static std::shared_ptr<Texture> m_spTempBitmap256;
-    static std::shared_ptr<Texture> m_spTempBitmap512;
-
-    // Intermediary drawing bitmap used to draw MO silhouettes. Not owned; points to the shared static bitmaps
-	std::shared_ptr<Texture> m_pTempBitmapS;
-    // Temp drawing bitmaps shared between all MOSRotatings
-    static std::shared_ptr<Texture> m_spTempBitmapS16;
-    static std::shared_ptr<Texture> m_spTempBitmapS32;
-    static std::shared_ptr<Texture> m_spTempBitmapS64;
-    static std::shared_ptr<Texture> m_spTempBitmapS128;
-    static std::shared_ptr<Texture> m_spTempBitmapS256;
-    static std::shared_ptr<Texture> m_spTempBitmapS512;
-
 //////////////////////////////////////////////////////////////////////////////////////////
 // Private member variable and method declarations
 
