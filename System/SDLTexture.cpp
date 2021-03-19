@@ -64,6 +64,7 @@ namespace RTE {
 		m_PixelsRO.resize(width * height);
 		m_Texture.reset(
 		    SDL_CreateTexture(renderer, m_Format, access, width, height));
+		SDL_SetTextureBlendMode(m_Texture.get(), SDL_BLENDMODE_BLEND);
 	}
 
 	void Texture::Reset() {
