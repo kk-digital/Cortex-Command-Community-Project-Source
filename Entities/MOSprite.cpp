@@ -71,12 +71,12 @@ int MOSprite::Create()
         // Set default sprite offset
         if (m_SpriteOffset.IsZero())
         {
-            m_SpriteOffset.m_X = -m_aSprite[0]->w / 2;
-            m_SpriteOffset.m_Y = -m_aSprite[0]->h / 2;
+            m_SpriteOffset.m_X = -m_aSprite[0]->getW() / 2;
+            m_SpriteOffset.m_Y = -m_aSprite[0]->getH() / 2;
         }
         // Calc maximum dimensions from the Pos, based on the sprite
-        float maxX =std::max(fabs(m_SpriteOffset.m_X), fabs(m_aSprite[0]->w + m_SpriteOffset.m_X));
-        float maxY =std::max(fabs(m_SpriteOffset.m_Y), fabs(m_aSprite[0]->h + m_SpriteOffset.m_Y));
+        float maxX =std::max(fabs(m_SpriteOffset.m_X), fabs(m_aSprite[0]->getW() + m_SpriteOffset.m_X));
+        float maxY =std::max(fabs(m_SpriteOffset.m_Y), fabs(m_aSprite[0]->getH() + m_SpriteOffset.m_Y));
         m_SpriteRadius = sqrt((float)(maxX * maxX) + (maxY * maxY));
         m_SpriteDiameter = m_SpriteRadius * 2.0F;
     }
@@ -105,13 +105,13 @@ int MOSprite::Create(ContentFile spriteFile,
     m_FrameCount = frameCount;
 	m_aSprite.clear();
     m_aSprite = m_SpriteFile.GetAsAnimation(m_FrameCount);
-    m_SpriteOffset = Vector(-m_aSprite[0]->w / 2, -m_aSprite[0]->h / 2);
+    m_SpriteOffset = Vector(-m_aSprite[0]->getW() / 2, -m_aSprite[0]->getH() / 2);
 
     m_HFlipped = false;
 
     // Calc maximum dimensions from the Pos, based on the sprite
-    float maxX =std::max(fabs(m_SpriteOffset.m_X), fabs(m_aSprite[0]->w + m_SpriteOffset.m_X));
-    float maxY =std::max(fabs(m_SpriteOffset.m_Y), fabs(m_aSprite[0]->h + m_SpriteOffset.m_Y));
+    float maxX =std::max(fabs(m_SpriteOffset.m_X), fabs(m_aSprite[0]->getW() + m_SpriteOffset.m_X));
+    float maxY =std::max(fabs(m_SpriteOffset.m_Y), fabs(m_aSprite[0]->getH() + m_SpriteOffset.m_Y));
     m_SpriteRadius = sqrt((float)(maxX * maxX) + (maxY * maxY));
     m_SpriteDiameter = m_SpriteRadius * 2.0F;
 
@@ -524,7 +524,7 @@ void MOSprite::Draw(SDL_Renderer* renderer,
     // Apply offsets and positions.
     Vector spriteOffset;
     if (m_HFlipped)
-        spriteOffset.SetXY(-(m_aSprite[m_Frame]->w + m_SpriteOffset.m_X), m_SpriteOffset.m_Y);
+        spriteOffset.SetXY(-(m_aSprite[m_Frame]->getW() + m_SpriteOffset.m_X), m_SpriteOffset.m_Y);
     else
         spriteOffset = m_SpriteOffset;
 
@@ -543,13 +543,13 @@ void MOSprite::Draw(SDL_Renderer* renderer,
         // See if need to double draw this across the scene seam if we're being drawn onto a scenewide bitmap
         if (targetPos.IsZero() && m_WrapDoubleDraw)
         {
-            if (spritePos.m_X < m_aSprite[m_Frame]->w)
+            if (spritePos.m_X < m_aSprite[m_Frame]->getW())
             {
                 aDrawPos[passes] = spritePos;
                 aDrawPos[passes].m_X += viewport.w;
                 passes++;
             }
-            else if (spritePos.m_X > viewport.w - m_aSprite[m_Frame]->w)
+            else if (spritePos.m_X > viewport.w - m_aSprite[m_Frame]->getW())
             {
                 aDrawPos[passes] = spritePos;
                 aDrawPos[passes].m_X -= viewport.w;
@@ -574,38 +574,33 @@ void MOSprite::Draw(SDL_Renderer* renderer,
         }
     }
 
+	int flip{SDL_FLIP_NONE};
+	if(m_HFlipped)
+		flip = SDL_FLIP_HORIZONTAL;
+
     for (int i = 0; i < passes; ++i)
     {
         if (mode == g_DrawMaterial) {
             RTEAbort("Ordered to draw an MOSprite in its material, which is not possible!");
         }
         else if (mode == g_DrawAir)
-            draw_character_ex(pTargetBitmap, m_aSprite[m_Frame], aDrawPos[i].GetFloorIntX(), aDrawPos[i].GetFloorIntY(), g_MaterialAir, -1);
+			m_aSprite[m_Frame]->renderFillColor(renderer, aDrawPos[i].m_X, aDrawPos[i].m_Y, g_MaterialAir, flip);
         else if (mode == g_DrawMask)
-            draw_character_ex(pTargetBitmap, m_aSprite[m_Frame], aDrawPos[i].GetFloorIntX(), aDrawPos[i].GetFloorIntY(), g_MaskColor, -1);
+			m_aSprite[m_Frame]->renderFillColor(renderer, aDrawPos[i].m_X, aDrawPos[i].m_Y, g_MaskColor, flip);
         else if (mode == g_DrawWhite)
-            draw_character_ex(pTargetBitmap, m_aSprite[m_Frame], aDrawPos[i].GetFloorIntX(), aDrawPos[i].GetFloorIntY(), g_WhiteColor, -1);
+			m_aSprite[m_Frame]->renderFillColor(renderer, aDrawPos[i].m_X, aDrawPos[i].m_Y, g_WhiteColor, flip);
         else if (mode == g_DrawMOID)
         {
             int spriteX = aDrawPos[i].GetFloorIntX();
             int spriteY = aDrawPos[i].GetFloorIntY();
-            draw_character_ex(pTargetBitmap, m_aSprite[m_Frame], spriteX, spriteY, m_MOID, -1);
-            g_SceneMan.RegisterMOIDDrawing(spriteX, spriteY, spriteX + m_aSprite[m_Frame]->w, spriteY + m_aSprite[m_Frame]->h);
+			m_aSprite[m_Frame]->renderFillColor(renderer, spriteX, spriteY, m_MOID, flip);
+            g_SceneMan.RegisterMOIDDrawing(spriteX, spriteY, spriteX + m_aSprite[m_Frame]->getW(), spriteY + m_aSprite[m_Frame]->getH());
 		}
         else if (mode == g_DrawNoMOID)
-            draw_character_ex(pTargetBitmap, m_aSprite[m_Frame], aDrawPos[i].GetFloorIntX(), aDrawPos[i].GetFloorIntY(), g_NoMOID, -1);
-        else if (mode == g_DrawTrans)
-            draw_trans_sprite(pTargetBitmap, m_aSprite[m_Frame], aDrawPos[i].GetFloorIntX(), aDrawPos[i].GetFloorIntY());
-        else if (mode == g_DrawAlpha)
+			m_aSprite[m_Frame]->renderFillColor(renderer, aDrawPos[i].m_X, aDrawPos[i].m_Y, g_NoMOID, flip);
+        else
         {
-            set_alpha_blender();
-            draw_trans_sprite(pTargetBitmap, m_aSprite[m_Frame], aDrawPos[i].GetFloorIntX(), aDrawPos[i].GetFloorIntY());
-        }
-        else {
-            if (!m_HFlipped)
-                draw_sprite(pTargetBitmap, m_aSprite[m_Frame], aDrawPos[i].GetFloorIntX(), aDrawPos[i].GetFloorIntY());
-            else
-                draw_sprite_h_flip(pTargetBitmap, m_aSprite[m_Frame], aDrawPos[i].GetFloorIntX(), aDrawPos[i].GetFloorIntY());
+			m_aSprite[m_Frame]->render(renderer, aDrawPos[i].m_X, aDrawPos[i].m_Y, flip);
         }
     }
 }
