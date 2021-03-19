@@ -86,9 +86,9 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void Turret::Draw(BITMAP *pTargetBitmap, const Vector &targetPos, DrawMode mode, bool onlyPhysical) const {
-		Attachable::Draw(pTargetBitmap, targetPos, mode, onlyPhysical);
+	void Turret::Draw(SDL_Renderer* renderer, const Vector &targetPos, DrawMode mode, bool onlyPhysical) const {
+		Attachable::Draw(renderer, targetPos, mode, onlyPhysical);
 		//TODO replace this with a relative draw order property or something that lets you organize attachable drawing so it doesn't need special hardcoding crap. Use this for ahuman limbs and arm held mo if possible.
-		if (m_MountedDevice && m_MountedDevice->IsDrawnAfterParent()) { m_MountedDevice->Draw(pTargetBitmap, targetPos, mode, onlyPhysical); }
+		if (m_MountedDevice && m_MountedDevice->IsDrawnAfterParent()) { m_MountedDevice->Draw(renderer, targetPos, mode, onlyPhysical); }
 	}
 }
