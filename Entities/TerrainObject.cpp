@@ -15,6 +15,8 @@
 #include "PresetMan.h"
 #include "ContentFile.h"
 
+#include "System/SDLHelper.h"
+
 namespace RTE {
 
 ConcreteClassInfo(TerrainObject, SceneObject, 0)
@@ -34,7 +36,7 @@ void TerrainObject::Clear()
     m_pFGColor = 0;
     m_pMaterial = 0;
     m_pBGColor = 0;
-    m_BitmapOffset.Reset();
+    m_TextureOffset.Reset();
     m_OffsetDefined = false;
     m_ChildObjects.clear();
 	m_DisplayAsTerrain = false;
@@ -55,15 +57,15 @@ int TerrainObject::Create()
     if (!m_OffsetDefined && m_pFGColor)
     {
 /*
-        if (m_pFGColor->w > 24)
-            m_BitmapOffset.m_X = -std::ceil(((float)m_pFGColor->w / (float)2) + 0.5f);
-        if (m_pFGColor->h > 24)
-            m_BitmapOffset.m_Y = -std::ceil(((float)m_pFGColor->h / (float)2) + 0.5f);
+        if (m_pFGColor->getW() > 24)
+            m_TextureOffset.m_X = -std::ceil(((float)m_pFGColor->getW() / (float)2) + 0.5f);
+        if (m_pFGColor->getH() > 24)
+            m_TextureOffset.m_Y = -std::ceil(((float)m_pFGColor->getH() / (float)2) + 0.5f);
 */
-        if (m_pFGColor->w > 24)
-            m_BitmapOffset.m_X = -(m_pFGColor->w / 2);
-        if (m_pFGColor->h > 24)
-            m_BitmapOffset.m_Y = -(m_pFGColor->h / 2);
+        if (m_pFGColor->getW() > 24)
+            m_TextureOffset.m_X = -(m_pFGColor->getW() / 2);
+        if (m_pFGColor->getH() > 24)
+            m_TextureOffset.m_Y = -(m_pFGColor->getH() / 2);
     }
 
     return 0;
@@ -139,7 +141,7 @@ int TerrainObject::Create(const TerrainObject &reference)
     m_pMaterial = reference.m_pMaterial;
     m_pBGColor = reference.m_pBGColor;
 
-    m_BitmapOffset = reference.m_BitmapOffset;
+    m_TextureOffset = reference.m_TextureOffset;
     m_OffsetDefined = reference.m_OffsetDefined;
 
     for (list<SOPlacer>::const_iterator itr = reference.m_ChildObjects.begin(); itr != reference.m_ChildObjects.end(); ++itr)
@@ -163,28 +165,28 @@ int TerrainObject::ReadProperty(const std::string_view &propName, Reader &reader
     if (propName == "FGColorFile")
     {
         reader >> m_FGColorFile;
-        m_pFGColor = m_FGColorFile.GetAsBitmap();
+        m_pFGColor = m_FGColorFile.GetAsTexture();
     }
     else if (propName == "MaterialFile")
     {
         reader >> m_MaterialFile;
-        m_pMaterial = m_MaterialFile.GetAsBitmap();
+        m_pMaterial = m_MaterialFile.GetAsTexture();
     }
     else if (propName == "BGColorFile")
     {
         reader >> m_BGColorFile;
-        m_pBGColor = m_BGColorFile.GetAsBitmap();
+        m_pBGColor = m_BGColorFile.GetAsTexture();
     }
     else if (propName == "BitmapOffset")
     {
-        reader >> m_BitmapOffset;
+        reader >> m_TextureOffset;
         m_OffsetDefined = true;
     }
     // This is to handle legacy placement of terrain objects, without the bitmap offset
     else if (propName == "Location")
     {
         reader >> m_Pos;
-        m_Pos -= m_BitmapOffset;
+        m_Pos -= m_TextureOffset;
     }
     else if (propName == "AddChildObject")
     {
@@ -223,7 +225,7 @@ int TerrainObject::Save(Writer &writer) const
     if (m_OffsetDefined)
     {
         writer.NewProperty("BitmapOffset");
-        writer << m_BitmapOffset;
+        writer << m_TextureOffset;
     }
     for (list<SOPlacer>::const_iterator itr = m_ChildObjects.begin(); itr != m_ChildObjects.end(); ++itr)
     {
@@ -261,17 +263,17 @@ void TerrainObject::Destroy(bool notInherited)
 // Description:     Gets a bitmap showing a good identifyable icon of this, for use in
 //                  GUI lists etc.
 
-BITMAP * TerrainObject::GetGraphicalIcon()
+std::shared_ptr<Texture> TerrainObject::GetGraphicalIcon()
 {
     if (!m_pFGColor)
         return m_pBGColor;
 
     // Checking if the FG has anything to show, if not, show the bg layer isntead
-    int piece = m_pFGColor->w / 10;
-    if (getpixel(m_pFGColor, m_pFGColor->w / 2, m_pFGColor->h / 2) != g_MaskColor ||
-        getpixel(m_pFGColor, piece, piece) != g_MaskColor ||
-        getpixel(m_pFGColor, m_pFGColor->w - piece, piece) != g_MaskColor ||
-        getpixel(m_pFGColor, piece, m_pFGColor->h - piece) != g_MaskColor)
+    int piece = m_pFGColor->getW() / 10;
+    if (m_pFGColor->getPixel(m_pFGColor->getW() / 2, m_pFGColor->getH() / 2) != g_MaskColor ||
+        m_pFGColor->getPixel(piece, piece) != g_MaskColor ||
+        m_pFGColor->getPixel(m_pFGColor->getW() - piece, piece) != g_MaskColor ||
+        m_pFGColor->getPixel(piece, m_pFGColor->getH() - piece) != g_MaskColor)
         return m_pFGColor;
     else
         return m_pBGColor;
@@ -293,7 +295,7 @@ bool TerrainObject::IsOnScenePoint(Vector &scenePoint) const
 // TODO: TAKE CARE OF WRAPPING
 /*
     // Take care of wrapping situations
-    bitmapPos = m_Pos + m_BitmapOffset;
+    bitmapPos = m_Pos + m_TextureOffset;
     Vector aScenePoint[4];
     aScenePoint[0] = scenePoint;
     int passes = 1;
@@ -303,13 +305,13 @@ bool TerrainObject::IsOnScenePoint(Vector &scenePoint) const
     {
         if (g_SceneMan.SceneWrapsX())
         {
-            if (bitmapPos.m_X < m_pFGColor->w)
+            if (bitmapPos.m_X < m_pFGColor->getW())
             {
                 aScenePoint[passes] = aScenePoint[0];
                 aScenePoint[passes].m_X += g_SceneMan.GetSceneWidth();
                 passes++;
             }
-            else if (aScenePoint[0].m_X > pTargetBitmap->w - m_pFGColor->w)
+            else if (aScenePoint[0].m_X > viewport.w - m_pFGColor->getW())
             {
                 aScenePoint[passes] = aScenePoint[0];
                 aScenePoint[passes].m_X -= g_SceneMan.GetSceneWidth();
@@ -326,7 +328,7 @@ bool TerrainObject::IsOnScenePoint(Vector &scenePoint) const
     for (int i = 0; i < passes; ++i)
     {
 
-        if (IsWithinBox(aScenePoint[i], m_Pos + m_BitmapOffset, m_pFGColor->w, m_pFGColor->h))
+        if (IsWithinBox(aScenePoint[i], m_Pos + m_TextureOffset, m_pFGColor->getW(), m_pFGColor->getH()))
         {
             if (getpixel(m_pFGColor, aScenePoint[i].m_X, aScenePoint[i].m_Y) != g_MaskColor ||
                (m_pBGColor && getpixel(m_pBGColor, aScenePoint[i].m_X, aScenePoint[i].m_Y) != g_MaskColor) ||
@@ -335,14 +337,14 @@ bool TerrainObject::IsOnScenePoint(Vector &scenePoint) const
         }
     }
 */
-    Vector bitmapPos = m_Pos + m_BitmapOffset;
-    if (WithinBox(scenePoint, bitmapPos, m_pFGColor->w, m_pFGColor->h))
+    Vector bitmapPos = m_Pos + m_TextureOffset;
+    if (WithinBox(scenePoint, bitmapPos, m_pFGColor->getW(), m_pFGColor->getH()))
     {
         // Scene point on the bitmap
         Vector bitmapPoint = scenePoint - bitmapPos;
-        if (getpixel(m_pFGColor, bitmapPoint.m_X, bitmapPoint.m_Y) != g_MaskColor ||
-           (m_pBGColor && getpixel(m_pBGColor, bitmapPoint.m_X, bitmapPoint.m_Y) != g_MaskColor) ||
-           (m_pMaterial && getpixel(m_pMaterial, bitmapPoint.m_X, bitmapPoint.m_Y) != g_MaterialAir))
+        if (m_pFGColor->getPixel(bitmapPoint.m_X, bitmapPoint.m_Y) != g_MaskColor ||
+			(m_pBGColor && m_pBGColor->getPixel(bitmapPoint.m_X, bitmapPoint.m_Y) != g_MaskColor) ||
+			(m_pMaterial && m_pMaterial->getPixel(bitmapPoint.m_X, bitmapPoint.m_Y) != g_MaterialAir))
            return true;
     }
 
@@ -371,29 +373,32 @@ void TerrainObject::SetTeam(int team)
 // Description:     Draws this TerrainObject's current graphical representation to a
 //                  BITMAP of choice.
 
-void TerrainObject::Draw(BITMAP *pTargetBitmap, const Vector &targetPos, DrawMode mode, bool onlyPhysical) const
+void TerrainObject::Draw(SDL_Renderer* renderer, const Vector &targetPos, DrawMode mode, bool onlyPhysical) const
 {
     if (!m_pFGColor)
         RTEAbort("TerrainObject's bitmaps are null when drawing!");
 
     // Take care of wrapping situations
     Vector aDrawPos[4];
-    aDrawPos[0] = m_Pos + m_BitmapOffset - targetPos;
+    aDrawPos[0] = m_Pos + m_TextureOffset - targetPos;
     int passes = 1;
 
+	SDL_Rect viewport;
+	SDL_RenderGetViewport(renderer, &viewport);
+
     // See if need to double draw this across the scene seam if we're being drawn onto a scenewide bitmap
-	if (targetPos.IsZero() && g_SceneMan.GetSceneWidth() <= pTargetBitmap->w)
+	if (targetPos.IsZero() && g_SceneMan.GetSceneWidth() <= viewport.w)
     {
-        if (aDrawPos[0].m_X < m_pFGColor->w)
+        if (aDrawPos[0].m_X < m_pFGColor->getW())
         {
             aDrawPos[passes] = aDrawPos[0];
-            aDrawPos[passes].m_X += pTargetBitmap->w;
+            aDrawPos[passes].m_X += viewport.w;
             passes++;
         }
-        else if (aDrawPos[0].m_X > pTargetBitmap->w - m_pFGColor->w)
+        else if (aDrawPos[0].m_X > viewport.w - m_pFGColor->getW())
         {
             aDrawPos[passes] = aDrawPos[0];
-            aDrawPos[passes].m_X -= pTargetBitmap->w;
+            aDrawPos[passes].m_X -= viewport.w;
             passes++;
         }
     }
@@ -409,7 +414,7 @@ void TerrainObject::Draw(BITMAP *pTargetBitmap, const Vector &targetPos, DrawMod
                 aDrawPos[passes].m_X -= sceneWidth;
                 passes++;
             }
-            if (targetPos.m_X + pTargetBitmap->w > sceneWidth)
+            if (targetPos.m_X + viewport.w > sceneWidth)
             {
                 aDrawPos[passes] = aDrawPos[0];
                 aDrawPos[passes].m_X += sceneWidth;
@@ -423,21 +428,21 @@ void TerrainObject::Draw(BITMAP *pTargetBitmap, const Vector &targetPos, DrawMod
     {
         if (mode == g_DrawColor)
         {
-            masked_blit(m_pBGColor, pTargetBitmap, 0, 0, aDrawPos[i].GetFloorIntX(), aDrawPos[i].GetFloorIntY(), m_pBGColor->w, m_pBGColor->h);
-            masked_blit(m_pFGColor, pTargetBitmap, 0, 0, aDrawPos[i].GetFloorIntX(), aDrawPos[i].GetFloorIntY(), m_pFGColor->w, m_pFGColor->h);
+			m_pBGColor->render(renderer, aDrawPos[i].m_X, aDrawPos[i].m_Y);
+			m_pFGColor->render(renderer, aDrawPos[i].m_X, aDrawPos[i].m_Y);
         }
         else if (mode == g_DrawMaterial)
         {
-            masked_blit(m_pMaterial, pTargetBitmap, 0, 0, aDrawPos[i].GetFloorIntX(), aDrawPos[i].GetFloorIntY(), m_pMaterial->w, m_pMaterial->h);
+			m_pMaterial->render(renderer, aDrawPos[i].m_X, aDrawPos[i].m_Y);
         }
         else if (mode == g_DrawLess)
         {
-            masked_blit(m_pFGColor, pTargetBitmap, 0, 0, aDrawPos[i].GetFloorIntX(), aDrawPos[i].GetFloorIntY(), m_pFGColor->w, m_pFGColor->h);
+			m_pFGColor->render(renderer, aDrawPos[i].m_X, aDrawPos[i].m_Y);
         }
         else if (mode == g_DrawTrans)
         {
-            draw_trans_sprite(pTargetBitmap, m_pFGColor, aDrawPos[i].GetFloorIntX(), aDrawPos[i].GetFloorIntY());
-            draw_trans_sprite(pTargetBitmap, m_pBGColor, aDrawPos[i].GetFloorIntX(), aDrawPos[i].GetFloorIntY());
+			m_pBGColor->render(renderer, aDrawPos[i].m_X, aDrawPos[i].m_Y);
+			m_pFGColor->render(renderer, aDrawPos[i].m_X, aDrawPos[i].m_Y);
         }
     }
 }
