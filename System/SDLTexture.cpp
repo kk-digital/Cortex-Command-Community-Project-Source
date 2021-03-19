@@ -111,6 +111,10 @@ namespace RTE {
 		return render(pRenderer, SDL_Rect{x, y, w, h}, angle, flip);
 	}
 
+	int Texture::render(SDL_Renderer* pRenderer, int x, int y, double angle, int flip, double scale){
+		return render(pRenderer, SDL_Rect{x,y,w,h}*scale, angle, flip);
+	}
+
 	int Texture::render(SDL_Renderer *pRenderer, const SDL_Rect &dest,
 	                    double angle, int flip) {
 		return SDL_RenderCopyEx(pRenderer, m_Texture.get(), nullptr, &dest,

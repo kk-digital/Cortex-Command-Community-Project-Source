@@ -218,6 +218,37 @@ namespace RTE {
 		           int flip);
 
 		/// <summary>
+		/// Render the texture to the screen rotated by angle around the center,
+		/// flipped horizontally or vertically according to flip and scaled.
+		/// </summary>
+		/// <param name="pRenderer">
+		/// Render context to be rendered to.
+		/// </param>
+		/// <param name="x">
+		/// x position to draw the texture to.
+		/// </param>
+		/// <param name="y">
+		/// y position to draw the texture to.
+		/// </param>
+		/// <param name="angle">
+		/// The angle the texture should be drawn at.
+		/// </param>
+		/// <param name="flip">
+		/// One or more of <a href="https://wiki.libsdl.org/SDL_RendererFlip">
+		/// SDL_RenderFlip</a>,
+		/// multiple values may be bitwise or'd together.
+		/// </param>
+		/// <param name="scale">
+		/// Scalefactor
+		/// </param>
+		/// <returns>
+		/// 0 or a negative number which represents an error that can be read by
+		/// SDL_GetError
+		/// </returns>
+		int render(SDL_Renderer *pRenderer, int x, int y, double angle,
+		           int flip, double scale);
+
+		/// <summary>
 		/// Render the texture to the screen rotated by angle around the center
 		/// and flipped horizontally or vertically according to flip.
 		/// </summary>
@@ -373,6 +404,39 @@ namespace RTE {
 		                    uint32_t color, double angle, int flip);
 
 		/// <summary>
+		/// Render the silhouette of the texture to the screen rotated by angle,
+		/// flipped horizontally or vertically according to flip and scaled.
+		/// </summary>
+		/// <param name="pRenderer">
+		/// Render context to be rendered to.
+		/// </param>
+		/// <param name="x">
+		/// x position to draw the texture to.
+		/// </param>
+		/// <param name="y">
+		/// y position to draw the texture to.
+		/// </param>
+		/// <param name="color">
+		/// The color that the silhouette should be rendered
+		/// </param>
+		/// <param name="angle">
+		/// The angle the texture should be rotated by
+		/// </param>
+		/// <param name="flip">
+		/// One or more of <a
+		/// href="https://wiki.libsdl.org/SDL_RendererFlip">SDL_RenderFlip</a>,
+		/// multiple values may be bitwise or'd together.
+		/// </param>
+		/// <param name="scale">
+		/// Scale to draw the Texture at.
+		/// </param>
+		/// <returns>
+		/// 0 or a negative number which represents an error that can be read by
+		/// SDL_GetError
+		/// </returns>
+		int renderFillColor(SDL_Renderer *renderer, int x, int y,
+		                    uint32_t color, double angle, int flip, double scale);
+		/// <summary>
 		/// Render the silhouette of the texture to the screen rotated by angle
 		/// and flipped horizontally or vertically according to flip.
 		/// </summary>
@@ -432,6 +496,16 @@ namespace RTE {
 		/// texture)
 		/// </summary>
 		void unlock();
+
+		/// <summary>
+		/// Get the internal SDL_Texture. This will ONLY return non nullptr for render targets
+		/// </summary>
+		SDL_Texture* getAsRenderTarget(){
+			if (m_Access == 2) {
+				return m_Texture.get();
+			}
+			return nullptr;
+		}
 
 		/// <summary>
 		/// Get the width of the Texture
