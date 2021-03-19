@@ -308,12 +308,12 @@ void Magazine::Update()
 // Description:     Draws this Magazine's current graphical representation to a
 //                  BITMAP of choice.
 
-void Magazine::Draw(BITMAP *pTargetBitmap,
+void Magazine::Draw(SDL_Renderer* renderer,
                       const Vector &targetPos,
                       DrawMode mode,
                       bool onlyPhysical) const
 {
-    Attachable::Draw(pTargetBitmap, targetPos, mode, onlyPhysical);
+    Attachable::Draw(renderer, targetPos, mode, onlyPhysical);
 }
 
 } // namespace RTE
