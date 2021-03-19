@@ -14,11 +14,14 @@
 #include "MovableObject.h"
 #include "PresetMan.h"
 #include "SceneMan.h"
+#include "FrameMan.h"
 #include "ConsoleMan.h"
 #include "SettingsMan.h"
 #include "LuaMan.h"
 #include "Atom.h"
 #include "Actor.h"
+
+#include "SDLHelper.h"
 
 namespace RTE {
 
@@ -867,7 +870,12 @@ void MovableObject::ApplyImpulses()
 void MovableObject::PreTravel()
 {
 	// Temporarily remove the representation of this from the scene MO layers
-	if (m_GetsHitByMOs) { Draw(g_SceneMan.GetMOIDBitmap(), Vector(), g_DrawNoMOID, true); }
+	if (m_GetsHitByMOs) {
+		SDL_Texture* activeTarget{SDL_GetRenderTarget(g_FrameMan.GetRenderer())};
+		SDL_SetRenderTarget(g_FrameMan.GetRenderer(), g_SceneMan.GetMOIDTexture()->getAsRenderTarget());
+		Draw(g_FrameMan.GetRenderer(), Vector(), g_DrawNoMOID, true);
+		SDL_SetRenderTarget(g_FrameMan.GetRenderer(), activeTarget);
+	}
 
     // Save previous position and velocities before moving
     m_PrevPos = m_Pos;
@@ -904,7 +912,10 @@ void MovableObject::PostTravel()
 
 	if (m_GetsHitByMOs) {
 		// Replace updated MOID representation to scene after Update
-		Draw(g_SceneMan.GetMOIDBitmap(), Vector(), g_DrawMOID, true);
+		SDL_Texture* activeTarget{SDL_GetRenderTarget(g_FrameMan.GetRenderer())};
+		SDL_SetRenderTarget(g_FrameMan.GetRenderer(), g_SceneMan.GetMOIDTexture()->getAsRenderTarget());
+		Draw(g_FrameMan.GetRenderer(), Vector(), g_DrawMOID, true);
+		SDL_SetRenderTarget(g_FrameMan.GetRenderer(), activeTarget);
 		m_AlreadyHitBy.clear();
 	}
 	m_IsUpdated = true;
