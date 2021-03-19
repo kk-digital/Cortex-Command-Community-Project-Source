@@ -71,7 +71,7 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void TDExplosive::DrawHUD(BITMAP *targetBitmap, const Vector &targetPos, int whichScreen, bool playerControlled) {
-		if (m_HUDVisible && !m_Activated) { ThrownDevice::DrawHUD(targetBitmap, targetPos, whichScreen); }
+	void TDExplosive::DrawHUD(SDL_Renderer* renderer, const Vector &targetPos, int whichScreen, bool playerControlled) {
+		if (m_HUDVisible && !m_Activated) { ThrownDevice::DrawHUD(renderer, targetPos, whichScreen); }
 	}
 }
