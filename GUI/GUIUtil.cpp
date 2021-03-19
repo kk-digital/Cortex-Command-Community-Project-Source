@@ -12,6 +12,8 @@
 
 #include "GUI.h"
 
+#include <SDL2/SDL_clipboard.h>
+
 using namespace RTE;
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -54,39 +56,9 @@ char* GUIUtil::SafeOverlappingStrCpy(char* dst, char* src)
 
 bool GUIUtil::GetClipboardText(string *Text)
 {
-/* Platform dependent, moved to WinUtil
-    HANDLE  CBDataHandle; // handle to the clipboard data
-    LPSTR   CBDataPtr;    // pointer to data to send
 
-    // Check the pointer
-    assert(Text);
-    
-    // Does the clipboard contain text?
-    if (IsClipboardFormatAvailable(CF_TEXT)) {
-           
-        // Open the clipboard
-        if (OpenClipboard(m_hWnd)) {
-            CBDataHandle = GetClipboardData(CF_TEXT);
-                
-            if (CBDataHandle) {
-                CBDataPtr = (LPSTR)GlobalLock(CBDataHandle);
-                int TextSize = strlen(CBDataPtr);
-
-                // Insert the text
-                Text->erase();
-                Text->insert(0, CBDataPtr);
-                CloseClipboard();
-
-                GlobalUnlock(CBDataHandle);                
-
-                return true;
-            }
-
-            CloseClipboard();
-        }
-    }
-*/
-    return false;
+	*Text = SDL_GetClipboardText();
+	return !Text->empty();
 }
 
 
@@ -97,33 +69,5 @@ bool GUIUtil::GetClipboardText(string *Text)
 
 bool GUIUtil::SetClipboardText(string Text)
 {
-/* Platform dependent
-    // Open the clipboard
-    if (OpenClipboard(m_hWnd)) {
-
-        // Allocate global memory for the text
-        HGLOBAL hMemory = GlobalAlloc(GMEM_MOVEABLE, Text.size()+1);
-        if (hMemory == 0) {
-            CloseClipboard();
-            return false;
-        }
-
-        // Empty the clipboard
-        EmptyClipboard(); 
-
-        // Copy the text into memory
-        char *CText = (char *)GlobalLock(hMemory);
-        memcpy(CText, Text.c_str(), Text.size());
-        CText[Text.size()] = '\0';
-        GlobalUnlock(hMemory);    
-
-        // Set the data
-        SetClipboardData(CF_TEXT, hMemory);
-
-        CloseClipboard();
-
-        return true;
-    }
-*/
-    return false;
+	return SDL_SetClipboardText(Text.c_str());
 }
