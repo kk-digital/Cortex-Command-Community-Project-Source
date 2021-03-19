@@ -911,6 +911,7 @@ deque<MOPixel *> SLTerrain::EraseSilhouette(std::shared_ptr<Texture> pSprite,
 // TODO: OPTIMIZE THIS, IT'S A TIME HOG. MAYBE JSUT STAMP THE OUTLINE AND SAMPLE SOME RANDOM PARTICLES?
 
     RTEAssert(pSprite.get(), "Null BITMAP passed to SLTerrain::EraseSilhouette");
+	RTEAssert(pSprite->m_Access!=SDL_TEXTUREACCESS_TARGET, "Render Target passed to SLTerrain::EraseSilhouette")
 
     deque<MOPixel *> MOPDeque;
 
