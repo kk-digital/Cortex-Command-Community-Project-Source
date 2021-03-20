@@ -10,6 +10,8 @@ void sdl_texture_deleter::operator()(SDL_Texture *p) { SDL_DestroyTexture(p); }
 namespace RTE {
 	std::unique_ptr<Texture> Texture::fillTarget;
 
+	Texture::Texture(){Reset();}
+
 	Texture::Texture(Texture &&texture) {
 		texture.unlock();
 		m_Texture = std::move(texture.m_Texture);
@@ -66,6 +68,8 @@ namespace RTE {
 		    SDL_CreateTexture(renderer, m_Format, access, width, height));
 		SDL_SetTextureBlendMode(m_Texture.get(), SDL_BLENDMODE_BLEND);
 	}
+
+	Texture::~Texture(){Reset();}
 
 	void Texture::Reset() {
 		m_Texture.reset();

@@ -8,16 +8,17 @@
 #include "PostProcessMan.h"
 #include "PrimitiveMan.h"
 #include "PerformanceMan.h"
+#include "SceneMan.h"
 // #include "ActivityMan.h"
 // #include "ConsoleMan.h"
 // #include "SettingsMan.h"
 // #include "UInputMan.h"
 
-// #include "Entities/SLTerrain.h"
-// #include "Entities/Scene.h"
+#include "Entities/SLTerrain.h"
+#include "Entities/Scene.h"
 
 #include "GUI/GUI.h"
-#include "GUI/SDLTexture.h"
+#include "GUI/SDLGUITexture.h"
 //#include "GUI/SDLScreen.h"
 
 #include "System/Constants.h"
@@ -25,15 +26,17 @@
 
 namespace RTE {
 
+	FrameMan::FrameMan(){Clear();}
+
 	void FrameMan::Clear() {
 		m_Window = nullptr;
 		m_Renderer = nullptr;
 
 		m_NumScreens = SDL_GetNumVideoDisplays();
-		SDL_GetDisplayBounds(0, &m_Resolution);
+		SDL_GetDisplayBounds(0, m_Resolution.get());
 
-		m_ScreenResX = m_Resolution.w;
-		m_ScreenResY = m_Resolution.h;
+		m_ScreenResX = m_Resolution->w;
+		m_ScreenResY = m_Resolution->h;
 
 		m_ResX = 960;
 		m_ResY = 540;
@@ -80,8 +83,10 @@ namespace RTE {
 	}
 
 	void FrameMan::Destroy() {
-		SDL_DestroyRenderer(m_Renderer);
-		SDL_DestroyWindow(m_Window);
+		if(m_Renderer)
+			SDL_DestroyRenderer(m_Renderer);
+		if(m_Window)
+			SDL_DestroyWindow(m_Window);
 
 		Clear();
 	}
@@ -116,22 +121,6 @@ namespace RTE {
 			// draw it onto the intermediate screen
 			g_SceneMan.Update(playerScreen);
 
-			// Save scene layer's offsets for each screen, server will pick them
-			// to build the frame state and send to client
-			if (IsInMultiplayerMode()) {
-				int layerCount = 0;
-
-				for (const SceneLayer *sceneLayer:
-				     g_SceneMan.GetScene()->GetBackLayers()) {
-					SLOffset[playerScreen][layerCount] =
-					    sceneLayer->GetOffset();
-					layerCount++;
-
-					if (layerCount >= c_MaxLayersStoredForNetwork) {
-						break;
-					}
-				}
-			}
 			Vector targetPos = g_SceneMan.GetOffset(playerScreen);
 
 			// Adjust the drawing position on the target screen for if the
@@ -230,6 +219,7 @@ namespace RTE {
 				      m_BackBuffer8->h - 1, m_AlmostBlackColor);
 			}
 
+			/*
 			// Replace 8 bit backbuffer contents with network received image
 			// before post-processing as it is where this buffer is copied to 32
 			// bit buffer
@@ -250,7 +240,7 @@ namespace RTE {
 				}
 
 				m_NetworkBitmapLock[0].unlock();
-			}
+				}*/
 		}
 
 		if (IsInMultiplayerMode()) {

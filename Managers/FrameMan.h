@@ -4,12 +4,12 @@
 #include "System/Singleton.h"
 #include "System/Box.h"
 
+#include "System/SDLTexture.h"
+
 #define g_FrameMan FrameMan::Instance()
 
 struct SDL_Renderer;
 struct SDL_Window;
-struct SDL_Rect;
-struct SDL_Texture;
 
 namespace RTE {
 	class SDLScreen;
@@ -28,7 +28,7 @@ namespace RTE {
 		/// Constructor method used to instantiate a FrameMan object in system
 		/// memory. Create() should be called before using the object.
 		/// </summary>
-		FrameMan() { Clear(); }
+		FrameMan();
 
 		/// <summary>
 		/// Makes the FrameMan object ready for use, which is to be used with
@@ -487,56 +487,74 @@ namespace RTE {
 		             int altColor = 0, int skip = 0, int skipStart = 0,
 		             bool shortestWrap = false) const;
 
-		int SaveScreenToBMP(std::string nameBase) { return 0; }
+		int SaveScreenToBMP(std::string nameBase);
 
-		int SaveWorldToBMP(std::string nameBase) { return 0; }
+		int SaveWorldToBMP(std::string nameBase);
 
 		bool IsInMultiplayerMode() const { return false; }
 
+		// Private members
 	private:
 		//!< The game window
 		SDL_Window *m_Window;
 		//!< The renderer instance needed for drawing
 		SDL_Renderer *m_Renderer;
 
-		SDL_Rect m_Resolution; //!< Screen area excluding things like start
-		                       //!< menus, window decoration, etc.
-		static constexpr unsigned short m_BPP =
-		    32; //!< Color Depth (bits per pixel)
-		unsigned short m_NumScreens; //!< Number of physical displays
-		unsigned short
-		    m_ScreenResX; //!< Horizontal resolution of the primary display
-		unsigned short
-		    m_ScreenResY; //!< Vertical resolution of the primary display
+		//!< Maximum usable Screen area; In Windowed mode this excludes
+		//!< Window decorations, task bar, etc.
+		std::unique_ptr<SDL_Rect> m_Resolution;
+
+		//!< Color Depth (bits per pixel)
+		static constexpr unsigned short m_BPP = 32;
+		//!< Number of physical displays
+		unsigned short m_NumScreens;
+		//!< Horizontal resolution of the primary display
+		unsigned short m_ScreenResX;
+		//!< Vertical resolution of the primary display
+		unsigned short m_ScreenResY;
 
 		unsigned short m_ResX; //!< Game window width.
 		unsigned short m_ResY; //!< Game window height.
 		unsigned short m_ResMultiplier; //!< Resolution multiplier
-		unsigned short
-		    m_NewResX; //!< New game window height that will take
-		               //!< effect next time this FrameMan is started.
-		unsigned short
-		    m_NewResY; //!< New game window width that will take effect
-		               //!< next time this FrameMan is started.
-		unsigned short
-		    m_NewResMultiplier; //!< New multiplier that will take effect
-		                        //!< the next time FrameMan is started
-		bool m_ResChanged; //!< Wether the resolution was changed through the
-		                   //!< settings fullscreen/upscaled fullscreen buttons.
 
-		bool m_Fullscreen; //!< Wether in fullscreen mode or not.
-		bool
-		    m_UpscaledFullscreen; //!< Wether in upscaled fullscreen mode or not
+		//!< New game window height that will take
+		//!< effect next time this FrameMan is started.
+		unsigned short m_NewResX;
 
-		bool m_HSplit; //!< Wether the screen is split horizontally across the
-		               //!< screen, i.e. as two scplitscreens above another.
-		bool m_VSplit; //!< Wether the screen is split vertically across the
-		               //!< screen, i.e. as two splitscreens side by side.
-		bool m_HSplitOverride; //!< Wether the screen is set to split
-		                       //!< horizontally in settings
-		bool m_VSplitOverride; //!< Wether the screen is set to split vertically
-		                       //!< in settings
+		//!< New game window width that will take effect
+		//!< next time this FrameMan is started.
+		unsigned short m_NewResY;
 
+		//!< New multiplier that will take effect
+		//!< the next time FrameMan is started
+		unsigned short m_NewResMultiplier;
+
+		//!< Wether the resolution was changed through the
+		//!< settings fullscreen/upscaled fullscreen buttons.
+		bool m_ResChanged;
+
+		//!< Wether in fullscreen mode or not.
+		bool m_Fullscreen;
+
+		//!< Wether in upscaled fullscreen mode or not
+		bool m_UpscaledFullscreen;
+
+		//!< Wether the screen is split horizontally across the
+		//!< screen, i.e. as two scplitscreens above another.
+		bool m_HSplit;
+		//!< Wether the screen is split vertically across the
+		//!< screen, i.e. as two splitscreens side by side.
+		bool m_VSplit;
+
+		//!< Wether the screen is set to split
+		//!< horizontally in settings
+		bool m_HSplitOverride;
+		//!< Wether the screen is set to split vertically
+		//!< in settings
+		bool m_VSplitOverride;
+
+		// Private functions
+	private:
 		/// <summary>
 		/// Check that a resolution will fit the screen(s) and fall back to a
 		/// safe resolution if the set resolution was to high.

@@ -16,9 +16,6 @@ struct sdl_texture_deleter {
 struct sdl_format_deleter {
 	void operator()(SDL_PixelFormat *p);
 };
-struct sdl_rect_deleter {
-	void operator()(SDL_Rect *p);
-};
 
 namespace RTE {
 	/// <summary>
@@ -52,7 +49,7 @@ namespace RTE {
 		/// </param>
 		Texture(std::string filename, int access = 0);
 
-		~Texture() { Reset(); }
+		virtual ~Texture();
 
 		/// <summary>
 		/// Render the texture to the screen.
@@ -671,7 +668,7 @@ namespace RTE {
 		void *m_PixelsWO;
 
 		//! Non NULL if locked with lock(SDL_Rect);
-		std::unique_ptr<SDL_Rect, sdl_rect_deleter> m_LockedRect;
+		std::unique_ptr<SDL_Rect> m_LockedRect;
 
 		//! Size of one row of pixels in Memory, only meaningful while Texture
 		//! is locked
@@ -711,7 +708,7 @@ namespace RTE {
 		/// <summary>
 		/// Create an empty Texture. Only for use by friend classes
 		/// </summary>
-		Texture() { Reset(); }
+		Texture();
 
 		/// <summary>
 		/// Create an empty Texture with dimensions width x height
