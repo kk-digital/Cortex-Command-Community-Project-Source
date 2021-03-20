@@ -5,8 +5,8 @@ namespace RTE {
 
 #pragma region Type Definitions
 	// TODO: Look into not using distinctive types for IDs.
-	typedef uint32_t MOID; //!< Distinctive type definition for MovableObject IDs.
-	typedef uint32_t MID; //!< Distinctive type definition for Material IDs.
+	typedef unsigned long MOID; //!< Distinctive type definition for MovableObject IDs.
+	typedef unsigned long MID; //!< Distinctive type definition for Material IDs.
 #pragma endregion
 
 #pragma region Game Version
@@ -30,7 +30,7 @@ namespace RTE {
 	static constexpr unsigned short c_GoldMaterialID = 2; //!< Index of gold material in the material palette.
 
 	//! ColorKeys in RGBA32 (0xRRGGBBAA)
-	enum ColorKeys : uint32_t{
+	enum ColorKeys : unsigned long{
 		g_MaskColor = 0xFF00FFFF, //!< Mask color for all 8bpp bitmaps (palette index 0 (255,0,255)). This color is fully transparent.
 		//g_MOIDMaskColor = 0, //!< Mask color for 8bpp MOID layer bitmaps (palette index 0 (255,0,255)). This color is fully transparent.
 		g_MOIDMaskColor = 0xFF00FFFF, //!< Mask color for 16bpp MOID layer bitmaps (255,0,255). This color is fully transparent.
@@ -41,13 +41,6 @@ namespace RTE {
 		g_RedColor = 0xEA1507FF,
 		g_YellowGlowColor = 0xF9F338FF,
 		g_NoMOID = 0x2F2020FF
-	};
-
-	enum class g_ColorMask: uint32_t {
-		Red = 0xFF000000,
-		Green = 0x00FF0000,
-		Blue = 0x0000FF00,
-		Alpha = 0x000000FF
 	};
 
 	enum DotGlowColor { NoDot = 0, YellowDot, RedDot, BlueDot };
