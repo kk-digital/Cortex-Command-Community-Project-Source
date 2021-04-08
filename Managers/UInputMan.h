@@ -73,7 +73,7 @@ namespace RTE {
 		/// <summary>
 		/// Re-initializes the keyboard for when windows regains focus. This is really used to work around an Allegro bug.
 		/// </summary>
-		void ReInitKeyboard() { install_keyboard(); }
+		void ReInitKeyboard() {}
 
 		/// <summary>
 		/// Updates the state of this UInputMan. Supposed to be done every frame.
@@ -303,19 +303,21 @@ namespace RTE {
 		/// Gets the state of the Ctrl key.
 		/// </summary>
 		/// <returns>The state of the Ctrl key.</returns>
-		bool FlagCtrlState() const { return ((key_shifts & KB_CTRL_FLAG) > 0) ? true : false; }
+		bool FlagCtrlState() const {
+			return false;
+		} //TODO ((key_shifts & KB_CTRL_FLAG) > 0) ? true : false; }
 
 		/// <summary>
 		/// Gets the state of the Alt key.
 		/// </summary>
 		/// <returns>The state of the Alt key.</returns>
-		bool FlagAltState() const { return ((key_shifts & KB_ALT_FLAG) > 0) ? true : false; }
+		bool FlagAltState() const { return false;}//TODO ((key_shifts & KB_ALT_FLAG) > 0) ? true : false; }
 
 		/// <summary>
 		/// Gets the state of the Shift key.
 		/// </summary>
 		/// <returns>The state of the Shift key.</returns>
-		bool FlagShiftState() const { return ((key_shifts & KB_SHIFT_FLAG) > 0) ? true : false; }
+		bool FlagShiftState() const { return false;}//TODO ((key_shifts & KB_SHIFT_FLAG) > 0) ? true : false; }
 #pragma endregion
 
 #pragma region Keyboard Handling
@@ -336,7 +338,7 @@ namespace RTE {
 		/// Shows the scancode of the keyboard key which is currently down.
 		/// </summary>
 		/// <returns>The scancode of the first keyboard key in the keyboard buffer. 0 means none.</returns>
-		int WhichKeyHeld() const { int key = readkey(); return key >> 8; }
+		int WhichKeyHeld() const;//TODO { int key = readkey(); return key >> 8; }
 
 		/// <summary>
 		/// Gets whether a key was pressed between the last update and the one previous to it.
@@ -506,21 +508,21 @@ namespace RTE {
 		/// Gets the number of active joysticks.
 		/// </summary>
 		/// <returns>The number of active joysticks.</returns>
-		int GetJoystickCount() const { return (num_joysticks > Players::MaxPlayerCount) ? Players::MaxPlayerCount : num_joysticks; }
+		int GetJoystickCount() const { return 0;}//TODO (num_joysticks > Players::MaxPlayerCount) ? Players::MaxPlayerCount : num_joysticks; }
 
 		/// <summary>
 		/// Gets the index number of a joystick from InputDevice. Basically just subtract 2 from the passed in value because the Allegro joystick indices are 0-3 and ours are 2-5.
 		/// </summary>
 		/// <param name="device">The InputDevice to get index from.</param>
 		/// <returns>The corrected index. A non-joystick device will result in an out of range value returned which will not affect any active joysticks.</returns>
-		int GetJoystickIndex(InputDevice device) const { return (device >= InputDevice::DEVICE_GAMEPAD_1 && device < InputDevice::DEVICE_COUNT) ? device - InputDevice::DEVICE_GAMEPAD_1 : InputDevice::DEVICE_COUNT ; }
+		int GetJoystickIndex(InputDevice device) const;//TODO { return (device >= InputDevice::DEVICE_GAMEPAD_1 && device < InputDevice::DEVICE_COUNT) ? device - InputDevice::DEVICE_GAMEPAD_1 : InputDevice::DEVICE_COUNT ; }
 
 		/// <summary>
 		/// Gets whether the specified joystick is active. The joystick number does not correspond to the player number.
 		/// </summary>
 		/// <param name="joystickNumber">Joystick to check for.</param>
 		/// <returns>Whether the specified joystick is active.</returns>
-		bool JoystickActive(int joystickNumber) const { return joystickNumber >= Players::PlayerOne && joystickNumber < Players::MaxPlayerCount && joystickNumber < num_joysticks; }
+		bool JoystickActive(int joystickNumber) const;//TODO { return joystickNumber >= Players::PlayerOne && joystickNumber < Players::MaxPlayerCount && joystickNumber < num_joysticks; }
 
 		/// <summary>
 		/// Gets whether a joystick button is being held down right now.
@@ -528,7 +530,7 @@ namespace RTE {
 		/// <param name="whichJoy">Which joystick to check for.</param>
 		/// <param name="whichButton">Which joystick button to check for.</param>
 		/// <returns>Whether the joystick button is held or not.</returns>
-		bool JoyButtonHeld(int whichJoy, int whichButton) const { return GetJoystickButtonState(whichJoy, whichButton, InputState::Held); }
+		bool JoyButtonHeld(int whichJoy, int whichButton) const;//TODO { return GetJoystickButtonState(whichJoy, whichButton, InputState::Held); }
 
 		/// <summary>
 		/// Shows the first joystick button which is currently down.
@@ -741,8 +743,14 @@ namespace RTE {
 		static bool s_PrevMouseButtonStates[MouseButtons::MAX_MOUSE_BUTTONS]; //!< Mouse button states as they were the previous update.
 		static bool s_ChangedMouseButtonStates[MouseButtons::MAX_MOUSE_BUTTONS]; //!< Mouse button states that have changed since previous update.
 
-		static JOYSTICK_INFO s_PrevJoystickStates[Players::MaxPlayerCount]; //!< Joystick states as they were the previous update.
-		static JOYSTICK_INFO s_ChangedJoystickStates[Players::MaxPlayerCount]; //!< Joystick states that have changed.
+		// static JOYSTICK_INFO s_PrevJoystickStates[Players::MaxPlayerCount]; //!< Joystick states as they were the previous update.
+		static int
+		    s_PrevJoystickStates[Players::MaxPlayerCount]; //!< Joystick states
+		                                                   //!< as they were the
+		                                                   //!< previous update.
+		// static JOYSTICK_INFO s_ChangedJoystickStates[Players::MaxPlayerCount]; //!< Joystick states that have changed.
+		static int s_ChangedJoystickStates
+		    [Players::MaxPlayerCount]; //!< Joystick states that have changed.
 
 		bool m_OverrideInput; //!< If true then this instance operates in multiplayer mode and the input is overridden by network input.
 
