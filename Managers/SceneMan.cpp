@@ -989,11 +989,12 @@ int SceneMan::RemoveOrphans(int posX, int posY,
 	int bmpX = 0;
 	int bmpY = 0;
 
-	BITMAP * mat = m_pCurrentScene->GetTerrain()->GetMaterialBitmap();
+	std::shared_ptr<Texture> mat = m_pCurrentScene->GetTerrain()->GetMaterialTexture();
 
-	if (posX < 0 || posY < 0 || posX >= mat->w || posY >= mat->h) return 0;
+	if (posX < 0 || posY < 0 || posX >= mat->getW() || posY >= mat->getH()) return 0;
 
-	unsigned char materialID = _getpixel(mat, posX, posY);
+	uint32_t materialID  = mat->getPixel(posX, posY);
+
 	if (materialID == g_MaterialAir && (posX != centerPosX || posY != centerPosY))
 		return 0;
 	else
@@ -1001,19 +1002,19 @@ int SceneMan::RemoveOrphans(int posX, int posY,
 		bmpX = posX - (centerPosX - radius / 2);
 		bmpY = posY - (centerPosY - radius / 2);
 
-		// We reached the border of orphan-searching area and 
+		// We reached the border of orphan-searching area and
 		// there are still material pixels there -> the area is not an orphaned teran piece, abort search
 		if (bmpX <= 0 || bmpY <= 0 || bmpX >= radius - 1 || bmpY >= radius - 1)
 			return MAXORPHANRADIUS * MAXORPHANRADIUS + 1;
 		else
 		// Check if pixel was already checked
 		{
-			if (_getpixel(m_pOrphanSearchBitmap, bmpX, bmpY) != g_MaterialAir)
+			if (m_pOrphanSearchBitmap->getPixel(bmpX, bmpY) != g_MaterialAir)
 				return 0;
 		}
 	}
 
-	_putpixel(m_pOrphanSearchBitmap, bmpX, bmpY, materialID);
+	m_pOrphanSearchBitmap->setPixel(bmpX, bmpY, materialID);
 	area++;
 
 	// We're clear to remove the pixel
@@ -1054,6 +1055,7 @@ int SceneMan::RemoveOrphans(int posX, int posY,
 		}
 		m_pCurrentScene->GetTerrain()->SetFGColorPixel(posX, posY, g_MaskColor);
 		RegisterTerrainChange(posX, posY, 1, 1, g_MaskColor, false);
+
 		m_pCurrentScene->GetTerrain()->SetMaterialPixel(posX, posY, g_MaterialAir);
 	}
 
