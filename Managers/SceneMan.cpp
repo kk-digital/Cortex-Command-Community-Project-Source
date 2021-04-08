@@ -818,8 +818,8 @@ void SceneMan::LockScene()
 	if (!m_pCurrentScene->IsLocked())
 	{
 		m_pCurrentScene->Lock();
-		m_pMOColorLayer->LockBitmaps();
-		m_pMOIDLayer->LockBitmaps();
+		m_pMOColorLayer->lock();
+		m_pMOIDLayer->lock();
 	}
 }
 
@@ -838,8 +838,8 @@ void SceneMan::UnlockScene()
 	if (m_pCurrentScene->IsLocked())
 	{
 		m_pCurrentScene->Unlock();
-		m_pMOColorLayer->UnlockBitmaps();
-		m_pMOIDLayer->UnlockBitmaps();
+		m_pMOColorLayer->unlock();
+		m_pMOIDLayer->unlock();
 	}
 }
 
