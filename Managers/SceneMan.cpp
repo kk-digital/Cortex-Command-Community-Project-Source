@@ -3480,28 +3480,28 @@ void SceneMan::Update(int screen)
         {
             if (pTerrain->WrapsX())
             {
-                if (m_ScrollTarget[screen].m_X < (pTerrain->GetBitmap()->w / 2))
+                if (m_ScrollTarget[screen].m_X < (pTerrain->GetTexture()->getW() / 2))
                 {
-                    m_Offset[screen].m_X -= pTerrain->GetBitmap()->w;
+                    m_Offset[screen].m_X -= pTerrain->GetTexture()->getW();
                     m_SeamCrossCount[screen][X] += 1;
                 }
                 else
                 {
-                    m_Offset[screen].m_X += pTerrain->GetBitmap()->w;
+                    m_Offset[screen].m_X += pTerrain->GetTexture()->getW();
                     m_SeamCrossCount[screen][X] -= 1;
                 }
             }
 
             if (pTerrain->WrapsY())
             {
-                if (m_ScrollTarget[screen].m_Y < (pTerrain->GetBitmap()->h / 2))
+                if (m_ScrollTarget[screen].m_Y < (pTerrain->GetTexture()->getH() / 2))
                 {
-                    m_Offset[screen].m_Y -= pTerrain->GetBitmap()->h;
+                    m_Offset[screen].m_Y -= pTerrain->GetTexture()->getH();
                     m_SeamCrossCount[screen][Y] += 1;
                 }
                 else
                 {
-                    m_Offset[screen].m_Y += pTerrain->GetBitmap()->h;
+                    m_Offset[screen].m_Y += pTerrain->GetTexture()->getH();
                     m_SeamCrossCount[screen][Y] -= 1;
                 }
             }
@@ -3562,8 +3562,8 @@ void SceneMan::Update(int screen)
     // Background layers may scroll in fractions of the real offset, and need special care to avoid jumping after having traversed wrapped edges
     // Reconstruct and give them the total offset, not taking any wrappings into account
     Vector offsetUnwrapped = m_Offset[screen];
-    offsetUnwrapped.m_X += pTerrain->GetBitmap()->w * m_SeamCrossCount[screen][X];
-    offsetUnwrapped.m_Y += pTerrain->GetBitmap()->h * m_SeamCrossCount[screen][Y];
+    offsetUnwrapped.m_X += pTerrain->GetTexture()->getW() * m_SeamCrossCount[screen][X];
+    offsetUnwrapped.m_Y += pTerrain->GetTexture()->getH() * m_SeamCrossCount[screen][Y];
 
     for (list<SceneLayer *>::iterator itr = m_pCurrentScene->GetBackLayers().begin(); itr != m_pCurrentScene->GetBackLayers().end(); ++itr)
         (*itr)->SetOffset(offsetUnwrapped);
