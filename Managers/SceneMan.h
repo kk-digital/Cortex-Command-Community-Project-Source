@@ -445,7 +445,7 @@ public:
 // Arguments:       None.
 // Return value:    A BITMAP pointer to the MO bitmap. Ownership is NOT transferred!
 
-    BITMAP * GetMOColorBitmap() const;
+	std::shared_ptr<Texture> GetMOColorTexture() const;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -456,7 +456,7 @@ public:
 // Arguments:       None.
 // Return value:    A BITMAP pointer to the debug bitmap. Ownership is NOT transferred!
 
-    BITMAP * GetDebugBitmap() const;
+	std::shared_ptr<Texture> GetDebugTexture() const;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -467,8 +467,8 @@ public:
 // Arguments:       None.
 // Return value:    A BITMAP pointer to the MO bitmap. Ownership is NOT transferred!
 
-    BITMAP * GetMOIDBitmap() const;
-	*/
+	std::shared_ptr<Texture> GetMOIDTexture() const;
+
 // TEMP!
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          MOIDClearCheck
@@ -1682,14 +1682,14 @@ public:
     // Current scene being used
     Scene *m_pCurrentScene;
     // Color MO layer
-    SceneLayer *m_pMOColorLayer;
+	std::shared_ptr<Texture> m_pMOColorLayer;
     // MovableObject ID layer
-    SceneLayer *m_pMOIDLayer;
+	std::shared_ptr<Texture> m_pMOIDLayer;
     // All the areas drawn within on the MOID layer since last Update
     std::list<IntRect> m_MOIDDrawings;
 
     // Debug layer for seeing cast rays etc
-    SceneLayer *m_pDebugLayer;
+	std::shared_ptr<Texture> m_pDebugLayer;
     // The absolute end position of the last ray cast
     Vector m_LastRayHitPos;
     // The mode we're drawing layers in to the screen
@@ -1743,8 +1743,9 @@ public:
 
     // The Timer to measure time between cleanings of the color layer of the Terrain.
     Timer m_CleanTimer;
+
 	// Bitmap to look for orphaned regions
-	SDL_Texture * m_pOrphanSearchBitmap;
+	std::unique_ptr<Texture> m_pOrphanSearchBitmap;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////

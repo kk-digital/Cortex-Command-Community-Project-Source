@@ -404,13 +404,7 @@ void SceneMan::Destroy()
 		delete m_apMatPalette[i];
 
 	delete m_pCurrentScene;
-	delete m_pDebugLayer;
-	delete m_pMOIDLayer;
-	delete m_pMOColorLayer;
 	delete m_pUnseenRevealSound;
-
-	destroy_bitmap(m_pOrphanSearchBitmap);
-	m_pOrphanSearchBitmap = 0;
 
 	Clear();
 }
@@ -507,7 +501,7 @@ SLTerrain * SceneMan::GetTerrain()
 //                  MovableObject:s draw themselves onto before it itself gets drawn onto
 //                  the screen back buffer.
 
-BITMAP * SceneMan::GetMOColorBitmap() const { return m_pMOColorLayer->GetBitmap(); }
+std::shared_ptr<Texture> SceneMan::GetMOColorTexture() const { return m_pMOColorLayer; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -516,8 +510,7 @@ BITMAP * SceneMan::GetMOColorBitmap() const { return m_pMOColorLayer->GetBitmap(
 // Description:     Gets the bitmap of the SceneLayer that debug graphics is drawn onto.
 //                  Will only return valid BITMAP if building with DEBUG_BUILD.
 
-BITMAP * SceneMan::GetDebugBitmap() const { return m_pDebugLayer->GetBitmap(); }
-
+std::shared_ptr<Texture> SceneMan::GetDebugTexture() const { return m_pDebugLayer; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -526,7 +519,7 @@ BITMAP * SceneMan::GetDebugBitmap() const { return m_pDebugLayer->GetBitmap(); }
 // Description:     Gets the bitmap of the SceneLayer that all MovableObject:s draw their
 //                  current (for the frame only!) MOID's onto.
 
-BITMAP * SceneMan::GetMOIDBitmap() const { return m_pMOIDLayer->GetBitmap(); }
+std::shared_ptr<Texture> SceneMan::GetMOIDTexture() const { return m_pMOIDLayer; }
 
 // TEMP!
 //////////////////////////////////////////////////////////////////////////////////////////
