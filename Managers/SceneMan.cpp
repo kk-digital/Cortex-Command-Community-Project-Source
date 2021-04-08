@@ -962,7 +962,7 @@ bool SceneMan::WillPenetrate(const int posX,
 		return false;
 
 	float impMag = impulse.GetMagnitude();
-	unsigned char materialID = getpixel(m_pCurrentScene->GetTerrain()->GetMaterialBitmap(), posX, posY);
+	uint32_t materialID = m_pCurrentScene->GetTerrain()->GetMaterialTexture()->getPixel(posX, posY);
 
 	return impMag >= GetMaterialFromID(materialID)->GetIntegrity();
 }
@@ -974,17 +974,19 @@ bool SceneMan::WillPenetrate(const int posX,
 
 int SceneMan::RemoveOrphans(int posX, int posY, int radius, int maxArea, bool remove)
 {
+	m_pOrphanSearchBitmap->lock();
 	if (radius > MAXORPHANRADIUS)
 		radius = MAXORPHANRADIUS;
 
-	clear_to_color(m_pOrphanSearchBitmap, g_MaterialAir);
+	m_pOrphanSearchBitmap->clearAll();
 	int area = RemoveOrphans(posX, posY, posX, posY, 0, radius, maxArea, false);
 	if (remove && area <= maxArea)
 	{
-		clear_to_color(m_pOrphanSearchBitmap, g_MaterialAir);
+		m_pOrphanSearchBitmap->clearAll();
 		RemoveOrphans(posX, posY, posX, posY, 0, radius, maxArea, true);
 	}
 
+	m_pOrphanSearchBitmap->unlock();
 	return area;
 }
 
