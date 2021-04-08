@@ -1203,7 +1203,7 @@ bool SceneMan::TryPenetrate(const int posX,
 	if (!m_pCurrentScene->GetTerrain()->IsWithinBounds(posX, posY))
 		return false;
 
-	unsigned char materialID = _getpixel(m_pCurrentScene->GetTerrain()->GetMaterialBitmap(), posX, posY);
+	uint32_t materialID = m_pCurrentScene->GetTerrain()->GetMaterialTexture()->getPixel(posX, posY);
 	if (materialID == g_MaterialAir)
 	{
 //        RTEAbort("Why are we penetrating air??");
@@ -1281,12 +1281,15 @@ bool SceneMan::TryPenetrate(const int posX,
 		retardation = -(sceneMat->GetIntegrity() / impMag);
 
 		// If this is a scrap pixel, or there is no background pixel 'supporting' the knocked-loose pixel, make the column above also turn into particles
-		if (sceneMat->IsScrap() || _getpixel(m_pCurrentScene->GetTerrain()->GetBGColorBitmap(), posX, posY) == g_MaskColor)
+		if (sceneMat->IsScrap() || m_pCurrentScene->GetTerrain()->GetBGColorTexture()->getPixel(posX, posY) == g_MaskColor)
 		{
 			// Get quicker direct access to bitmaps
-			BITMAP *pFGColor = m_pCurrentScene->GetTerrain()->GetFGColorBitmap();
-			BITMAP *pBGColor = m_pCurrentScene->GetTerrain()->GetBGColorBitmap();
-			BITMAP *pMaterial = m_pCurrentScene->GetTerrain()->GetMaterialBitmap();
+			std::shared_ptr<Texture> pFGColor = m_pCurrentScene->GetTerrain()->GetFGColorTexture();
+			std::shared_ptr<Texture> pBGColor = m_pCurrentScene->GetTerrain()->GetBGColorTexture();
+			std::shared_ptr<Texture> pMaterial = m_pCurrentScene->GetTerrain()->GetMaterialTexture();
+
+			pFGColor->lock();
+			pMaterial->lock();
 
 			int testMaterialID = g_MaterialAir;
 			MOPixel *pixelMO = 0;
@@ -1298,12 +1301,12 @@ bool SceneMan::TryPenetrate(const int posX,
 			for (int testY = posY - 1; testY > posY - COMPACTINGHEIGHT && testY >= 0; --testY)
 			{
 				// Check if there is a material pixel above
-				if ((testMaterialID = _getpixel(pMaterial, posX, testY)) != g_MaterialAir)
+				if ((testMaterialID = pMaterial->getPixel(posX, testY)) != g_MaterialAir)
 				{
 					sceneMat = GetMaterialFromID(testMaterialID);
 
 					// No support in the background layer, or is scrap material, so make particle of some of them
-					if (sceneMat->IsScrap() || _getpixel(pBGColor, posX, testY) == g_MaskColor)
+					if (sceneMat->IsScrap() || pBGColor->getPixel(posX, testY) == g_MaskColor)
 					{
 						//  Only generate  particles of some of 'em
 						if (RandomNum() > 0.75F)
@@ -1337,14 +1340,17 @@ bool SceneMan::TryPenetrate(const int posX,
 
 						// Clear the terrain pixel now when the particle has been generated from it
 						RegisterTerrainChange(posX, testY, 1, 1, g_MaskColor, false);
-						_putpixel(pFGColor, posX, testY, g_MaskColor);
-						_putpixel(pMaterial, posX, testY, g_MaterialAir);
+						pFGColor->setPixel(posX, testY, g_MaskColor);
+						pMaterial->setPixel(posX, testY, g_MaterialAir);
 					}
 					// There is support, so stop checking
 					else
 						break;
 				}
 			}
+
+			pFGColor->unlock();
+			pMaterial->unlock();
 		}
 
 		// Remove orphaned regions if told to by parent MO who travelled an atom which tries to penetrate terrain
