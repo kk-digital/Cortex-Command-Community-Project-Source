@@ -23,8 +23,6 @@ namespace RTE {
 	/// and used with SDLHelper.h
 	/// </summary>
 	class Texture {
-		friend class SceneLayer;
-		friend class SLTerrain;
 		friend class ContentFile;
 
 	public:
@@ -38,16 +36,29 @@ namespace RTE {
 		Texture(Texture &&texture);
 
 		/// <summary>
-		/// Create a Texture from a file, with the given texture access
+		/// Create an empty Texture with dimensions width x height
 		/// </summary>
-		/// <param name="filename">
-		/// A string representing the path of the image file to load
+		/// <param name="width">
+		/// Width of the new Texture
+		/// </param>
+		/// <param name="height">
+		/// Height of the new Texture
 		/// </param>
 		/// <param name="access">
-		/// One of <a href="https://wiki.libsdl.org/SDL_TextureAccess">
-		/// SDL_TextureAccess</a>
+		/// TextureAccess of the Texture defaults to render target
 		/// </param>
-		Texture(std::string filename, int access = 0);
+		Texture(SDL_Renderer *renderer, int width, int height, int access = 2);
+
+		/// <summary>
+		/// Copy constructor with rendering context
+		/// </summary>
+		/// <param name="renderer">
+		/// The Rendering context for which the texture is created
+		/// </param>
+		/// <param name="texture">
+		/// The Texture to be copied, this is a deep copy operation
+		/// </param>
+		Texture(SDL_Renderer *renderer, const Texture &texture);
 
 		virtual ~Texture();
 
@@ -68,8 +79,7 @@ namespace RTE {
 		/// SDL_GetError
 		/// </returns>
 		int render(SDL_Renderer *pRenderer, int x, int y);
-
-		/// <summary>
+/// <summary>
 		/// Render the texture to the screen.
 		/// </summary>
 		/// <param name="pRenderer">
@@ -579,6 +589,33 @@ namespace RTE {
 		uint32_t getPixel(SDL_Point pos);
 
 		/// <summary>
+		/// Set a pixel at (x,y) to color
+		/// </summary>
+		/// <param name="x">
+		/// x coordinate of pixel to set
+		/// </param>
+		/// <param name="y">
+		/// y coordinate of pixel to set
+		/// </param>
+		/// <param name="color">
+		/// Color to set the pixel to in RGBA32
+		/// </param>
+		void setPixel(int x, int y, uint32_t color);
+
+		void setPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
+
+		/// <summary>
+		/// Clear all pixels of the Texture to trasparent (0x00000000)
+		/// </summary>
+		void clearAll();
+
+		/// <summary>
+		/// Get the raw Pixels of the Texture for RW ops, offset by the locked
+		/// area
+		/// </summary>
+		uint32_t *getPixelsRW();
+
+		/// <summary>
 		/// Get the alpha value that will be multiplied onto all render
 		/// operations
 		/// </summary>
@@ -655,6 +692,7 @@ namespace RTE {
 		//! Internal SDL_PixelFormat to avoid repeated allocation on every
 		//! setPixel
 		std::unique_ptr<SDL_PixelFormat, sdl_format_deleter> m_PixelFormat;
+
 		//! Pixel Format specifier
 		uint32_t m_Format;
 		uint32_t m_Rmask;
@@ -669,8 +707,7 @@ namespace RTE {
 
 		//! Non NULL if locked with lock(SDL_Rect);
 		std::unique_ptr<SDL_Rect> m_LockedRect;
-
-		//! Size of one row of pixels in Memory, only meaningful while Texture
+//! Size of one row of pixels in Memory, only meaningful while Texture
 		//! is locked
 		int m_Pitch;
 
@@ -679,26 +716,6 @@ namespace RTE {
 		static std::unique_ptr<Texture> fillTarget;
 
 	private:
-		/// <summary>
-		/// Set a pixel at (x,y) to color
-		/// </summary>
-		/// <param name="x">
-		/// x coordinate of pixel to set
-		/// </param>
-		/// <param name="y">
-		/// y coordinate of pixel to set
-		/// </param>
-		/// <param name="color">
-		/// Color to set the pixel to in RGBA32
-		/// </param>
-		void setPixel(int x, int y, uint32_t color);
-
-		void setPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
-		/// <summary>
-		/// Get the raw Pixels of the Texture for RW ops, offset by the locked
-		/// area
-		/// </summary>
-		uint32_t *getPixelsRW();
 
 		/// <summary>
 		/// Clear the texture and reset member variables
@@ -710,32 +727,18 @@ namespace RTE {
 		/// </summary>
 		Texture();
 
-		/// <summary>
-		/// Create an empty Texture with dimensions width x height
-		/// </summary>
-		/// <param name="width">
-		/// Width of the new Texture
-		/// </param>
-		/// <param name="height">
-		/// Height of the new Texture
-		/// </param>
-		/// <param name="access">
-		/// TextureAccess of the Texture defaults to render target
-		/// </param>
-		Texture(SDL_Renderer *renderer, int width, int height, int access = 2);
 
 		uint32_t getNativeAlphaFormat(SDL_Renderer *renderer);
 		void setRGBAMasks();
 
 		Texture(const Texture &copy) = delete;
 		Texture &operator=(const Texture &copy) = delete;
-		// Copying only allowed for friends of this class but needs to specify
-		// rendering context
-		Texture(SDL_Renderer *renderer, const Texture &texture);
 
 	public:
 		//! Move assignment operator
 		Texture &operator=(Texture &&texture);
+
+		//! True if the Texture exists
 		operator bool() const { return m_Texture.get(); }
 	};
 } // namespace RTE
