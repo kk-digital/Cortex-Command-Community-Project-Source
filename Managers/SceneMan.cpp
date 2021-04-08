@@ -57,17 +57,17 @@ bool IntRect::IntersectionCut(const IntRect &rhs)
 {
 	if (Intersects(rhs))
 	{
-		m_Left = MAX(m_Left, rhs.m_Left);
-		m_Right = MIN(m_Right, rhs.m_Right);
-		m_Top = MAX(m_Top, rhs.m_Top);
-		m_Bottom = MIN(m_Bottom, rhs.m_Bottom);
+		m_Left =std::max(m_Left, rhs.m_Left);
+		m_Right =std::min(m_Right, rhs.m_Right);
+		m_Top =std::max(m_Top, rhs.m_Top);
+		m_Bottom =std::min(m_Bottom, rhs.m_Bottom);
 		return true;
 	}
 
 	return false;
 }
 
-
+SceneMan::SceneMan() { Clear(); }
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          Clear
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -723,8 +723,8 @@ float SceneMan::TargetDistanceScalar(Vector point)
 		return 0;
 
 	int screenCount = g_FrameMan.GetScreenCount();
-	int screenRadius = MAX(g_FrameMan.GetPlayerScreenWidth(), g_FrameMan.GetPlayerScreenHeight()) / 2;
-	int sceneRadius = MAX(m_pCurrentScene->GetWidth(), m_pCurrentScene->GetHeight()) / 2;
+	int screenRadius =std::max(g_FrameMan.GetPlayerScreenWidth(), g_FrameMan.GetPlayerScreenHeight()) / 2;
+	int sceneRadius =std::max(m_pCurrentScene->GetWidth(), m_pCurrentScene->GetHeight()) / 2;
 	// Avoid divide by zero problems if scene and screen radius are the same
 	if (screenRadius == sceneRadius)
 		sceneRadius += 100;
