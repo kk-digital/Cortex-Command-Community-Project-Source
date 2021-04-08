@@ -3245,7 +3245,7 @@ float SceneMan::ShortestDistanceY(float val1, float val2, bool checkBounds, int 
 
 bool SceneMan::ObscuredPoint(int x, int y, int team)
 {
-    bool obscured = m_pMOIDLayer->GetPixel(x, y) != g_NoMOID || m_pCurrentScene->GetTerrain()->GetPixel(x, y) != g_MaterialAir;
+    bool obscured = m_pMOIDLayer->getPixel(x, y) != g_NoMOID || m_pCurrentScene->GetTerrain()->GetPixel(x, y) != g_MaterialAir;
 
     if (team != Activity::NoTeam)
         obscured = obscured || IsUnseen(x, y, team);
