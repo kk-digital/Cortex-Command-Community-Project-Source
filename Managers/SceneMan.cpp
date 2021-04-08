@@ -2947,34 +2947,35 @@ void SceneMan::StructuralCalc(unsigned long calcTime) {
     m_CalcTimer.Reset();
 
     SLTerrain *pTerrain = g_SceneMan.GetTerrain();
-    BITMAP *pColBitmap = pTerrain->GetFGColorBitmap();
-    BITMAP *pMatBitmap = pTerrain->GetMaterialBitmap();
-    BITMAP *pStructBitmap = pTerrain->GetStructuralBitmap();
+		std::shared_ptr<Texture> pColTexture = pTerrain->GetFGColorTexture();
+		std::shared_ptr<Texture> pMatTexture = pTerrain->GetMaterialTexture();
+		std::shared_ptr<Texture> pStructTexture = pTerrain->GetStructuralTexture();
     Material **pMatPalette = GetMaterialPalette();
-    int posX, posY, height = pColBitmap->h, width = pColBitmap->w;
+    int posX, posY, height = pColTexture->getH(), width = pColTexture->getW();
 
     // Lock all bitmaps involved, outside the loop.
-    acquire_bitmap(pColBitmap);
-    acquire_bitmap(pMatBitmap);
-    acquire_bitmap(pStructBitmap);
+		pColTexture->lock();
+		pMatTexture->lock();
+		pStructTexture->lock();
+
 
     // Preprocess bottom row to have full support.
     for (posX = width - 1; posX >= 0; --posX)
-        putpixel(pStructBitmap, posX, height - 1, 255);
+			pStructTexture->setPixel(posX, height - 1, 255);
 
     // Start on the second row from bottom.
     for (posY = height - 2; posY >= 0 && !m_CalcTimer.IsPastSimMS(calcTime); --posY) {
         for (posX = width - 1; posX >= 0; --posX) {
-            getpixel(pColBitmap, posX, posY);
-            getpixel(pMatBitmap, posX, posY);
-            getpixel(pStructBitmap, posX, posY);
+					pColTexture->getPixel(posX, posY);
+					pMatTexture->getPixel(posX, posY);
+					pStructTexture->getPixel(posX, posY);
         }
     }
 
     // Unlock all bitmaps involved.
-    release_bitmap(pColBitmap);
-    release_bitmap(pMatBitmap);
-    release_bitmap(pStructBitmap);
+		pColTexture->unlock();
+		pMatTexture->unlock();
+		pStructTexture->unlock();
 }
 
 
