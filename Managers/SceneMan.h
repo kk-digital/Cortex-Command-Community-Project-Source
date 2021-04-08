@@ -21,6 +21,8 @@
 
 #include "ActivityMan.h"
 
+#include "System/SDLTexture.h"
+
 #define g_SceneMan SceneMan::Instance()
 
 namespace RTE
@@ -122,7 +124,7 @@ public:
 //                  memory. Create() should be called before using the object.
 // Arguments:       None.
 
-    SceneMan() { m_pOrphanSearchBitmap = 0; Clear(); }
+	SceneMan();
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -435,7 +437,6 @@ public:
     SLTerrain * GetTerrain();
 
 
-	/* //TODO: make better
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          GetMOColorBitmap
 //////////////////////////////////////////////////////////////////////////////////////////
