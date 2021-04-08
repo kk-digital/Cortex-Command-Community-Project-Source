@@ -519,21 +519,29 @@ std::shared_ptr<Texture> SceneMan::GetMOIDTexture() const { return m_pMOIDLayer;
 
 bool SceneMan::MOIDClearCheck()
 {
-	BITMAP *pMOIDMap = m_pMOIDLayer->GetBitmap();
-	int badMOID = g_NoMOID;
-	for (int y = 0; y < pMOIDMap->h; ++y)
+	SDL_Texture* activeTarget{SDL_GetRenderTarget(g_FrameMan.GetRenderer())};
+	SDL_SetRenderTarget(g_FrameMan.GetRenderer(), m_pMOIDLayer->getAsRenderTarget());
+	uint32_t badMOID = g_NoMOID;
+	SDL_Rect pos{0,0,1,1};
+	for (int y = 0; y < m_pMOIDLayer->getH(); ++y)
 	{
-		for (int x = 0; x < pMOIDMap->w; ++x)
+		pos.y=y;
+		for (int x = 0; x < m_pMOIDLayer->getW(); ++x)
 		{
-			if ((badMOID = _getpixel(pMOIDMap, x, y)) != g_NoMOID)
+			pos.x=x;
+			// FIXME: This might be very very slow
+			SDL_RenderReadPixels(g_FrameMan.GetRenderer(), &pos, SDL_PIXELFORMAT_RGBA32, &badMOID, sizeof(uint32_t));
+			if (badMOID != g_NoMOID)
 			{
-				g_FrameMan.SaveBitmapToPNG(pMOIDMap, "MOIDCheck");
-				g_FrameMan.SaveBitmapToPNG(m_pMOColorLayer->GetBitmap(), "MOIDCheck");
+				SDL_SetRenderTarget(g_FrameMan.GetRenderer(), activeTarget);
+				g_FrameMan.SaveTextureToPNG(m_pMOIDLayer, "MOIDCheck");
+				g_FrameMan.SaveTextureToPNG(m_pMOColorLayer, "MOIDCheck");
 				RTEAbort("Bad MOID of MO detected: " + g_MovableMan.GetMOFromID(badMOID)->GetPresetName());
 				return false;
 			}
 		}
 	}
+	SDL_SetRenderTarget(g_FrameMan.GetRenderer(), activeTarget);
 	return true;
 }
 

@@ -491,6 +491,8 @@ namespace RTE {
 
 		int SaveWorldToBMP(std::string nameBase);
 
+		int SaveTextureToPNG(std::shared_ptr<Texture> tex, std::string nameBase);
+
 		bool IsInMultiplayerMode() const { return false; }
 
 		// Private members
