@@ -893,7 +893,12 @@ void SceneMan::ClearAllMOIDDrawings()
 void SceneMan::ClearMOIDRect(int left, int top, int right, int bottom)
 {
 	// Draw the first unwrapped rect
-	rectfill(m_pMOIDLayer->GetBitmap(), left, top, right, bottom, g_NoMOID);
+	SDL_SetRenderTarget(g_FrameMan.GetRenderer(), m_pMOIDLayer->getAsRenderTarget());
+	SDL_SetRenderDrawColor(g_FrameMan.GetRenderer(), (g_NoMOID << 24) & 0xff,
+		                     (g_NoMOID << 16) & 0xff, (g_NoMOID << 4) & 0xff,
+		                     g_NoMOID & 0xff);
+	SDL_Rect fill{left, top, right - left, bottom - top};
+	SDL_RenderFillRect(g_FrameMan.GetRenderer(), &fill);
 
 	// Draw wrapped rectangles
 	if (g_SceneMan.SceneWrapsX())
