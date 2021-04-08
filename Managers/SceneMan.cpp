@@ -218,7 +218,7 @@ int SceneMan::LoadScene(Scene *pNewScene, bool placeObjects, bool placeUnits) {
 #endif
 
 	// Finally draw the ID:s of the MO:s to the MOID layers for the first time
-	g_MovableMan.UpdateDrawMOIDs(m_pMOIDLayer->GetBitmap());
+	g_MovableMan.UpdateDrawMOIDs(g_FrameMan.GetRenderer(), m_pMOIDLayer);
 
 #ifdef NETWORK_ENABLE
 	g_NetworkServer.LockScene(false);
