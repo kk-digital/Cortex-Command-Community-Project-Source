@@ -558,11 +558,10 @@ unsigned char SceneMan::GetTerrMatter(int pixelX, int pixelY)
 
 	WrapPosition(pixelX, pixelY);
 
-	BITMAP *pTMatBitmap = m_pCurrentScene->GetTerrain()->GetMaterialBitmap();
 
 	// If it's still below or to the sides out of bounds after
 	// what is supposed to be wrapped, shit is out of bounds.
-	if (pixelX < 0 || pixelX >= pTMatBitmap->w || pixelY >= pTMatBitmap->h)
+	if (pixelX < 0 || pixelX >= m_pCurrentScene->GetWidth() || pixelY >= m_pCurrentScene->GetHeight())
 //        return g_MaterialOutOfBounds;
 		return g_MaterialAir;
 
@@ -570,7 +569,7 @@ unsigned char SceneMan::GetTerrMatter(int pixelX, int pixelY)
 	if (pixelY < 0)
 		return g_MaterialAir;
 
-	return getpixel(pTMatBitmap, pixelX, pixelY);
+	return m_pCurrentScene->GetTerrain()->GetMaterialPixel(pixelX, pixelY);
 }
 
 
