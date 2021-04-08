@@ -475,7 +475,7 @@ ClassInfoGetters
 // Description:     Gets the structural bitmap of this Terrain.
 // Arguments:       None.
 // Return value:    A pointer to the material bitmap.
-	std::shared_ptr<Texture> GetStructuralBitmap() { return m_pStructural; }
+	std::shared_ptr<Texture> GetStructuralTexture() { return m_pStructural; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
