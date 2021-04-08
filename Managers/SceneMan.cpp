@@ -115,9 +115,7 @@ void SceneMan::Clear()
 //    m_CalcTimer.Reset();
 	m_CleanTimer.Reset();
 
-	if (m_pOrphanSearchBitmap)
-		destroy_bitmap(m_pOrphanSearchBitmap);
-	m_pOrphanSearchBitmap = create_bitmap_ex(8, MAXORPHANRADIUS , MAXORPHANRADIUS);
+	m_pOrphanSearchBitmap.reset(new Texture(g_FrameMan.GetRenderer(), MAXORPHANRADIUS, MAXORPHANRADIUS, SDL_TEXTUREACCESS_STREAMING));
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -192,10 +190,10 @@ int SceneMan::LoadScene(Scene *pNewScene, bool placeObjects, bool placeUnits) {
 		if (!g_ActivityMan.GetActivity()->TeamActive(team))
 			continue;
 		SceneLayer *pUnseenLayer = m_pCurrentScene->GetUnseenLayer(team);
-		if (pUnseenLayer && pUnseenLayer->GetBitmap())
+		if (pUnseenLayer && pUnseenLayer->GetTexture())
 		{
 			// Calculate how many times smaller the unseen map is compared to the entire terrain's dimensions, and set it as the scale factor on the Unseen layer
-			pUnseenLayer->SetScaleFactor(Vector((float)m_pCurrentScene->GetTerrain()->GetBitmap()->w / (float)pUnseenLayer->GetBitmap()->w, (float)m_pCurrentScene->GetTerrain()->GetBitmap()->h / (float)pUnseenLayer->GetBitmap()->h));
+			pUnseenLayer->SetScaleFactor(Vector((float)m_pCurrentScene->GetTerrain()->GetTexture()->getW() / (float)pUnseenLayer->GetTexture()->getW(), (float)m_pCurrentScene->GetTerrain()->GetTexture()->getH() / (float)pUnseenLayer->GetTexture()->getH()));
 		}
 	}
 
@@ -206,36 +204,26 @@ int SceneMan::LoadScene(Scene *pNewScene, bool placeObjects, bool placeUnits) {
 //    m_pCurrentScene->GetTerrain()->CleanAir();
 
 	// Re-create the MoveableObject:s color SceneLayer
-	delete m_pMOColorLayer;
-	BITMAP *pBitmap = create_bitmap_ex(8, GetSceneWidth(), GetSceneHeight());
-	clear_to_color(pBitmap, g_MaskColor);
-	m_pMOColorLayer = new SceneLayer();
-	m_pMOColorLayer->Create(pBitmap, true, Vector(), m_pCurrentScene->WrapsX(), m_pCurrentScene->WrapsY(), Vector(1.0, 1.0));
-	pBitmap = 0;
+	m_pMOColorLayer.reset(new Texture(g_FrameMan.GetRenderer(), GetSceneWidth(), GetSceneHeight()));
 
 	// Re-create the MoveableObject:s ID SceneLayer
-	delete m_pMOIDLayer;
-	pBitmap = create_bitmap_ex(c_MOIDLayerBitDepth, GetSceneWidth(), GetSceneHeight());
-	clear_to_color(pBitmap, g_NoMOID);
-	m_pMOIDLayer = new SceneLayer();
-	m_pMOIDLayer->Create(pBitmap, false, Vector(), m_pCurrentScene->WrapsX(), m_pCurrentScene->WrapsY(), Vector(1.0, 1.0));
-	pBitmap = 0;
+	m_pMOIDLayer.reset(
+		  new Texture(g_FrameMan.GetRenderer(), GetSceneWidth(), GetSceneHeight()));
 
 #ifdef DEBUG_BUILD
 	// Create the Debug SceneLayer
-	delete m_pDebugLayer;
-	pBitmap = create_bitmap_ex(8, GetSceneWidth(), GetSceneHeight());
-	clear_to_color(pBitmap, g_MaskColor);
 	m_pDebugLayer = new SceneLayer();
-	m_pDebugLayer->Create(pBitmap, true, Vector(), m_pCurrentScene->WrapsX(), m_pCurrentScene->WrapsY(), Vector(1.0, 1.0));
-	pBitmap = 0;
+	m_pDebugLayer.reset(
+		  new Texture(g_FrameMan.GetRenderer(), GetSceneWidth(), GetSceneHeight()));
 #endif
 
 	// Finally draw the ID:s of the MO:s to the MOID layers for the first time
 	g_MovableMan.UpdateDrawMOIDs(m_pMOIDLayer->GetBitmap());
 
+#ifdef NETWORK_ENABLE
 	g_NetworkServer.LockScene(false);
 	g_NetworkServer.ResetScene();
+#endif
 
 	return 0;
 }
