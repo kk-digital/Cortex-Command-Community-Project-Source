@@ -698,8 +698,8 @@ void SceneMan::SetScrollTarget(const Vector &targetCenter,
 	{
 		SLTerrain *pTerrain = m_pCurrentScene->GetTerrain();
 		// If the difference is more than half the scene width, then wrap
-		if ((pTerrain->WrapsX() && fabs(targetCenter.m_X - m_ScrollTarget[screen].m_X) > pTerrain->GetBitmap()->w / 2) ||
-			(pTerrain->WrapsY() && fabs(targetCenter.m_Y - m_ScrollTarget[screen].m_Y) > pTerrain->GetBitmap()->h / 2))
+		if ((pTerrain->WrapsX() && fabs(targetCenter.m_X - m_ScrollTarget[screen].m_X) > pTerrain->GetTexture()->getW() / 2) ||
+			(pTerrain->WrapsY() && fabs(targetCenter.m_Y - m_ScrollTarget[screen].m_Y) > pTerrain->GetTexture()->getH() / 2))
 			targetWrapped = true;
 	}
 
