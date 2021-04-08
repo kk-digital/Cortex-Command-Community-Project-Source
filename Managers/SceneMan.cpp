@@ -3407,8 +3407,8 @@ bool SceneMan::AddTerrainObject(TerrainObject *pObject)
     bool result =  m_pCurrentScene->GetTerrain()->ApplyObject(pObject);
 	if (result)
 	{
-		Vector corner = pObject->GetPos() + pObject->GetBitmapOffset();
-		Box box = Box(corner, pObject->GetBitmapWidth(), pObject->GetBitmapHeight());
+		Vector corner = pObject->GetPos() + pObject->GetTextureOffset();
+		Box box = Box(corner, pObject->GetTextureWidth(), pObject->GetTextureHeight());
 		
 		m_pCurrentScene->GetTerrain()->CleanAirBox(box, GetScene()->WrapsX(), GetScene()->WrapsY());
 	}
