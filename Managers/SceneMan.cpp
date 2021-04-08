@@ -789,17 +789,17 @@ void SceneMan::CheckOffset(int screen)
 		frameHeight = g_FrameMan.GetPlayerFrameBufferHeight(screen);
 	}
 
-	if (!pTerrain->WrapsX() && m_Offset[screen].m_X >= pTerrain->GetBitmap()->w - frameWidth)
-		m_Offset[screen].m_X = pTerrain->GetBitmap()->w - frameWidth;
+	if (!pTerrain->WrapsX() && m_Offset[screen].m_X >= pTerrain->GetTexture()->getW() - frameWidth)
+		m_Offset[screen].m_X = pTerrain->GetTexture()->getW() - frameWidth;
 
-	if (!pTerrain->WrapsY() && m_Offset[screen].m_Y >= pTerrain->GetBitmap()->h - frameHeight)
-		m_Offset[screen].m_Y = pTerrain->GetBitmap()->h - frameHeight;
+	if (!pTerrain->WrapsY() && m_Offset[screen].m_Y >= pTerrain->GetTexture()->getH() - frameHeight)
+		m_Offset[screen].m_Y = pTerrain->GetTexture()->getH() - frameHeight;
 
-	if (!pTerrain->WrapsX() && m_Offset[screen].m_X >= pTerrain->GetBitmap()->w - frameWidth)
-		m_Offset[screen].m_X = pTerrain->GetBitmap()->w - frameWidth;
+	if (!pTerrain->WrapsX() && m_Offset[screen].m_X >= pTerrain->GetTexture()->getW() - frameWidth)
+		m_Offset[screen].m_X = pTerrain->GetTexture()->getW() - frameWidth;
 
-	if (!pTerrain->WrapsY() && m_Offset[screen].m_Y >= pTerrain->GetBitmap()->h - frameHeight)
-		m_Offset[screen].m_Y = pTerrain->GetBitmap()->h - frameHeight;
+	if (!pTerrain->WrapsY() && m_Offset[screen].m_Y >= pTerrain->GetTexture()->getH() - frameHeight)
+		m_Offset[screen].m_Y = pTerrain->GetTexture()->getH() - frameHeight;
 }
 
 
