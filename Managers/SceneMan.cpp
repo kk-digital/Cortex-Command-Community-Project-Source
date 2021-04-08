@@ -1467,7 +1467,7 @@ bool SceneMan::IsUnseen(const int posX, const int posY, const int team)
 		Vector scale = pUnseenLayer->GetScaleInverse();
 		int scaledX = posX * scale.m_X;
 		int scaledY = posY * scale.m_Y;
-		return getpixel(pUnseenLayer->GetBitmap(), scaledX, scaledY) != g_MaskColor;
+		return pUnseenLayer->GetTexture()->getPixel(scaledX, scaledY) != g_MaskColor;
 	}
 
 	return false;
@@ -1493,18 +1493,21 @@ bool SceneMan::RevealUnseen(const int posX, const int posY, const int team)
 		int scaledX = posX * scale.m_X;
 		int scaledY = posY * scale.m_Y;
 
+		pUnseenLayer->LockTexture();
+
 		// Make sure we're actually revealing an unseen pixel that is ON the bitmap!
-		int pixel = getpixel(pUnseenLayer->GetBitmap(), scaledX, scaledY);
+		int pixel = pUnseenLayer->GetPixel(scaledX, scaledY);
 		if (pixel != g_MaskColor && pixel != -1)
 		{
 			// Add the pixel to the list of now seen pixels so it can be visually flashed
 			m_pCurrentScene->GetSeenPixels(team).push_back(Vector(scaledX, scaledY));
 			// Clear to key color that pixel on the map so it won't be detected as unseen again
-			putpixel(pUnseenLayer->GetBitmap(), scaledX, scaledY, g_MaskColor);
+			pUnseenLayer->SetPixel(scaledX, scaledY, g_MaskColor);
 			// Play the reveal sound, if there's not too many already revealed this frame
 			if (g_SettingsMan.BlipOnRevealUnseen() && m_pUnseenRevealSound && m_pCurrentScene->GetSeenPixels(team).size() < 5)
 				m_pUnseenRevealSound->Play(Vector(posX, posY));
 			// Show that we actually cleared an unseen pixel
+
 			return true;
 		}
 	}
@@ -1533,13 +1536,13 @@ bool SceneMan::RestoreUnseen(const int posX, const int posY, const int team)
 		int scaledY = posY * scale.m_Y;
 
 		// Make sure we're actually revealing an unseen pixel that is ON the bitmap!
-		int pixel = getpixel(pUnseenLayer->GetBitmap(), scaledX, scaledY);
+		int pixel = pUnseenLayer->GetPixel(scaledX, scaledY);
 		if (pixel != g_BlackColor && pixel != -1)
 		{
 			// Add the pixel to the list of now seen pixels so it can be visually flashed
 			m_pCurrentScene->GetSeenPixels(team).push_back(Vector(scaledX, scaledY));
 			// Clear to key color that pixel on the map so it won't be detected as unseen again
-			putpixel(pUnseenLayer->GetBitmap(), scaledX, scaledY, g_BlackColor);
+			pUnseenLayer->SetPixel(scaledX, scaledY, g_BlackColor);
 			// Play the reveal sound, if there's not too many already revealed this frame
 			//if (g_SettingsMan.BlipOnRevealUnseen() && m_pUnseenRevealSound && m_pCurrentScene->GetSeenPixels(team).size() < 5)
 			//    m_pUnseenRevealSound->Play(g_SceneMan.TargetDistanceScalar(Vector(posX, posY)));
@@ -1678,6 +1681,8 @@ bool SceneMan::CastUnseenRay(int team, const Vector &start, const Vector &ray, V
 	/////////////////////////////////////////////////////
 	// Bresenham's line drawing algorithm execution
 
+	m_pCurrentScene->GetUnseenLayer(team)->LockTexture();
+
 	for (domSteps = 0; domSteps < delta[dom]; ++domSteps)
 	{
 		intPos[dom] += increment[dom];
@@ -1721,6 +1726,8 @@ bool SceneMan::CastUnseenRay(int team, const Vector &start, const Vector &ray, V
 #endif
 		}
 	}
+
+	m_pCurrentScene->GetUnseenLayer(team)->UnlockTexture();
 
 #ifdef DEBUG_BUILD
 	if (m_pDebugLayer)
