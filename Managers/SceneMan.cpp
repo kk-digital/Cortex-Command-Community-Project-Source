@@ -902,34 +902,46 @@ void SceneMan::ClearMOIDRect(int left, int top, int right, int bottom)
 
 		if (left < 0)
 		{
-			int wrapLeft = left + sceneWidth;
-			int wrapRight = sceneWidth - 1;
-			rectfill(m_pMOIDLayer->GetBitmap(), wrapLeft, top, wrapRight, bottom, g_NoMOID);
+			// int wrapLeft = left + sceneWidth;
+			// int wrapRight = sceneWidth - 1;
+			fill.x = left + sceneWidth;
+			fill.w = -1 - left;
+			SDL_RenderFillRect(g_FrameMan.GetRenderer(), &fill);
 		}
 		if (right >= sceneWidth)
 		{
-			int wrapLeft = 0;
-			int wrapRight = right - sceneWidth;
-			rectfill(m_pMOIDLayer->GetBitmap(), wrapLeft, top, wrapRight, bottom, g_NoMOID);
+			// int wrapLeft = 0;
+			// int wrapRight = right - sceneWidth;
+			fill.x = 0;
+			fill.w = right - sceneWidth;
+			SDL_RenderFillRect(g_FrameMan.GetRenderer(), &fill);
 		}
 	}
 	if (g_SceneMan.SceneWrapsY())
 	{
+		fill.x = left;
+		fill.w = right - left;
 		int sceneHeight = m_pCurrentScene->GetHeight();
 
 		if (top < 0)
 		{
-			int wrapTop = top + sceneHeight;
-			int wrapBottom = sceneHeight - 1;
-			rectfill(m_pMOIDLayer->GetBitmap(), left, wrapTop, right, wrapBottom, g_NoMOID);
+			// int wrapTop = top + sceneHeight;
+			// int wrapBottom = sceneHeight - 1;
+			fill.y = top + sceneHeight;
+			fill.h = -1 - top;
+			SDL_RenderFillRect(g_FrameMan.GetRenderer(), &fill);
 		}
 		if (bottom >= sceneHeight)
 		{
-			int wrapTop = 0;
-			int wrapBottom = bottom - sceneHeight;
-			rectfill(m_pMOIDLayer->GetBitmap(), left, wrapTop, right, wrapBottom, g_NoMOID);
+			// int wrapTop = 0;
+			// int wrapBottom = bottom - sceneHeight;
+			fill.y = 0;
+			fill.h = bottom - sceneHeight;
+			SDL_RenderFillRect(g_FrameMan.GetRenderer(), &fill);
 		}
 	}
+	SDL_SetRenderTarget(g_FrameMan.GetRenderer(), NULL);
+	SDL_SetRenderDrawColor(g_FrameMan.GetRenderer(), 0, 0, 0, 0);
 }
 
 
