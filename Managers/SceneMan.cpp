@@ -583,13 +583,25 @@ MOID SceneMan::GetMOIDPixel(int pixelX, int pixelY)
 {
 	WrapPosition(pixelX, pixelY);
 
+	// Out of Bounds
 	if (pixelX < 0 ||
-	   pixelX >= m_pMOIDLayer->GetBitmap()->w ||
+	   pixelX >= m_pMOIDLayer->getW() ||
 	   pixelY < 0 ||
-	   pixelY >= m_pMOIDLayer->GetBitmap()->h)
+	   pixelY >= m_pMOIDLayer->getH())
 		return g_NoMOID;
 
-	return getpixel(m_pMOIDLayer->GetBitmap(), pixelX, pixelY);
+	// In Bounds
+	uint32_t pixel;
+	SDL_Rect pos{pixelX, pixelY, 1, 1};
+
+	// TODO: Move Target change elsewhere, this is likely very slow
+	SDL_Texture* activeTarget{SDL_GetRenderTarget(g_FrameMan.GetRenderer())};
+
+	SDL_RenderReadPixels(g_FrameMan.GetRenderer(), &pos, SDL_PIXELFORMAT_RGBA32, &pixel, sizeof(uint32_t));
+
+	SDL_SetRenderTarget(g_FrameMan.GetRenderer(), activeTarget);
+
+	return pixel;
 }
 
 
