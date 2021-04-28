@@ -381,6 +381,27 @@ namespace RTE {
 		SDL_Renderer *GetRenderer() { return m_Renderer; }
 
 		/// <summary>
+		/// Set a new render target from an SDL_Texture, storing the current target. Can be nullptr
+		/// </summary>
+		/// <param name="target">
+		/// The new target.
+		/// </param>
+		void PushRenderTarget(SDL_Texture* target);
+		/// <summary>
+		/// Set a new render target from a RTE::Texture, storing the current target.
+		/// </summary>
+		/// <param name="target">
+		/// The new target
+		/// </param>
+
+		void PushRenderTarget(std::shared_ptr<Texture> target);
+
+		/// <summary>
+		/// Reset the render target to the previous target.
+		/// </summary>
+		void PopRenderTarget();
+
+		/// <summary>
 		/// Get the current game window as SDL_Window
 		/// </summary>
 		/// <returns>
@@ -504,16 +525,12 @@ namespace RTE {
 
 		//!< Maximum usable Screen area; In Windowed mode this excludes
 		//!< Window decorations, task bar, etc.
-		std::unique_ptr<SDL_Rect> m_Resolution;
+		std::unique_ptr<SDL_Rect> m_ScreenRes;
 
 		//!< Color Depth (bits per pixel)
 		static constexpr unsigned short m_BPP = 32;
 		//!< Number of physical displays
 		unsigned short m_NumScreens;
-		//!< Horizontal resolution of the primary display
-		unsigned short m_ScreenResX;
-		//!< Vertical resolution of the primary display
-		unsigned short m_ScreenResY;
 
 		unsigned short m_ResX; //!< Game window width.
 		unsigned short m_ResY; //!< Game window height.
@@ -540,6 +557,11 @@ namespace RTE {
 
 		//!< Wether in upscaled fullscreen mode or not
 		bool m_UpscaledFullscreen;
+
+		std::unique_ptr<Texture> m_PlayerScreen;
+
+		//!< A stack of the current render targets
+		std::stack<SDL_Texture*> targetStack;
 
 		//!< Wether the screen is split horizontally across the
 		//!< screen, i.e. as two scplitscreens above another.

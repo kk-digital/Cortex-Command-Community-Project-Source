@@ -26,17 +26,14 @@
 
 namespace RTE {
 
-	FrameMan::FrameMan(){Clear();}
+	FrameMan::FrameMan() { Clear(); }
 
 	void FrameMan::Clear() {
 		m_Window = nullptr;
 		m_Renderer = nullptr;
 
 		m_NumScreens = SDL_GetNumVideoDisplays();
-		SDL_GetDisplayBounds(0, m_Resolution.get());
-
-		m_ScreenResX = m_Resolution->w;
-		m_ScreenResY = m_Resolution->h;
+		SDL_GetDisplayBounds(0, m_ScreenRes.get());
 
 		m_ResX = 960;
 		m_ResY = 540;
@@ -83,21 +80,22 @@ namespace RTE {
 	}
 
 	void FrameMan::Destroy() {
-		if(m_Renderer)
+		if (m_Renderer)
 			SDL_DestroyRenderer(m_Renderer);
-		if(m_Window)
+		if (m_Window)
 			SDL_DestroyWindow(m_Window);
 
 		Clear();
 	}
 
 	void FrameMan::Update() {
-		// g_PerformanceMan.Update();
+		g_PerformanceMan.Update();
 
-		// g_PrimitiveMan.ClearPrimitivesList();
+		g_PrimitiveMan.ClearPrimitivesQueue();
 	}
 
 	void FrameMan::Draw() {
+		#if 0
 		// Count how many split screens we'll need
 		int screenCount = (m_HSplit ? 2 : 1) * (m_VSplit ? 2 : 1);
 		// RTEAssert(screenCount <= 1 || m_PlayerScreen,
@@ -224,23 +222,23 @@ namespace RTE {
 			// before post-processing as it is where this buffer is copied to 32
 			// bit buffer
 			if (GetDrawNetworkBackBuffer()) {
-				m_NetworkBitmapLock[0].lock();
+			    m_NetworkBitmapLock[0].lock();
 
-				blit(m_NetworkBackBufferFinal8[m_NetworkFrameReady][0],
-				     m_BackBuffer8, 0, 0, 0, 0, m_BackBuffer8->w,
-				     m_BackBuffer8->h);
-				masked_blit(
-				    m_NetworkBackBufferFinalGUI8[m_NetworkFrameReady][0],
-				    m_BackBuffer8, 0, 0, 0, 0, m_BackBuffer8->w,
-				    m_BackBuffer8->h);
+			    blit(m_NetworkBackBufferFinal8[m_NetworkFrameReady][0],
+			         m_BackBuffer8, 0, 0, 0, 0, m_BackBuffer8->w,
+			         m_BackBuffer8->h);
+			    masked_blit(
+			        m_NetworkBackBufferFinalGUI8[m_NetworkFrameReady][0],
+			        m_BackBuffer8, 0, 0, 0, 0, m_BackBuffer8->w,
+			        m_BackBuffer8->h);
 
-				if (g_UInputMan.FlagAltState() || g_UInputMan.FlagCtrlState() ||
-				    g_UInputMan.FlagShiftState()) {
-					g_PerformanceMan.DrawCurrentPing();
-				}
+			    if (g_UInputMan.FlagAltState() || g_UInputMan.FlagCtrlState() ||
+			        g_UInputMan.FlagShiftState()) {
+			        g_PerformanceMan.DrawCurrentPing();
+			    }
 
-				m_NetworkBitmapLock[0].unlock();
-				}*/
+			    m_NetworkBitmapLock[0].unlock();
+			    }*/
 		}
 
 		if (IsInMultiplayerMode()) {
@@ -262,11 +260,32 @@ namespace RTE {
 		// Reset the frame timer so we can measure how much it takes until next
 		// frame being drawn
 		g_PerformanceMan.ResetFrameTimer();
+		#endif
 	}
 
 	void FrameMan::SetFullscreen(bool fullscreen, bool endActivity) {
 		SDL_SetWindowFullscreen(m_Window,
 		                        fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
+	}
+
+	void FrameMan::PushRenderTarget(SDL_Texture *target){
+		int access;
+		SDL_QueryTexture(target, nullptr, &access, nullptr, nullptr);
+		RTEAssert(access==SDL_TEXTUREACCESS_TARGET, "Trying to set a render target to non target texture");
+		targetStack.push(target);
+		SDL_SetRenderTarget(m_Renderer, target);
+	}
+
+	void FrameMan::PushRenderTarget(std::shared_ptr<Texture> target){
+		RTEAssert(target->getAccess()==SDL_TEXTUREACCESS_TARGET, "Trying to set a render target to non target texture");
+
+		targetStack.push(target->getAsRenderTarget());
+		SDL_SetRenderTarget(m_Renderer, targetStack.top());
+	}
+
+	void FrameMan::PopRenderTarget(){
+		targetStack.pop();
+		SDL_SetRenderTarget(m_Renderer, targetStack.top());
 	}
 
 } // namespace RTE
