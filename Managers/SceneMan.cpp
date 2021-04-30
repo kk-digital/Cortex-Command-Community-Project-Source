@@ -13,9 +13,9 @@
 
 #include <SDL2/SDL_render.h>
 #include <SDL2/SDL_rect.h>
-
+#ifdef NETWORK_ENABLED
 #include "NetworkServer.h"
-
+#endif
 #include "SceneMan.h"
 #include "PresetMan.h"
 #include "FrameMan.h"
@@ -26,6 +26,8 @@
 #include "SettingsMan.h"
 #include "Scene.h"
 #include "SLTerrain.h"
+#include "RenderLayer.h"
+#include "SceneLayer.h"
 #include "TerrainObject.h"
 #include "MovableObject.h"
 #include "ContentFile.h"
@@ -81,10 +83,7 @@ void SceneMan::Clear()
 	m_PlaceObjects = true;
 	m_PlaceUnits = true;
 	m_pCurrentScene = 0;
-	m_pMOColorLayer = 0;
-	m_pMOIDLayer = 0;
 	m_MOIDDrawings.clear();
-	m_pDebugLayer = 0;
 	m_LastRayHitPos.Reset();
 
 	m_LayerDrawMode = g_LayerNormal;
@@ -170,13 +169,17 @@ int SceneMan::LoadScene(Scene *pNewScene, bool placeObjects, bool placeUnits) {
 		m_pCurrentScene = nullptr;
 	}
 
+	#ifdef NETWORK_ENABLED
 	g_NetworkServer.LockScene(true);
+	#endif
 
 	m_pCurrentScene = pNewScene;
 	if (m_pCurrentScene->LoadData(placeObjects, true, placeUnits) < 0)
 	{
 		g_ConsoleMan.PrintString("ERROR: Loading scene \'" + m_pCurrentScene->GetPresetName() + "\' failed! Has it been properly defined?");
+		#ifdef NETWORK_ENABLED
 		g_NetworkServer.LockScene(false);
+		#endif
 		return -1;
 	}
 
@@ -204,21 +207,32 @@ int SceneMan::LoadScene(Scene *pNewScene, bool placeObjects, bool placeUnits) {
 //    m_pCurrentScene->GetTerrain()->CleanAir();
 
 	// Re-create the MoveableObject:s color SceneLayer
-	m_pMOColorLayer.reset(new Texture(g_FrameMan.GetRenderer(), GetSceneWidth(), GetSceneHeight()));
+	m_pMOColorLayer.reset(new RenderLayer());
+	m_pMOColorLayer->Create(GetSceneWidth(), GetSceneHeight(), Vector(),
+		                    m_pCurrentScene->WrapsX(),
+		                    m_pCurrentScene->WrapsY(), Vector(1.0, 1.0));
 
 	// Re-create the MoveableObject:s ID SceneLayer
-	m_pMOIDLayer.reset(
-		  new Texture(g_FrameMan.GetRenderer(), GetSceneWidth(), GetSceneHeight()));
+	m_pMOIDLayer.reset(new RenderLayer());
+	m_pMOIDLayer->Create(GetSceneWidth(), GetSceneHeight(), Vector(),
+		                 m_pCurrentScene->WrapsX(), m_pCurrentScene->WrapsY(),
+		                 Vector(1.0, 1.0));
+	new Texture(g_FrameMan.GetRenderer(), GetSceneWidth(), GetSceneHeight());
 
 #ifdef DEBUG_BUILD
 	// Create the Debug SceneLayer
-	m_pDebugLayer = new SceneLayer();
-	m_pDebugLayer.reset(
-		  new Texture(g_FrameMan.GetRenderer(), GetSceneWidth(), GetSceneHeight()));
+	m_pDebugLayer.reset(new SceneLayer());
+	Texture debugTexture(g_FrameMan.GetRenderer(), GetSceneWidth(),
+		                 GetSceneHeight(), SDL_TEXTUREACCESS_STREAMING);
+		m_pDebugLayer->Create(debugTexture,
+		                      true, Vector(), m_pCurrentScene->WrapsX(),
+		                      m_pCurrentScene->WrapsY(), Vector(1.0, 1.0));
+	new Texture(g_FrameMan.GetRenderer(), GetSceneWidth(), GetSceneHeight(),
+		        SDL_TEXTUREACCESS_STREAMING);
 #endif
 
 	// Finally draw the ID:s of the MO:s to the MOID layers for the first time
-	g_MovableMan.UpdateDrawMOIDs(g_FrameMan.GetRenderer(), m_pMOIDLayer);
+	g_MovableMan.UpdateDrawMOIDs(g_FrameMan.GetRenderer(), m_pMOIDLayer->GetTexture());
 
 #ifdef NETWORK_ENABLE
 	g_NetworkServer.LockScene(false);
@@ -489,7 +503,7 @@ SLTerrain * SceneMan::GetTerrain()
 //                  MovableObject:s draw themselves onto before it itself gets drawn onto
 //                  the screen back buffer.
 
-std::shared_ptr<Texture> SceneMan::GetMOColorTexture() const { return m_pMOColorLayer; }
+std::shared_ptr<Texture> SceneMan::GetMOColorTexture() const { return m_pMOColorLayer->GetTexture(); }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -498,7 +512,7 @@ std::shared_ptr<Texture> SceneMan::GetMOColorTexture() const { return m_pMOColor
 // Description:     Gets the bitmap of the SceneLayer that debug graphics is drawn onto.
 //                  Will only return valid BITMAP if building with DEBUG_BUILD.
 
-std::shared_ptr<Texture> SceneMan::GetDebugTexture() const { return m_pDebugLayer; }
+std::shared_ptr<Texture> SceneMan::GetDebugTexture() const { return m_pDebugLayer->GetTexture(); }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -507,7 +521,7 @@ std::shared_ptr<Texture> SceneMan::GetDebugTexture() const { return m_pDebugLaye
 // Description:     Gets the bitmap of the SceneLayer that all MovableObject:s draw their
 //                  current (for the frame only!) MOID's onto.
 
-std::shared_ptr<Texture> SceneMan::GetMOIDTexture() const { return m_pMOIDLayer; }
+std::shared_ptr<Texture> SceneMan::GetMOIDTexture() const { return m_pMOIDLayer->GetTexture(); }
 
 // TEMP!
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -519,29 +533,28 @@ std::shared_ptr<Texture> SceneMan::GetMOIDTexture() const { return m_pMOIDLayer;
 
 bool SceneMan::MOIDClearCheck()
 {
-	SDL_Texture* activeTarget{SDL_GetRenderTarget(g_FrameMan.GetRenderer())};
-	SDL_SetRenderTarget(g_FrameMan.GetRenderer(), m_pMOIDLayer->getAsRenderTarget());
+	g_FrameMan.PushRenderTarget(m_pMOIDLayer->GetTexture());
 	uint32_t badMOID = g_NoMOID;
 	SDL_Rect pos{0,0,1,1};
-	for (int y = 0; y < m_pMOIDLayer->getH(); ++y)
+	for (int y = 0; y < m_pMOIDLayer->GetTexture()->getW(); ++y)
 	{
 		pos.y=y;
-		for (int x = 0; x < m_pMOIDLayer->getW(); ++x)
+		for (int x = 0; x < m_pMOIDLayer->GetTexture()->getW(); ++x)
 		{
 			pos.x=x;
 			// FIXME: This might be very very slow
 			SDL_RenderReadPixels(g_FrameMan.GetRenderer(), &pos, SDL_PIXELFORMAT_RGBA32, &badMOID, sizeof(uint32_t));
 			if (badMOID != g_NoMOID)
 			{
-				SDL_SetRenderTarget(g_FrameMan.GetRenderer(), activeTarget);
-				g_FrameMan.SaveTextureToPNG(m_pMOIDLayer, "MOIDCheck");
-				g_FrameMan.SaveTextureToPNG(m_pMOColorLayer, "MOIDCheck");
+				g_FrameMan.PopRenderTarget();
+				g_FrameMan.SaveTextureToPNG(m_pMOIDLayer->GetTexture(), "MOIDCheck");
+				g_FrameMan.SaveTextureToPNG(m_pMOColorLayer->GetTexture(), "MOIDCheck");
 				RTEAbort("Bad MOID of MO detected: " + g_MovableMan.GetMOFromID(badMOID)->GetPresetName());
 				return false;
 			}
 		}
 	}
-	SDL_SetRenderTarget(g_FrameMan.GetRenderer(), activeTarget);
+	g_FrameMan.PopRenderTarget();
 	return true;
 }
 
@@ -585,21 +598,18 @@ MOID SceneMan::GetMOIDPixel(int pixelX, int pixelY)
 
 	// Out of Bounds
 	if (pixelX < 0 ||
-	   pixelX >= m_pMOIDLayer->getW() ||
+	   pixelX >= m_pMOIDLayer->GetTexture()->getW() ||
 	   pixelY < 0 ||
-	   pixelY >= m_pMOIDLayer->getH())
+	   pixelY >= m_pMOIDLayer->GetTexture()->getH())
 		return g_NoMOID;
 
 	// In Bounds
 	uint32_t pixel;
 	SDL_Rect pos{pixelX, pixelY, 1, 1};
 
-	// TODO: Move Target change elsewhere, this is likely very slow
-	SDL_Texture* activeTarget{SDL_GetRenderTarget(g_FrameMan.GetRenderer())};
 
 	SDL_RenderReadPixels(g_FrameMan.GetRenderer(), &pos, SDL_PIXELFORMAT_RGBA32, &pixel, sizeof(uint32_t));
 
-	SDL_SetRenderTarget(g_FrameMan.GetRenderer(), activeTarget);
 
 	return pixel;
 }
@@ -818,8 +828,6 @@ void SceneMan::LockScene()
 	if (!m_pCurrentScene->IsLocked())
 	{
 		m_pCurrentScene->Lock();
-		m_pMOColorLayer->lock();
-		m_pMOIDLayer->lock();
 	}
 }
 
@@ -838,8 +846,6 @@ void SceneMan::UnlockScene()
 	if (m_pCurrentScene->IsLocked())
 	{
 		m_pCurrentScene->Unlock();
-		m_pMOColorLayer->unlock();
-		m_pMOIDLayer->unlock();
 	}
 }
 
@@ -893,7 +899,7 @@ void SceneMan::ClearAllMOIDDrawings()
 void SceneMan::ClearMOIDRect(int left, int top, int right, int bottom)
 {
 	// Draw the first unwrapped rect
-	SDL_SetRenderTarget(g_FrameMan.GetRenderer(), m_pMOIDLayer->getAsRenderTarget());
+	g_FrameMan.PushRenderTarget(m_pMOIDLayer->GetTexture());
 	SDL_SetRenderDrawColor(g_FrameMan.GetRenderer(), (g_NoMOID << 24) & 0xff,
 		                     (g_NoMOID << 16) & 0xff, (g_NoMOID << 4) & 0xff,
 		                     g_NoMOID & 0xff);
@@ -945,7 +951,7 @@ void SceneMan::ClearMOIDRect(int left, int top, int right, int bottom)
 			SDL_RenderFillRect(g_FrameMan.GetRenderer(), &fill);
 		}
 	}
-	SDL_SetRenderTarget(g_FrameMan.GetRenderer(), NULL);
+	g_FrameMan.PopRenderTarget();
 	SDL_SetRenderDrawColor(g_FrameMan.GetRenderer(), 0, 0, 0, 0);
 }
 
@@ -1093,6 +1099,7 @@ int SceneMan::RemoveOrphans(int posX, int posY,
 
 void SceneMan::RegisterTerrainChange(int x, int y, int w, int h, unsigned char color, bool back) 
 {
+	#ifdef NETWORK_ENABLED
 	if (!g_NetworkServer.IsServerModeEnabled())
 		return;
 
@@ -1194,6 +1201,7 @@ void SceneMan::RegisterTerrainChange(int x, int y, int w, int h, unsigned char c
 	tc.back = back;
 	tc.color = color;
 	g_NetworkServer.RegisterTerrainChange(tc);
+	#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -1588,15 +1596,18 @@ void SceneMan::RevealUnseenBox(const int posX, const int posY, const int width, 
 	SceneLayer *pUnseenLayer = m_pCurrentScene->GetUnseenLayer(team);
 	if (pUnseenLayer)
 	{
+		pUnseenLayer->LockTexture();
 		// Translate to the scaled unseen layer's coordinates
 		Vector scale = pUnseenLayer->GetScaleInverse();
-		int scaledX = posX * scale.m_X;
-		int scaledY = posY * scale.m_Y;
-		int scaledW = width * scale.m_X;
-		int scaledH = height * scale.m_Y;
+		SDL_Rect scaled;
+		scaled.x = posX * scale.m_X;
+		scaled.y = posY * scale.m_Y;
+		scaled.w = width * scale.m_X;
+		scaled.h = height * scale.m_Y;
 
 		// Fill the box
-		rectfill(pUnseenLayer->GetBitmap(), scaledX, scaledY, scaledX + scaledW, scaledY + scaledH, g_MaskColor);
+		pUnseenLayer->GetTexture()->fillRect(scaled, 0);
+		pUnseenLayer->UnlockTexture();
 	}
 }
 
@@ -1609,21 +1620,24 @@ void SceneMan::RevealUnseenBox(const int posX, const int posY, const int width, 
 void SceneMan::RestoreUnseenBox(const int posX, const int posY, const int width, const int height, const int team)
 {
 	RTEAssert(m_pCurrentScene, "Checking scene before the scene exists!");
-	if (team < Activity::TeamOne || team >= Activity::MaxTeamCount) 
+	if (team < Activity::TeamOne || team >= Activity::MaxTeamCount)
 		return;
 
 	SceneLayer *pUnseenLayer = m_pCurrentScene->GetUnseenLayer(team);
 	if (pUnseenLayer)
 	{
+		pUnseenLayer->LockTexture();
 		// Translate to the scaled unseen layer's coordinates
 		Vector scale = pUnseenLayer->GetScaleInverse();
-		int scaledX = posX * scale.m_X;
-		int scaledY = posY * scale.m_Y;
-		int scaledW = width * scale.m_X;
-		int scaledH = height * scale.m_Y;
+		SDL_Rect scaled;
+		scaled.x = posX * scale.m_X;
+		scaled.y = posY * scale.m_Y;
+		scaled.w = width * scale.m_X;
+		scaled.h = height * scale.m_Y;
 
 		// Fill the box
-		rectfill(pUnseenLayer->GetBitmap(), scaledX, scaledY, scaledX + scaledW, scaledY + scaledH, g_BlackColor);
+		pUnseenLayer->GetTexture()->fillRect(scaled, g_BlackColor);
+		pUnseenLayer->UnlockTexture();
 	}
 }
 
@@ -1639,7 +1653,7 @@ bool SceneMan::CastUnseenRay(int team, const Vector &start, const Vector &ray, V
 {
 #ifdef DEBUG_BUILD
 	if (m_pDebugLayer)
-		m_pDebugLayer->LockBitmaps();
+		m_pDebugLayer->LockTexture();
 #endif
 
 	if (!m_pCurrentScene->GetUnseenLayer(team))
@@ -1741,7 +1755,7 @@ bool SceneMan::CastUnseenRay(int team, const Vector &start, const Vector &ray, V
 #ifdef DEBUG_BUILD
 			// Draw debug graphics, if applicable
 			if (m_pDebugLayer)
-				m_pDebugLayer->SetPixel(intPos[X], intPos[Y], 13);
+				m_pDebugLayer->SetPixel(intPos[X], intPos[Y], 13); //TODO: Magic numbers
 #endif
 		}
 	}
@@ -1750,7 +1764,7 @@ bool SceneMan::CastUnseenRay(int team, const Vector &start, const Vector &ray, V
 
 #ifdef DEBUG_BUILD
 	if (m_pDebugLayer)
-		m_pDebugLayer->UnlockBitmaps();
+		m_pDebugLayer->UnlockTexture();
 #endif
 
 	return affectedAny;
@@ -1792,7 +1806,7 @@ bool SceneMan::CastMaterialRay(const Vector &start, const Vector &ray, unsigned 
 {
 #ifdef DEBUG_BUILD
 	if (m_pDebugLayer)
-		m_pDebugLayer->LockBitmaps();
+		m_pDebugLayer->LockTexture();
 #endif
 
 	int hitCount = 0, error, dom, sub, domSteps, skipped = skip;
@@ -1885,7 +1899,7 @@ bool SceneMan::CastMaterialRay(const Vector &start, const Vector &ray, unsigned 
 
 #ifdef DEBUG_BUILD
 	if (m_pDebugLayer)
-		m_pDebugLayer->UnlockBitmaps();
+		m_pDebugLayer->UnlockTexture();
 #endif
 
 	return foundPixel;
@@ -1923,7 +1937,7 @@ bool SceneMan::CastNotMaterialRay(const Vector &start, const Vector &ray, unsign
 {
 #ifdef DEBUG_BUILD
 	if (m_pDebugLayer)
-		m_pDebugLayer->LockBitmaps();
+		m_pDebugLayer->LockTexture();
 #endif
 
 	int hitCount = 0, error, dom, sub, domSteps, skipped = skip;
@@ -1976,6 +1990,8 @@ bool SceneMan::CastNotMaterialRay(const Vector &start, const Vector &ray, unsign
 	/////////////////////////////////////////////////////
 	// Bresenham's line drawing algorithm execution
 
+	g_FrameMan.PushRenderTarget(m_pMOIDLayer->GetTexture());
+
 	for (domSteps = 0; domSteps < delta[dom]; ++domSteps)
 	{
 		intPos[dom] += increment[dom];
@@ -2016,7 +2032,7 @@ bool SceneMan::CastNotMaterialRay(const Vector &start, const Vector &ray, unsign
 
 #ifdef DEBUG_BUILD
 	if (m_pDebugLayer)
-		m_pDebugLayer->UnlockBitmaps();
+		m_pDebugLayer->UnlockTexture();
 #endif
 
 	return foundPixel;
@@ -2243,7 +2259,7 @@ bool SceneMan::CastStrengthRay(const Vector &start, const Vector &ray, float str
 {
 #ifdef DEBUG_BUILD
 	if (m_pDebugLayer)
-		m_pDebugLayer->LockBitmaps();
+		m_pDebugLayer->LockTexture();
 #endif
 
 	int hitCount = 0, error, dom, sub, domSteps, skipped = skip;
@@ -2345,7 +2361,7 @@ delta[Y] = -delta[Y];
 
 #ifdef DEBUG_BUILD
     if (m_pDebugLayer)
-        m_pDebugLayer->UnlockBitmaps();
+        m_pDebugLayer->UnlockTexture();
 #endif
 
     // If no pixel of sufficient strength was found, set the result to the final tried position
@@ -2367,7 +2383,7 @@ bool SceneMan::CastWeaknessRay(const Vector &start, const Vector &ray, float str
 {
 #ifdef DEBUG_BUILD
     if (m_pDebugLayer)
-        m_pDebugLayer->LockBitmaps();
+        m_pDebugLayer->LockTexture();
 #endif
 
     int hitCount = 0, error, dom, sub, domSteps, skipped = skip;
@@ -2465,7 +2481,7 @@ bool SceneMan::CastWeaknessRay(const Vector &start, const Vector &ray, float str
 
 #ifdef DEBUG_BUILD
     if (m_pDebugLayer)
-        m_pDebugLayer->UnlockBitmaps();
+        m_pDebugLayer->UnlockTexture();
 #endif
 
     // If no pixel of sufficient strength was found, set the result to the final tried position
@@ -2487,7 +2503,7 @@ MOID SceneMan::CastMORay(const Vector &start, const Vector &ray, MOID ignoreMOID
 {
 #ifdef DEBUG_BUILD
     if (m_pDebugLayer)
-        m_pDebugLayer->LockBitmaps();
+        m_pDebugLayer->LockTexture();
 #endif
 
     int hitCount = 0, error, dom, sub, domSteps, skipped = skip;
@@ -2541,6 +2557,7 @@ MOID SceneMan::CastMORay(const Vector &start, const Vector &ray, MOID ignoreMOID
     /////////////////////////////////////////////////////
     // Bresenham's line drawing algorithm execution
 
+	g_FrameMan.PushRenderTarget(m_pMOIDLayer->GetTexture());
     for (domSteps = 0; domSteps < delta[dom]; ++domSteps)
     {
         intPos[dom] += increment[dom];
@@ -2576,6 +2593,7 @@ MOID SceneMan::CastMORay(const Vector &start, const Vector &ray, MOID ignoreMOID
                     {
                         // Save last ray pos
                         m_LastRayHitPos.SetXY(intPos[X], intPos[Y]);
+						g_FrameMan.PopRenderTarget();
                         return hitMOID;
                     }
                 }
@@ -2584,6 +2602,7 @@ MOID SceneMan::CastMORay(const Vector &start, const Vector &ray, MOID ignoreMOID
                 {
                     // Save last ray pos
                     m_LastRayHitPos.SetXY(intPos[X], intPos[Y]);
+					g_FrameMan.PopRenderTarget();
                     return hitMOID;
                 }
             }
@@ -2596,6 +2615,8 @@ MOID SceneMan::CastMORay(const Vector &start, const Vector &ray, MOID ignoreMOID
                 {
                     // Save last ray pos
                     m_LastRayHitPos.SetXY(intPos[X], intPos[Y]);
+
+					g_FrameMan.PopRenderTarget();
                     return g_NoMOID;
                 }
             }
@@ -2605,14 +2626,14 @@ MOID SceneMan::CastMORay(const Vector &start, const Vector &ray, MOID ignoreMOID
 #ifdef DEBUG_BUILD
             // Draw debug graphics, if applicable
             if (m_pDebugLayer)
-                m_pDebugLayer->SetPixel(intPos[X], intPos[Y], 120);
+                m_pDebugLayer->SetPixel(intPos[X], intPos[Y], 120); //TODO: Magic numbers
 #endif
         }
     }
 
 #ifdef DEBUG_BUILD
     if (m_pDebugLayer)
-        m_pDebugLayer->UnlockBitmaps();
+        m_pDebugLayer->UnlockTexture();
 #endif
 
     // Didn't hit anything but air
@@ -2629,7 +2650,7 @@ bool SceneMan::CastFindMORay(const Vector &start, const Vector &ray, MOID target
 {
 #ifdef DEBUG_BUILD
     if (m_pDebugLayer)
-        m_pDebugLayer->LockBitmaps();
+        m_pDebugLayer->LockTexture();
 #endif
 
     int hitCount = 0, error, dom, sub, domSteps, skipped = skip;;
@@ -2727,14 +2748,14 @@ bool SceneMan::CastFindMORay(const Vector &start, const Vector &ray, MOID target
 #ifdef DEBUG_BUILD
             // Draw debug graphics, if applicable
             if (m_pDebugLayer)
-                m_pDebugLayer->SetPixel(intPos[X], intPos[Y], 120);
+                m_pDebugLayer->SetPixel(intPos[X], intPos[Y], 120); //TODO: Magic numbers
 #endif
         }
     }
 
 #ifdef DEBUG_BUILD
     if (m_pDebugLayer)
-        m_pDebugLayer->UnlockBitmaps();
+        m_pDebugLayer->UnlockTexture();
 #endif
 
     // Didn't hit the target
@@ -2752,7 +2773,7 @@ float SceneMan::CastObstacleRay(const Vector &start, const Vector &ray, Vector &
 {
 #ifdef DEBUG_BUILD
     if (m_pDebugLayer)
-        m_pDebugLayer->LockBitmaps();
+        m_pDebugLayer->LockTexture();
 #endif
 
     int hitCount = 0, error, dom, sub, domSteps, skipped = skip;
@@ -2871,7 +2892,7 @@ float SceneMan::CastObstacleRay(const Vector &start, const Vector &ray, Vector &
 
 #ifdef DEBUG_BUILD
     if (m_pDebugLayer)
-        m_pDebugLayer->UnlockBitmaps();
+        m_pDebugLayer->UnlockTexture();
 #endif
 
     // Add the pixel fraction to the free position if there were any free pixels
@@ -3264,8 +3285,9 @@ float SceneMan::ShortestDistanceY(float val1, float val2, bool checkBounds, int 
 
 bool SceneMan::ObscuredPoint(int x, int y, int team)
 {
-    bool obscured = m_pMOIDLayer->getPixel(x, y) != g_NoMOID || m_pCurrentScene->GetTerrain()->GetPixel(x, y) != g_MaterialAir;
-
+	g_FrameMan.PushRenderTarget(m_pMOIDLayer->GetTexture());
+    bool obscured = m_pMOIDLayer->GetPixel(x, y) != g_NoMOID || m_pCurrentScene->GetTerrain()->GetPixel(x, y) != g_MaterialAir;
+	g_FrameMan.PopRenderTarget();
     if (team != Activity::NoTeam)
         obscured = obscured || IsUnseen(x, y, team);
 
@@ -3596,7 +3618,7 @@ void SceneMan::Update(int screen)
 // Description:     Draws this SceneMan's current graphical representation to a
 //                  BITMAP of choice.
 
-void SceneMan::Draw(SDL_Renderer* renderer, const Vector &targetPos, bool skipSkybox, bool skipTerrain)
+void SceneMan::Draw(SDL_Renderer* renderer, std::shared_ptr<Texture> pGUITexture, const Vector &targetPos, bool skipSkybox, bool skipTerrain)
 {
     if (m_pCurrentScene == nullptr) {
         return;
@@ -3649,7 +3671,7 @@ void SceneMan::Draw(SDL_Renderer* renderer, const Vector &targetPos, bool skipSk
 
 			if (!skipTerrain)
 				// Terrain background
-				pTerrain->DrawBackground(pTargetBitmap, targetBox);
+				pTerrain->DrawBackground(renderer, targetBox);
             // Movables' color layer
             m_pMOColorLayer->Draw(renderer, targetBox);
             // Terrain foreground
@@ -3665,15 +3687,18 @@ void SceneMan::Draw(SDL_Renderer* renderer, const Vector &targetPos, bool skipSk
             }
 
             // Actor and gameplay HUDs and GUIs
-            g_MovableMan.DrawHUD(pTargetGUIBitmap, targetPos, m_LastUpdatedScreen);
-			g_PrimitiveMan.DrawPrimitives(m_LastUpdatedScreen, pTargetGUIBitmap, targetPos);
+            g_MovableMan.DrawHUD(renderer, targetPos, m_LastUpdatedScreen);
+			g_FrameMan.PushRenderTarget(pGUITexture);
+			g_PrimitiveMan.DrawPrimitives(m_LastUpdatedScreen, g_FrameMan.GetRenderer(), targetPos);
+			g_FrameMan.PopRenderTarget();
 //            g_ActivityMan.GetActivity()->Draw(pTargetBitmap, targetPos, m_LastUpdatedScreen);
             g_ActivityMan.GetActivity()->DrawGUI(renderer, targetPos, m_LastUpdatedScreen);
 
 //            std::snprintf(str, sizeof(str), "Normal Layer Draw Mode\nHit M to cycle modes");
 
 #ifdef DEBUG_BUILD
-            m_pDebugLayer->Draw(renderer, Box());
+			Box empty{};
+            m_pDebugLayer->Draw(renderer, empty);
 #endif
     }
 }
@@ -3686,10 +3711,17 @@ void SceneMan::Draw(SDL_Renderer* renderer, const Vector &targetPos, bool skipSk
 
 void SceneMan::ClearMOColorLayer()
 {
-    clear_to_color(m_pMOColorLayer->GetBitmap(), g_MaskColor);
+	g_FrameMan.PushRenderTarget(m_pMOColorLayer->GetTexture());
+	SDL_SetRenderDrawColor(g_FrameMan.GetRenderer(), 0, 0, 0, 0);
+	SDL_RenderClear(g_FrameMan.GetRenderer());
+	g_FrameMan.PopRenderTarget();
 
 #ifdef DEBUG_BUILD
-    clear_to_color(m_pDebugLayer->GetBitmap(), g_MaskColor);
+	SDL_Rect lockRect{0, 0, m_pDebugLayer->GetTexture()->getW(),
+		              m_pDebugLayer->GetTexture()->getH()};
+	m_pDebugLayer->GetTexture()->lock(lockRect);
+	m_pDebugLayer->GetTexture()->clearAll();
+	m_pDebugLayer->UnlockTexture();
 #endif
 }
 
@@ -3702,7 +3734,13 @@ void SceneMan::ClearMOColorLayer()
 
 void SceneMan::ClearMOIDLayer()
 {
-    clear_to_color(m_pMOIDLayer->GetBitmap(), g_NoMOID);
+	g_FrameMan.PushRenderTarget(m_pMOIDLayer->GetTexture());
+	SDL_SetRenderDrawColor(g_FrameMan.GetRenderer(), (g_NoMOID << 24) & 0xff,
+		                   (g_NoMOID << 16) & 0xff, (g_NoMOID << 8) & 0xff,
+		                   (g_NoMOID)&0xff);
+	SDL_RenderClear(g_FrameMan.GetRenderer());
+	SDL_SetRenderDrawColor(g_FrameMan.GetRenderer(), 0, 0, 0, 0);
+	g_FrameMan.PopRenderTarget();
 }
 
 
