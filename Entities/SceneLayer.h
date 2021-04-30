@@ -221,7 +221,7 @@ ClassInfoGetters
 
 	std::shared_ptr<Texture> GetTexture() const { return m_pMainTexture; }
 
-	size_t GetBitmapHash() const { return m_TextureFile.GetHash(); }
+	size_t GetTextureHash() const { return m_TextureFile.GetHash(); }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -384,7 +384,7 @@ ClassInfoGetters
     bool IsWithinBounds(const int pixelX, const int pixelY, const int margin = 0)
     {
 // TODO: This doesn't take Y wrapping into acocunt!$@#$
-        return (m_WrapX || (pixelX >= -margin) && pixelX < (m_pMainTexture->w + margin)) && pixelY >= -1000 && pixelY < (m_pMainTexture->h + margin);
+        return (m_WrapX || (pixelX >= -margin) && pixelX < (m_pMainTexture->getW() + margin)) && pixelY >= -1000 && pixelY < (m_pMainTexture->getH() + margin);
     }
 
 

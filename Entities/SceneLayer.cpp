@@ -107,9 +107,9 @@ int SceneLayer::Create(ContentFile textureFile,
                        Vector scrollInfo)
 {
 
-	RTEAssert(!texture.m_PixelsRO.empty(), "Null bitmap passed in when creating SceneLayer");
+	RTEAssert(!texture.getPixelsRW(), "Null bitmap passed in when creating SceneLayer");
 
-	RTEAssert(texture.m_Access == SDL_TEXTUREACCESS_STREAMING,
+	RTEAssert(texture.getAccess() == SDL_TEXTUREACCESS_STREAMING,
 		      "Non streaming access texture passed in when creating SceneLayer")
 		*m_pMainTexture = std::move(texture);
 
@@ -151,19 +151,21 @@ int SceneLayer::Create(ContentFile textureFile,
     // Sampled color at the edges of the layer that can be used to fill gap if the layer isn't large enough to cover a target bitmap
 	m_FillLeftColor =
 		m_WrapX ? g_AlphaZero
-		: m_pMainTexture->getPixel(0 ,
-								   (m_pMainTexture->getH() / 2));
+		        : m_pMainTexture->getPixel(0, (m_pMainTexture->getH() / 2));
+
 	m_FillRightColor =
-		m_WrapX
-		    ? g_AlphaZero
-		: m_pMainTexture->getPixel(m_pMainTexture->getW() -1, (m_pMainTexture->getH() / 2));
-	m_FillUpColor = m_WrapY ? g_MaskColor
-		: m_pMainTexture->getPixel((m_pMainTexture->getW() / 2) - 1,0);
+		m_WrapX ? g_AlphaZero
+		        : m_pMainTexture->getPixel(m_pMainTexture->getW() - 1,
+		                                   (m_pMainTexture->getH() / 2));
+
+	m_FillUpColor =
+		m_WrapY ? g_AlphaZero
+		        : m_pMainTexture->getPixel((m_pMainTexture->getW() / 2) - 1, 0);
 
 	m_FillDownColor =
-		m_WrapY
-		    ? g_AlphaZero
-		: m_pMainTexture->getPixel((m_pMainTexture->getW() / 2)-1, m_pMainTexture->getH()-1);
+		m_WrapY ? g_AlphaZero
+		        : m_pMainTexture->getPixel((m_pMainTexture->getW() / 2) - 1,
+		                                   m_pMainTexture->getH() - 1);
 
 	return 0;
 }
@@ -245,7 +247,7 @@ int SceneLayer::LoadData()
 		        : m_pMainTexture->getPixel((m_pMainTexture->getW() / 2) - 1, 0);
 
 	m_FillDownColor =
-		m_WrapY ? g_MaskColor
+		m_WrapY ? g_AlphaZero
 		        : m_pMainTexture->getPixel((m_pMainTexture->getW() / 2) - 1,
 		                                   m_pMainTexture->getH() - 1);
 
@@ -266,7 +268,7 @@ int SceneLayer::SaveData(string bitmapPath)
     // Save out the bitmap
     if (m_pMainTexture)
     {
-		SDL_Surface *savePNG = SDL_CreateRGBSurfaceWithFormatFrom(m_pMainTexture->m_PixelsRO.data(), m_pMainTexture->getW(), m_pMainTexture->getH(), 32, m_pMainTexture->getW() * sizeof(uint32_t), m_pMainTexture->m_Format);
+		SDL_Surface *savePNG = SDL_CreateRGBSurfaceWithFormatFrom(m_pMainTexture->getPixelsRW(), m_pMainTexture->getW(), m_pMainTexture->getH(), 32, m_pMainTexture->getW() * sizeof(uint32_t), m_pMainTexture->getFormat());
 		if(!savePNG){
 			return -1;
 		}
@@ -693,7 +695,7 @@ void SceneLayer::Draw(SDL_Renderer * renderer, Box& targetBox, const Vector &scr
 
 // TODO: Do this above instead, testing down here only
         // Detect if nonwrapping layer dimensions can't cover the whole target area with its main bitmap. If so, fill in the gap with appropriate solid color sampled from the hanging edge
-		SDL_PixelFormat *format = SDL_AllocFormat(m_pMainTexture->m_Format);
+		SDL_PixelFormat *format = SDL_AllocFormat(m_pMainTexture->getFormat());
 		uint_fast8_t r, g, b, a;
 		if (!m_WrapX && !screenLargerThanSceneX && m_ScrollRatio.m_X < 0) {
 			if (m_FillLeftColor != g_MaskColor && offsetX != 0){
