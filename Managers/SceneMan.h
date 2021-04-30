@@ -30,6 +30,7 @@ namespace RTE
 
 class Scene;
 class SceneLayer;
+class RenderLayer;
 class SLTerrain;
 class SceneObject;
 class TerrainObject;
@@ -446,28 +447,44 @@ public:
 // Arguments:       None.
 // Return value:    A BITMAP pointer to the MO bitmap. Ownership is NOT transferred!
 
+	/// <summary>
+	/// Gets the intermediary collection texture that all MOs draw themselves
+	/// onto before it gets drawn to the screen.
+	/// This is a render texture!
+	/// </summary>
+	/// <returns>
+	/// Shared pointer to the MOColorTexture.
+	/// </returns>
 	std::shared_ptr<Texture> GetMOColorTexture() const;
 
 
-//////////////////////////////////////////////////////////////////////////////////////////
-// Method:          GetDebugBitmap
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Gets the bitmap of the SceneLayer that debug graphics is drawn onto.
-//                  Will only return valid BITMAP if building with DEBUG_BUILD.
-// Arguments:       None.
-// Return value:    A BITMAP pointer to the debug bitmap. Ownership is NOT transferred!
-
+#ifdef DEBUG_BUILD
+	/// <summary>
+	/// Gets the debug texture, only vaild if building with DEBUG_BUILD
+	/// </summary>
+	/// <reutrns>
+	/// shared pointer to the debug texture
+	/// </returns>
 	std::shared_ptr<Texture> GetDebugTexture() const;
+#endif
 
+	//////////////////////////////////////////////////////////////////////////////////////////
+	// Method:          GetMOIDBitmap
+	//////////////////////////////////////////////////////////////////////////////////////////
+	// Description:     Gets the bitmap of the SceneLayer that all
+	// MovableObject:s draw thir
+	//                  current (for the frame only!) MOID's onto.
+	// Arguments:       None.
+	// Return value:    A BITMAP pointer to the MO bitmap. Ownership is NOT
+	// transferred!
 
-//////////////////////////////////////////////////////////////////////////////////////////
-// Method:          GetMOIDBitmap
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Gets the bitmap of the SceneLayer that all MovableObject:s draw thir
-//                  current (for the frame only!) MOID's onto.
-// Arguments:       None.
-// Return value:    A BITMAP pointer to the MO bitmap. Ownership is NOT transferred!
-
+	/// <summary>
+	/// Gets the Texture that all MOs draw their current MOID onto.
+	/// This is a render Texture!
+	/// </summary>
+	/// <returns>
+	/// Shared pointer to rhe MOID Texture
+	/// </returns>
 	std::shared_ptr<Texture> GetMOIDTexture() const;
 
 // TEMP!
@@ -1593,7 +1610,7 @@ public:
 //                  is located.
 // Return value:    None.
 
-    void Draw(SDL_Renderer* renderer,  const Vector &targetPos = Vector(), bool skipSkybox = false, bool skipTerrain = false);
+    void Draw(SDL_Renderer* renderer, std::shared_ptr<Texture> pGUITexture,  const Vector &targetPos = Vector(), bool skipSkybox = false, bool skipTerrain = false);
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -1683,14 +1700,14 @@ public:
     // Current scene being used
     Scene *m_pCurrentScene;
     // Color MO layer
-	std::shared_ptr<Texture> m_pMOColorLayer;
+	std::shared_ptr<RenderLayer> m_pMOColorLayer;
     // MovableObject ID layer
-	std::shared_ptr<Texture> m_pMOIDLayer;
+	std::shared_ptr<RenderLayer> m_pMOIDLayer;
     // All the areas drawn within on the MOID layer since last Update
     std::list<IntRect> m_MOIDDrawings;
 
     // Debug layer for seeing cast rays etc
-	std::shared_ptr<Texture> m_pDebugLayer;
+	std::shared_ptr<SceneLayer> m_pDebugLayer;
     // The absolute end position of the last ray cast
     Vector m_LastRayHitPos;
     // The mode we're drawing layers in to the screen
@@ -1710,8 +1727,9 @@ public:
     Vector m_Offset[c_MaxScreenCount];
     // The difference in current offset and the Update() before.
     Vector m_DeltaOffset[c_MaxScreenCount];
-    // The final offset target of the current scroll interpolation, in scene coordinates!
-    Vector m_ScrollTarget[c_MaxScreenCount];
+	// The finahttps://youtu.be/VZu9X6ctEWg?t=869l offset target of the current
+	// scroll interpolation, in scene coordinates!
+	Vector m_ScrollTarget[c_MaxScreenCount];
     // The team associated with each screen.
     int m_ScreenTeam[c_MaxScreenCount];
     // The amount screen a screen is occluded or covered by GUI, etc
