@@ -1,8 +1,8 @@
 #include "TimerMan.h"
-#include "SDL2/SDL.h"
+#include "AudioMan.h"
+#include "PerformanceMan.h"
 
-
-namespace RTE {
+#include "SDL2/SDL_timer.h"
 
 namespace RTE {
 
