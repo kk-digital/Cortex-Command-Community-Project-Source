@@ -77,7 +77,7 @@ namespace RTE {
 
 	int SettingsMan::ReadProperty(const std::string_view &propName, Reader &reader) {
 		if (propName == "PaletteFile") {
-			reader >> g_FrameMan.m_PaletteFile;
+			// reader >> g_FrameMan.m_PaletteFile;
 		} else if (propName == "ResolutionX") {
 			reader >> g_FrameMan.m_ResX;
 			g_FrameMan.m_NewResX = g_FrameMan.m_ResX;
@@ -88,16 +88,10 @@ namespace RTE {
 			reader >> g_FrameMan.m_ResMultiplier;
 		} else if (propName == "Fullscreen"){
 			reader >> g_FrameMan.m_Fullscreen;
-	  } else if (propName == "DisableMultiScreenResolutionValidation") {
-			reader >> g_FrameMan.m_DisableMultiScreenResolutionValidation;
 		} else if (propName == "HSplitScreen") {
 			reader >> g_FrameMan.m_HSplitOverride;
 		} else if (propName == "VSplitScreen") {
 			reader >> g_FrameMan.m_VSplitOverride;
-		} else if (propName == "ForceVirtualFullScreenGfxDriver") {
-			reader >> g_FrameMan.m_ForceVirtualFullScreenGfxDriver;
-		} else if (propName == "ForceDedicatedFullScreenGfxDriver") {
-			reader >> g_FrameMan.m_ForceDedicatedFullScreenGfxDriver;
 		} else if (propName == "SoundVolume") {
 			g_AudioMan.SetSoundsVolume(std::stof(reader.ReadPropValue()) / 100.0F);
 		} else if (propName == "MusicVolume") {
@@ -239,16 +233,14 @@ namespace RTE {
 		writer.NewDivider(false);
 		writer.NewLineString("// Display Settings", false);
 		writer.NewLine(false);
-		writer.NewPropertyWithValue("PaletteFile", g_FrameMan.m_PaletteFile);
+		// writer.NewPropertyWithValue("PaletteFile", g_FrameMan.m_PaletteFile);
 		writer.NewPropertyWithValue("ResolutionX", g_FrameMan.m_NewResX);
 		writer.NewPropertyWithValue("ResolutionY", g_FrameMan.m_NewResY);
 		writer.NewPropertyWithValue("ResolutionMultiplier", g_FrameMan.m_ResMultiplier);
 		writer.NewPropertyWithValue("Fullscreen", g_FrameMan.m_Fullscreen);
-		writer.NewPropertyWithValue("DisableMultiScreenResolutionValidation", g_FrameMan.m_DisableMultiScreenResolutionValidation);
+		// writer.NewPropertyWithValue("DisableMultiScreenResolutionValidation", g_FrameMan.m_DisableMultiScreenResolutionValidation);
 		writer.NewPropertyWithValue("HSplitScreen", g_FrameMan.m_HSplitOverride);
 		writer.NewPropertyWithValue("VSplitScreen", g_FrameMan.m_VSplitOverride);
-		writer.NewPropertyWithValue("ForceVirtualFullScreenGfxDriver", g_FrameMan.m_ForceVirtualFullScreenGfxDriver);
-		writer.NewPropertyWithValue("ForceDedicatedFullScreenGfxDriver", g_FrameMan.m_ForceDedicatedFullScreenGfxDriver);
 
 		writer.NewLine(false, 2);
 		writer.NewDivider(false);
