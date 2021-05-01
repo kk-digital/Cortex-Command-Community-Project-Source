@@ -4,7 +4,9 @@
 #include "SceneMan.h"
 
 #include "GUI.h"
-#include "AllegroBitmap.h"
+#include "SDLGUITexture.h"
+#include "SDLHelper.h"
+#include "SDL2/SDL2_gfxPrimitives.h"
 
 namespace RTE {
 
@@ -33,11 +35,13 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void LinePrimitive::Draw(BITMAP *drawScreen, const Vector &targetPos) {
+	void LinePrimitive::Draw(SDL_Renderer* renderer, const Vector &targetPos) {
 		if (!g_SceneMan.SceneWrapsX() && !g_SceneMan.SceneWrapsY()) {
 			Vector drawStart = m_StartPos - targetPos;
 			Vector drawEnd = m_EndPos - targetPos;
-			line(drawScreen, drawStart.GetFloorIntX(), drawStart.GetFloorIntY(), drawEnd.GetFloorIntX(), drawEnd.GetFloorIntY(), m_Color);
+
+			uint8_t r,g,b,a;
+			lineColor(renderer, drawStart.GetFloorIntX(), drawStart.GetFloorIntY(), drawEnd.GetFloorIntX(), drawEnd.GetFloorIntY(), m_Color);
 		} else {
 			Vector drawStartLeft;
 			Vector drawEndLeft;
@@ -47,22 +51,34 @@ namespace RTE {
 			TranslateCoordinates(targetPos, m_StartPos, drawStartLeft, drawStartRight);
 			TranslateCoordinates(targetPos, m_EndPos, drawEndLeft, drawEndRight);
 
-			line(drawScreen, drawStartLeft.GetFloorIntX(), drawStartLeft.GetFloorIntY(), drawEndLeft.GetFloorIntX(), drawEndLeft.GetFloorIntY(), m_Color);
-			line(drawScreen, drawStartRight.GetFloorIntX(), drawStartRight.GetFloorIntY(), drawEndRight.GetFloorIntX(), drawEndRight.GetFloorIntY(), m_Color);
+			uint8_t r,g,b,a;
+
+			lineColor(renderer, drawStartLeft.GetFloorIntX(),
+			          drawStartLeft.GetFloorIntY(), drawEndLeft.GetFloorIntX(),
+			          drawEndLeft.GetFloorIntY(), m_Color);
+			lineColor(renderer, drawStartRight.GetFloorIntX(),
+			          drawStartRight.GetFloorIntY(),
+			          drawEndRight.GetFloorIntX(), drawEndRight.GetFloorIntY(),
+			          m_Color);
 		}
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void ArcPrimitive::Draw(BITMAP *drawScreen, const Vector &targetPos) {
+	void ArcPrimitive::Draw(SDL_Renderer* renderer, const Vector &targetPos) {
 		if (!g_SceneMan.SceneWrapsX() && !g_SceneMan.SceneWrapsY()) {
 			Vector drawStart = m_StartPos - targetPos;
 			if (m_Thickness > 1) {
 				for (int i = 0; i < m_Thickness; i++) {
-					arc(drawScreen, drawStart.GetFloorIntX(), drawStart.GetFloorIntY(), ftofix(GetAllegroAngle(m_StartAngle)), ftofix(GetAllegroAngle(m_EndAngle)), (m_Radius - (m_Thickness / 2)) + i, m_Color);
+					arcColor(renderer, drawStart.GetFloorIntX(),
+					         drawStart.GetFloorIntY(),
+					         (m_Radius - (m_Thickness / 2)) + i, m_StartAngle,
+					         m_EndAngle, m_Color);
 				}
 			} else {
-				arc(drawScreen, drawStart.GetFloorIntX(), drawStart.GetFloorIntY(), ftofix(GetAllegroAngle(m_StartAngle)), ftofix(GetAllegroAngle(m_EndAngle)), m_Radius, m_Color);
+				arcColor(renderer, drawStart.GetFloorIntX(), m_Radius,
+				         drawStart.GetFloorIntY(), m_StartAngle, m_EndAngle,
+				         m_Color);
 			}
 		} else {
 			Vector drawStartLeft;
@@ -72,27 +88,43 @@ namespace RTE {
 
 			if (m_Thickness > 1) {
 				for (int i = 0; i < m_Thickness; i++){
-					arc(drawScreen, drawStartLeft.GetFloorIntX(), drawStartLeft.GetFloorIntY(), ftofix(GetAllegroAngle(m_StartAngle)), ftofix(GetAllegroAngle(m_EndAngle)), (m_Radius - (m_Thickness / 2)) + i, m_Color);
-					arc(drawScreen, drawStartRight.GetFloorIntX(), drawStartRight.GetFloorIntY(), ftofix(GetAllegroAngle(m_StartAngle)), ftofix(GetAllegroAngle(m_EndAngle)), (m_Radius - (m_Thickness / 2)) + i, m_Color);
+					arcColor(renderer, drawStartLeft.GetFloorIntX(),
+					         drawStartLeft.GetFloorIntY(),
+					         (m_Radius - (m_Thickness / 2)) + i, m_StartAngle,
+					         m_EndAngle, m_Color);
+					arcColor(renderer, drawStartRight.GetFloorIntX(),
+					         drawStartRight.GetFloorIntY(),
+					         (m_Radius - (m_Thickness / 2)) + i, m_StartAngle,
+					         m_EndAngle, m_Color);
 				}
 			} else {
-				arc(drawScreen, drawStartLeft.GetFloorIntX(), drawStartLeft.GetFloorIntY(), ftofix(GetAllegroAngle(m_StartAngle)), ftofix(GetAllegroAngle(m_EndAngle)), m_Radius, m_Color);
-				arc(drawScreen, drawStartRight.GetFloorIntX(), drawStartRight.GetFloorIntY(), ftofix(GetAllegroAngle(m_StartAngle)), ftofix(GetAllegroAngle(m_EndAngle)), m_Radius, m_Color);
+				arcColor(renderer, drawStartLeft.GetFloorIntX(),
+				         drawStartLeft.GetFloorIntY(), m_Radius, m_StartAngle,
+				         m_EndAngle, m_Color);
+				arcColor(renderer, drawStartRight.GetFloorIntX(),
+				    drawStartRight.GetFloorIntY(), m_Radius,
+				    m_StartAngle,
+				    m_EndAngle, m_Color);
 			}
 		}
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void SplinePrimitive::Draw(BITMAP *drawScreen, const Vector &targetPos) {
+	void SplinePrimitive::Draw(SDL_Renderer* renderer, const Vector &targetPos) {
 		if (!g_SceneMan.SceneWrapsX() && !g_SceneMan.SceneWrapsY()) {
 			Vector drawStart = m_StartPos - targetPos;
 			Vector drawGuideA = m_GuidePointAPos - targetPos;
 			Vector drawGuideB = m_GuidePointBPos - targetPos;
 			Vector drawEnd = m_EndPos - targetPos;
 
-			std::array<int, 8> guidePoints = { drawStart.GetFloorIntX(), drawStart.GetFloorIntY(), drawGuideA.GetFloorIntX(), drawGuideA.GetFloorIntY(), drawGuideB.GetFloorIntX(), drawGuideB.GetFloorIntY(), drawEnd.GetFloorIntX(), drawEnd.GetFloorIntY() };
-			spline(drawScreen, guidePoints.data(), m_Color);
+			std::array<Sint16, 4> guidePointsX = {
+			    static_cast<Sint16>(drawStart.GetFloorIntX()), static_cast<Sint16>(drawGuideA.GetFloorIntX()),
+			    static_cast<Sint16>(drawGuideB.GetFloorIntX()), static_cast<Sint16>(drawEnd.GetFloorIntX())};
+			std::array<Sint16, 4> guidePointsY = {
+			    static_cast<Sint16>(drawStart.GetFloorIntY()), static_cast<Sint16>(drawGuideA.GetFloorIntY()),
+			    static_cast<Sint16>(drawGuideB.GetFloorIntY()), static_cast<Sint16>(drawEnd.GetFloorIntY())};
+			bezierColor(renderer, guidePointsX.data(), guidePointsY.data(), 4, 16, m_Color); //TODO: proper interpolation!
 		} else {
 			Vector drawStartLeft;
 			Vector drawGuideALeft;
@@ -108,20 +140,43 @@ namespace RTE {
 			TranslateCoordinates(targetPos, m_GuidePointBPos, drawGuideBLeft, drawGuideBRight);
 			TranslateCoordinates(targetPos, m_EndPos, drawEndLeft, drawEndRight);
 
-			std::array<int, 8> guidePointsLeft = { drawStartLeft.GetFloorIntX(), drawStartLeft.GetFloorIntY(), drawGuideALeft.GetFloorIntX(), drawGuideALeft.GetFloorIntY(), drawGuideBLeft.GetFloorIntX(), drawGuideBLeft.GetFloorIntY(), drawEndLeft.GetFloorIntX(), drawEndLeft.GetFloorIntY() };
-			std::array<int, 8> guidePointsRight = { drawStartRight.GetFloorIntX(), drawStartRight.GetFloorIntY(), drawGuideARight.GetFloorIntX(), drawGuideARight.GetFloorIntY(), drawGuideBRight.GetFloorIntX(), drawGuideBRight.GetFloorIntY(), drawEndRight.GetFloorIntX(), drawEndRight.GetFloorIntY() };
-			spline(drawScreen, guidePointsLeft.data(), m_Color);
-			spline(drawScreen, guidePointsRight.data(), m_Color);
+			std::array<Sint16, 4> guidePointsLeftX{
+			    static_cast<Sint16>(drawStartLeft.GetFloorIntX()),
+				static_cast<Sint16>(drawGuideALeft.GetFloorIntX()),
+				static_cast<Sint16>(drawGuideBLeft.GetFloorIntX()),
+				static_cast<Sint16>(drawEndLeft.GetFloorIntX())
+			};
+			std::array<Sint16, 4> guidePointsLeftY{
+			    static_cast<Sint16>(drawStartLeft.GetFloorIntY()),
+			    static_cast<Sint16>(drawGuideALeft.GetFloorIntY()),
+			    static_cast<Sint16>(drawGuideBLeft.GetFloorIntY()),
+			    static_cast<Sint16>(drawEndLeft.GetFloorIntY())
+			};
+			std::array<Sint16, 8> guidePointsRightX = {
+			    static_cast<Sint16>(drawStartRight.GetFloorIntX()),
+			    static_cast<Sint16>(drawGuideARight.GetFloorIntX()),
+			    static_cast<Sint16>(drawGuideBRight.GetFloorIntX()),
+			    static_cast<Sint16>(drawEndRight.GetFloorIntX())
+			};
+
+			std::array<Sint16, 4> guidePointsRightY{
+			    static_cast<Sint16>(drawStartRight.GetFloorIntY()),
+			    static_cast<Sint16>(drawGuideARight.GetFloorIntY()),
+			    static_cast<Sint16>(drawGuideBRight.GetFloorIntY()),
+			    static_cast<Sint16>(drawEndRight.GetFloorIntY())
+			};
+			bezierColor(renderer, guidePointsLeftX.data(), guidePointsLeftY.data(), 4, 16, m_Color); //TODO: Interpolate!!!!
+			bezierColor(renderer, guidePointsRightX.data(), guidePointsRightY.data(), 4, 16, m_Color); //TODO: Interpolation!
 		}
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void BoxPrimitive::Draw(BITMAP *drawScreen, const Vector &targetPos) {
+	void BoxPrimitive::Draw(SDL_Renderer* renderer, const Vector &targetPos) {
 		if (!g_SceneMan.SceneWrapsX() && !g_SceneMan.SceneWrapsY()) {
 			Vector drawStart = m_StartPos - targetPos;
 			Vector drawEnd = m_EndPos - targetPos;
-			rect(drawScreen, drawStart.GetFloorIntX(), drawStart.GetFloorIntY(), drawEnd.GetFloorIntX(), drawEnd.GetFloorIntY(), m_Color);
+			rectangleColor(renderer, drawStart.GetFloorIntX(), drawStart.GetFloorIntY(), drawEnd.GetFloorIntX(), drawEnd.GetFloorIntY(), m_Color);
 		} else {
 			Vector drawStartLeft;
 			Vector drawEndLeft;
@@ -131,18 +186,18 @@ namespace RTE {
 			TranslateCoordinates(targetPos, m_StartPos, drawStartLeft, drawStartRight);
 			TranslateCoordinates(targetPos, m_EndPos, drawEndLeft, drawEndRight);
 
-			rect(drawScreen, drawStartLeft.GetFloorIntX(), drawStartLeft.GetFloorIntY(), drawEndLeft.GetFloorIntX(), drawEndLeft.GetFloorIntY(), m_Color);
-			rect(drawScreen, drawStartRight.GetFloorIntX(), drawStartRight.GetFloorIntY(), drawEndRight.GetFloorIntX(), drawEndRight.GetFloorIntY(), m_Color);
+			rectangleColor(renderer, drawStartLeft.GetFloorIntX(), drawStartLeft.GetFloorIntY(), drawEndLeft.GetFloorIntX(), drawEndLeft.GetFloorIntY(), m_Color);
+			rectangleColor(renderer, drawStartRight.GetFloorIntX(), drawStartRight.GetFloorIntY(), drawEndRight.GetFloorIntX(), drawEndRight.GetFloorIntY(), m_Color);
 		}
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void BoxFillPrimitive::Draw(BITMAP *drawScreen, const Vector &targetPos) {
+	void BoxFillPrimitive::Draw(SDL_Renderer* renderer, const Vector &targetPos) {
 		if (!g_SceneMan.SceneWrapsX() && !g_SceneMan.SceneWrapsY()) {
 			Vector drawStart = m_StartPos - targetPos;
 			Vector drawEnd = m_EndPos - targetPos;
-			rectfill(drawScreen, drawStart.GetFloorIntX(), drawStart.GetFloorIntY(), drawEnd.GetFloorIntX(), drawEnd.GetFloorIntY(), m_Color);
+			boxColor(renderer, drawStart.GetFloorIntX(), drawStart.GetFloorIntY(), drawEnd.GetFloorIntX(), drawEnd.GetFloorIntY(), m_Color);
 		} else {
 			Vector drawStartLeft;
 			Vector drawEndLeft;
@@ -152,30 +207,20 @@ namespace RTE {
 			TranslateCoordinates(targetPos, m_StartPos, drawStartLeft, drawStartRight);
 			TranslateCoordinates(targetPos, m_EndPos, drawEndLeft, drawEndRight);
 
-			rectfill(drawScreen, drawStartLeft.GetFloorIntX(), drawStartLeft.GetFloorIntY(), drawEndLeft.GetFloorIntX(), drawEndLeft.GetFloorIntY(), m_Color);
-			rectfill(drawScreen, drawStartRight.GetFloorIntX(), drawStartRight.GetFloorIntY(), drawEndRight.GetFloorIntX(), drawEndRight.GetFloorIntY(), m_Color);
+			boxColor(renderer, drawStartLeft.GetFloorIntX(), drawStartLeft.GetFloorIntY(), drawEndLeft.GetFloorIntX(), drawEndLeft.GetFloorIntY(), m_Color);
+			boxColor(renderer, drawStartRight.GetFloorIntX(), drawStartRight.GetFloorIntY(), drawEndRight.GetFloorIntX(), drawEndRight.GetFloorIntY(), m_Color);
 		}
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void RoundedBoxPrimitive::Draw(BITMAP *drawScreen, const Vector &targetPos) {
+	void RoundedBoxPrimitive::Draw(SDL_Renderer* renderer, const Vector &targetPos) {
 		// TODO: Fix corners drawing incorrectly when vectors are inverted
 		if (!g_SceneMan.SceneWrapsX() && !g_SceneMan.SceneWrapsY()) {
 			Vector drawStart = m_StartPos - targetPos;
 			Vector drawEnd = m_EndPos - targetPos;
 
-			// Draw the top left, bottom left, top right and bottom right corners respectively
-			arc(drawScreen, drawStart.GetFloorIntX() + m_CornerRadius, drawEnd.GetFloorIntY() + m_CornerRadius, itofix(64), itofix(128), m_CornerRadius, m_Color);
-			arc(drawScreen, drawStart.GetFloorIntX() + m_CornerRadius, drawStart.GetFloorIntY() - m_CornerRadius, itofix(128), itofix(-64), m_CornerRadius, m_Color);
-			arc(drawScreen, drawEnd.GetFloorIntX() - m_CornerRadius, drawEnd.GetFloorIntY() + m_CornerRadius, itofix(0), itofix(64), m_CornerRadius, m_Color);
-			arc(drawScreen, drawEnd.GetFloorIntX() - m_CornerRadius, drawStart.GetFloorIntY() - m_CornerRadius, itofix(-64), itofix(0), m_CornerRadius, m_Color);
-
-			//Draw the top, bottom, left and right planes respectively
-			hline(drawScreen, drawStart.GetFloorIntX() + m_CornerRadius, drawStart.GetFloorIntY(), drawEnd.GetFloorIntX() - m_CornerRadius, m_Color);
-			hline(drawScreen, drawStart.GetFloorIntX() + m_CornerRadius, drawEnd.GetFloorIntY(), drawEnd.GetFloorIntX() - m_CornerRadius, m_Color);
-			vline(drawScreen, drawStart.GetFloorIntX(), drawStart.GetFloorIntY() - m_CornerRadius, drawEnd.GetFloorIntY() + m_CornerRadius, m_Color);
-			vline(drawScreen, drawEnd.GetFloorIntX(), drawStart.GetFloorIntY() - m_CornerRadius, drawEnd.GetFloorIntY() + m_CornerRadius, m_Color);
+			roundedRectangleColor(renderer, drawStart.GetFloorIntX(), drawStart.GetFloorIntY(), drawEnd.GetFloorIntX(), drawEnd.GetFloorIntY(), m_CornerRadius, m_Color);
 		} else {
 			Vector drawStartLeft;
 			Vector drawEndLeft;
@@ -185,42 +230,30 @@ namespace RTE {
 			TranslateCoordinates(targetPos, m_StartPos, drawStartLeft, drawStartRight);
 			TranslateCoordinates(targetPos, m_EndPos, drawEndLeft, drawEndRight);
 
-			arc(drawScreen, drawStartLeft.GetFloorIntX() + m_CornerRadius, drawEndLeft.GetFloorIntY() + m_CornerRadius, itofix(64), itofix(128), m_CornerRadius, m_Color);
-			arc(drawScreen, drawStartLeft.GetFloorIntX() + m_CornerRadius, drawStartLeft.GetFloorIntY() - m_CornerRadius, itofix(128), itofix(-64), m_CornerRadius, m_Color);
-			arc(drawScreen, drawEndLeft.GetFloorIntX() - m_CornerRadius, drawEndLeft.GetFloorIntY() + m_CornerRadius, itofix(0), itofix(64), m_CornerRadius, m_Color);
-			arc(drawScreen, drawEndLeft.GetFloorIntX() - m_CornerRadius, drawStartLeft.GetFloorIntY() - m_CornerRadius, itofix(-64), itofix(0), m_CornerRadius, m_Color);
-			hline(drawScreen, drawStartLeft.GetFloorIntX() + m_CornerRadius, drawStartLeft.GetFloorIntY(), drawEndLeft.GetFloorIntX() - m_CornerRadius, m_Color);
-			hline(drawScreen, drawStartLeft.GetFloorIntX() + m_CornerRadius, drawEndLeft.GetFloorIntY(), drawEndLeft.GetFloorIntX() - m_CornerRadius, m_Color);
-			vline(drawScreen, drawStartLeft.GetFloorIntX(), drawStartLeft.GetFloorIntY() - m_CornerRadius, drawEndLeft.GetFloorIntY() + m_CornerRadius, m_Color);
-			vline(drawScreen, drawEndLeft.GetFloorIntX(), drawStartLeft.GetFloorIntY() - m_CornerRadius, drawEndLeft.GetFloorIntY() + m_CornerRadius, m_Color);
+			roundedRectangleColor(
+			    renderer, drawStartLeft.GetFloorIntX(),
+			    drawStartLeft.GetFloorIntY(), drawEndLeft.GetFloorIntX(),
+			    drawEndLeft.GetFloorIntY(), m_CornerRadius, m_Color);
 
-			arc(drawScreen, drawStartRight.GetFloorIntX() + m_CornerRadius, drawEndRight.GetFloorIntY() + m_CornerRadius, itofix(64), itofix(128), m_CornerRadius, m_Color);
-			arc(drawScreen, drawStartRight.GetFloorIntX() + m_CornerRadius, drawStartRight.GetFloorIntY() - m_CornerRadius, itofix(128), itofix(-64), m_CornerRadius, m_Color);
-			arc(drawScreen, drawEndRight.GetFloorIntX() - m_CornerRadius, drawEndRight.GetFloorIntY() + m_CornerRadius, itofix(0), itofix(64), m_CornerRadius, m_Color);
-			arc(drawScreen, drawEndRight.GetFloorIntX() - m_CornerRadius, drawStartRight.GetFloorIntY() - m_CornerRadius, itofix(-64), itofix(0), m_CornerRadius, m_Color);
-			hline(drawScreen, drawStartRight.GetFloorIntX() + m_CornerRadius, drawStartRight.GetFloorIntY(), drawEndRight.GetFloorIntX() - m_CornerRadius, m_Color);
-			hline(drawScreen, drawStartRight.GetFloorIntX() + m_CornerRadius, drawEndRight.GetFloorIntY(), drawEndRight.GetFloorIntX() - m_CornerRadius, m_Color);
-			vline(drawScreen, drawStartRight.GetFloorIntX(), drawStartRight.GetFloorIntY() - m_CornerRadius, drawEndRight.GetFloorIntY() + m_CornerRadius, m_Color);
-			vline(drawScreen, drawEndRight.GetFloorIntX(), drawStartRight.GetFloorIntY() - m_CornerRadius, drawEndRight.GetFloorIntY() + m_CornerRadius, m_Color);
+			roundedRectangleColor(
+			    renderer, drawStartRight.GetFloorIntX(),
+			    drawStartRight.GetFloorIntY(), drawEndRight.GetFloorIntX(),
+			    drawEndRight.GetFloorIntY(), m_CornerRadius, m_Color);
 		}
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void RoundedBoxFillPrimitive::Draw(BITMAP *drawScreen, const Vector &targetPos) {
+	void RoundedBoxFillPrimitive::Draw(SDL_Renderer* renderer, const Vector &targetPos) {
 		// TODO: Fix corners drawing incorrectly when vectors are inverted
 		if (!g_SceneMan.SceneWrapsX() && !g_SceneMan.SceneWrapsY()) {
 			Vector drawStart = m_StartPos - targetPos;
 			Vector drawEnd = m_EndPos - targetPos;
 
-			// Draw the top left, bottom left, top right and bottom right corners respectively
-			circlefill(drawScreen, drawStart.GetFloorIntX() + m_CornerRadius, drawEnd.GetFloorIntY() + m_CornerRadius, m_CornerRadius, m_Color);
-			circlefill(drawScreen, drawStart.GetFloorIntX() + m_CornerRadius, drawStart.GetFloorIntY() - m_CornerRadius, m_CornerRadius, m_Color);
-			circlefill(drawScreen, drawEnd.GetFloorIntX() - m_CornerRadius, drawEnd.GetFloorIntY() + m_CornerRadius, m_CornerRadius, m_Color);
-			circlefill(drawScreen, drawEnd.GetFloorIntX() - m_CornerRadius, drawStart.GetFloorIntY() - m_CornerRadius, m_CornerRadius, m_Color);
-
-			rectfill(drawScreen, drawStart.GetFloorIntX(), drawStart.GetFloorIntY() - m_CornerRadius, drawEnd.GetFloorIntX(), drawEnd.GetFloorIntY() + m_CornerRadius, m_Color);
-			rectfill(drawScreen, drawStart.GetFloorIntX() + m_CornerRadius, drawStart.GetFloorIntY(), drawEnd.GetFloorIntX() - m_CornerRadius, drawEnd.GetFloorIntY(), m_Color);
+			roundedBoxColor(
+			    renderer, drawStart.GetFloorIntX(), drawStart.GetFloorIntY(),
+			    drawEnd.GetFloorIntX(), drawEnd.GetFloorIntY(), m_CornerRadius,
+			    m_Color);
 		} else {
 			Vector drawStartLeft;
 			Vector drawEndLeft;
@@ -230,100 +263,99 @@ namespace RTE {
 			TranslateCoordinates(targetPos, m_StartPos, drawStartLeft, drawStartRight);
 			TranslateCoordinates(targetPos, m_EndPos, drawEndLeft, drawEndRight);
 
-			circlefill(drawScreen, drawStartLeft.GetFloorIntX() + m_CornerRadius, drawEndLeft.GetFloorIntY() + m_CornerRadius, m_CornerRadius, m_Color);
-			circlefill(drawScreen, drawStartLeft.GetFloorIntX() + m_CornerRadius, drawStartLeft.GetFloorIntY() - m_CornerRadius, m_CornerRadius, m_Color);
-			circlefill(drawScreen, drawEndLeft.GetFloorIntX() - m_CornerRadius, drawEndLeft.GetFloorIntY() + m_CornerRadius, m_CornerRadius, m_Color);
-			circlefill(drawScreen, drawEndLeft.GetFloorIntX() - m_CornerRadius, drawStartLeft.GetFloorIntY() - m_CornerRadius, m_CornerRadius, m_Color);
-			rectfill(drawScreen, drawStartLeft.GetFloorIntX(), drawStartLeft.GetFloorIntY() - m_CornerRadius, drawEndLeft.GetFloorIntX(), drawEndLeft.GetFloorIntY() + m_CornerRadius, m_Color);
-			rectfill(drawScreen, drawStartLeft.GetFloorIntX() + m_CornerRadius, drawStartLeft.GetFloorIntY(), drawEndLeft.GetFloorIntX() - m_CornerRadius, drawEndLeft.GetFloorIntY(), m_Color);
+			roundedBoxColor(
+			    renderer, drawStartLeft.GetFloorIntX(),
+			    drawStartLeft.GetFloorIntY(), drawEndLeft.GetFloorIntX(),
+			    drawEndLeft.GetFloorIntY(), m_CornerRadius, m_Color);
 
-			circlefill(drawScreen, drawStartRight.GetFloorIntX() + m_CornerRadius, drawEndRight.GetFloorIntY() + m_CornerRadius, m_CornerRadius, m_Color);
-			circlefill(drawScreen, drawStartRight.GetFloorIntX() + m_CornerRadius, drawStartRight.GetFloorIntY() - m_CornerRadius, m_CornerRadius, m_Color);
-			circlefill(drawScreen, drawEndRight.GetFloorIntX() - m_CornerRadius, drawEndRight.GetFloorIntY() + m_CornerRadius, m_CornerRadius, m_Color);
-			circlefill(drawScreen, drawEndRight.GetFloorIntX() - m_CornerRadius, drawStartRight.GetFloorIntY() - m_CornerRadius, m_CornerRadius, m_Color);
-			rectfill(drawScreen, drawStartRight.GetFloorIntX(), drawStartRight.GetFloorIntY() - m_CornerRadius, drawEndRight.GetFloorIntX(), drawEndRight.GetFloorIntY() + m_CornerRadius, m_Color);
-			rectfill(drawScreen, drawStartRight.GetFloorIntX() + m_CornerRadius, drawStartRight.GetFloorIntY(), drawEndRight.GetFloorIntX() - m_CornerRadius, drawEndRight.GetFloorIntY(), m_Color);
+			roundedBoxColor(
+			    renderer, drawStartRight.GetFloorIntX(),
+			    drawStartRight.GetFloorIntY(), drawEndRight.GetFloorIntX(),
+			    drawEndRight.GetFloorIntY(), m_CornerRadius, m_Color);
 		}
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void CirclePrimitive::Draw(BITMAP *drawScreen, const Vector &targetPos) {
+	void CirclePrimitive::Draw(SDL_Renderer* renderer, const Vector &targetPos) {
 		if (!g_SceneMan.SceneWrapsX() && !g_SceneMan.SceneWrapsY()) {
 			Vector drawStart = m_StartPos - targetPos;
-			circle(drawScreen, drawStart.GetFloorIntX(), drawStart.GetFloorIntY(), m_Radius, m_Color);
+			circleColor(renderer, drawStart.GetFloorIntX(), drawStart.GetFloorIntY(), m_Radius, m_Color);
 		} else {
 			Vector drawStartLeft;
 			Vector drawStartRight;
 
 			TranslateCoordinates(targetPos, m_StartPos, drawStartLeft, drawStartRight);
 
-			circle(drawScreen, drawStartLeft.GetFloorIntX(), drawStartLeft.GetFloorIntY(), m_Radius, m_Color);
-			circle(drawScreen, drawStartRight.GetFloorIntX(), drawStartRight.GetFloorIntY(), m_Radius, m_Color);
+			circleColor(renderer, drawStartLeft.GetFloorIntX(), drawStartLeft.GetFloorIntY(), m_Radius, m_Color);
+			circleColor(renderer, drawStartRight.GetFloorIntX(), drawStartRight.GetFloorIntY(), m_Radius, m_Color);
 		}
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void CircleFillPrimitive::Draw(BITMAP *drawScreen, const Vector &targetPos) {
+	void CircleFillPrimitive::Draw(SDL_Renderer* renderer, const Vector &targetPos) {
 		if (!g_SceneMan.SceneWrapsX() && !g_SceneMan.SceneWrapsY()) {
 			Vector drawStart = m_StartPos - targetPos;
-			circlefill(drawScreen, drawStart.GetFloorIntX(), drawStart.GetFloorIntY(), m_Radius, m_Color);
+			filledCircleColor(renderer, drawStart.GetFloorIntX(), drawStart.GetFloorIntY(), m_Radius, m_Color);
 		} else {
 			Vector drawStartLeft;
 			Vector drawStartRight;
 
 			TranslateCoordinates(targetPos, m_StartPos, drawStartLeft, drawStartRight);
 
-			circlefill(drawScreen, drawStartLeft.GetFloorIntX(), drawStartLeft.GetFloorIntY(), m_Radius, m_Color);
-			circlefill(drawScreen, drawStartRight.GetFloorIntX(), drawStartRight.GetFloorIntY(), m_Radius, m_Color);
+			filledCircleColor(renderer, drawStartLeft.GetFloorIntX(), drawStartLeft.GetFloorIntY(), m_Radius, m_Color);
+			filledCircleColor(renderer, drawStartRight.GetFloorIntX(), drawStartRight.GetFloorIntY(), m_Radius, m_Color);
 		}
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void EllipsePrimitive::Draw(BITMAP *drawScreen, const Vector &targetPos) {
+	void EllipsePrimitive::Draw(SDL_Renderer* renderer, const Vector &targetPos) {
 		if (!g_SceneMan.SceneWrapsX() && !g_SceneMan.SceneWrapsY()) {
 			Vector drawStart = m_StartPos - targetPos;
-			ellipse(drawScreen, drawStart.GetFloorIntX(), drawStart.GetFloorIntY(), m_HorizRadius, m_VertRadius, m_Color);
+			ellipseColor(renderer, drawStart.GetFloorIntX(), drawStart.GetFloorIntY(), m_HorizRadius, m_VertRadius, m_Color);
 		} else {
 			Vector drawStartLeft;
 			Vector drawStartRight;
 
 			TranslateCoordinates(targetPos, m_StartPos, drawStartLeft, drawStartRight);
 
-			ellipse(drawScreen, drawStartLeft.GetFloorIntX(), drawStartLeft.GetFloorIntY(), m_HorizRadius, m_VertRadius, m_Color);
-			ellipse(drawScreen, drawStartRight.GetFloorIntX(), drawStartRight.GetFloorIntY(), m_HorizRadius, m_VertRadius, m_Color);
+			ellipseColor(renderer, drawStartLeft.GetFloorIntX(), drawStartLeft.GetFloorIntY(), m_HorizRadius, m_VertRadius, m_Color);
+			ellipseColor(renderer, drawStartRight.GetFloorIntX(), drawStartRight.GetFloorIntY(), m_HorizRadius, m_VertRadius, m_Color);
 		}
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void EllipseFillPrimitive::Draw(BITMAP *drawScreen, const Vector &targetPos) {
+	void EllipseFillPrimitive::Draw(SDL_Renderer* renderer, const Vector &targetPos) {
 		if (!g_SceneMan.SceneWrapsX() && !g_SceneMan.SceneWrapsY()) {
 			Vector drawStart = m_StartPos - targetPos;
-			ellipsefill(drawScreen, drawStart.GetFloorIntX(), drawStart.GetFloorIntY(), m_HorizRadius, m_VertRadius, m_Color);
+			filledEllipseColor(renderer, drawStart.GetFloorIntX(), drawStart.GetFloorIntY(), m_HorizRadius, m_VertRadius, m_Color);
 		} else {
 			Vector drawStartLeft;
 			Vector drawStartRight;
 
 			TranslateCoordinates(targetPos, m_StartPos, drawStartLeft, drawStartRight);
 
-			ellipsefill(drawScreen, drawStartLeft.GetFloorIntX(), drawStartLeft.GetFloorIntY(), m_HorizRadius, m_VertRadius, m_Color);
-			ellipsefill(drawScreen, drawStartRight.GetFloorIntX(), drawStartRight.GetFloorIntY(), m_HorizRadius, m_VertRadius, m_Color);
+			filledEllipseColor(renderer, drawStartLeft.GetFloorIntX(), drawStartLeft.GetFloorIntY(), m_HorizRadius, m_VertRadius, m_Color);
+			filledEllipseColor(renderer, drawStartRight.GetFloorIntX(), drawStartRight.GetFloorIntY(), m_HorizRadius, m_VertRadius, m_Color);
 		}
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void TrianglePrimitive::Draw(BITMAP *drawScreen, const Vector &targetPos) {
+	void TrianglePrimitive::Draw(SDL_Renderer* renderer, const Vector &targetPos) {
 		if (!g_SceneMan.SceneWrapsX() && !g_SceneMan.SceneWrapsY()) {
 			Vector drawPointA = m_PointAPos - targetPos;
 			Vector drawPointB = m_PointBPos - targetPos;
 			Vector drawPointC = m_PointCPos - targetPos;
-			line(drawScreen, drawPointA.GetFloorIntX(), drawPointA.GetFloorIntY(), drawPointB.GetFloorIntX(), drawPointB.GetFloorIntY(), m_Color);
-			line(drawScreen, drawPointB.GetFloorIntX(), drawPointB.GetFloorIntY(), drawPointC.GetFloorIntX(), drawPointC.GetFloorIntY(), m_Color);
-			line(drawScreen, drawPointC.GetFloorIntX(), drawPointC.GetFloorIntY(), drawPointA.GetFloorIntX(), drawPointA.GetFloorIntY(), m_Color);
+			trigonColor(renderer,
+						drawPointA.GetFloorIntX(), drawPointA.GetFloorIntY(),
+						drawPointB.GetFloorIntX(), drawPointA.GetFloorIntY(),
+						drawPointC.GetFloorIntX(), drawPointC.GetFloorIntY(),
+						m_Color
+						);
 		} else {
 			Vector drawPointALeft;
 			Vector drawPointBLeft;
@@ -336,23 +368,26 @@ namespace RTE {
 			TranslateCoordinates(targetPos, m_PointBPos, drawPointBLeft, drawPointBRight);
 			TranslateCoordinates(targetPos, m_PointCPos, drawPointCLeft, drawPointCRight);
 
-			line(drawScreen, drawPointALeft.GetFloorIntX(), drawPointALeft.GetFloorIntY(), drawPointBLeft.GetFloorIntX(), drawPointBLeft.GetFloorIntY(), m_Color);
-			line(drawScreen, drawPointARight.GetFloorIntX(), drawPointARight.GetFloorIntY(), drawPointBRight.GetFloorIntX(), drawPointBRight.GetFloorIntY(), m_Color);
-			line(drawScreen, drawPointBLeft.GetFloorIntX(), drawPointBLeft.GetFloorIntY(), drawPointCLeft.GetFloorIntX(), drawPointCLeft.GetFloorIntY(), m_Color);
-			line(drawScreen, drawPointBRight.GetFloorIntX(), drawPointBRight.GetFloorIntY(), drawPointCRight.GetFloorIntX(), drawPointCRight.GetFloorIntY(), m_Color);
-			line(drawScreen, drawPointCLeft.GetFloorIntX(), drawPointCLeft.GetFloorIntY(), drawPointALeft.GetFloorIntX(), drawPointALeft.GetFloorIntY(), m_Color);
-			line(drawScreen, drawPointCRight.GetFloorIntX(), drawPointCRight.GetFloorIntY(), drawPointARight.GetFloorIntX(), drawPointARight.GetFloorIntY(), m_Color);
+			trigonColor(renderer, drawPointALeft.GetFloorIntX(),
+			            drawPointALeft.GetFloorIntY(), drawPointBLeft.GetFloorIntX(),
+			            drawPointALeft.GetFloorIntY(), drawPointCLeft.GetFloorIntX(),
+			            drawPointCLeft.GetFloorIntY(), m_Color);
+			trigonColor(
+			    renderer, drawPointARight.GetFloorIntX(),
+			    drawPointARight.GetFloorIntY(), drawPointBRight.GetFloorIntX(),
+			    drawPointARight.GetFloorIntY(), drawPointCRight.GetFloorIntX(),
+			    drawPointCRight.GetFloorIntY(), m_Color);
 		}
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void TriangleFillPrimitive::Draw(BITMAP *drawScreen, const Vector &targetPos) {
+	void TriangleFillPrimitive::Draw(SDL_Renderer* renderer, const Vector &targetPos) {
 		if (!g_SceneMan.SceneWrapsX() && !g_SceneMan.SceneWrapsY()) {
 			Vector drawPointA = m_PointAPos - targetPos;
 			Vector drawPointB = m_PointBPos - targetPos;
 			Vector drawPointC = m_PointCPos - targetPos;
-			triangle(drawScreen, drawPointA.GetFloorIntX(), drawPointA.GetFloorIntY(), drawPointB.GetFloorIntX(), drawPointB.GetFloorIntY(), drawPointC.GetFloorIntX(), drawPointC.GetFloorIntY(), m_Color);
+			filledTrigonColor(renderer, drawPointA.GetFloorIntX(), drawPointA.GetFloorIntY(), drawPointB.GetFloorIntX(), drawPointB.GetFloorIntY(), drawPointC.GetFloorIntX(), drawPointC.GetFloorIntY(), m_Color);
 		} else {
 			Vector drawPointALeft;
 			Vector drawPointBLeft;
@@ -365,17 +400,17 @@ namespace RTE {
 			TranslateCoordinates(targetPos, m_PointBPos, drawPointBLeft, drawPointBRight);
 			TranslateCoordinates(targetPos, m_PointCPos, drawPointCLeft, drawPointCRight);
 
-			triangle(drawScreen, drawPointALeft.GetFloorIntX(), drawPointALeft.GetFloorIntY(), drawPointBLeft.GetFloorIntX(), drawPointBLeft.GetFloorIntY(), drawPointCLeft.GetFloorIntX(), drawPointCLeft.GetFloorIntY(), m_Color);
-			triangle(drawScreen, drawPointARight.GetFloorIntX(), drawPointARight.GetFloorIntY(), drawPointBRight.GetFloorIntX(), drawPointBRight.GetFloorIntY(), drawPointCRight.GetFloorIntX(), drawPointCRight.GetFloorIntY(), m_Color);
+			filledTrigonColor(renderer, drawPointALeft.GetFloorIntX(), drawPointALeft.GetFloorIntY(), drawPointBLeft.GetFloorIntX(), drawPointBLeft.GetFloorIntY(), drawPointCLeft.GetFloorIntX(), drawPointCLeft.GetFloorIntY(), m_Color);
+			filledTrigonColor(renderer, drawPointARight.GetFloorIntX(), drawPointARight.GetFloorIntY(), drawPointBRight.GetFloorIntX(), drawPointBRight.GetFloorIntY(), drawPointCRight.GetFloorIntX(), drawPointCRight.GetFloorIntY(), m_Color);
 		}
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void TextPrimitive::Draw(BITMAP *drawScreen, const Vector &targetPos) {
+	void TextPrimitive::Draw(SDL_Renderer* renderer, const Vector &targetPos) {
 		if (!g_SceneMan.SceneWrapsX() && !g_SceneMan.SceneWrapsY()) {
 			Vector drawStart = m_StartPos - targetPos;
-			AllegroBitmap playerGUIBitmap(drawScreen);
+			SDLGUITexture playerGUIBitmap;
 
 			if (m_IsSmall) {
 				g_FrameMan.GetSmallFont()->DrawAligned(&playerGUIBitmap, drawStart.GetFloorIntX(), drawStart.GetFloorIntY(), m_Text, m_Alignment);
@@ -388,7 +423,7 @@ namespace RTE {
 
 			TranslateCoordinates(targetPos, m_StartPos, drawStartLeft, drawStartRight);
 
-			AllegroBitmap playerGUIBitmap(drawScreen);
+			SDLGUITexture playerGUIBitmap;
 			if (m_IsSmall) {
 				g_FrameMan.GetSmallFont()->DrawAligned(&playerGUIBitmap, drawStartLeft.GetFloorIntX(), drawStartLeft.GetFloorIntY(), m_Text, m_Alignment);
 				g_FrameMan.GetSmallFont()->DrawAligned(&playerGUIBitmap, drawStartRight.GetFloorIntX(), drawStartRight.GetFloorIntY(), m_Text, m_Alignment);
@@ -401,47 +436,26 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void BitmapPrimitive::Draw(BITMAP *drawScreen, const Vector &targetPos) {
-		if (!m_Bitmap) {
+	void BitmapPrimitive::Draw(SDL_Renderer* renderer, const Vector &targetPos) {
+		if (!m_Texture) {
 			return;
 		}
 
-		BITMAP *bitmapToDraw = create_bitmap_ex(8, m_Bitmap->w, m_Bitmap->h);
-		clear_to_color(bitmapToDraw, 0);
-		draw_sprite(bitmapToDraw, m_Bitmap, 0, 0);
-
-		if (m_HFlipped || m_VFlipped) {
-			BITMAP *flipBitmap = create_bitmap_ex(8, bitmapToDraw->w, bitmapToDraw->h);
-			clear_to_color(flipBitmap, 0);
-
-			if (m_HFlipped && !m_VFlipped) {
-				draw_sprite_h_flip(flipBitmap, bitmapToDraw, 0, 0);
-			} else if (!m_HFlipped && m_VFlipped) {
-				draw_sprite_v_flip(flipBitmap, bitmapToDraw, 0, 0);
-			} else if (m_HFlipped && m_VFlipped) {
-				draw_sprite_vh_flip(flipBitmap, bitmapToDraw, 0, 0);
-			}
-
-			blit(flipBitmap, bitmapToDraw, 0, 0, 0, 0, bitmapToDraw->w, bitmapToDraw->h);
-			destroy_bitmap(flipBitmap);
-		}
-
-		Matrix rotation = Matrix(m_RotAngle);
+		int flip = m_HFlipped? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE;
+		flip |= m_VFlipped ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE;
 
 		if (!g_SceneMan.SceneWrapsX() && !g_SceneMan.SceneWrapsY()) {
 			Vector drawStart = m_StartPos - targetPos;
-			pivot_scaled_sprite(drawScreen, bitmapToDraw, drawStart.GetFloorIntX(), drawStart.GetFloorIntY(), bitmapToDraw->w / 2, bitmapToDraw->h / 2, ftofix(rotation.GetAllegroAngle()), ftofix(1.0));
+			m_Texture->render(renderer, drawStart.m_X, drawStart.m_Y, m_RotAngle, flip);
 		} else {
 			Vector drawStartLeft;
 			Vector drawStartRight;
 
 			TranslateCoordinates(targetPos, m_StartPos, drawStartLeft, drawStartRight);
 
-			// Take into account the h-flipped pivot point
-			pivot_scaled_sprite(drawScreen, bitmapToDraw, drawStartLeft.GetFloorIntX(), drawStartLeft.GetFloorIntY(), bitmapToDraw->w / 2, bitmapToDraw->h / 2, ftofix(rotation.GetAllegroAngle()), ftofix(1.0));
-			pivot_scaled_sprite(drawScreen, bitmapToDraw, drawStartRight.GetFloorIntX(), drawStartRight.GetFloorIntY(), bitmapToDraw->w / 2, bitmapToDraw->h / 2, ftofix(rotation.GetAllegroAngle()), ftofix(1.0));
-		}
+			m_Texture->render(renderer, drawStartLeft.m_X, drawStartLeft.m_Y, m_RotAngle, flip);
 
-		destroy_bitmap(bitmapToDraw);
+			m_Texture->render(renderer, drawStartRight.m_X, drawStartLeft.m_Y, m_RotAngle, flip);
+		}
 	}
 }

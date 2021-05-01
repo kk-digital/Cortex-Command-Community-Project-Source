@@ -542,7 +542,6 @@ namespace RTE {
 #pragma endregion
 
 #pragma region Bitmap Primitive
-	//TODO Ohnooo
 	/// <summary>
 	/// Class used to schedule drawing of bitmap primitives created from Lua.
 	/// </summary>
@@ -550,7 +549,7 @@ namespace RTE {
 
 	public:
 
-		std::shared_ptr<Texture> m_Bitmap; //!< Bitmap to draw.
+		std::shared_ptr<Texture> m_Texture; //!< Bitmap to draw.
 		float m_RotAngle; //!< Angle to rotate bitmap in radians.
 		bool m_HFlipped; //!< Whether the Bitmap to draw should be horizontally flipped.
 		bool m_VFlipped; //!< Whether the Bitmap to draw should be vertically flipped.
@@ -565,7 +564,7 @@ namespace RTE {
 		/// <param name="hFlipped">Whether the bitmap to draw should be horizontally flipped.</param>
 		/// <param name="vFlipped">Whether the bitmap to draw should be vertically flipped.</param>
 		BitmapPrimitive(int player, const Vector &centerPos, std::shared_ptr<Texture> bitmap, float rotAngle, bool hFlipped, bool vFlipped) :
-			m_Bitmap(bitmap), m_RotAngle(rotAngle), m_HFlipped(hFlipped), m_VFlipped(vFlipped) {
+			m_Texture(bitmap), m_RotAngle(rotAngle), m_HFlipped(hFlipped), m_VFlipped(vFlipped) {
 
 			m_StartPos = centerPos;
 			m_Player = player;
