@@ -49,6 +49,9 @@ namespace RTE {
 		m_VSplit = false;
 		m_HSplitOverride = false;
 		m_VSplitOverride = false;
+
+		for(; !targetStack.empty(); targetStack.pop());
+		targetStack.push(nullptr);
 	}
 
 	int FrameMan::Initialize() {
@@ -269,9 +272,12 @@ namespace RTE {
 	}
 
 	void FrameMan::PushRenderTarget(SDL_Texture *target){
-		int access;
-		SDL_QueryTexture(target, nullptr, &access, nullptr, nullptr);
-		RTEAssert(access==SDL_TEXTUREACCESS_TARGET, "Trying to set a render target to non target texture");
+		if (target) {
+			int access;
+			SDL_QueryTexture(target, nullptr, &access, nullptr, nullptr);
+			RTEAssert(access == SDL_TEXTUREACCESS_TARGET,
+			          "Trying to set a render target to non target texture");
+		}
 		targetStack.push(target);
 		SDL_SetRenderTarget(m_Renderer, target);
 	}
@@ -284,6 +290,7 @@ namespace RTE {
 	}
 
 	void FrameMan::PopRenderTarget(){
+		RTEAssert(targetStack.size()>1, "Attempted removing the main renderer");
 		targetStack.pop();
 		SDL_SetRenderTarget(m_Renderer, targetStack.top());
 	}
