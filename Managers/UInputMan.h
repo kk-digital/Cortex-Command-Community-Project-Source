@@ -5,6 +5,8 @@
 #include "Vector.h"
 #include "InputScheme.h"
 
+#include <SDL2/SDL_keycode.h>
+
 #define g_UInputMan UInputMan::Instance()
 
 namespace RTE {
