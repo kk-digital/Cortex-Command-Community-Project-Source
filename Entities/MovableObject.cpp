@@ -211,7 +211,7 @@ int MovableObject::Create(const MovableObject &reference)
     m_MissionCritical = reference.m_MissionCritical;
     m_CanBeSquished = reference.m_CanBeSquished;
     m_HUDVisible = reference.m_HUDVisible;
-    
+
     for (const std::pair<std::string, bool> &referenceScriptEntry : reference.m_AllLoadedScripts) {
         m_AllLoadedScripts.push_back({referenceScriptEntry.first, referenceScriptEntry.second});
     }
@@ -564,7 +564,7 @@ int MovableObject::ReloadScripts(bool alsoReloadPresetScripts) {
             object->m_ScriptObjectName.clear();
         }
 
-        int status = 0; 
+        int status = 0;
         for (const std::pair<std::string, bool> &scriptEntry : loadedScriptsCopy) {
             status = object->LoadScript(scriptEntry.first, scriptEntry.second);
             if (status < 0) {
@@ -657,11 +657,11 @@ int MovableObject::RunScriptedFunction(const std::string &scriptPath, const std:
 
     std::string presetAndFunctionName = m_ScriptPresetName + "." + functionName;
     std::string fullFunctionName = presetAndFunctionName + "[\"" + scriptPath + "\"]";
-    
+
     int status = g_LuaMan.RunScriptedFunction(fullFunctionName, m_ScriptObjectName, {presetAndFunctionName, m_ScriptObjectName, fullFunctionName}, functionEntityArguments, functionLiteralArguments);
     functionEntityArguments.clear();
     functionLiteralArguments.clear();
-    
+
     if (status < 0 && m_AllLoadedScripts.size() > 1) {
         g_ConsoleMan.PrintString("ERROR: An error occured while trying to run the " + functionName + " function for script at path " + scriptPath);
         return -2;
@@ -705,7 +705,7 @@ MovableObject::MovableObject(const MovableObject &reference):
     m_AgeTimer(reference.GetAge()),
     m_Lifetime(reference.GetLifetime())
 {
-    
+
 }
 */
 
@@ -894,7 +894,7 @@ void MovableObject::PreTravel()
 
 void MovableObject::Travel()
 {
-    
+
 }
 
 
@@ -1033,7 +1033,7 @@ void MovableObject::RegMOID(vector<MovableObject *> &MOIDIndex, MOID rootMOID, b
 		MOIDIndex.push_back(this);
     }
 
-    m_RootMOID = (rootMOID == g_NoMOID ? m_MOID : rootMOID);
+    m_RootMOID = rootMOID == g_NoMOID ? m_MOID : rootMOID;
 }
 
 } // namespace RTE

@@ -52,6 +52,9 @@ void HeldDevice::Clear()
     m_BlinkTimer.Reset();
     m_PieSlices.clear();
     m_Loudness = -1;
+
+    // NOTE: This special override of a parent class member variable avoids needing an extra variable to avoid overwriting INI values.
+    m_CollidesWithTerrainWhileAttached = false;
 }
 
 

@@ -362,7 +362,7 @@ EntityAllocation(Scene)
 //////////////////////////////////////////////////////////////////////////////////////////
 // Virtual method:  ExpandAIPlanAssemblySchemes
 //////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Replace all assembly shemes by corresponding bunker assemblies in 
+// Description:     Replace all assembly shemes by corresponding bunker assemblies in
 //					AI plan objects set.
 // Arguments:       None.
 // Return value:    None.
@@ -390,17 +390,7 @@ EntityAllocation(Scene)
 // Arguments:       The full filepath the where to save the Bitmap data.
 // Return value:    None.
 
-	int SavePreview(string bitmapPath);
-
-//////////////////////////////////////////////////////////////////////////////////////////
-// Virtual method:  DrawPlacedObjectsPreview
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Draw placed objects onto specified preview bitmap with scaling
-// Arguments:       Bitmap to draw on. Set of scene objects to draw. Width and height of scaled scene layer, 
-//					scaled map offset, scale.
-// Return value:    None.
-
-	void DrawPlacedObjectsPreview(SDL_Renderer* renderer, int set, int width, int height, int xOffset, int yOffset, float scale);
+	int SavePreview(const std::string &bitmapPath);
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -1276,7 +1266,7 @@ const SceneObject * PickPlacedActorInRange(int whichSet, Vector &scenePoint, int
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          IsMetagameInternal
 //////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Whether this scene is a temprorary metagame scene and should 
+// Description:     Whether this scene is a temprorary metagame scene and should
 //					not be used anywhere except in metagame.
 // Arguments:       None.
 // Return value:    Whether scene belongs to metagame or not.
@@ -1287,7 +1277,7 @@ const SceneObject * PickPlacedActorInRange(int whichSet, Vector &scenePoint, int
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          SetMetagameInternal
 //////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Sets whether this scene is a temprorary metagame scene and should 
+// Description:     Sets whether this scene is a temprorary metagame scene and should
 //					not be used anywhere except in metagame.
 // Arguments:       New value.
 // Return value:    None.

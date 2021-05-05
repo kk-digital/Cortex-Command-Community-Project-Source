@@ -1288,6 +1288,15 @@ void MOSRotating::PostTravel()
 // TODO: don't hardcode the MOPixel limits!
     if (g_MovableMan.IsMOSubtractionEnabled() && (m_ForceDeepCheck || m_DeepCheck))
         DeepCheck(true, 8, 50);
+
+
+    Attachable *attachable;
+    for (std::list<Attachable *>::iterator attachableIterator = m_Attachables.begin(); attachableIterator != m_Attachables.end(); ) {
+        attachable = *attachableIterator;
+        RTEAssert(attachable, "Broken Attachable in PostTravel!");
+        ++attachableIterator;
+        attachable->PostTravel();
+    }
 }
 
 
@@ -1316,7 +1325,7 @@ void MOSRotating::Update() {
     AEmitter *wound = nullptr;
     for (std::list<AEmitter *>::iterator woundIterator = m_Wounds.begin(); woundIterator != m_Wounds.end(); ) {
         wound = *woundIterator;
-        RTEAssert(wound && wound->IsAttachedTo(this), "Broken wound AEmitter");
+        RTEAssert(wound && wound->IsAttachedTo(this), "Broken wound AEmitter in Update");
         ++woundIterator;
         wound->Update();
 
@@ -1340,14 +1349,17 @@ void MOSRotating::Update() {
     Attachable *attachable = nullptr;
     for (std::list<Attachable *>::iterator attachableIterator = m_Attachables.begin(); attachableIterator != m_Attachables.end(); ) {
         attachable = *attachableIterator;
-        RTEAssert(attachable, "Broken Attachable!");
+        RTEAssert(attachable, "Broken Attachable in Update!");
+        RTEAssert(attachable->IsAttached(), "Found Attachable on " + GetModuleAndPresetName() + " (" + attachable->GetModuleAndPresetName() + ") with no parent, this should never happen!");
+        RTEAssert(attachable->IsAttachedTo(this), "Found Attachable on " + GetModuleAndPresetName() + " (" + attachable->GetModuleAndPresetName() + ") with another parent (" + attachable->GetParent()->GetModuleAndPresetName() + "), this should never happen!");
         ++attachableIterator;
 
         attachable->Update();
+        RTEAssert(attachable, "Broken Attachable after Updating it!");
 
         if (attachable->IsAttachedTo(this) && attachable->IsSetToDelete()) {
             RemoveAttachable(attachable, true, true);
-        } else if (!attachable->IsSetToDelete()) {
+        } else if (attachable->IsAttachedTo(this) && !attachable->IsSetToDelete()) {
             TransferForcesFromAttachable(attachable);
         }
     }
@@ -1446,7 +1458,7 @@ bool MOSRotating::RemoveAttachable(Attachable *attachable, bool addToMovableMan,
         hardcodedAttachableMapEntry->second(this, nullptr);
         m_HardcodedAttachableUniqueIDsAndSetters.erase(hardcodedAttachableMapEntry);
     }
-    
+
     if (addBreakWounds) {
         if (!m_ToDelete && attachable->GetParentBreakWound()) {
             AEmitter *parentBreakWound = dynamic_cast<AEmitter *>(attachable->GetParentBreakWound()->Clone());
@@ -1524,11 +1536,42 @@ void MOSRotating::SetWhichMOToNotHit(MovableObject *moToNotHit, float forHowLong
 // Description:     Draws this MOSRotating's current graphical representation to a
 //                  BITMAP of choice.
 
-void MOSRotating::Draw(SDL_Renderer *renderer, const Vector &targetPos,
-	                   DrawMode mode, bool onlyPhysical) const {
-	RTEAssert(!m_aSprite.empty(), "No sprite bitmaps loaded to draw!");
-	RTEAssert(m_Frame >= 0 && m_Frame < m_FrameCount,
-		      "Frame is out of bounds!");
+void MOSRotating::Draw(BITMAP *pTargetBitmap,
+                       const Vector &targetPos,
+                       DrawMode mode,
+                       bool onlyPhysical) const
+{
+    RTEAssert(m_aSprite, "No sprite bitmaps loaded to draw!");
+    RTEAssert(m_Frame >= 0 && m_Frame < m_FrameCount, "Frame is out of bounds!");
+
+    // Only draw MOID if this gets hit by MO's and it has a valid MOID assigned to it
+    if (mode == g_DrawMOID && (!m_GetsHitByMOs || m_MOID == g_NoMOID))
+        return;
+
+    // Draw all the attached wound emitters, and only if the mode is g_DrawColor and not onlyphysical
+    // Only draw attachables and emitters which are not drawn after parent, so we draw them before
+    if (mode == g_DrawColor || (!onlyPhysical && mode == g_DrawMaterial)) {
+        for (const AEmitter *woundToDraw : m_Wounds) {
+            if (!woundToDraw->IsDrawnAfterParent()) { woundToDraw->Draw(pTargetBitmap, targetPos, mode, onlyPhysical); }
+        }
+    }
+
+    // Draw all the attached attachables
+    for (const Attachable *attachableToDraw : m_Attachables) {
+        if (!attachableToDraw->IsDrawnAfterParent() && attachableToDraw->IsDrawnNormallyByParent()) { attachableToDraw->Draw(pTargetBitmap, targetPos, mode, onlyPhysical); }
+    }
+
+	BITMAP * pTempBitmap = m_pTempBitmap;
+	BITMAP * pFlipBitmap = m_pFlipBitmap;
+	int keyColor = g_MaskColor;
+
+	// Switch to non 8-bit drawing mode if we're drawing onto MO layer
+	if (mode == g_DrawMOID || mode == g_DrawNoMOID)
+	{
+		pTempBitmap = m_pTempBitmapS;
+		pFlipBitmap = m_pFlipBitmapS;
+		keyColor = g_MOIDMaskColor;
+	}
 
 	// Only draw MOID if this gets hit by MO's and it has a valid MOID assigned
 	// to it
@@ -1594,6 +1637,7 @@ void MOSRotating::Draw(SDL_Renderer *renderer, const Vector &targetPos,
 		}
 	}
 
+<<<<<<< variant A
 	// Draw all the attached wound emitters, and only if the mode is g_DrawColor
 	// and not onlyphysical Only draw attachables and emitters which are not
 	// drawn after parent, so we draw them before
@@ -1612,6 +1656,70 @@ void MOSRotating::Draw(SDL_Renderer *renderer, const Vector &targetPos,
 			attachableToDraw->Draw(renderer, targetPos, mode, onlyPhysical);
 		}
 	}
+>>>>>>> variant B
+    //////////////////
+    // FLIPPED
+    if (m_HFlipped && pFlipBitmap)
+    {
+        // Don't size the intermediate bitmaps to the m_Scale, because the scaling happens after they are done
+        clear_to_color(pFlipBitmap, keyColor);
+        // Draw eitehr the source color bitmap or the intermediate material bitmap onto the intermediate flipping bitmap
+        if (mode == g_DrawColor || mode == g_DrawTrans)
+            draw_sprite_h_flip(pFlipBitmap, m_aSprite[m_Frame], 0, 0);
+        // If using the temp bitmap (which is always larger than the sprite) make sure the flipped image ends up in the upper right corner as if it was just as small as the sprite bitmap
+        else
+            draw_sprite_h_flip(pFlipBitmap, pTempBitmap, -(pTempBitmap->w - m_aSprite[m_Frame]->w), 0);
+
+        // Transparent mode
+        if (mode == g_DrawTrans)
+        {
+            clear_to_color(pTempBitmap, keyColor);
+            // Draw the rotated thing onto the intermediate bitmap so its COM position aligns with the middle of the temp bitmap.
+            // The temp bitmap should be able to hold the full size since it is larger than the max diameter.
+            // Take into account the h-flipped pivot point
+            pivot_scaled_sprite(pTempBitmap,
+                                pFlipBitmap,
+                                pTempBitmap->w / 2,
+                                pTempBitmap->h / 2,
+                                pFlipBitmap->w + m_SpriteOffset.m_X,
+                                -(m_SpriteOffset.m_Y),
+                                ftofix(m_Rotation.GetAllegroAngle()),
+                                ftofix(m_Scale));
+
+            // Draw the now rotated object's temporary bitmap onto the final drawing bitmap with transperency
+            // Do the passes loop in here so the intermediate drawing doesn't get done multiple times
+            for (int i = 0; i < passes; ++i)
+                draw_trans_sprite(pTargetBitmap, pTempBitmap, aDrawPos[i].GetFloorIntX() - (pTempBitmap->w / 2), aDrawPos[i].GetFloorIntY() - (pTempBitmap->h / 2));
+        }
+        // Non-transparent mode
+        else
+        {
+            // Do the passes loop in here so the flipping operation doesn't get done multiple times
+            for (int i = 0; i < passes; ++i)
+            {
+                // Take into account the h-flipped pivot point
+                pivot_scaled_sprite(pTargetBitmap,
+                                    pFlipBitmap,
+                                    aDrawPos[i].GetFloorIntX(),
+                                    aDrawPos[i].GetFloorIntY(),
+                                    pFlipBitmap->w + m_SpriteOffset.m_X,
+                                    -(m_SpriteOffset.m_Y),
+                                    ftofix(m_Rotation.GetAllegroAngle()),
+                                    ftofix(m_Scale));
+
+                // Register potential MOID drawing
+                if (mode == g_DrawMOID)
+                    g_SceneMan.RegisterMOIDDrawing(aDrawPos[i].GetFloored(), m_SpriteRadius + 2);
+            }
+        }
+    }
+    /////////////////
+    // NON-FLIPPED
+    else
+    {
+//        spritePos += m_SpriteOffset;
+//        spritePos += (m_SpriteCenter * m_Rotation - m_SpriteCenter);
+======= end
 
 	for (int i = 0; i < passes; ++i) {
 		// TODO: Fix that MaterialAir and KeyColor don't work at all because
@@ -1692,7 +1800,7 @@ bool MOSRotating::HandlePotentialRadiusAffectingAttachable(const Attachable *att
     if (attachable == m_RadiusAffectingAttachable && distanceAndRadiusFromParent < m_FarthestAttachableDistanceAndRadius) {
         m_FarthestAttachableDistanceAndRadius = distanceAndRadiusFromParent;
         if (m_Attachables.size() > 1) {
-            std::for_each(m_Attachables.begin(), m_Attachables.end(), [this](const Attachable *attachableToCheck) { HandlePotentialRadiusAffectingAttachable(attachableToCheck); });
+            std::for_each(m_Attachables.begin(), m_Attachables.end(), [this](Attachable *attachableToCheck) { attachableToCheck->UpdatePositionAndJointPositionBasedOnOffsets(); HandlePotentialRadiusAffectingAttachable(attachableToCheck); });
         }
         return true;
     } else if (distanceAndRadiusFromParent > m_FarthestAttachableDistanceAndRadius) {
@@ -1707,18 +1815,12 @@ bool MOSRotating::HandlePotentialRadiusAffectingAttachable(const Attachable *att
 
 bool MOSRotating::TransferForcesFromAttachable(Attachable *attachable) {
     bool intact = false;
-    if (attachable) {
-        RTEAssert(attachable->IsAttached(), "Tried to transfer forces from Attachable (" + attachable->GetModuleAndPresetName() + ") with no parent, this should never happen!");
-        RTEAssert(attachable->IsAttachedTo(this), "Tried to transfer forces from another parent's (" + attachable->GetParent()->GetModuleAndPresetName() + ") Attachable (" + attachable->GetModuleAndPresetName() + "), this should never happen!");
-        
-        attachable->PostTravel();
-        Vector forces;
-        Vector impulses;
-        intact = attachable->TransferJointForces(forces) && attachable->TransferJointImpulses(impulses);
+    Vector forces;
+    Vector impulses;
+    intact = attachable->TransferJointForces(forces) && attachable->TransferJointImpulses(impulses);
 
-        if (!forces.IsZero()) { AddForce(forces, attachable->GetApplyTransferredForcesAtOffset() ? attachable->GetParentOffset() * m_Rotation * c_MPP : Vector()); }
-        if (!impulses.IsZero()) { AddImpulseForce(impulses, attachable->GetApplyTransferredForcesAtOffset() ? attachable->GetParentOffset() * m_Rotation * c_MPP : Vector()); }
-    }
+    if (!forces.IsZero()) { AddForce(forces, attachable->GetApplyTransferredForcesAtOffset() ? attachable->GetParentOffset() * m_Rotation * c_MPP : Vector()); }
+    if (!impulses.IsZero()) { AddImpulseForce(impulses, attachable->GetApplyTransferredForcesAtOffset() ? attachable->GetParentOffset() * m_Rotation * c_MPP : Vector()); }
     return intact;
 }
 
