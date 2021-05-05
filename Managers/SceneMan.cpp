@@ -108,9 +108,11 @@ void SceneMan::Clear()
 		m_SeamCrossCount[i][Y] = 0;
 	}
 
-	m_pUnseenRevealSound = 0;
-	m_LastUpdatedScreen = 0;
-	m_SecondStructPass = false;
+    m_pUnseenRevealSound = 0;
+    m_DrawRayCastVisualizations = false;
+    m_DrawPixelCheckVisualizations = false;
+    m_LastUpdatedScreen = 0;
+    m_SecondStructPass = false;
 //    m_CalcTimer.Reset();
 	m_CleanTimer.Reset();
 
@@ -137,7 +139,7 @@ int SceneMan::Create(std::string readerFile)
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          AddMaterialCopy
 //////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Creates a copy of passed material and stores it into internal vector 
+// Description:     Creates a copy of passed material and stores it into internal vector
 //					to make sure there's only one material owner. Ownership not transfered.
 // Arguments:       Material to add.
 // Return value:    Pointer to stored material.
@@ -219,7 +221,7 @@ int SceneMan::LoadScene(Scene *pNewScene, bool placeObjects, bool placeUnits) {
 		                 Vector(1.0, 1.0));
 	new Texture(g_FrameMan.GetRenderer(), GetSceneWidth(), GetSceneHeight());
 
-#ifdef DEBUG_BUILD
+  if(m_DrawRayCastVisualizations || m_DrawPixelCheckVisualizations){
 	// Create the Debug SceneLayer
 	m_pDebugLayer.reset(new SceneLayer());
 	Texture debugTexture(g_FrameMan.GetRenderer(), GetSceneWidth(),
@@ -229,7 +231,7 @@ int SceneMan::LoadScene(Scene *pNewScene, bool placeObjects, bool placeUnits) {
 		                      m_pCurrentScene->WrapsY(), Vector(1.0, 1.0));
 	new Texture(g_FrameMan.GetRenderer(), GetSceneWidth(), GetSceneHeight(),
 		        SDL_TEXTUREACCESS_STREAMING);
-#endif
+  }
 
 	// Finally draw the ID:s of the MO:s to the MOID layers for the first time
 	g_MovableMan.UpdateDrawMOIDs(g_FrameMan.GetRenderer(), m_pMOIDLayer->GetTexture());
@@ -571,6 +573,7 @@ unsigned char SceneMan::GetTerrMatter(int pixelX, int pixelY)
 
 	WrapPosition(pixelX, pixelY);
 
+    if (m_pDebugLayer && m_DrawPixelCheckVisualizations) { m_pDebugLayer->SetPixel(pixelX, pixelY, 5); }
 
 	// If it's still below or to the sides out of bounds after
 	// what is supposed to be wrapped, shit is out of bounds.
@@ -596,6 +599,7 @@ MOID SceneMan::GetMOIDPixel(int pixelX, int pixelY)
 {
 	WrapPosition(pixelX, pixelY);
 
+  if (m_pDebugLayer && m_DrawPixelCheckVisualizations) { m_pDebugLayer->SetPixel(pixelX, pixelY, 5); }
 	// Out of Bounds
 	if (pixelX < 0 ||
 	   pixelX >= m_pMOIDLayer->GetTexture()->getW() ||
@@ -679,7 +683,7 @@ void SceneMan::SetScroll(const Vector &center, int screen)
 		m_Offset[screen].m_X = center.GetFloorIntX() - (g_FrameMan.GetPlayerFrameBufferWidth(screen) / 2);
 		m_Offset[screen].m_Y = center.GetFloorIntY() - (g_FrameMan.GetPlayerFrameBufferHeight(screen) / 2);
 	}
-	else 
+	else
 	{
 		m_Offset[screen].m_X = center.GetFloorIntX() - (g_FrameMan.GetResX() / 2);
 		m_Offset[screen].m_Y = center.GetFloorIntY() - (g_FrameMan.GetResY() / 2);
@@ -1004,10 +1008,10 @@ int SceneMan::RemoveOrphans(int posX, int posY, int radius, int maxArea, bool re
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          RemoveOrphans
 //////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Returns the area of an orphaned region at specified coordinates. 
+// Description:     Returns the area of an orphaned region at specified coordinates.
 
-int SceneMan::RemoveOrphans(int posX, int posY, 
-							int centerPosX, int centerPosY, 
+int SceneMan::RemoveOrphans(int posX, int posY,
+							int centerPosX, int centerPosY,
 							int accumulatedArea, int radius, int maxArea, bool remove)
 {
 	int area = 0;
@@ -1097,7 +1101,7 @@ int SceneMan::RemoveOrphans(int posX, int posY,
 	return area;
 }
 
-void SceneMan::RegisterTerrainChange(int x, int y, int w, int h, unsigned char color, bool back) 
+void SceneMan::RegisterTerrainChange(int x, int y, int w, int h, unsigned char color, bool back)
 {
 	#ifdef NETWORK_ENABLED
 	if (!g_NetworkServer.IsServerModeEnabled())
@@ -1404,7 +1408,7 @@ bool SceneMan::TryPenetrate(const int posX,
 void SceneMan::MakeAllUnseen(Vector pixelSize, const int team)
 {
 	RTEAssert(m_pCurrentScene, "Messing with scene before the scene exists!");
-	if (team < Activity::TeamOne || team >= Activity::MaxTeamCount) 
+	if (team < Activity::TeamOne || team >= Activity::MaxTeamCount)
 		return;
 
 	m_pCurrentScene->FillUnseenLayer(pixelSize, team);
@@ -1465,7 +1469,7 @@ bool SceneMan::AnythingUnseen(const int team)
 Vector SceneMan::GetUnseenResolution(const int team) const
 {
 	RTEAssert(m_pCurrentScene, "Checking scene before the scene exists!");
-	if (team < Activity::TeamOne || team >= Activity::MaxTeamCount) 
+	if (team < Activity::TeamOne || team >= Activity::MaxTeamCount)
 		return Vector(1, 1);
 
 	SceneLayer *pUnseenLayer = m_pCurrentScene->GetUnseenLayer(team);
@@ -1484,7 +1488,7 @@ Vector SceneMan::GetUnseenResolution(const int team) const
 bool SceneMan::IsUnseen(const int posX, const int posY, const int team)
 {
 	RTEAssert(m_pCurrentScene, "Checking scene before the scene exists!");
-	if (team < Activity::TeamOne || team >= Activity::MaxTeamCount) 
+	if (team < Activity::TeamOne || team >= Activity::MaxTeamCount)
 		return false;
 
 	SceneLayer *pUnseenLayer = m_pCurrentScene->GetUnseenLayer(team);
@@ -1509,7 +1513,7 @@ bool SceneMan::IsUnseen(const int posX, const int posY, const int team)
 bool SceneMan::RevealUnseen(const int posX, const int posY, const int team)
 {
 	RTEAssert(m_pCurrentScene, "Checking scene before the scene exists!");
-	if (team < Activity::TeamOne || team >= Activity::MaxTeamCount) 
+	if (team < Activity::TeamOne || team >= Activity::MaxTeamCount)
 		return false;
 
 	SceneLayer *pUnseenLayer = m_pCurrentScene->GetUnseenLayer(team);
@@ -1551,7 +1555,7 @@ bool SceneMan::RevealUnseen(const int posX, const int posY, const int team)
 bool SceneMan::RestoreUnseen(const int posX, const int posY, const int team)
 {
 	RTEAssert(m_pCurrentScene, "Checking scene before the scene exists!");
-	if (team < Activity::TeamOne || team >= Activity::MaxTeamCount) 
+	if (team < Activity::TeamOne || team >= Activity::MaxTeamCount)
 		return false;
 
 	SceneLayer *pUnseenLayer = m_pCurrentScene->GetUnseenLayer(team);
@@ -1590,7 +1594,7 @@ bool SceneMan::RestoreUnseen(const int posX, const int posY, const int team)
 void SceneMan::RevealUnseenBox(const int posX, const int posY, const int width, const int height, const int team)
 {
 	RTEAssert(m_pCurrentScene, "Checking scene before the scene exists!");
-	if (team < Activity::TeamOne || team >= Activity::MaxTeamCount) 
+	if (team < Activity::TeamOne || team >= Activity::MaxTeamCount)
 		return;
 
 	SceneLayer *pUnseenLayer = m_pCurrentScene->GetUnseenLayer(team);
@@ -1649,15 +1653,11 @@ void SceneMan::RestoreUnseenBox(const int posX, const int posY, const int width,
 //                  as long as the accumulated material strengths traced through the terrain
 //                  don't exceed a specific value.
 
+//TODO Every raycast should use some shared line drawing method (or maybe something more efficient if it exists, that needs looking into) instead of having a ton of duplicated code.
 bool SceneMan::CastUnseenRay(int team, const Vector &start, const Vector &ray, Vector &endPos, int strengthLimit, int skip, bool reveal)
 {
-#ifdef DEBUG_BUILD
-	if (m_pDebugLayer)
-		m_pDebugLayer->LockTexture();
-#endif
-
-	if (!m_pCurrentScene->GetUnseenLayer(team))
-		return false;
+    if (!m_pCurrentScene->GetUnseenLayer(team))
+        return false;
 
 	int hitCount = 0, error, dom, sub, domSteps, skipped = skip;
 	int intPos[2], delta[2], delta2[2], increment[2];
@@ -1672,7 +1672,7 @@ bool SceneMan::CastUnseenRay(int team, const Vector &start, const Vector &ray, V
 	intPos[Y] = std::floor(start.m_Y);
 	delta[X] = std::floor(start.m_X + ray.m_X) - intPos[X];
 	delta[Y] = std::floor(start.m_Y + ray.m_Y) - intPos[Y];
-    
+
 	if (delta[X] == 0 &&  delta[Y] == 0)
 		return false;
 
@@ -1752,20 +1752,12 @@ bool SceneMan::CastUnseenRay(int team, const Vector &start, const Vector &ray, V
 			}
 			// Reset skip counter
 			skipped = 0;
-#ifdef DEBUG_BUILD
-			// Draw debug graphics, if applicable
-			if (m_pDebugLayer)
+			if (m_pDebugLayer && m_DrawRayCastVisualizations)
 				m_pDebugLayer->SetPixel(intPos[X], intPos[Y], 13); //TODO: Magic numbers
-#endif
 		}
 	}
 
 	m_pCurrentScene->GetUnseenLayer(team)->UnlockTexture();
-
-#ifdef DEBUG_BUILD
-	if (m_pDebugLayer)
-		m_pDebugLayer->UnlockTexture();
-#endif
 
 	return affectedAny;
 }
@@ -1804,10 +1796,6 @@ bool SceneMan::CastUnseeRay(int team, const Vector &start, const Vector &ray, Ve
 
 bool SceneMan::CastMaterialRay(const Vector &start, const Vector &ray, unsigned char material, Vector &result, int skip, bool wrap)
 {
-#ifdef DEBUG_BUILD
-	if (m_pDebugLayer)
-		m_pDebugLayer->LockTexture();
-#endif
 
 	int hitCount = 0, error, dom, sub, domSteps, skipped = skip;
 	int intPos[2], delta[2], delta2[2], increment[2];
@@ -1817,7 +1805,7 @@ bool SceneMan::CastMaterialRay(const Vector &start, const Vector &ray, unsigned 
 	intPos[Y] = std::floor(start.m_Y);
 	delta[X] = std::floor(start.m_X + ray.m_X) - intPos[X];
 	delta[Y] = std::floor(start.m_Y + ray.m_Y) - intPos[Y];
-    
+
 	if (delta[X] == 0 &&  delta[Y] == 0)
 		return false;
 
@@ -1889,18 +1877,9 @@ bool SceneMan::CastMaterialRay(const Vector &start, const Vector &ray, unsigned 
 
 			skipped = 0;
 
-#ifdef DEBUG_BUILD
-			// Draw debug graphics, if applicable
-			if (m_pDebugLayer)
-				m_pDebugLayer->SetPixel(intPos[X], intPos[Y], 13);
-#endif
-		}
-	}
-
-#ifdef DEBUG_BUILD
-	if (m_pDebugLayer)
-		m_pDebugLayer->UnlockTexture();
-#endif
+      if (m_pDebugLayer && m_DrawRayCastVisualizations) { m_pDebugLayer->SetPixel(intPos[X], intPos[Y], 13); } // TODO: Magic numbers
+        }
+    }
 
 	return foundPixel;
 }
@@ -1935,14 +1914,9 @@ float SceneMan::CastMaterialRay(const Vector &start, const Vector &ray, unsigned
 
 bool SceneMan::CastNotMaterialRay(const Vector &start, const Vector &ray, unsigned char material, Vector &result, int skip, bool checkMOs)
 {
-#ifdef DEBUG_BUILD
-	if (m_pDebugLayer)
-		m_pDebugLayer->LockTexture();
-#endif
-
-	int hitCount = 0, error, dom, sub, domSteps, skipped = skip;
-	int intPos[2], delta[2], delta2[2], increment[2];
-	bool foundPixel = false;
+    int hitCount = 0, error, dom, sub, domSteps, skipped = skip;
+    int intPos[2], delta[2], delta2[2], increment[2];
+    bool foundPixel = false;
 
 	intPos[X] = std::floor(start.m_X);
 	intPos[Y] = std::floor(start.m_Y);
@@ -2021,19 +1995,10 @@ bool SceneMan::CastNotMaterialRay(const Vector &start, const Vector &ray, unsign
 				break;
 			}
 
-			skipped = 0;
-#ifdef DEBUG_BUILD
-			// Draw debug graphics, if applicable
-			if (m_pDebugLayer)
-				m_pDebugLayer->SetPixel(intPos[X], intPos[Y], 13);
-#endif
-		}
-	}
-
-#ifdef DEBUG_BUILD
-	if (m_pDebugLayer)
-		m_pDebugLayer->UnlockTexture();
-#endif
+            skipped = 0;
+            if (m_pDebugLayer && m_DrawRayCastVisualizations) { m_pDebugLayer->SetPixel(intPos[X], intPos[Y], 13); } // TODO: Magic Numbers
+        }
+    }
 
 	return foundPixel;
 }
@@ -2081,7 +2046,7 @@ float SceneMan::CastStrengthSumRay(const Vector &start, const Vector &end, int s
 	intPos[Y] = std::floor(start.m_Y);
 	delta[X] = std::floor(start.m_X + ray.m_X) - intPos[X];
 	delta[Y] = std::floor(start.m_Y + ray.m_Y) - intPos[Y];
-    
+
 	if (delta[X] == 0 &&  delta[Y] == 0)
 		return false;
 
@@ -2145,9 +2110,11 @@ float SceneMan::CastStrengthSumRay(const Vector &start, const Vector &end, int s
 			if (materialID != g_MaterialAir && materialID != ignoreMaterial)
 				strengthSum += GetMaterialFromID(materialID)->GetIntegrity();
 
-			skipped = 0;
-		}
-	}
+            skipped = 0;
+
+            if (m_pDebugLayer && m_DrawRayCastVisualizations) { m_pDebugLayer->SetPixel(intPos[X], intPos[Y], 13); }
+        }
+    }
 
 	return strengthSum;
 }
@@ -2175,7 +2142,7 @@ float SceneMan::CastMaxStrengthRay(const Vector &start, const Vector &end, int s
 	intPos[Y] = std::floor(start.m_Y);
 	delta[X] = std::floor(start.m_X + ray.m_X) - intPos[X];
 	delta[Y] = std::floor(start.m_Y + ray.m_Y) - intPos[Y];
-    
+
 	if (delta[X] == 0 &&  delta[Y] == 0)
 		return false;
 
@@ -2239,10 +2206,12 @@ float SceneMan::CastMaxStrengthRay(const Vector &start, const Vector &end, int s
 			if (materialID != g_MaterialDoor)
 				maxStrength = std::max(maxStrength, GetMaterialFromID(materialID)->GetIntegrity());
 
-			skipped = 0;
-		}
-	}
-    
+            skipped = 0;
+
+            if (m_pDebugLayer && m_DrawRayCastVisualizations) { m_pDebugLayer->SetPixel(intPos[X], intPos[Y], 13); }
+        }
+    }
+
 	return maxStrength;
 }
 
@@ -2257,22 +2226,17 @@ float SceneMan::CastMaxStrengthRay(const Vector &start, const Vector &end, int s
 
 bool SceneMan::CastStrengthRay(const Vector &start, const Vector &ray, float strength, Vector &result, int skip, unsigned char ignoreMaterial, bool wrap)
 {
-#ifdef DEBUG_BUILD
-	if (m_pDebugLayer)
-		m_pDebugLayer->LockTexture();
-#endif
-
-	int hitCount = 0, error, dom, sub, domSteps, skipped = skip;
-	int intPos[2], delta[2], delta2[2], increment[2];
-	bool foundPixel = false;
-	unsigned char materialID;
-	Material const * foundMaterial;
+    int hitCount = 0, error, dom, sub, domSteps, skipped = skip;
+    int intPos[2], delta[2], delta2[2], increment[2];
+    bool foundPixel = false;
+    unsigned char materialID;
+    Material const * foundMaterial;
 
 	intPos[X] = std::floor(start.m_X);
 	intPos[Y] = std::floor(start.m_Y);
 	delta[X] = std::floor(start.m_X + ray.m_X) - intPos[X];
 	delta[Y] = std::floor(start.m_Y + ray.m_Y) - intPos[Y];
-    
+
 	if (delta[X] == 0 &&  delta[Y] == 0)
 		return false;
 
@@ -2351,18 +2315,9 @@ delta[Y] = -delta[Y];
             }
             skipped = 0;
 
-#ifdef DEBUG_BUILD
-            // Draw debug graphics, if applicable
-            if (m_pDebugLayer)
-                m_pDebugLayer->SetPixel(intPos[X], intPos[Y], 13);
-#endif
+            if (m_pDebugLayer && m_DrawRayCastVisualizations) { m_pDebugLayer->SetPixel(intPos[X], intPos[Y], 13); }
         }
     }
-
-#ifdef DEBUG_BUILD
-    if (m_pDebugLayer)
-        m_pDebugLayer->UnlockTexture();
-#endif
 
     // If no pixel of sufficient strength was found, set the result to the final tried position
     if (!foundPixel)
@@ -2381,11 +2336,6 @@ delta[Y] = -delta[Y];
 
 bool SceneMan::CastWeaknessRay(const Vector &start, const Vector &ray, float strength, Vector &result, int skip, bool wrap)
 {
-#ifdef DEBUG_BUILD
-    if (m_pDebugLayer)
-        m_pDebugLayer->LockTexture();
-#endif
-
     int hitCount = 0, error, dom, sub, domSteps, skipped = skip;
     int intPos[2], delta[2], delta2[2], increment[2];
     bool foundPixel = false;
@@ -2396,7 +2346,7 @@ bool SceneMan::CastWeaknessRay(const Vector &start, const Vector &ray, float str
     intPos[Y] = std::floor(start.m_Y);
     delta[X] = std::floor(start.m_X + ray.m_X) - intPos[X];
     delta[Y] = std::floor(start.m_Y + ray.m_Y) - intPos[Y];
-    
+
     if (delta[X] == 0 &&  delta[Y] == 0)
         return false;
 
@@ -2471,18 +2421,9 @@ bool SceneMan::CastWeaknessRay(const Vector &start, const Vector &ray, float str
 
             skipped = 0;
 
-#ifdef DEBUG_BUILD
-            // Draw debug graphics, if applicable
-            if (m_pDebugLayer)
-                m_pDebugLayer->SetPixel(intPos[X], intPos[Y], 13);
-#endif
+            if (m_pDebugLayer && m_DrawRayCastVisualizations) { m_pDebugLayer->SetPixel(intPos[X], intPos[Y], 13); }
         }
     }
-
-#ifdef DEBUG_BUILD
-    if (m_pDebugLayer)
-        m_pDebugLayer->UnlockTexture();
-#endif
 
     // If no pixel of sufficient strength was found, set the result to the final tried position
     if (!foundPixel)
@@ -2501,11 +2442,6 @@ bool SceneMan::CastWeaknessRay(const Vector &start, const Vector &ray, float str
 
 MOID SceneMan::CastMORay(const Vector &start, const Vector &ray, MOID ignoreMOID, int ignoreTeam, unsigned char ignoreMaterial, bool ignoreAllTerrain, int skip)
 {
-#ifdef DEBUG_BUILD
-    if (m_pDebugLayer)
-        m_pDebugLayer->LockTexture();
-#endif
-
     int hitCount = 0, error, dom, sub, domSteps, skipped = skip;
     int intPos[2], delta[2], delta2[2], increment[2];
     MOID hitMOID = g_NoMOID;
@@ -2515,7 +2451,7 @@ MOID SceneMan::CastMORay(const Vector &start, const Vector &ray, MOID ignoreMOID
     intPos[Y] = std::floor(start.m_Y);
     delta[X] = std::floor(start.m_X + ray.m_X) - intPos[X];
     delta[Y] = std::floor(start.m_Y + ray.m_Y) - intPos[Y];
-    
+
     if (delta[X] == 0 && delta[Y] == 0)
         return g_NoMOID;
 
@@ -2623,18 +2559,9 @@ MOID SceneMan::CastMORay(const Vector &start, const Vector &ray, MOID ignoreMOID
 
             skipped = 0;
 
-#ifdef DEBUG_BUILD
-            // Draw debug graphics, if applicable
-            if (m_pDebugLayer)
-                m_pDebugLayer->SetPixel(intPos[X], intPos[Y], 120); //TODO: Magic numbers
-#endif
+            if (m_pDebugLayer && m_DrawRayCastVisualizations) { m_pDebugLayer->SetPixel(intPos[X], intPos[Y], 13); } // TODO: Magic numbers
         }
     }
-
-#ifdef DEBUG_BUILD
-    if (m_pDebugLayer)
-        m_pDebugLayer->UnlockTexture();
-#endif
 
     // Didn't hit anything but air
     return g_NoMOID;
@@ -2648,11 +2575,6 @@ MOID SceneMan::CastMORay(const Vector &start, const Vector &ray, MOID ignoreMOID
 
 bool SceneMan::CastFindMORay(const Vector &start, const Vector &ray, MOID targetMOID, Vector &resultPos, unsigned char ignoreMaterial, bool ignoreAllTerrain, int skip)
 {
-#ifdef DEBUG_BUILD
-    if (m_pDebugLayer)
-        m_pDebugLayer->LockTexture();
-#endif
-
     int hitCount = 0, error, dom, sub, domSteps, skipped = skip;;
     int intPos[2], delta[2], delta2[2], increment[2];
     MOID hitMOID = g_NoMOID;
@@ -2662,7 +2584,7 @@ bool SceneMan::CastFindMORay(const Vector &start, const Vector &ray, MOID target
     intPos[Y] = std::floor(start.m_Y);
     delta[X] = std::floor(start.m_X + ray.m_X) - intPos[X];
     delta[Y] = std::floor(start.m_Y + ray.m_Y) - intPos[Y];
-    
+
     if (delta[X] == 0 && delta[Y] == 0)
         return g_NoMOID;
 
@@ -2745,18 +2667,9 @@ bool SceneMan::CastFindMORay(const Vector &start, const Vector &ray, MOID target
 
             skipped = 0;
 
-#ifdef DEBUG_BUILD
-            // Draw debug graphics, if applicable
-            if (m_pDebugLayer)
-                m_pDebugLayer->SetPixel(intPos[X], intPos[Y], 120); //TODO: Magic numbers
-#endif
+            if (m_pDebugLayer && m_DrawRayCastVisualizations) { m_pDebugLayer->SetPixel(intPos[X], intPos[Y], 13); } //TODO: Magic numbers
         }
     }
-
-#ifdef DEBUG_BUILD
-    if (m_pDebugLayer)
-        m_pDebugLayer->UnlockTexture();
-#endif
 
     // Didn't hit the target
     return false;
@@ -2771,11 +2684,6 @@ bool SceneMan::CastFindMORay(const Vector &start, const Vector &ray, MOID target
 
 float SceneMan::CastObstacleRay(const Vector &start, const Vector &ray, Vector &obstaclePos, Vector &freePos, MOID ignoreMOID, int ignoreTeam, unsigned char ignoreMaterial, int skip)
 {
-#ifdef DEBUG_BUILD
-    if (m_pDebugLayer)
-        m_pDebugLayer->LockTexture();
-#endif
-
     int hitCount = 0, error, dom, sub, domSteps, skipped = skip;
     int intPos[2], delta[2], delta2[2], increment[2];
     bool hitObstacle = false;
@@ -2880,20 +2788,11 @@ float SceneMan::CastObstacleRay(const Vector &start, const Vector &ray, Vector &
 
             skipped = 0;
 
-#ifdef DEBUG_BUILD
-            // Draw debug graphics, if applicable
-            if (m_pDebugLayer)
-                m_pDebugLayer->SetPixel(intPos[X], intPos[Y], 13);
-#endif
+            if (m_pDebugLayer && m_DrawRayCastVisualizations) { m_pDebugLayer->SetPixel(intPos[X], intPos[Y], 13); }
         }
         else
             freePos.SetXY(intPos[X], intPos[Y]);
     }
-
-#ifdef DEBUG_BUILD
-    if (m_pDebugLayer)
-        m_pDebugLayer->UnlockTexture();
-#endif
 
     // Add the pixel fraction to the free position if there were any free pixels
     if (domSteps != 0)
@@ -3431,7 +3330,7 @@ bool SceneMan::AddTerrainObject(TerrainObject *pObject)
 	{
 		Vector corner = pObject->GetPos() + pObject->GetTextureOffset();
 		Box box = Box(corner, pObject->GetTextureWidth(), pObject->GetTextureHeight());
-		
+
 		m_pCurrentScene->GetTerrain()->CleanAirBox(box, GetScene()->WrapsX(), GetScene()->WrapsY());
 	}
 	return result;
@@ -3547,7 +3446,7 @@ void SceneMan::Update(int screen)
 		offsetTarget.m_X = m_ScrollTarget[screen].m_X - (g_FrameMan.GetPlayerFrameBufferWidth(screen) / 2);
 		offsetTarget.m_Y = m_ScrollTarget[screen].m_Y - (g_FrameMan.GetPlayerFrameBufferHeight(screen) / 2);
 	}
-	else 
+	else
 	{
 		offsetTarget.m_X = m_ScrollTarget[screen].m_X - (g_FrameMan.GetResX() / (g_FrameMan.GetVSplit() ? 4 : 2));
 		offsetTarget.m_Y = m_ScrollTarget[screen].m_Y - (g_FrameMan.GetResY() / (g_FrameMan.GetHSplit() ? 4 : 2));
@@ -3574,9 +3473,7 @@ void SceneMan::Update(int screen)
     m_pMOColorLayer->SetOffset(m_Offset[screen]);
     m_pMOIDLayer->SetOffset(m_Offset[screen]);
 
-#ifdef DEBUG_BUILD
-    m_pDebugLayer->SetOffset(m_Offset[screen]);
-#endif
+    if (m_pDebugLayer) { m_pDebugLayer->SetOffset(m_Offset[screen]); }
 
     pTerrain->SetOffset(m_Offset[screen]);
     pTerrain->Update();
@@ -3661,7 +3558,7 @@ void SceneMan::Draw(SDL_Renderer* renderer, std::shared_ptr<Texture> pGUITexture
 			if (skipSkybox)
 			{
 
-			} 
+			}
 			else
 			{
 				// Background Layers
@@ -3696,10 +3593,7 @@ void SceneMan::Draw(SDL_Renderer* renderer, std::shared_ptr<Texture> pGUITexture
 
 //            std::snprintf(str, sizeof(str), "Normal Layer Draw Mode\nHit M to cycle modes");
 
-#ifdef DEBUG_BUILD
-			Box empty{};
-            m_pDebugLayer->Draw(renderer, empty);
-#endif
+            if (m_pDebugLayer) { m_pDebugLayer->Draw(pTargetBitmap, targetBox); }
     }
 }
 
@@ -3716,13 +3610,13 @@ void SceneMan::ClearMOColorLayer()
 	SDL_RenderClear(g_FrameMan.GetRenderer());
 	g_FrameMan.PopRenderTarget();
 
-#ifdef DEBUG_BUILD
+  if(m_pDebugLayer){
 	SDL_Rect lockRect{0, 0, m_pDebugLayer->GetTexture()->getW(),
 		              m_pDebugLayer->GetTexture()->getH()};
 	m_pDebugLayer->GetTexture()->lock(lockRect);
 	m_pDebugLayer->GetTexture()->clearAll();
 	m_pDebugLayer->UnlockTexture();
-#endif
+  }
 }
 
 

@@ -10,8 +10,8 @@ namespace RTE {
 #pragma endregion
 
 #pragma region Game Version
-	static constexpr char *c_GameVersion = "Pre-Release 3.0";
-	static constexpr char *c_WindowTitle = "Cortex Command Community Project";
+	static constexpr const char *c_GameVersion = "Pre-Release 3.0";
+	static constexpr const char *c_WindowTitle = "Cortex Command Community Project";
 #pragma endregion
 
 #pragma region Physics Constants

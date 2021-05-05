@@ -268,13 +268,9 @@ int MovableObject::Create(const MovableObject &reference)
 
 int MovableObject::ReadProperty(const std::string_view &propName, Reader &reader)
 {
-	if (propName == "Mass")
-	{
+	if (propName == "Mass") {
 		reader >> m_Mass;
-		if (m_Mass == 0)
-			m_Mass = 0.0001;
-	}
-	else if (propName == "Velocity")
+	} else if (propName == "Velocity")
 		reader >> m_Vel;
 	else if (propName == "Scale")
 		reader >> m_Scale;
@@ -336,7 +332,7 @@ int MovableObject::ReadProperty(const std::string_view &propName, Reader &reader
 	}
 	else if (propName == "ScriptPath") {
 		std::string scriptPath = CorrectBackslashesInPath(reader.ReadPropValue());
-		if (LoadScript(scriptPath) == -2) { reader.ReportError("Duplicate script path " + scriptPath); }
+		if (LoadScript(scriptPath) == -3) { reader.ReportError("Duplicate script path " + scriptPath); }
 	} else if (propName == "ScreenEffect") {
         reader >> m_ScreenEffectFile;
         m_pScreenEffect = m_ScreenEffectFile.GetAsTexture();
@@ -491,25 +487,27 @@ int MovableObject::LoadScript(const std::string &scriptPath, bool loadAsEnabledS
     // Return an error if the script path is empty or already there
     if (scriptPath.empty()) {
         return -1;
-    } else if (HasScript(scriptPath)) {
+    } else if (!std::filesystem::exists(scriptPath)) {
         return -2;
+    } else if (HasScript(scriptPath)) {
+        return -3;
     }
     m_AllLoadedScripts.push_back({scriptPath, loadAsEnabledScript});
 
     // Clear the temporary variable names that will hold the functions read in from the file
     for (const std::string &functionName : GetSupportedScriptFunctionNames()) {
         if (g_LuaMan.RunScriptString(functionName + " = nil;") < 0) {
-            return -3;
+            return -4;
         }
     }
     // Create a new table for all presets and object instances of this class, to organize things a bit
     if (g_LuaMan.RunScriptString(GetClassName() + "s = " + GetClassName() + "s or {};") < 0) {
-        return -3;
+        return -4;
     }
 
     // Run the specified lua file to load everything in it into the global namespace for assignment
     if (g_LuaMan.RunScriptFile(scriptPath) < 0) {
-        return -4;
+        return -5;
     }
 
     // If there's no ScriptPresetName this is the first script being loaded for this preset, or scripts have been reloaded.
@@ -518,7 +516,7 @@ int MovableObject::LoadScript(const std::string &scriptPath, bool loadAsEnabledS
         m_ScriptPresetName = GetClassName() + "s." + g_LuaMan.GetNewPresetID();
 
         if (g_LuaMan.RunScriptString(m_ScriptPresetName + " = {};") < 0) {
-            return -3;
+            return -4;
         }
 
         m_ScriptObjectName.clear();
@@ -537,7 +535,7 @@ int MovableObject::LoadScript(const std::string &scriptPath, bool loadAsEnabledS
             );
 
             if (error < 0) {
-                return -3;
+                return -4;
             }
         }
     }
@@ -600,9 +598,12 @@ bool MovableObject::AddScript(const std::string &scriptPath) {
             g_ConsoleMan.PrintString("ERROR: The script path was empty.");
             break;
         case -2:
-            g_ConsoleMan.PrintString("ERROR: The script path " + scriptPath + " is already loaded onto this object.");
+            g_ConsoleMan.PrintString("ERROR: The script path did not point to a valid file.");
             break;
         case -3:
+            g_ConsoleMan.PrintString("ERROR: The script path " + scriptPath + " is already loaded onto this object.");
+            break;
+        case -4:
             g_ConsoleMan.PrintString("ERROR: Failed to do necessary setup to add scripts while attempting to add the script with path " + scriptPath + ". This has nothing to do with your script, please report it to a developer.");
             break;
         default:
@@ -823,7 +824,7 @@ void MovableObject::ApplyForces()
     {
         // Continuous force application to transformational velocity.
         // (F = m * a -> a = F / m).
-        m_Vel += ((*fItr).first / GetMass()) * deltaTime;
+        m_Vel += ((*fItr).first / (GetMass() != 0 ? GetMass() : 0.0001F) * deltaTime);
     }
 
     // Clear out the forces list
@@ -853,7 +854,7 @@ void MovableObject::ApplyImpulses()
     for (deque<pair<Vector, Vector> >::iterator iItr = m_ImpulseForces.begin(); iItr != m_ImpulseForces.end(); ++iItr) {
         // Impulse force application to the transformational velocity of this MO.
         // Don't timescale these because they're already in kg * m/s (as opposed to kg * m/s^2).
-        m_Vel += (*iItr).first / GetMass();
+        m_Vel += (*iItr).first / (GetMass() != 0 ? GetMass() : 0.0001F);
     }
 
     // Clear out the impulses list

@@ -204,7 +204,7 @@ namespace RTE {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	float AtomGroup::GetMomentOfInertia() {
-		float currentOwnerMass = m_OwnerMOSR->GetMass();
+		float currentOwnerMass = (m_OwnerMOSR->GetMass() != 0 ? m_OwnerMOSR->GetMass() : 0.0001F);
 		if (m_MomentOfInertia == 0.0F || std::abs(m_StoredOwnerMass - currentOwnerMass) >= (m_StoredOwnerMass / 10.0F)) {
 			RTEAssert(m_OwnerMOSR, "Tried to calculate moment of inertia for an AtomGroup with no parent!");
 
@@ -742,7 +742,7 @@ namespace RTE {
 		int stepCount = 0;
 		int hitCount = 0;
 		float timeLeft = travelTime;
-		float mass = m_OwnerMOSR->GetMass();
+		float mass = (m_OwnerMOSR->GetMass() != 0 ? m_OwnerMOSR->GetMass() : 0.0001F);
 		float retardation;
 		bool halted = false;
 
@@ -1258,11 +1258,6 @@ namespace RTE {
 				penetrates = true;
 				break;
 			}
-#ifdef DEBUG_BUILD
-			// TODO: Remove this once AtomGroup drawing in Material layer draw mode is implemented.
-			// Draw a dot for each Atom for visual reference.
-			putpixel(g_SceneMan.GetDebugBitmap(), atomPos.GetFloorIntX(), atomPos.GetFloorIntY(), 112);
-#endif
 		}
 
 		//if (g_SceneMan.SceneIsLocked()) { g_SceneMan.UnlockScene(); }
@@ -1476,8 +1471,8 @@ namespace RTE {
 		if (intersectedMO->GetPinStrength() > 0.0F) {
 			thisExit = totalExitVector;
 		} else {
-			float massA = m_OwnerMOSR->GetMass();
-			float massB = intersectedMO->GetMass();
+			float massA = (m_OwnerMOSR->GetMass() != 0 ? m_OwnerMOSR->GetMass() : 0.0001F);
+			float massB = (intersectedMO->GetMass() != 0 ? intersectedMO->GetMass() : 0.0001F);
 			float invMassA = 1.0F / massA;
 			float invMassB = 1.0F / massB;
 			float normMassA = invMassA / (invMassA + invMassB);

@@ -33,15 +33,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 	
 - Added Lua (R/W) properties for all hardcoded `Attachables`. You can now set them on the fly to be created objects of the relevant type. Note that trying to set things inappropriately (e.g. setting an `HDFirearm` as something's `Leg`) will probably crash the game; that's your problem to deal with.  
 	You can read and write the following properties:  
-	**AHuman** - `Head`, `Jetpack`, `FGArm`, `BGArm`, `FGLeg`, `BGLeg`, `FGFoot`, `BGFoot`  
-	**ACrab** - `Turret`, `Jetpack`, `LeftFGLeg`, `LeftBGLeg`, `RightFGLeg`, `RightBGLeg`  
-	**ACDropship** - `RightEngine`, `LeftEngine`, `RightThruster`, `LeftThruster`, `RightHatch`, `LeftHatch`  
-	**ACRocket** - `RightLeg`, `LeftLeg`, `MainEngine`, `LeftEngine`, `RightEngine`, `LeftThruster`, `RightThruster`  
-	**ADoor** - `Door`  
-	**Turret** - `MountedDevice`  
-	**Leg** - `Foot`  
-	**HDFirearm** - `Magazine`, `Flash`  
-	**AEmitter** - `Flash`
+	**`AHuman`** - `Head`, `Jetpack`, `FGArm`, `BGArm`, `FGLeg`, `BGLeg`, `FGFoot`, `BGFoot`  
+	**`ACrab`** - `Turret`, `Jetpack`, `LeftFGLeg`, `LeftBGLeg`, `RightFGLeg`, `RightBGLeg`  
+	**`ACDropship`** - `RightEngine`, `LeftEngine`, `RightThruster`, `LeftThruster`, `RightHatch`, `LeftHatch`  
+	**`ACRocket`** - `RightLeg`, `LeftLeg`, `MainEngine`, `LeftEngine`, `RightEngine`, `LeftThruster`, `RightThruster`  
+	**`ADoor`** - `Door`  
+	**`Turret`** - `MountedDevice`  
+	**`Leg`** - `Foot`  
+	**`HDFirearm`** - `Magazine`, `Flash`  
+	**`AEmitter`** - `Flash`
 
 - Added `Vector:ClampMagnitude(upperLimit, lowerLimit)` Lua function that lets you limit a Vector's upper and lower magnitude.
 
@@ -55,7 +55,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 	In Lua there's only `InheritedRotAngleOffset` which takes/returns radians, to avoid confusion. For example, `InheritedRotAngleDegOffset = 90` would make the `Attachable` always face perpendicular to its parent.  
 	Does nothing if the `Attachable`'s `InheritsRotAngle` is set to false or the `Attachable` has no parent.  
 	`GibWithParentChance = 0 - 1` allows you to specify whether this `Attachable` should be gibbed when its parent does and what the chance of that happening is. 0 means never, 1 means always.  
-	`ParentGibBlastStrengthMultiplier = number` allows you to specify the multiplier this `Attachable` will apply to its parent's gib blast strength when the parent gibs. Usually this would be a positive number, but it doesn't have to be.
+	`ParentGibBlastStrengthMultiplier = number` allows you to specify a multiplier for how strongly this `Attachable` will apply its parent's gib blast strength to itself when the parent gibs. Usually this would be a positive number, but it doesn't have to be.
 
 - New INI and Lua (R/W) `Arm` property `GripStrength`. This effectively replaces the `JointStrength` of the held `HeldDevice`, allowing `Arms` to control how tightly equipment is held.
 
@@ -101,6 +101,35 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - Added `OnStride` special Lua function for `AHumans` that is called whenever they stride (i.e. when their `StrideSound` is played). Like playing `StrideSound`, this does not happen when the AHuman is climbing.
 
+- Exposed broad range of sounds to Lua (R/W) through their relevant SoundContainers. For each class, these include:  
+	**Actor**: `BodyHitSound`, `PainSound`, `DeathSound`, `DeviceSwitchSound`, `AlarmSound`  
+	**AHuman & ACrab**: `StrideSound`  
+	**HDFirearm**: `FireSound`, `FireEchoSound`, `EmptySound`, `ReloadStartSound`, `ReloadEndSound`, `ActiveSound`, `DeactivationSound`, `PreFireSound`  
+	**AEmitter**: `EmissionSound`, `BurstSound`, `EndSound`  
+	**ACraft**: `HatchOpenSound`, `CrashSound`  
+	**MOSRotating**: `GibSound`  
+	**ADoor**: `DoorMoveStartSound`, `DoorMoveSound`, `DoorDirectionChangeSound`, `DoorMoveEndSound`
+  
+- Added Lua function `RoundFloatToPrecision`. Utility function to round and format floating point numbers for display in strings.  
+`RoundFloatToPrecision(floatValue, digitsPastDecimal, roundingMode) -- Rounding mode 0 for system default, 1 for floored remainder, 2 for ceiled remainder.`
+
+- The Lua console (and all text boxes) now support using `Ctrl` to move the cursor around and select or delete text.
+
+- Added `mosRotating:RemoveAttachable(attachableOrUniqueID, addToMovableMan, addBreakWounds)` method that allows you to remove an `Attachable` and specify whether it should be added to `MovableMan` or not, and whether breakwounds should be added (if defined) to the `Attachable` and parent `MOSRotating`.
+
+- Added `attachable:RemoveFromParent()` and `attachable:RemoveFromParent(addToMovableMan, addBreakWounds)` that allow you to remove `Attachables` from their parents without having to use `GetParent` first.
+
+- Added `Settings.ini` debug properties to allow modders to turn on some potentially useful information visualizations.  
+	`DrawAtomGroupVisualizations` - any `MOSRotating` will draw its `AtomGroup` to the standard view.  
+	`DrawHandAndFootGroupVisualizations` - any `Actor` subclasses with  will draw its `AtomGroup` to the standard view.  
+	`DrawLimbPathVisualizations` - any  `AHumans` or `ACrabs` will draw some of their `LimbPaths` to the standard view.  
+	`DrawRayCastVisualizations` - any rays cast by `SceneMan` will be drawn to the standard view.  
+	`DrawPixelCheckVisualizations ` - any pixel checks made by `SceneMan:GetTerrMatter` or `SceneMan:GetMOIDPixel` will be drawn to the standard view.
+
+- New `Settings.ini` property `CaseSensitiveFilePaths = 0/1` to enable/disable file path case sensitivity in INIs. Enabled by default.  
+	It is **STRONGLY** ill-advised to disable this behavior as it makes case sensitivity mismatches immediately obvious and allows fixing them with ease to ensure a path related crash free cross-platform experience.  
+	Only disable this if for some reason case sensitivity increases the loading times on your system (which it generally should not). Loading times can be benchmarked using the `Settings.ini` property `MeasureModuleLoadTime`. The result will be printed to the console.
+
 ### Changed
 
 - SDL:  
@@ -108,6 +137,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
       ownership confusion  
     - TimerMan now uses cross platform SDL_Timer functions  
     - GUIUtil now provides cross platform clipboard handling through SDL  
+- File paths in INIs are now case sensitive.
 
 - Hands will now draw in transparent drawing mode, i.e. editing menu.
 
@@ -160,9 +190,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 	
 - Pressing escape when a buy menu is open now closes it instead of pausing the game.
 
-- `GetParent` will now always return null for objects with no parents, instead of returning the self object for things that weren't `Attachables`. This makes things more consistent and reasonable throughout and will rarely, if ever, cause Lua problems.
+- `GetParent` will now return an `MOSRotating` instead of a `MovableObject` so it doesn't need to be casted. Additionally, it will always return null for objects with no parents, instead of returning the self object for things that weren't `Attachables`.  
+	This makes things more consistent and reasonable throughout and will rarely, if ever, cause Lua problems.
 
 - Previews generated by the `SceneEditor` are now the same as `ScenePreviewDumps`, also both are now saved as PNGs.
+
+- `Attachable` terrain collisions will now propagate to any child `Attachables` on them. This means that `Attachables` will not collide with terrain, even if set to, if they're attached to a parent that doesn't collide with terrain.  
+	This means that the `attachable.CollidesWithTerrainWhileAttached` value may not represent the true state of things, you should instead use `attachable.CanCollideWithTerrain` to determine whether a given `Attachable` can collide with terrain.
+	
+- Actor selection keys can be used to cycle the selected `ObjectPicker` item while it's closed during building phase and in editors.
+
+- The `Actor` property `MaxMass` now no longer includes the `Mass` of the `Actor`, and has been renamed to `MaxInventoryMass` for clarity. In mods, this is most important for `ACraft`, which will now need their total `Mass` subtracted from the old value. 
+
+- `BuyMenu` tooltips now display item info as well as a description. This includes `MaxInventoryMass` and `MaxPassengers` for `ACraft`, `Mass` and `PassengerSlots` required for `Actors`, and `Mass` for other `MoveableObjects`.
 
 ### Fixed
 
@@ -188,6 +228,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - Fixed a bug that caused the game to crash when the crab bomb effect was triggered while there were multiple crab bomb eligible Craft in an activity.
 
+- Renamed `Attachable` INI property `CollidesWithTerrainWhenAttached` to more correct, consistent `CollidesWithTerrainWhileAttached`.
+
 ### Removed
 - Removed all references to Allegro
 
@@ -210,6 +252,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Removed `Attachable:CollectDamage`, `Attachable:TransferJointForces` and `Attachable:TransferJointImpulses` Lua function definitions. These are internal functions that should never have been exposed to Lua.
 
 - Removed `MOSRotating:ApplyForces` and `MOSRotating:ApplyImpulses` Lua functions. These are both internal functions that should never have been exposed to Lua.
+
+- Removed hardcoded INI constraint that forced `Mass` of `MovableObjects` to not be 0. Previously, anytime a `Mass` of 0 was read in from INI, it was changed to 0.0001.
 
 ***
 

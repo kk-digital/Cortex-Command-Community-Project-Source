@@ -60,7 +60,7 @@ void MOSRotating::Clear()
     m_GibImpulseLimit = 0;
     m_GibWoundLimit = 0;
     m_GibBlastStrength = 10.0F;
-    m_GibSound.Reset();
+    m_GibSound = nullptr;
     m_EffectOnGib = true;
     m_LoudnessOnGib = 1;
 	m_DamageMultiplier = 0;
@@ -149,6 +149,7 @@ int MOSRotating::Create(const MOSRotating &reference) {
         AddWound(dynamic_cast<AEmitter *>(wound->Clone()), wound->GetParentOffset(), false);
     }
 
+    //TODO This could probably be replaced with just using HardcodedAttachableUniqueIDs entirely. At this point in, these lists should have the same UIDs in them, so it should work.
     for (const Attachable *referenceAttachable : reference.m_Attachables) {
         if (m_ReferenceHardcodedAttachableUniqueIDs.find(referenceAttachable->GetUniqueID()) == m_ReferenceHardcodedAttachableUniqueIDs.end()) {
             AddAttachable(dynamic_cast<Attachable *>(referenceAttachable->Clone()));
@@ -167,8 +168,8 @@ int MOSRotating::Create(const MOSRotating &reference) {
     m_GibImpulseLimit = reference.m_GibImpulseLimit;
     m_GibWoundLimit = reference.m_GibWoundLimit;
     m_GibBlastStrength = reference.m_GibBlastStrength;
-    m_GibSound = reference.m_GibSound;
-    m_EffectOnGib = reference.m_EffectOnGib;
+	if (reference.m_GibSound) { m_GibSound = dynamic_cast<SoundContainer*>(reference.m_GibSound->Clone()); }
+	m_EffectOnGib = reference.m_EffectOnGib;
     m_LoudnessOnGib = reference.m_LoudnessOnGib;
 
 	m_DamageMultiplier = reference.m_DamageMultiplier;
@@ -236,9 +237,10 @@ int MOSRotating::ReadProperty(const std::string_view &propName, Reader &reader)
         reader >> m_GibWoundLimit;
     else if (propName == "GibBlastStrength") {
         reader >> m_GibBlastStrength;
-    } else if (propName == "GibSound")
-        reader >> m_GibSound;
-    else if (propName == "EffectOnGib")
+	} else if (propName == "GibSound") {
+		if (!m_GibSound) { m_GibSound = new SoundContainer; }
+		reader >> m_GibSound;
+	} else if (propName == "EffectOnGib")
         reader >> m_EffectOnGib;
     else if (propName == "LoudnessOnGib")
         reader >> m_LoudnessOnGib;
@@ -456,6 +458,8 @@ void MOSRotating::Destroy(bool notInherited)
         delete (*itr);
     for (list<Attachable *>::iterator aItr = m_Attachables.begin(); aItr != m_Attachables.end(); ++aItr)
         delete (*aItr);
+
+    delete m_GibSound;
 
     if (!notInherited)
         MOSprite::Destroy();
@@ -861,7 +865,7 @@ void MOSRotating::GibThis(const Vector &impactImpulse, MovableObject *movableObj
 
     RemoveAttachablesWhenGibbing(impactImpulse, movableObjectToIgnore);
 
-    m_GibSound.Play(m_Pos);
+	if (m_GibSound) { m_GibSound->Play(m_Pos); }
 
     if (m_pScreenEffect && m_EffectOnGib && (m_EffectAlwaysShows || !g_SceneMan.ObscuredPoint(m_Pos.GetFloorIntX(), m_Pos.GetFloorIntY()))) {
 		g_PostProcessMan.RegisterPostEffect(m_Pos, m_pScreenEffect, m_ScreenEffectHash, 255, m_EffectRotAngle);
@@ -881,10 +885,11 @@ void MOSRotating::CreateGibsWhenGibbing(const Vector &impactImpulse, MovableObje
         }
         MovableObject *gibParticleClone = dynamic_cast<MovableObject *>(gibSettingsObject.GetParticlePreset()->Clone());
 
+		float mass = (gibParticleClone->GetMass() != 0 ? gibParticleClone->GetMass() : 0.0001F);
         float minVelocity = gibSettingsObject.GetMinVelocity();
         float velocityRange = gibSettingsObject.GetMaxVelocity() - gibSettingsObject.GetMinVelocity();
         if (gibSettingsObject.GetMinVelocity() == 0 && gibSettingsObject.GetMaxVelocity() == 0) {
-            minVelocity = m_GibBlastStrength / gibParticleClone->GetMass();
+            minVelocity = m_GibBlastStrength / mass;
             velocityRange = 10.0F;
         }
         Vector rotatedGibOffset = RotateOffset(gibSettingsObject.GetOffset());
@@ -896,7 +901,7 @@ void MOSRotating::CreateGibsWhenGibbing(const Vector &impactImpulse, MovableObje
             }
 
             gibParticleClone->SetRotAngle(GetRotAngle() + gibParticleClone->GetRotAngle());
-            gibParticleClone->SetAngularVel((gibParticleClone->GetAngularVel() * 0.35F) + (gibParticleClone->GetAngularVel() * 0.65F / gibParticleClone->GetMass()) * RandomNum());
+            gibParticleClone->SetAngularVel((gibParticleClone->GetAngularVel() * 0.35F) + (gibParticleClone->GetAngularVel() * 0.65F / mass) * RandomNum());
             if (rotatedGibOffset.GetRoundIntX() > m_aSprite[0]->getW() / 3) {
                 float offCenterRatio = rotatedGibOffset.m_X / (static_cast<float>(m_aSprite[0]->getW()) / 2.0F);
                 float angularVel = fabs(gibParticleClone->GetAngularVel() * 0.5F) + std::fabs(gibParticleClone->GetAngularVel() * 0.5F * offCenterRatio);
@@ -932,7 +937,7 @@ void MOSRotating::RemoveAttachablesWhenGibbing(const Vector &impactImpulse, Mova
         }
 
         if (!attachable->GetDeleteWhenRemovedFromParent()) {
-            float attachableGibBlastStrength = (attachable->GetParentGibBlastStrengthMultiplier() == 0 ? 1 : attachable->GetParentGibBlastStrengthMultiplier() * m_GibBlastStrength) / (1 + attachable->GetMass());
+            float attachableGibBlastStrength = (attachable->GetParentGibBlastStrengthMultiplier() * m_GibBlastStrength) / (1 + attachable->GetMass());
             attachable->SetAngularVel((attachable->GetAngularVel() * 0.5F) + (attachable->GetAngularVel() * 0.5F * attachableGibBlastStrength * RandomNormalNum()));
             Vector gibBlastVel = Vector(attachable->GetParentOffset()).SetMagnitude(attachableGibBlastStrength * 0.5F + (attachableGibBlastStrength * RandomNum()));
             attachable->SetVel(m_Vel + gibBlastVel + impactImpulse);
@@ -1420,7 +1425,7 @@ void MOSRotating::AddAttachable(Attachable *attachable) {
 
 void MOSRotating::AddAttachable(Attachable *attachable, const Vector& parentOffsetToSet) {
 	if (attachable) {
-        RTEAssert(!attachable->IsAttached(), "Tried to add Attachable " + attachable->GetModuleAndPresetName() + " but it already has a parent, " + (attachable->GetParent() ? attachable->GetParent()->GetModuleAndPresetName() : "ERROR") + ".");
+        RTEAssert(!attachable->IsAttached(), "Tried to add Attachable " + attachable->GetModuleAndPresetName() + " but it already has a parent, " + (attachable->IsAttached() ? attachable->GetParent()->GetModuleAndPresetName() : "ERROR") + ".");
         if (g_MovableMan.ValidMO(attachable)) { g_MovableMan.RemoveMO(attachable); }
         attachable->SetParentOffset(parentOffsetToSet);
         attachable->SetParent(this);
@@ -1447,7 +1452,7 @@ bool MOSRotating::RemoveAttachable(Attachable *attachable, bool addToMovableMan,
     if (!attachable || !attachable->IsAttached()) {
         return false;
     }
-    RTEAssert(attachable->IsAttachedTo(this), "Tried to remove Attachable " + attachable->GetModuleAndPresetName() + " from presumed parent " + GetModuleAndPresetName() + ", but it had a different parent (" + (attachable->GetParent() ? attachable->GetParent()->GetModuleAndPresetName() : "ERROR") + "). This should never happen!");
+    RTEAssert(attachable->IsAttachedTo(this), "Tried to remove Attachable " + attachable->GetPresetNameAndUniqueID() + " from presumed parent " + GetPresetNameAndUniqueID() + ", but it had a different parent (" + (attachable->GetParent() ? attachable->GetParent()->GetPresetNameAndUniqueID() : "ERROR") + "). This should never happen!");
 
     if (!m_Attachables.empty()) { m_Attachables.remove(attachable); }
     attachable->SetParent(nullptr);
@@ -1701,13 +1706,10 @@ void MOSRotating::Draw(SDL_Renderer *renderer,
 		}
 	}
 
-#ifdef DEBUG_BUILD
-	if (mode == g_DrawColor && !onlyPhysical && m_pAtomGroup &&
-		GetRootParent() == this) {
-		m_pAtomGroup->Draw(renderer, targetPos, false, 122);
-		// m_pDeepGroup->Draw(pTargetBitmap, targetPos, false, 13);
-	}
-#endif
+    if (mode == g_DrawColor && !onlyPhysical && m_pAtomGroup && g_SettingsMan.DrawAtomGroupVisualizations() && GetRootParent() == this) {
+        m_pAtomGroup->Draw(renderer, targetPos, false, 122);
+        //m_pDeepGroup->Draw(pTargetBitmap, targetPos, false, 13);
+    }
 }
 
 bool MOSRotating::HandlePotentialRadiusAffectingAttachable(const Attachable *attachable) {
