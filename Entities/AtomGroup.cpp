@@ -3,6 +3,8 @@
 #include "MOSRotating.h"
 #include "LimbPath.h"
 #include "ConsoleMan.h"
+#include "SceneMan.h"
+#include "Managers/FrameMan.h"
 
 namespace RTE {
 
@@ -1387,6 +1389,8 @@ namespace RTE {
 		Vector atomPos = Vector();
 
 		// First go through all Atoms to find the first intersection and get the intersected MO
+
+		g_FrameMan.PushRenderTarget(g_SceneMan.GetMOIDTexture());
 		for (Atom *atom : m_Atoms) {
 			atomOffset = m_OwnerMOSR->RotateOffset(atom->GetOffset());
 			atom->SetupPos(position + atomOffset);
@@ -1405,7 +1409,7 @@ namespace RTE {
 				if (tempMO->GetsHitByMOs()) {
 					// Make that MO draw itself again in the MOID layer so we can find its true edges
 					intersectedMO = tempMO;
-					intersectedMO->Draw(g_SceneMan.GetMOIDBitmap(), Vector(), g_DrawMOID, true);
+					intersectedMO->Draw(g_FrameMan.GetRenderer(), Vector(), g_DrawMOID, true);
 					break;
 				}
 			}
@@ -1463,6 +1467,7 @@ namespace RTE {
 				}
 			}
 		}
+		g_FrameMan.PopRenderTarget();
 
 		Vector thisExit;
 		Vector intersectedExit;
