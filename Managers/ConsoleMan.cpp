@@ -4,13 +4,15 @@
 #include "UInputMan.h"
 #include "FrameMan.h"
 
+#include "System/System.h"
+
 #include "GUI/GUI.h"
-#include "GUI/AllegroBitmap.h"
-#include "GUI/AllegroScreen.h"
-#include "GUI/AllegroInput.h"
+#include "GUI/SDLScreen.h"
+#include "GUI/SDLInput.h"
 #include "GUI/GUICollectionBox.h"
 #include "GUI/GUITextBox.h"
 #include "GUI/GUILabel.h"
+
 
 namespace RTE {
 
@@ -36,8 +38,8 @@ namespace RTE {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	int ConsoleMan::Initialize() {
-		if (!m_GUIScreen) { m_GUIScreen = new AllegroScreen(g_FrameMan.GetBackBuffer32()); }
-		if (!m_GUIInput) { m_GUIInput = new AllegroInput(-1); }
+		if (!m_GUIScreen) { m_GUIScreen = new SDLScreen(); }
+		if (!m_GUIInput) { m_GUIInput = new SDLInput(-1); }
 		if (!m_GUIControlManager) { m_GUIControlManager = new GUIControlManager(); }
 
 		if (!m_GUIControlManager->Create(m_GUIScreen, m_GUIInput, "Base.rte/GUIs/Skins/MainMenu", "ConsoleSkin.ini")) {
@@ -226,11 +228,11 @@ namespace RTE {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void ConsoleMan::Update() {
-		if (g_UInputMan.FlagCtrlState() && g_UInputMan.KeyPressed(KEY_TILDE)) {
+		if (g_UInputMan.FlagCtrlState() && g_UInputMan.KeyPressed(SDL_SCANCODE_GRAVE)) {
 			SetReadOnly();
 		}
 
-		if (!g_UInputMan.FlagShiftState() && (!g_UInputMan.FlagCtrlState() && g_UInputMan.KeyPressed(KEY_TILDE))) {
+		if (!g_UInputMan.FlagShiftState() && (!g_UInputMan.FlagCtrlState() && g_UInputMan.KeyPressed(SDL_SCANCODE_GRAVE))) {
 			if (IsEnabled()) {
 				if (!m_ReadOnly) {
 					m_InputTextBox->SetEnabled(false);
@@ -259,9 +261,9 @@ namespace RTE {
 
 		m_GUIControlManager->Update();
 
-		if (g_UInputMan.FlagCtrlState() && g_UInputMan.KeyPressed(KEY_DOWN)) {
+		if (g_UInputMan.FlagCtrlState() && g_UInputMan.KeyPressed(SDLK_DOWN)) {
 			SetConsoleScreenSize(m_ConsoleScreenRatio + 0.05F);
-		} else if (g_UInputMan.FlagCtrlState() && g_UInputMan.KeyPressed(KEY_UP)) {
+		} else if (g_UInputMan.FlagCtrlState() && g_UInputMan.KeyPressed(SDLK_UP)) {
 			SetConsoleScreenSize(m_ConsoleScreenRatio - 0.05F);
 		}
 
@@ -270,9 +272,9 @@ namespace RTE {
 			m_InputTextBox->SetFocus();
 
 			if (!m_InputLog.empty() && !g_UInputMan.FlagCtrlState()) {
-				if (g_UInputMan.KeyPressed(KEY_UP)) {
+				if (g_UInputMan.KeyPressed(SDLK_UP)) {
 					LoadLoggedInput(false);
-				} else if (g_UInputMan.KeyPressed(KEY_DOWN)) {
+				} else if (g_UInputMan.KeyPressed(SDLK_DOWN)) {
 					LoadLoggedInput(true);
 				}
 			}
@@ -284,7 +286,7 @@ namespace RTE {
 		}
 
 		// Execute string when Enter is pressed, or execute immediately if a newline character is found, meaning multiple strings were pasted in.
-		if ((g_UInputMan.KeyPressed(KEY_ENTER) || g_UInputMan.KeyPressed(KEY_ENTER_PAD)) || (m_InputTextBox->GetText().find_last_of('\n') != std::string::npos)) {
+		if ((g_UInputMan.KeyPressed(SDLK_RETURN) || g_UInputMan.KeyPressed(SDLK_KP_ENTER)) || (m_InputTextBox->GetText().find_last_of('\n') != std::string::npos)) {
 			FeedString(m_InputTextBox->GetText().empty() ? true : false);
 		}
 
@@ -406,9 +408,9 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void ConsoleMan::Draw(BITMAP *targetBitmap) const {
+	void ConsoleMan::Draw(SDL_Renderer* renderer) const {
 		if (m_ConsoleState != ConsoleState::Disabled) {
-			AllegroScreen drawScreen(targetBitmap);
+			SDLScreen drawScreen;
 			m_GUIControlManager->Draw(&drawScreen);
 		}
 	}
