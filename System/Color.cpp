@@ -1,5 +1,4 @@
 #include "Color.h"
-#include "allegro/color.h"
 
 namespace RTE {
 
