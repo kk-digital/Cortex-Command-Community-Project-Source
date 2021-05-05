@@ -35,6 +35,7 @@
 
 #include "DataModule.h"
 #include "SceneLayer.h"
+#include "RenderLayer.h"
 #include "MOSParticle.h"
 #include "MOSRotating.h"
 #include "Controller.h"
