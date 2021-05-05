@@ -1536,12 +1536,12 @@ void MOSRotating::SetWhichMOToNotHit(MovableObject *moToNotHit, float forHowLong
 // Description:     Draws this MOSRotating's current graphical representation to a
 //                  BITMAP of choice.
 
-void MOSRotating::Draw(BITMAP *pTargetBitmap,
+void MOSRotating::Draw(SDL_Renderer *renderer,
                        const Vector &targetPos,
                        DrawMode mode,
                        bool onlyPhysical) const
 {
-    RTEAssert(m_aSprite, "No sprite bitmaps loaded to draw!");
+    RTEAssert(!m_aSprite.empty(), "No sprite bitmaps loaded to draw!");
     RTEAssert(m_Frame >= 0 && m_Frame < m_FrameCount, "Frame is out of bounds!");
 
     // Only draw MOID if this gets hit by MO's and it has a valid MOID assigned to it
@@ -1552,26 +1552,14 @@ void MOSRotating::Draw(BITMAP *pTargetBitmap,
     // Only draw attachables and emitters which are not drawn after parent, so we draw them before
     if (mode == g_DrawColor || (!onlyPhysical && mode == g_DrawMaterial)) {
         for (const AEmitter *woundToDraw : m_Wounds) {
-            if (!woundToDraw->IsDrawnAfterParent()) { woundToDraw->Draw(pTargetBitmap, targetPos, mode, onlyPhysical); }
+            if (!woundToDraw->IsDrawnAfterParent()) { woundToDraw->Draw(renderer, targetPos, mode, onlyPhysical); }
         }
     }
 
     // Draw all the attached attachables
     for (const Attachable *attachableToDraw : m_Attachables) {
-        if (!attachableToDraw->IsDrawnAfterParent() && attachableToDraw->IsDrawnNormallyByParent()) { attachableToDraw->Draw(pTargetBitmap, targetPos, mode, onlyPhysical); }
+        if (!attachableToDraw->IsDrawnAfterParent() && attachableToDraw->IsDrawnNormallyByParent()) { attachableToDraw->Draw(renderer, targetPos, mode, onlyPhysical); }
     }
-
-	BITMAP * pTempBitmap = m_pTempBitmap;
-	BITMAP * pFlipBitmap = m_pFlipBitmap;
-	int keyColor = g_MaskColor;
-
-	// Switch to non 8-bit drawing mode if we're drawing onto MO layer
-	if (mode == g_DrawMOID || mode == g_DrawNoMOID)
-	{
-		pTempBitmap = m_pTempBitmapS;
-		pFlipBitmap = m_pFlipBitmapS;
-		keyColor = g_MOIDMaskColor;
-	}
 
 	// Only draw MOID if this gets hit by MO's and it has a valid MOID assigned
 	// to it
@@ -1637,7 +1625,6 @@ void MOSRotating::Draw(BITMAP *pTargetBitmap,
 		}
 	}
 
-<<<<<<< variant A
 	// Draw all the attached wound emitters, and only if the mode is g_DrawColor
 	// and not onlyphysical Only draw attachables and emitters which are not
 	// drawn after parent, so we draw them before
@@ -1656,70 +1643,6 @@ void MOSRotating::Draw(BITMAP *pTargetBitmap,
 			attachableToDraw->Draw(renderer, targetPos, mode, onlyPhysical);
 		}
 	}
->>>>>>> variant B
-    //////////////////
-    // FLIPPED
-    if (m_HFlipped && pFlipBitmap)
-    {
-        // Don't size the intermediate bitmaps to the m_Scale, because the scaling happens after they are done
-        clear_to_color(pFlipBitmap, keyColor);
-        // Draw eitehr the source color bitmap or the intermediate material bitmap onto the intermediate flipping bitmap
-        if (mode == g_DrawColor || mode == g_DrawTrans)
-            draw_sprite_h_flip(pFlipBitmap, m_aSprite[m_Frame], 0, 0);
-        // If using the temp bitmap (which is always larger than the sprite) make sure the flipped image ends up in the upper right corner as if it was just as small as the sprite bitmap
-        else
-            draw_sprite_h_flip(pFlipBitmap, pTempBitmap, -(pTempBitmap->w - m_aSprite[m_Frame]->w), 0);
-
-        // Transparent mode
-        if (mode == g_DrawTrans)
-        {
-            clear_to_color(pTempBitmap, keyColor);
-            // Draw the rotated thing onto the intermediate bitmap so its COM position aligns with the middle of the temp bitmap.
-            // The temp bitmap should be able to hold the full size since it is larger than the max diameter.
-            // Take into account the h-flipped pivot point
-            pivot_scaled_sprite(pTempBitmap,
-                                pFlipBitmap,
-                                pTempBitmap->w / 2,
-                                pTempBitmap->h / 2,
-                                pFlipBitmap->w + m_SpriteOffset.m_X,
-                                -(m_SpriteOffset.m_Y),
-                                ftofix(m_Rotation.GetAllegroAngle()),
-                                ftofix(m_Scale));
-
-            // Draw the now rotated object's temporary bitmap onto the final drawing bitmap with transperency
-            // Do the passes loop in here so the intermediate drawing doesn't get done multiple times
-            for (int i = 0; i < passes; ++i)
-                draw_trans_sprite(pTargetBitmap, pTempBitmap, aDrawPos[i].GetFloorIntX() - (pTempBitmap->w / 2), aDrawPos[i].GetFloorIntY() - (pTempBitmap->h / 2));
-        }
-        // Non-transparent mode
-        else
-        {
-            // Do the passes loop in here so the flipping operation doesn't get done multiple times
-            for (int i = 0; i < passes; ++i)
-            {
-                // Take into account the h-flipped pivot point
-                pivot_scaled_sprite(pTargetBitmap,
-                                    pFlipBitmap,
-                                    aDrawPos[i].GetFloorIntX(),
-                                    aDrawPos[i].GetFloorIntY(),
-                                    pFlipBitmap->w + m_SpriteOffset.m_X,
-                                    -(m_SpriteOffset.m_Y),
-                                    ftofix(m_Rotation.GetAllegroAngle()),
-                                    ftofix(m_Scale));
-
-                // Register potential MOID drawing
-                if (mode == g_DrawMOID)
-                    g_SceneMan.RegisterMOIDDrawing(aDrawPos[i].GetFloored(), m_SpriteRadius + 2);
-            }
-        }
-    }
-    /////////////////
-    // NON-FLIPPED
-    else
-    {
-//        spritePos += m_SpriteOffset;
-//        spritePos += (m_SpriteCenter * m_Rotation - m_SpriteCenter);
-======= end
 
 	for (int i = 0; i < passes; ++i) {
 		// TODO: Fix that MaterialAir and KeyColor don't work at all because
