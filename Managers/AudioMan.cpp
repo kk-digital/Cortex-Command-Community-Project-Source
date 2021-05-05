@@ -49,7 +49,7 @@ namespace RTE {
 		audioSystemAdvancedSettings.cbSize = sizeof(FMOD_ADVANCEDSETTINGS);
 		audioSystemSetupResult = (audioSystemSetupResult == FMOD_OK) ? m_AudioSystem->getAdvancedSettings(&audioSystemAdvancedSettings) : audioSystemSetupResult;
 		audioSystemAdvancedSettings.vol0virtualvol = 0.001F;
-		audioSystemAdvancedSettings.randomSeed = RandomNum(0, INT_MAX);
+		audioSystemAdvancedSettings.randomSeed = RandomNum(0, std::numeric_limits<int>::max());
 
 		audioSystemSetupResult = (audioSystemSetupResult == FMOD_OK) ? m_AudioSystem->setAdvancedSettings(&audioSystemAdvancedSettings) : audioSystemSetupResult;
 		audioSystemSetupResult = (audioSystemSetupResult == FMOD_OK) ? m_AudioSystem->set3DSettings(1, c_PPM, 1) : audioSystemSetupResult;
