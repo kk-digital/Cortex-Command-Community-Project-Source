@@ -1,16 +1,12 @@
 #ifndef _SDLSCREEN_
 #define _SDLSCREEN_
 #include "GUI/Interface.h"
-#include <SDL2/SDL.h>
 
 namespace RTE {
+	class SDLGUITexture;
 	class SDLScreen : public GUIScreen {
 	  public:
-		/// <summary>
-		/// Constructor method used to instantiate a ScreenInterface object.
-		/// </summary>
-		/// <param name="pBackBuffer"> Pointer to a SDL_Suface</param>
-		SDLScreen(SDL_Surface *pBackBuffer);
+		SDLScreen();
 
 		/// <summary>
 		/// Destructor method used to clean up a SDLScreen object before
@@ -42,10 +38,13 @@ namespace RTE {
 		void DrawBitmap(GUIBitmap *pGUIBitmap, int x, int y,
 		                GUIRect *pRect) override;
 
+		void DrawBitmapTrans(GUIBitmap*, int, int,
+		                     GUIRect*) override;
 		/// <summary>
 		/// Gets the Surface representing the Screen
 		/// </summary>
 		GUIBitmap *GetBitmap() override;
+
 
 		/// <summary>
 		/// Converts an 8-bit palette index to a valid pixel format.
@@ -62,7 +61,7 @@ namespace RTE {
 		                           int targetDepth = 0) override;
 
 	  private:
-		SDLBitmap *m_pBackBitmap;
+		SDLGUITexture *m_pBackBitmap;
 	};
 } // namespace RTE
 #endif
