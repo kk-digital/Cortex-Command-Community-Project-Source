@@ -25,7 +25,7 @@ namespace RTE {
 		/// Texture requests pixel access, this allows GetPixel and SetPixel to
 		/// be called safely
 		/// </param>
-		SDLGUITexture(SDL_Texture *pTexture, bool needPixelAccess = false);
+		SDLGUITexture(SDL_Renderer* renderer, SDL_Texture *pTexture, bool needPixelAccess = false);
 
 		/// <summary>
 		/// Destructor method to clean up the SDLBitmap object
