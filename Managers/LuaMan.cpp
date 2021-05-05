@@ -39,6 +39,7 @@
 #include "SceneEditorGUI.h"
 #include "MetaPlayer.h"
 #include "GUIBanner.h"
+#include "System.h"
 
 #include "MetaMan.h"
 #include "ConsoleMan.h"
@@ -46,6 +47,7 @@
 #include "PrimitiveMan.h"
 #include "UInputMan.h"
 #include "SettingsMan.h"
+#include "FrameMan.h"
 
 #include "lua.hpp"
 
@@ -768,9 +770,9 @@ int LuaMan::Initialize() {
         CONCRETELUABINDING(MOPixel, MovableObject),
 
         CONCRETELUABINDING(TerrainObject, SceneObject)
-            .def("GetBitmapOffset", &TerrainObject::GetBitmapOffset)
-            .def("GetBitmapWidth", &TerrainObject::GetBitmapWidth)
-            .def("GetBitmapHeight", &TerrainObject::GetBitmapHeight),
+            .def("GetBitmapOffset", &TerrainObject::GetTextureOffset)
+            .def("GetBitmapWidth", &TerrainObject::GetTextureWidth)
+            .def("GetBitmapHeight", &TerrainObject::GetTextureHeight),
 
 		ABSTRACTLUABINDING(MOSprite, MovableObject)
 			.enum_("SpriteAnimMode")[
@@ -1532,10 +1534,8 @@ int LuaMan::Initialize() {
             .property("PlayerScreenHeight", &FrameMan::GetPlayerScreenHeight)
             .def("SetScreenText", &FrameMan::SetScreenText)
             .def("ClearScreenText", &FrameMan::ClearScreenText)
-            .def("FadeInPalette", &FrameMan::FadeInPalette)
-            .def("FadeOutPalette", &FrameMan::FadeOutPalette)
             .def("SaveScreenToPNG", &FrameMan::SaveScreenToPNG)
-            .def("SaveBitmapToPNG", &FrameMan::SaveBitmapToPNG)
+            .def("SaveBitmapToPNG", &FrameMan::SaveTextureToPNG)
             .def("FlashScreen", &FrameMan::FlashScreen)
 			.def("CalculateTextHeight", &FrameMan::CalculateTextHeight)
 			.def("CalculateTextWidth", &FrameMan::CalculateTextWidth),
