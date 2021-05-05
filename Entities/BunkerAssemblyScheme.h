@@ -142,7 +142,7 @@ ClassInfoGetters
 // Arguments:       None.
 // Return value:    Width of bitmap.
 
-	const int GetBitmapWidth() const { return m_pPresentationBitmap->w; }
+	const int GetBitmapWidth() const { return m_pPresentationBitmap->getW(); }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -152,7 +152,7 @@ ClassInfoGetters
 // Arguments:       None.
 // Return value:    Height of 'material' bitmap.
 
-	const int GetBitmapHeight() const { return m_pPresentationBitmap->h; }
+	const int GetBitmapHeight() const { return m_pPresentationBitmap->getH(); }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -184,7 +184,7 @@ ClassInfoGetters
 // Arguments:       None.
 // Return value:    None.
 
-    int GetArea() const { return m_pBitmap->h * m_pBitmap->w; }
+    int GetArea() const { return m_pBitmap->getH() * m_pBitmap->getW(); }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
