@@ -79,7 +79,7 @@ namespace RTE {
 		/// SDL_GetError
 		/// </returns>
 		int render(SDL_Renderer *pRenderer, int x, int y);
-/// <summary>
+		/// <summary>
 		/// Render the texture to the screen.
 		/// </summary>
 		/// <param name="pRenderer">
@@ -447,7 +447,8 @@ namespace RTE {
 		/// SDL_GetError
 		/// </returns>
 		int renderFillColor(SDL_Renderer *renderer, int x, int y,
-		                    uint32_t color, double angle, int flip, double scale);
+		                    uint32_t color, double angle, int flip,
+		                    double scale);
 		/// <summary>
 		/// Render the silhouette of the texture to the screen rotated by angle
 		/// and flipped horizontally or vertically according to flip.
@@ -510,9 +511,10 @@ namespace RTE {
 		void unlock();
 
 		/// <summary>
-		/// Get the internal SDL_Texture. This will ONLY return non nullptr for render targets
+		/// Get the internal SDL_Texture. This will ONLY return non nullptr for
+		/// render targets
 		/// </summary>
-		SDL_Texture* getAsRenderTarget(){
+		SDL_Texture *getAsRenderTarget() {
 			if (m_Access == 2) {
 				return m_Texture.get();
 			}
@@ -528,6 +530,12 @@ namespace RTE {
 		/// Get the width of the Texture
 		/// </summary>
 		int getH() const { return h; }
+
+
+		/// <summary>
+		/// Get the textureaccess of the underlying texture
+		/// </summary>
+		int getAccess() const {return m_Access;}
 
 		/// <summary>
 		/// Get the pixel format of the Texture
@@ -550,7 +558,19 @@ namespace RTE {
 		/// <reutrns>
 		/// A uint32_t in the pixel format of the texture
 		/// </returns>
-		uint32_t getPixel(int x, int y);
+		uint32_t getPixel(int x, int y) const;
+
+		/// <summary>
+		/// Get the color of the pixel at (pos.x,pos.y). If pos is outside the
+		/// Texture this returns 0xFFFFFF00, i.e. fully transparent white.
+		/// </summary>
+		/// <param name="pos">
+		/// Position of the pixel to get.
+		/// </param>
+		/// <reutrns>
+		/// A uint32_t in the pixel format of the texture
+		/// </returns>
+		uint32_t getPixel(SDL_Point pos) const;
 
 		/// <summary>
 		/// Returns the bitmask for red in a 32bit color of the textures pixel
@@ -574,19 +594,7 @@ namespace RTE {
 		/// Returns the bitmask for alpha in a 32bit color of the textures pixel
 		/// format
 		/// </summary>
-		uint32_t getAmask() { return m_Amask; }
-
-		/// <summary>
-		/// Get the color of the pixel at (pos.x,pos.y). If pos is outside the
-		/// Texture this returns 0xFFFFFF00, i.e. fully transparent white.
-		/// </summary>
-		/// <param name="pos">
-		/// Position of the pixel to get.
-		/// </param>
-		/// <reutrns>
-		/// A uint32_t in the pixel format of the texture
-		/// </returns>
-		uint32_t getPixel(SDL_Point pos);
+		uint32_t getAmask() const { return m_Amask; }
 
 		/// <summary>
 		/// Set a pixel at (x,y) to color
@@ -608,6 +616,26 @@ namespace RTE {
 		/// Clear all pixels of the Texture to trasparent (0x00000000)
 		/// </summary>
 		void clearAll();
+
+
+		/// <summary>
+		/// For a globally locked streamable texture fills the area designated by rect with color
+		/// </summary>
+		/// <param name="rect">
+		/// An SDL_Rect that represents the rectangle to be filled
+		/// </param>
+		/// <param name="color">
+		/// The color in RGBA32 to fill
+		/// </param>
+		void fillRect(const SDL_Rect &rect, uint32_t color);
+
+		/// <summary>
+		/// Fill the entire locked region with color
+		/// </summary>
+		/// <param name="color">
+		/// The color in RGBA32 used to fill
+		/// </param>
+		void fillLocked(uint32_t color);
 
 		/// <summary>
 		/// Get the raw Pixels of the Texture for RW ops, offset by the locked
@@ -676,10 +704,8 @@ namespace RTE {
 		int setColorMod(uint8_t r, uint8_t g, uint8_t b);
 
 	private:
-
 		//! Internal SDL_Texture
 		std::unique_ptr<SDL_Texture, sdl_texture_deleter> m_Texture;
-
 
 		//! Width of the texture
 		int w;
@@ -707,7 +733,7 @@ namespace RTE {
 
 		//! Non NULL if locked with lock(SDL_Rect);
 		std::unique_ptr<SDL_Rect> m_LockedRect;
-//! Size of one row of pixels in Memory, only meaningful while Texture
+		//! Size of one row of pixels in Memory, only meaningful while Texture
 		//! is locked
 		int m_Pitch;
 
@@ -716,7 +742,6 @@ namespace RTE {
 		static std::unique_ptr<Texture> fillTarget;
 
 	private:
-
 		/// <summary>
 		/// Clear the texture and reset member variables
 		/// </summary>
@@ -726,7 +751,6 @@ namespace RTE {
 		/// Create an empty Texture. Only for use by friend classes
 		/// </summary>
 		Texture();
-
 
 		uint32_t getNativeAlphaFormat(SDL_Renderer *renderer);
 		void setRGBAMasks();

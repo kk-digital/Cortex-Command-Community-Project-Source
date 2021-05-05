@@ -29,7 +29,8 @@ namespace RTE {
 
 	Texture::Texture(SDL_Renderer *renderer, const Texture &texture) {
 		Reset();
-		std::copy(texture.m_PixelsRO.begin(), texture.m_PixelsRO.end(), m_PixelsRO);
+		std::copy(texture.m_PixelsRO.begin(), texture.m_PixelsRO.end(),
+		          m_PixelsRO);
 		w = texture.w;
 		h = texture.h;
 
@@ -51,8 +52,10 @@ namespace RTE {
 		}
 	}
 
-	Texture::Texture(SDL_Renderer *renderer, int width, int height, int access) :
-	    w{width}, h{height}, m_Access{access} {
+	Texture::Texture(SDL_Renderer *renderer, int width, int height,
+	                 int access) :
+	    w{width},
+	    h{height}, m_Access{access} {
 		m_Format = getNativeAlphaFormat(renderer);
 		m_PixelFormat.reset(SDL_AllocFormat(m_Format));
 		setRGBAMasks();
@@ -98,15 +101,16 @@ namespace RTE {
 
 	int Texture::render(SDL_Renderer *pRenderer, const SDL_Rect &dest,
 	                    double angle) {
-		return SDL_RenderCopyEx(pRenderer, m_Texture.get(), nullptr, &dest, angle,
-		                        nullptr, SDL_FLIP_NONE);
+		return SDL_RenderCopyEx(pRenderer, m_Texture.get(), nullptr, &dest,
+		                        angle, nullptr, SDL_FLIP_NONE);
 	}
 
 	int Texture::render(SDL_Renderer *pRenderer, int x, int y, double angle) {
 		return render(pRenderer, SDL_Rect{x, y, w, h}, angle);
 	}
 
-	int Texture::render(SDL_Renderer *pRenderer, const SDL_Rect &dest, int flip) {
+	int Texture::render(SDL_Renderer *pRenderer, const SDL_Rect &dest,
+	                    int flip) {
 		return SDL_RenderCopyEx(pRenderer, m_Texture.get(), nullptr, &dest, 0,
 		                        nullptr, static_cast<SDL_RendererFlip>(flip));
 	}
@@ -123,20 +127,22 @@ namespace RTE {
 
 	int Texture::render(SDL_Renderer *pRenderer, const SDL_Rect &dest,
 	                    double angle, int flip) {
-		return SDL_RenderCopyEx(pRenderer, m_Texture.get(), nullptr, &dest, angle,
-		                        nullptr, static_cast<SDL_RendererFlip>(flip));
+		return SDL_RenderCopyEx(pRenderer, m_Texture.get(), nullptr, &dest,
+		                        angle, nullptr,
+		                        static_cast<SDL_RendererFlip>(flip));
 	}
 
 	int Texture::render(SDL_Renderer *pRenderer, const SDL_Rect &dest,
 	                    double angle, const SDL_Point &center, int flip) {
-		return SDL_RenderCopyEx(pRenderer, m_Texture.get(), nullptr, &dest, angle,
-		                        &center, static_cast<SDL_RendererFlip>(flip));
+		return SDL_RenderCopyEx(pRenderer, m_Texture.get(), nullptr, &dest,
+		                        angle, &center,
+		                        static_cast<SDL_RendererFlip>(flip));
 	}
 
 	int Texture::renderFillColor(SDL_Renderer *renderer, int x, int y,
 	                             uint32_t color) {
-		return renderFillColor(renderer, SDL_Rect{0, 0, w, h}, SDL_Rect{x, y, w, h},
-		                       color);
+		return renderFillColor(renderer, SDL_Rect{0, 0, w, h},
+		                       SDL_Rect{x, y, w, h}, color);
 	}
 
 	int Texture::renderFillColor(SDL_Renderer *renderer, const SDL_Rect &source,
@@ -144,9 +150,9 @@ namespace RTE {
 		// Create a blend mode that draws all pixels of the Texture in the
 		// targets color
 		SDL_BlendMode blender{SDL_ComposeCustomBlendMode(
-		    SDL_BLENDFACTOR_ZERO, SDL_BLENDFACTOR_SRC_ALPHA, SDL_BLENDOPERATION_ADD,
-		    SDL_BLENDFACTOR_SRC_ALPHA, SDL_BLENDFACTOR_ZERO,
-		    SDL_BLENDOPERATION_ADD)};
+		    SDL_BLENDFACTOR_ZERO, SDL_BLENDFACTOR_SRC_ALPHA,
+		    SDL_BLENDOPERATION_ADD, SDL_BLENDFACTOR_SRC_ALPHA,
+		    SDL_BLENDFACTOR_ZERO, SDL_BLENDOPERATION_ADD)};
 		SDL_BlendMode activeBlendMode;
 		SDL_GetTextureBlendMode(m_Texture.get(), &activeBlendMode);
 
@@ -170,8 +176,9 @@ namespace RTE {
 		// Set the render target to the fillTexture thatll be used to
 		// generate the background color
 		SDL_SetRenderTarget(renderer, fillTarget->m_Texture.get());
-		SDL_SetRenderDrawColor(renderer, (color >> 24) & 0xFF, (color >> 16) & 0xFF,
-		                       (color >> 8) & 0xFF, (color)&0xFF);
+		SDL_SetRenderDrawColor(renderer, (color >> 24) & 0xFF,
+		                       (color >> 16) & 0xFF, (color >> 8) & 0xFF,
+		                       (color)&0xFF);
 
 		// Clear the target to the desired color
 		SDL_RenderClear(renderer);
@@ -191,20 +198,21 @@ namespace RTE {
 		SDL_SetTextureBlendMode(m_Texture.get(), activeBlendMode);
 
 		// Render the texture area from the intermediate target to the screen
-		return SDL_RenderCopy(renderer, fillTarget->m_Texture.get(), &dimensions,
-		                      &dest);
+		return SDL_RenderCopy(renderer, fillTarget->m_Texture.get(),
+		                      &dimensions, &dest);
 	}
 
 	int Texture::renderFillColor(SDL_Renderer *renderer, int x, int y,
 	                             uint32_t color, double angle) {
-		return renderFillColor(renderer, SDL_Rect{0, 0, w, h}, SDL_Rect{x, y, w, h},
-		                       color, angle, SDL_FLIP_NONE);
+		return renderFillColor(renderer, SDL_Rect{0, 0, w, h},
+		                       SDL_Rect{x, y, w, h}, color, angle,
+		                       SDL_FLIP_NONE);
 	}
 
 	int Texture::renderFillColor(SDL_Renderer *renderer, int x, int y,
 	                             uint32_t color, double angle, int flip) {
-		return renderFillColor(renderer, SDL_Rect{0, 0, w, h}, SDL_Rect{x, y, w, h},
-		                       color, angle, flip);
+		return renderFillColor(renderer, SDL_Rect{0, 0, w, h},
+		                       SDL_Rect{x, y, w, h}, color, angle, flip);
 	}
 
 	int Texture::renderFillColor(SDL_Renderer *renderer, const SDL_Rect &source,
@@ -213,9 +221,9 @@ namespace RTE {
 		// Create a custom blend mode that will draw all pixels of the texture
 		// in the color of the target
 		SDL_BlendMode blender{SDL_ComposeCustomBlendMode(
-		    SDL_BLENDFACTOR_ZERO, SDL_BLENDFACTOR_SRC_ALPHA, SDL_BLENDOPERATION_ADD,
-		    SDL_BLENDFACTOR_SRC_ALPHA, SDL_BLENDFACTOR_ZERO,
-		    SDL_BLENDOPERATION_ADD)};
+		    SDL_BLENDFACTOR_ZERO, SDL_BLENDFACTOR_SRC_ALPHA,
+		    SDL_BLENDOPERATION_ADD, SDL_BLENDFACTOR_SRC_ALPHA,
+		    SDL_BLENDFACTOR_ZERO, SDL_BLENDOPERATION_ADD)};
 
 		SDL_BlendMode activeBlendMode;
 		SDL_GetTextureBlendMode(m_Texture.get(), &activeBlendMode);
@@ -240,8 +248,9 @@ namespace RTE {
 		// Set the render target to the fillTexture thatll be used to
 		// generate the background color
 		SDL_SetRenderTarget(renderer, fillTarget->m_Texture.get());
-		SDL_SetRenderDrawColor(renderer, (color >> 24) & 0xFF, (color >> 16) & 0xFF,
-		                       (color >> 8) & 0xFF, (color)&0xFF);
+		SDL_SetRenderDrawColor(renderer, (color >> 24) & 0xFF,
+		                       (color >> 16) & 0xFF, (color >> 8) & 0xFF,
+		                       (color)&0xFF);
 
 		// Clear the target to the desired color
 		SDL_RenderClear(renderer);
@@ -261,8 +270,8 @@ namespace RTE {
 		SDL_SetTextureBlendMode(m_Texture.get(), activeBlendMode);
 
 		// Render the texture area from the intermediate target to the screen
-		return SDL_RenderCopyEx(renderer, fillTarget->m_Texture.get(), &dimensions,
-		                        &dest, angle, nullptr,
+		return SDL_RenderCopyEx(renderer, fillTarget->m_Texture.get(),
+		                        &dimensions, &dest, angle, nullptr,
 		                        static_cast<SDL_RendererFlip>(flip));
 	}
 
@@ -283,25 +292,26 @@ namespace RTE {
 			else
 				m_LockedRect->h = h - region.y;
 
-			return SDL_LockTexture(m_Texture.get(), m_LockedRect.get(), &m_PixelsWO,
-			                       &m_Pitch);
+			return SDL_LockTexture(m_Texture.get(), m_LockedRect.get(),
+			                       &m_PixelsWO, &m_Pitch);
 		}
 		return -1;
 	}
 
 	void Texture::unlock() {
 		if (m_LockedRect)
-			SDL_UpdateTexture(m_Texture.get(), m_LockedRect.get(), getPixelsRW(),
-			                  w * sizeof(uint32_t));
+			SDL_UpdateTexture(m_Texture.get(), m_LockedRect.get(),
+			                  getPixelsRW(), w * sizeof(uint32_t));
 		SDL_UnlockTexture(m_Texture.get());
 		m_PixelsWO = nullptr;
 		m_Pitch = 0;
 	}
 
-	uint32_t Texture::getPixel(int x, int y) {
+	uint32_t Texture::getPixel(int x, int y) const {
 		if (!m_PixelsRO.empty() && x < w && y < h) {
 			uint8_t r, g, b, a;
-			SDL_GetRGBA(m_PixelsRO[y * w + x], m_PixelFormat.get(), &r, &g, &b, &a);
+			SDL_GetRGBA(m_PixelsRO[y * w + x], m_PixelFormat.get(), &r, &g, &b,
+			            &a);
 			return (static_cast<uint32_t>(r) << 24) |
 			       (static_cast<uint32_t>(g) << 16) |
 			       (static_cast<uint32_t>(b) << 8) | (a);
@@ -310,7 +320,9 @@ namespace RTE {
 		return 0xFFFFFF00;
 	}
 
-	uint32_t Texture::getPixel(SDL_Point pos) { return getPixel(pos.x, pos.y); }
+	uint32_t Texture::getPixel(SDL_Point pos) const {
+		return getPixel(pos.x, pos.y);
+	}
 
 	void Texture::setPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b,
 	                       uint8_t a) {
@@ -326,8 +338,36 @@ namespace RTE {
 		         (color >> 8) & 0xFF, (color)&0xFF);
 	}
 
-	void Texture::clearAll(){
+	void Texture::clearAll() {
 		std::fill(m_PixelsRO.begin(), m_PixelsRO.end(), 0);
+	}
+
+	void Texture::fillRect(const SDL_Rect &rect, uint32_t color) {
+		if (!m_LockedRect && m_PixelsWO) {
+			std::unique_ptr<SDL_Surface, sdl_deleter> temp{
+			    SDL_CreateRGBSurfaceWithFormatFrom(getPixelsRW(), w, h, 32,
+			                                       sizeof(uint32_t), m_Format)};
+			uint32_t formattedColor = SDL_MapRGBA(
+			    m_PixelFormat.get(), (color >> 24) & 0xFF, (color >> 16) & 0xFF,
+			    (color >> 8) & 0xFF, (color)&0xFF);
+			SDL_FillRect(temp.get(), &rect, formattedColor);
+			SDL_ConvertPixels(w, h, m_Format, getPixelsRW(),
+			                  w * sizeof(uint32_t), m_Format, m_PixelsWO,
+			                  m_Pitch);
+		}
+	}
+
+	void Texture::fillLocked(uint32_t color) {
+		if (m_PixelsWO && m_LockedRect) {
+			uint32_t formattedColor = SDL_MapRGBA(
+			    m_PixelFormat.get(), (color >> 24) & 0xFF, (color >> 16) & 0xFF,
+			    (color >> 8) & 0xFF, (color)&0xFF);
+			std::unique_ptr<SDL_Surface, sdl_deleter> temp{
+				SDL_CreateRGBSurfaceWithFormatFrom(getPixelsRW(), w, h, 32,
+				                                   w * sizeof(32), m_Format)
+			};
+			SDL_FillRect(temp.get(), nullptr, formattedColor);
+		}
 	}
 
 	int Texture::setAlphaMod(uint8_t alpha) {
