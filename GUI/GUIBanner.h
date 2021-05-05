@@ -11,17 +11,14 @@
 //                  http://www.datarealms.com
 
 
-#include "Vector.h"
-#include "Timer.h"
-#include "allegro.h"
-
-struct BITMAP;
 
 #define MAXBANNERFONTCHARS 256
 
 namespace RTE
 {
 
+	class Vector;
+	class GUIBitmap;
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Class:           GUIBanner
@@ -53,7 +50,7 @@ public:
         FLYBYRIGHTWARD,
         ANIMMODECOUNT
     };
-    
+
     enum AnimState
     {
         NOTSTARTED = 0,
@@ -272,7 +269,7 @@ public:
 // Arguments:       The target bitmap to draw to.
 // Return value:    None.
 
-    void Draw(BITMAP *pTargetBitmap);
+    void Draw(GUIBitmap* pTargetBitmap);
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
