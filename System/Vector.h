@@ -4,6 +4,8 @@
 #include "Serializable.h"
 #include "RTETools.h"
 
+struct SDL_Point;
+
 namespace RTE {
 
 	enum Axes { X = 0, Y = 1 };
@@ -496,6 +498,11 @@ namespace RTE {
 		/// <param name="rhs">An int index indicating which element is requested (X = 0, Y = 1).</param>
 		/// <returns>The requested element.</returns>
 		float & operator[](const int &rhs) { return (rhs == 0) ? m_X : m_Y; }
+
+		/// <summary>
+		/// Type cast to SDL_Point, so Vectors can be used with SDL
+		/// </summary>
+		operator SDL_Point() const;
 #pragma endregion
 
 	private:

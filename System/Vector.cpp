@@ -1,5 +1,7 @@
 #include "Vector.h"
 
+#include "SDLHelper.h"
+
 #pragma float_control(precise, on)
 
 namespace RTE {
@@ -102,5 +104,9 @@ namespace RTE {
 			*this /= static_cast<float>(rhs.size());
 		}
 		return *this;
+	}
+
+	Vector::operator SDL_Point() const{
+		return SDL_Point{GetFloorIntX(), GetFloorIntY()};
 	}
 }
