@@ -182,7 +182,6 @@ ClassInfoGetters
 // Return value:    None.
 
     void Draw(SDL_Renderer* renderer, const Vector &targetPos = Vector(), DrawMode mode = g_DrawColor, bool onlyPhysical = false) const override;
-#endif
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
