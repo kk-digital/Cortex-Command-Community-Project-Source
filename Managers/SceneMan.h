@@ -135,7 +135,7 @@ public:
 //                  from system memory.
 // Arguments:       None.
 
-	~SceneMan() { Destroy(); }
+	~SceneMan();
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -1700,14 +1700,14 @@ public:
     // Current scene being used
     Scene *m_pCurrentScene;
     // Color MO layer
-	std::shared_ptr<RenderLayer> m_pMOColorLayer;
+	std::unique_ptr<RenderLayer> m_pMOColorLayer;
     // MovableObject ID layer
-	std::shared_ptr<RenderLayer> m_pMOIDLayer;
+	std::unique_ptr<RenderLayer> m_pMOIDLayer;
     // All the areas drawn within on the MOID layer since last Update
     std::list<IntRect> m_MOIDDrawings;
 
     // Debug layer for seeing cast rays etc
-	std::shared_ptr<SceneLayer> m_pDebugLayer;
+	std::unique_ptr<SceneLayer> m_pDebugLayer;
     // The absolute end position of the last ray cast
     Vector m_LastRayHitPos;
     // The mode we're drawing layers in to the screen
