@@ -226,9 +226,10 @@ namespace RTE {
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 	void PerformanceMan::DrawCurrentPing() const {
+#ifdef NETWORK_ENABLED
 		AllegroBitmap allegroBitmap(g_FrameMan.GetBackBuffer8());
 		g_FrameMan.GetLargeFont()->DrawAligned(&allegroBitmap, g_FrameMan.GetBackBuffer8()->w - 25, g_FrameMan.GetBackBuffer8()->h - 14, "PING: " + std::to_string(m_CurrentPing), GUIFont::Right);
+#endif
 	}
 }
