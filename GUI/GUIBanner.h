@@ -10,7 +10,9 @@
 //                  data@datarealms.com
 //                  http://www.datarealms.com
 
-
+#include "System/SDLTexture.h"
+#include "Vector.h"
+#include "Timer.h"
 
 #define MAXBANNERFONTCHARS 256
 
@@ -19,6 +21,7 @@ namespace RTE
 
 	class Vector;
 	class GUIBitmap;
+	class Timer;
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Class:           GUIBanner
@@ -269,7 +272,7 @@ public:
 // Arguments:       The target bitmap to draw to.
 // Return value:    None.
 
-    void Draw(GUIBitmap* pTargetBitmap);
+    void Draw(SDL_Renderer* renderer);
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -278,7 +281,7 @@ public:
 private:
 
     // Font bitmap files - not owned
-    BITMAP *m_pFontImage[FONTMODECOUNT];
+	std::shared_ptr<Texture> m_pFontImage[FONTMODECOUNT];
 
     // The loaded font information for each filepath to a font bitmap
     static std::map<std::string, FontChar *> m_sFontCache;

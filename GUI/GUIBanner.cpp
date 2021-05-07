@@ -13,6 +13,9 @@
 
 #include "GUIBanner.h"
 #include "ContentFile.h"
+#include "System/Timer.h"
+
+#include "SDLHelper.h"
 
 namespace RTE {
 
@@ -65,16 +68,17 @@ bool GUIBanner::Create(const std::string fontFilePath, const std::string fontBlu
     ContentFile fontFile;
     map<string, FontChar *>::iterator fontItr;
     map<string, int>::iterator indexItr;
-    int y, dotColor;
+    int y;
+	uint32_t dotColor;
     for (int mode = REGULAR; mode < FONTMODECOUNT; ++mode)
     {
         // Load the font images
         fontFile.SetDataPath(filePaths[mode].c_str());
-        m_pFontImage[mode] = fontFile.GetAsBitmap(bitDepth == 8 ? COLORCONV_REDUCE_TO_256 : COLORCONV_8_TO_32);
-        RTEAssert(m_pFontImage[mode], "Couldn't load font bitmap for banner font from this file:\n" + fontFilePath);
+        m_pFontImage[mode] = fontFile.GetAsTexture();
+        RTEAssert(m_pFontImage[mode].get(), "Couldn't load font bitmap for banner font from this file:\n" + fontFilePath);
 
         // Check the color key to be the same color as the Bottom-Right hand corner pixel
-        int keyColor = getpixel(m_pFontImage[mode], m_pFontImage[mode]->w - 1, m_pFontImage[mode]->h - 1);
+        uint32_t keyColor = m_pFontImage[mode]->getPixel(m_pFontImage[mode]->getW() - 1, m_pFontImage[mode]->getH() - 1);
 // No need (or way!) to actually set it; it's assumed to be bright pink (255, 255, 0)
 //        m_pFontImage[mode]->SetColorKey(keyColor);
 
@@ -84,6 +88,7 @@ bool GUIBanner::Create(const std::string fontFilePath, const std::string fontBlu
         if (fontItr != m_sFontCache.end())
         {
             // Yes, has been loaded previously, then use that data from memory.
+			//TODO: Ewww
             memcpy(m_aaFontChars[mode], (*fontItr).second, sizeof(FontChar) * MAXBANNERFONTCHARS);
             // Also retrieve the font max number of characters if we can
             indexItr = m_sCharCapCache.find(filePaths[mode]);
@@ -96,11 +101,11 @@ bool GUIBanner::Create(const std::string fontFilePath, const std::string fontBlu
             if (mode == REGULAR)
             {
                 // The red separator MUST be on the Top-Left hand corner
-                dotColor = getpixel(m_pFontImage[mode], 0, 0);
+                dotColor = m_pFontImage[mode]->getPixel(0, 0);
                 m_FontHeight = 0;
-                for (y = 1; y < m_pFontImage[mode]->h; y++)
+                for (y = 1; y < m_pFontImage[mode]->getH(); y++)
                 {
-                    if (getpixel(m_pFontImage[mode], 0, y) == dotColor)
+                    if (m_pFontImage[mode]->getPixel(0, y) == dotColor)
                     {
                         m_FontHeight = y;
                         break;
@@ -112,15 +117,15 @@ bool GUIBanner::Create(const std::string fontFilePath, const std::string fontBlu
         else
         {
             // The red separator MUST be on the Top-Left hand corner
-            dotColor = getpixel(m_pFontImage[mode], 0, 0);
+            dotColor = m_pFontImage[mode]->getPixel(0, 0);
             // Find the separating gap of the font lines
             // Calc the font height - the horizontally blurred one should be the same
             if (mode == REGULAR)
             {
                 m_FontHeight = 0;
-                for (y = 1; y < m_pFontImage[mode]->h; y++)
+                for (y = 1; y < m_pFontImage[mode]->getH(); y++)
                 {
-                    if (getpixel(m_pFontImage[mode], 0, y) == dotColor)
+                    if (m_pFontImage[mode]->getPixel(0, y) == dotColor)
                     {
                         m_FontHeight = y;
                         break;
@@ -141,9 +146,9 @@ bool GUIBanner::Create(const std::string fontFilePath, const std::string fontBlu
                 // Find the next red pixel
                 int w = 0;
                 int n;
-                for (n = x; n < m_pFontImage[mode]->w; n++, w++)
+                for (n = x; n < m_pFontImage[mode]->getW(); n++, w++)
                 {
-                    if (getpixel(m_pFontImage[mode], n, y) == dotColor)
+                    if (m_pFontImage[mode]->getPixel(n, y) == dotColor)
                     {
                         break;
                     }
@@ -155,9 +160,9 @@ bool GUIBanner::Create(const std::string fontFilePath, const std::string fontBlu
                 {
                     for (int i = x; i < x + w; i++)
                     {
-                        int Pixel = getpixel(m_pFontImage[mode], i, j);
+                        uint32_t Pixel = m_pFontImage[mode]->getPixel(i, j);
                         if (Pixel != dotColor && Pixel != keyColor)
-                            Height = MAX(Height, j - y);
+                            Height = std::max(Height, j - y);
                     }
                 }
                 
@@ -174,7 +179,7 @@ bool GUIBanner::Create(const std::string fontFilePath, const std::string fontBlu
                     x = 1;
                     y += m_FontHeight;
                     // Stop if we run out of bitmap
-                    if ((y + m_FontHeight) > m_pFontImage[mode]->h)
+                    if ((y + m_FontHeight) > m_pFontImage[mode]->getH())
                         break;
                 }
             }
@@ -321,7 +326,7 @@ void GUIBanner::Update()
         m_AnimState = HIDING;
 
     int flyDirection = m_AnimMode == FLYBYLEFTWARD ? -1 : 1;
-    int whichChar = 0;
+    size_t whichChar = 0;
     // Go through every character, updating their positions and states
     list<FlyingChar>::iterator prevItr = m_BannerChars.end();
     for (list<FlyingChar>::iterator cItr = m_BannerChars.begin(); cItr != m_BannerChars.end(); ++cItr)
@@ -409,7 +414,7 @@ void GUIBanner::Update()
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Draws text to a bitmap.
 
-void GUIBanner::Draw(BITMAP *pTargetBitmap)
+void GUIBanner::Draw(SDL_Renderer *renderer)
 {
     // Only bother drawing if things are visible at all
     if (m_AnimState < SHOWING || m_AnimState > HIDING)
@@ -427,11 +432,11 @@ void GUIBanner::Draw(BITMAP *pTargetBitmap)
             c = (*cItr).m_Character;
             if (c == '\n')
             {
-                
+
             }
             if (c == '\t')
             {
-                
+
             }
             if (c < 0)
                 c += m_CharIndexCap;
@@ -443,9 +448,21 @@ void GUIBanner::Draw(BITMAP *pTargetBitmap)
             charWidth = m_aaFontChars[mode][c].m_Width;
             offX = m_aaFontChars[mode][c].m_Offset;
             offY = ((c - 32) / 16) * m_FontHeight;
+			SDL_Rect src_pos{
+				offX,
+				offY,
+				charWidth,
+				m_FontHeight
+			};
+			SDL_Rect dest_pos{
+				cItr->m_PosX,
+				m_BannerPosY,
+				charWidth,
+				m_FontHeight
+			};
 
             // Draw the character onto the target
-            masked_blit(m_pFontImage[mode], pTargetBitmap, offX, offY, (*cItr).m_PosX, m_BannerPosY, charWidth, m_FontHeight);
+            m_pFontImage[mode]->render(renderer, src_pos, dest_pos);
         }
     }
 }
