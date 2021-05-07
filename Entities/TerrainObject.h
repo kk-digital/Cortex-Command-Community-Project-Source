@@ -167,7 +167,7 @@ ClassInfoGetters
 // Arguments:       None.
 // Return value:    Width of 'material' bitmap.
 
-	const int GetTextureWidth() const { return m_pMaterial->w; }
+	int GetTextureWidth() const { return m_pMaterial->getW(); }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -177,7 +177,7 @@ ClassInfoGetters
 // Arguments:       None.
 // Return value:    Height of 'material' bitmap.
 
-	const int GetTextureHeight() const { return m_pMaterial->h; }
+	int GetTextureHeight() const { return m_pMaterial->getH(); }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
