@@ -499,18 +499,18 @@ namespace RTE {
 		/// What color to flash it. -1 means no color or flash
 		/// </param>
 		/// <param name="periodMS">
-		/// How long a period to fill th eframe with color. If0, a single-frame
+		/// How long a period to fill the frame with color. If 0, a single-frame
 		/// flash will happen.
 		/// </param>
-		void FlashScreen(short screen, int colro, float periodMS = 0);
+		void FlashScreen(short screen, int color, float periodMS = 0);
 
 		int DrawLine(const Vector &start, const Vector &end, int color,
 		             int altColor = 0, int skip = 0, int skipStart = 0,
 		             bool shortestWrap = false) const;
 
-		int SaveScreenToBMP(std::string nameBase);
+		int SaveScreenToPNG(std::string nameBase);
 
-		int SaveWorldToBMP(std::string nameBase);
+		int SaveWorldToPNG(std::string nameBase);
 
 		int SaveTextureToPNG(std::shared_ptr<Texture> tex, std::string nameBase);
 
