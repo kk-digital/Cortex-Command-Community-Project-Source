@@ -57,7 +57,7 @@ char* GUIUtil::SafeOverlappingStrCpy(char* dst, char* src)
 bool GUIUtil::GetClipboardText(string *Text)
 {
 
-	*Text = SDL_GetClipboardText();
+	*Text = std::string(SDL_GetClipboardText());
 	return !Text->empty();
 }
 
