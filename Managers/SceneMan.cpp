@@ -70,6 +70,7 @@ bool IntRect::IntersectionCut(const IntRect &rhs)
 }
 
 SceneMan::SceneMan() { Clear(); }
+SceneMan::~SceneMan() { Destroy(); }
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          Clear
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -116,7 +117,7 @@ void SceneMan::Clear()
 //    m_CalcTimer.Reset();
 	m_CleanTimer.Reset();
 
-	m_pOrphanSearchBitmap.reset(new Texture(g_FrameMan.GetRenderer(), MAXORPHANRADIUS, MAXORPHANRADIUS, SDL_TEXTUREACCESS_STREAMING));
+	m_pOrphanSearchBitmap =  std::make_unique<Texture>(g_FrameMan.GetRenderer(), MAXORPHANRADIUS, MAXORPHANRADIUS, SDL_TEXTUREACCESS_STREAMING);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -209,28 +210,25 @@ int SceneMan::LoadScene(Scene *pNewScene, bool placeObjects, bool placeUnits) {
 //    m_pCurrentScene->GetTerrain()->CleanAir();
 
 	// Re-create the MoveableObject:s color SceneLayer
-	m_pMOColorLayer.reset(new RenderLayer());
+	m_pMOColorLayer = std::make_unique<RenderLayer>();
 	m_pMOColorLayer->Create(GetSceneWidth(), GetSceneHeight(), Vector(),
 		                    m_pCurrentScene->WrapsX(),
 		                    m_pCurrentScene->WrapsY(), Vector(1.0, 1.0));
 
 	// Re-create the MoveableObject:s ID SceneLayer
-	m_pMOIDLayer.reset(new RenderLayer());
+	m_pMOIDLayer = std::make_unique<RenderLayer>();
 	m_pMOIDLayer->Create(GetSceneWidth(), GetSceneHeight(), Vector(),
 		                 m_pCurrentScene->WrapsX(), m_pCurrentScene->WrapsY(),
 		                 Vector(1.0, 1.0));
-	new Texture(g_FrameMan.GetRenderer(), GetSceneWidth(), GetSceneHeight());
 
   if(m_DrawRayCastVisualizations || m_DrawPixelCheckVisualizations){
 	// Create the Debug SceneLayer
-	m_pDebugLayer.reset(new SceneLayer());
+	  m_pDebugLayer = std::make_unique<SceneLayer>();
 	Texture debugTexture(g_FrameMan.GetRenderer(), GetSceneWidth(),
 		                 GetSceneHeight(), SDL_TEXTUREACCESS_STREAMING);
 		m_pDebugLayer->Create(debugTexture,
 		                      true, Vector(), m_pCurrentScene->WrapsX(),
 		                      m_pCurrentScene->WrapsY(), Vector(1.0, 1.0));
-	new Texture(g_FrameMan.GetRenderer(), GetSceneWidth(), GetSceneHeight(),
-		        SDL_TEXTUREACCESS_STREAMING);
   }
 
 	// Finally draw the ID:s of the MO:s to the MOID layers for the first time
@@ -3593,7 +3591,7 @@ void SceneMan::Draw(SDL_Renderer* renderer, std::shared_ptr<Texture> pGUITexture
 
 //            std::snprintf(str, sizeof(str), "Normal Layer Draw Mode\nHit M to cycle modes");
 
-            if (m_pDebugLayer) { m_pDebugLayer->Draw(pTargetBitmap, targetBox); }
+            if (m_pDebugLayer) { m_pDebugLayer->Draw(renderer, targetBox); }
     }
 }
 

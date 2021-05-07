@@ -159,11 +159,11 @@ namespace RTE {
 		// If neccessary extend the dimensions of the target to at least match
 		// the size of this texture
 		if (fillTarget->w < source.w && fillTarget->h < source.h)
-			fillTarget.reset(new Texture(renderer, source.w, source.h));
+			fillTarget = std::make_unique<Texture>(renderer, source.w, source.h);
 		else if (fillTarget->w < source.w)
-			fillTarget.reset(new Texture(renderer, source.w, fillTarget->h));
+			fillTarget = std::make_unique<Texture>(renderer, source.w, fillTarget->h);
 		else if (fillTarget->h < source.h)
-			fillTarget.reset(new Texture(renderer, fillTarget->w, source.h));
+			fillTarget  = std::make_unique<Texture>(renderer, fillTarget->w, source.h);
 
 		SDL_Rect dimensions{0, 0, source.w, source.h};
 
@@ -231,11 +231,11 @@ namespace RTE {
 		// If neccessary extend the dimensions of the target to at least match
 		// the size of this texture
 		if (fillTarget->w < source.w && fillTarget->h < source.h)
-			fillTarget.reset(new Texture(renderer, source.w, source.h));
+			fillTarget = std::make_unique<Texture>(renderer, source.w, source.h);
 		else if (fillTarget->w < source.w)
-			fillTarget.reset(new Texture(renderer, source.w, fillTarget->h));
+			fillTarget = std::make_unique<Texture>(renderer, source.w, fillTarget->h);
 		else if (fillTarget->h < source.h)
-			fillTarget.reset(new Texture(renderer, fillTarget->w, source.h));
+			fillTarget = std::make_unique<Texture>(renderer, fillTarget->w, source.h);
 
 		SDL_Rect dimensions{0, 0, source.w, source.h};
 
@@ -281,7 +281,7 @@ namespace RTE {
 
 	int Texture::lock(const SDL_Rect &region) {
 		if (m_Access == SDL_TEXTUREACCESS_STREAMING) {
-			m_LockedRect.reset(new SDL_Rect{region.x, region.y, 0, 0});
+			m_LockedRect = std::make_unique<SDL_Rect>(region.x, region.y, 0, 0);
 
 			if ((region.x + region.w) < w)
 				m_LockedRect->w = region.w;
@@ -338,8 +338,14 @@ namespace RTE {
 		         (color >> 8) & 0xFF, (color)&0xFF);
 	}
 
-	void Texture::clearAll() {
-		std::fill(m_PixelsRO.begin(), m_PixelsRO.end(), 0);
+	void Texture::clearAll(uint32_t color) {
+		uint32_t fillColor{color};
+		if (fillColor)
+			fillColor = SDL_MapRGBA(m_PixelFormat.get(), (color<<24)&0xff, (color<<16)&0xff, (color<<8)&0xff, (color)&0xff);
+
+		std::fill(m_PixelsRO.begin(), m_PixelsRO.end(), fillColor);
+		if(m_PixelsWO)
+			std::fill((uint32_t*)m_PixelsWO, (uint32_t*)m_PixelsWO + m_Pitch * h, fillColor);
 	}
 
 	void Texture::fillRect(const SDL_Rect &rect, uint32_t color) {

@@ -186,7 +186,7 @@ int SceneLayer::Create(const SceneLayer &reference)
     // Deep copy the bitmap
     if (reference.m_pMainTexture)
     {
-		m_pMainTexture.reset(new Texture(g_FrameMan.GetRenderer(), *reference.m_pMainTexture));
+		m_pMainTexture = std::make_shared<Texture>(g_FrameMan.GetRenderer(), *reference.m_pMainTexture);
     }
     // If no bitmap to copy, has to load the data (LoadData) to create this in the copied to SL
     m_DrawTrans = reference.m_DrawTrans;

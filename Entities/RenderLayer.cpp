@@ -12,8 +12,7 @@ namespace RTE {
 		m_ScrollInfo = scrollInfo;
 		m_Offset = offset;
 
-		m_pMainTexture.reset(
-		    new Texture(g_FrameMan.GetRenderer(), width, height));
+		m_pMainTexture = std::make_shared<Texture>(g_FrameMan.GetRenderer(), width, height);
 
 		if (m_WrapX)
 			m_ScrollRatio.m_X = m_ScrollInfo.m_X;

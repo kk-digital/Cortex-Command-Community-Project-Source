@@ -133,7 +133,7 @@ int SLTerrain::TerrainFrosting::Save(Writer &writer) const
 }
 
 
-Texture SLTerrain::s_TempRenderTarget;
+std::unique_ptr<Texture> SLTerrain::s_TempRenderTarget;
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          Clear
@@ -280,8 +280,8 @@ int SLTerrain::LoadData()
     // Create blank foreground layer
     m_pFGColor->Destroy();
 
-    Texture pFGTexture = Texture(g_FrameMan.GetRenderer(), m_pMainTexture->getW(), m_pMainTexture->getH(), SDL_TEXTUREACCESS_STREAMING);
-    if (!pFGTexture.m_Texture.get() || m_pFGColor->Create(pFGTexture, true, m_Offset, m_WrapX, m_WrapY, m_ScrollRatio))
+    Texture pFGTexture(g_FrameMan.GetRenderer(), m_pMainTexture->getW(), m_pMainTexture->getH(), SDL_TEXTUREACCESS_STREAMING);
+    if (!pFGTexture || m_pFGColor->Create(pFGTexture, true, m_Offset, m_WrapX, m_WrapY, m_ScrollRatio))
     {
         RTEAbort("Failed to create terrain's foreground layer's bitmap!");
         return -1;
@@ -289,18 +289,21 @@ int SLTerrain::LoadData()
 
     // Create blank background layer
     m_pBGColor->Destroy();
-    Texture pBGTexture = Texture(g_FrameMan.GetRenderer(), m_pMainTexture->getW(), m_pMainTexture->getH(), SDL_TEXTUREACCESS_STREAMING);
-    if (!pBGTexture.m_Texture.get() || m_pBGColor->Create(pBGTexture, true, m_Offset, m_WrapX, m_WrapY, m_ScrollRatio))
+    Texture pBGTexture(g_FrameMan.GetRenderer(), m_pMainTexture->getW(), m_pMainTexture->getH(), SDL_TEXTUREACCESS_STREAMING);
+    if (!pBGTexture || m_pBGColor->Create(pBGTexture, true, m_Offset, m_WrapX, m_WrapY, m_ScrollRatio))
     {
         RTEAbort("Failed to create terrain's background layer's bitmap!");
         return -1;
     }
 
     // Structural integrity calc buffer bitmap
-    m_pStructural.reset(new Texture(g_FrameMan.GetRenderer(), m_pMainTexture->getW(), m_pMainTexture->getH(), SDL_TEXTUREACCESS_STREAMING));
-    RTEAssert(m_pStructural.get(), "Failed to allocate BITMAP in Terrain::Create");
+	m_pStructural = std::make_unique<Texture>(
+		g_FrameMan.GetRenderer(), m_pMainTexture->getW(),
+		m_pMainTexture->getH(), SDL_TEXTUREACCESS_STREAMING);
+	RTEAssert(m_pStructural.get(),
+		      "Failed to allocate BITMAP in Terrain::Create");
 
-    ///////////////////////////////////////////////
+	///////////////////////////////////////////////
     // Load and texturize the FG color bitmap, based on the materials defined in the recently loaded (main) material layer!
 
     int xPos, yPos, matIndex;
@@ -370,7 +373,7 @@ int SLTerrain::LoadData()
             else
             {
 //                acquire_bitmap(apTexTextures[matIndex]);
-                pixelColor = apTexTextures[matIndex]->getPixel(xPos % apTexTextures[matIndex]->w, yPos % apTexTextures[matIndex]->h);
+                pixelColor = apTexTextures[matIndex]->getPixel(xPos % apTexTextures[matIndex]->getW(), yPos % apTexTextures[matIndex]->getH());
             }
 
             // Draw the correct color pixel on the foreground
@@ -433,7 +436,7 @@ int SLTerrain::LoadData()
                 {
                     // Get the color either from the frosting material's texture or the solid color
                     if (pFrostingTex)
-                        pixelColor = pFrostingTex->getPixel(xPos % pFrostingTex->w, yPos % pFrostingTex->h);
+                        pixelColor = pFrostingTex->getPixel(xPos % pFrostingTex->getW(), yPos % pFrostingTex->getH());
                     else
                         pixelColor = (*tfItr).GetFrostingMaterial().GetColor().GetIndex();
 
@@ -911,7 +914,7 @@ deque<MOPixel *> SLTerrain::EraseSilhouette(std::shared_ptr<Texture> pSprite,
 // TODO: OPTIMIZE THIS, IT'S A TIME HOG. MAYBE JSUT STAMP THE OUTLINE AND SAMPLE SOME RANDOM PARTICLES?
 
     RTEAssert(pSprite.get(), "Null BITMAP passed to SLTerrain::EraseSilhouette");
-	RTEAssert(pSprite->m_Access!=SDL_TEXTUREACCESS_TARGET, "Render Target passed to SLTerrain::EraseSilhouette")
+	RTEAssert(pSprite->getAccess()!=SDL_TEXTUREACCESS_TARGET, "Render Target passed to SLTerrain::EraseSilhouette")
 
     deque<MOPixel *> MOPDeque;
 
@@ -920,12 +923,13 @@ deque<MOPixel *> SLTerrain::EraseSilhouette(std::shared_ptr<Texture> pSprite,
 	// because the pixels are not copied)
 	std::unique_ptr<SDL_Surface, sdl_deleter> tempSpriteSurface{
 		SDL_CreateRGBSurfaceWithFormatFrom(
-		    pSprite->m_PixelsRO.data(), pSprite->w, pSprite->h, 32,
-		    pSprite->w * sizeof(uint32_t), pSprite->m_Format)};
+		    pSprite->getPixelsRW(), pSprite->getW(), pSprite->getH(), 32,
+		    pSprite->getW() * sizeof(uint32_t), pSprite->getFormat())
+	};
 
-	std::unique_ptr<SDL_Surface, sdl_deleter>
-		rotozoomedSprite{rotozoomSurface(tempSpriteSurface.get(),
-		                                 rotation.GetDegAngle(), scale, false)};
+	std::unique_ptr<SDL_Surface, sdl_deleter> rotozoomedSprite{
+		rotozoomSurface(tempSpriteSurface.get(), rotation.GetDegAngle(), scale, false)
+	};
 
 	//TODO: All of the below should be possible to do using some clever blitting
 	// Find the maximum possible sized bitmap that the passed-in sprite will need
@@ -936,7 +940,7 @@ deque<MOPixel *> SLTerrain::EraseSilhouette(std::shared_ptr<Texture> pSprite,
     // Generate and collect MOPixels that represent the terrain overlap and clear the same pixels out of the terrain
     int testX, testY, terrX, terrY;
     MOPixel *pPixel = 0;
-	Material const * sceneMat = g_SceneMan.GetMaterialFromID(g_MaterialAir); 
+	Material const * sceneMat = g_SceneMan.GetMaterialFromID(g_MaterialAir);
 	Material const * spawnMat = g_SceneMan.GetMaterialFromID(g_MaterialAir);
     int halfWidth = rotozoomedSprite->w / 2;
     int halfHeight = rotozoomedSprite->h / 2;
@@ -1075,17 +1079,10 @@ void SLTerrain::ApplyMovableObject(MovableObject *pMObject)
 
 		SDL_Renderer *renderer = g_FrameMan.GetRenderer();
 
-		//Preserve the active rendering context
-		uint8_t r, g, b, a;
-
-		SDL_Texture *activeTarget{
-			SDL_GetRenderTarget(g_FrameMan.GetRenderer())};
-		SDL_GetRenderDrawColor(g_FrameMan.GetRenderer(), &r, &g, &b, &a);
-
 
 		// if neccessary resize the temporary render Target
-		if(spriteDiameter>s_TempRenderTarget.w)
-			s_TempRenderTarget = std::move(Texture(renderer, spriteDiameter, spriteDiameter, SDL_TEXTUREACCESS_TARGET));
+		if(!s_TempRenderTarget || spriteDiameter>s_TempRenderTarget->getW())
+			s_TempRenderTarget = std::make_unique<Texture>(renderer, spriteDiameter, spriteDiameter, SDL_TEXTUREACCESS_TARGET);
 
         // The position of the upper left corner of the temporary bitmap in the scene
         Vector bitmapScroll = pMObject->GetPos().GetFloored() - Vector(pMObject->GetDiameter() / 2, pMObject->GetDiameter() / 2);
@@ -1096,7 +1093,7 @@ void SLTerrain::ApplyMovableObject(MovableObject *pMObject)
 
 		Box notUsed;
 
-		SDL_SetRenderTarget(renderer, s_TempRenderTarget.m_Texture.get());
+		g_FrameMan.PushRenderTarget(s_TempRenderTarget->getAsRenderTarget());
 
 		pMOSprite->Draw(renderer, bitmapScroll, g_DrawColor, true);
 
@@ -1211,8 +1208,7 @@ void SLTerrain::ApplyMovableObject(MovableObject *pMObject)
 			GetFGColorTexture()->unlock();
 		}
 
-		SDL_SetRenderTarget(renderer, activeTarget);
-		SDL_SetRenderDrawColor(renderer, r, g, b, a);
+		g_FrameMan.PopRenderTarget();
     }
     // MOPixel, so update single pixel
     else
@@ -1281,7 +1277,7 @@ void SLTerrain::ApplyTerrainObject(TerrainObject *pTObject)
 		m_pMainTexture->lock(lockBox+offset);
 		SDL_ConvertPixels(
 			lockBox.w, lockBox.h, pTObject->GetMaterialTexture()->getFormat(),
-			pTObject->GetMaterialTexture()->m_PixelsRO.data(),
+			pTObject->GetMaterialTexture()->getPixelsRW(),
 			lockBox.w * sizeof(uint32_t), m_pMainTexture->getFormat(),
 			m_pMainTexture->getPixelsRW(),
 			m_pMainTexture->getW()* sizeof(uint32_t));
@@ -1291,7 +1287,7 @@ void SLTerrain::ApplyTerrainObject(TerrainObject *pTObject)
 		m_pFGColor->GetTexture()->lock(lockBox+offset);
 		SDL_ConvertPixels(
 			lockBox.w, lockBox.h, pTObject->GetFGColorTexture()->getFormat(),
-			pTObject->GetFGColorTexture()->m_PixelsRO.data(),
+			pTObject->GetFGColorTexture()->getPixelsRW(),
 			lockBox.w * sizeof(uint32_t), m_pFGColor->GetTexture()->getFormat(),
 			m_pFGColor->GetTexture()->getPixelsRW(),
 			m_pFGColor->GetTexture()->getW() * sizeof(uint32_t));
@@ -1303,7 +1299,7 @@ void SLTerrain::ApplyTerrainObject(TerrainObject *pTObject)
 
 			SDL_ConvertPixels(lockBox.w, lockBox.h,
 				              pTObject->GetFGColorTexture()->getFormat(),
-				              pTObject->GetFGColorTexture()->m_PixelsRO.data(),
+				              pTObject->GetFGColorTexture()->getPixelsRW(),
 				              lockBox.w * sizeof(uint32_t),
 				              m_pBGColor->GetTexture()->getFormat(),
 				              m_pBGColor->GetTexture()->getPixelsRW(),
@@ -1318,7 +1314,7 @@ void SLTerrain::ApplyTerrainObject(TerrainObject *pTObject)
 		m_pMainTexture->lock(lockBox + offset);
 		SDL_ConvertPixels(
 			lockBox.w, lockBox.h, pTObject->GetMaterialTexture()->getFormat(),
-			pTObject->GetMaterialTexture()->m_PixelsRO.data(),
+			pTObject->GetMaterialTexture()->getPixelsRW(),
 			lockBox.w * sizeof(uint32_t), m_pMainTexture->getFormat(),
 			m_pMainTexture->getPixelsRW(),
 			m_pMainTexture->getW() * sizeof(uint32_t));
@@ -1328,7 +1324,7 @@ void SLTerrain::ApplyTerrainObject(TerrainObject *pTObject)
 		m_pFGColor->GetTexture()->lock(lockBox + offset);
 		SDL_ConvertPixels(
 			lockBox.w, lockBox.h, pTObject->GetMaterialTexture()->getFormat(),
-			pTObject->GetMaterialTexture()->m_PixelsRO.data(),
+			pTObject->GetMaterialTexture()->getPixelsRW(),
 			lockBox.w * sizeof(uint32_t), m_pFGColor->GetTexture()->getFormat(),
 			m_pFGColor->GetTexture()->getPixelsRW(),
 			m_pFGColor->GetTexture()->getW() * sizeof(uint32_t));
@@ -1338,7 +1334,7 @@ void SLTerrain::ApplyTerrainObject(TerrainObject *pTObject)
 			m_pBGColor->GetTexture()->lock(lockBox + offset);
 			SDL_ConvertPixels(lockBox.w, lockBox.h,
 				              pTObject->GetMaterialTexture()->getFormat(),
-				              pTObject->GetMaterialTexture()->m_PixelsRO.data(),
+				              pTObject->GetMaterialTexture()->getPixelsRW(),
 				              lockBox.w * sizeof(uint32_t),
 				              m_pBGColor->GetTexture()->getFormat(),
 				              m_pBGColor->GetTexture()->getPixelsRW(),
@@ -1352,7 +1348,7 @@ void SLTerrain::ApplyTerrainObject(TerrainObject *pTObject)
 	m_pMainTexture->lock(lockBox);
 	SDL_ConvertPixels(lockBox.w, lockBox.h,
 		              pTObject->GetMaterialTexture()->getFormat(),
-		              pTObject->GetMaterialTexture()->m_PixelsRO.data(),
+		              pTObject->GetMaterialTexture()->getPixelsRW(),
 		              lockBox.w * sizeof(uint32_t), m_pMainTexture->getFormat(),
 		              m_pMainTexture->getPixelsRW(),
 		              m_pMainTexture->getW() * sizeof(uint32_t));
@@ -1361,7 +1357,7 @@ void SLTerrain::ApplyTerrainObject(TerrainObject *pTObject)
 	m_pFGColor->GetTexture()->lock(lockBox);
 	SDL_ConvertPixels(
 		lockBox.w, lockBox.h, pTObject->GetMaterialTexture()->getFormat(),
-		pTObject->GetMaterialTexture()->m_PixelsRO.data(),
+		pTObject->GetMaterialTexture()->getPixelsRW(),
 		lockBox.w * sizeof(uint32_t), m_pFGColor->GetTexture()->getFormat(),
 		m_pFGColor->GetTexture()->getPixelsRW(),
 		m_pFGColor->GetTexture()->getW() * sizeof(uint32_t));
@@ -1373,7 +1369,7 @@ void SLTerrain::ApplyTerrainObject(TerrainObject *pTObject)
 		m_pBGColor->GetTexture()->lock(lockBox);
 		SDL_ConvertPixels(
 			lockBox.w, lockBox.h, pTObject->GetMaterialTexture()->getFormat(),
-			pTObject->GetMaterialTexture()->m_PixelsRO.data(),
+			pTObject->GetMaterialTexture()->getPixelsRW(),
 			lockBox.w * sizeof(uint32_t), m_pBGColor->GetTexture()->getFormat(),
 			m_pBGColor->GetTexture()->getPixelsRW(),
 			m_pBGColor->GetTexture()->getW() * sizeof(uint32_t));
@@ -1521,17 +1517,12 @@ void SLTerrain::CleanAir()
 
 void SLTerrain::ClearAllMaterial()
 {
-	m_pMainTexture->lock(
-		SDL_Rect{0, 0, m_pMainTexture->getW(), m_pMainTexture->getH()});
-	std::fill(m_pMainTexture->m_PixelsRO.begin(),
-		      m_pMainTexture->m_PixelsRO.end(), 0);
+	m_pMainTexture->lock();
+	m_pMainTexture->clearAll();
 	m_pMainTexture->unlock();
 
-	m_pFGColor->GetTexture()->lock(SDL_Rect{0, 0,
-		                                    m_pFGColor->GetTexture()->getW(),
-		                                    m_pFGColor->GetTexture()->getH()});
-	m_pFGColor->GetTexture()->m_PixelsRO.assign(
-		m_pFGColor->GetTexture()->m_PixelsRO.size(), g_MaterialAir);
+	m_pFGColor->GetTexture()->lock();
+	m_pFGColor->GetTexture()->clearAll(g_MaterialAir);
 	m_pFGColor->GetTexture()->unlock();
 }
 

@@ -613,9 +613,12 @@ namespace RTE {
 		void setPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 
 		/// <summary>
-		/// Clear all pixels of the Texture to trasparent (0x00000000)
+		/// Clear all pixels of the Texture to color
 		/// </summary>
-		void clearAll();
+		/// <param name="color">
+		/// The color to clear the Texture to in RGBA32. Defaults to transparent (0x00000000)
+		/// </param>
+		void clearAll(uint32_t color = 0);
 
 
 		/// <summary>
