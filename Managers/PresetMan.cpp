@@ -25,6 +25,8 @@
 //#include "AtomGroup.h"
 //#include "Atom.h"
 
+#include "System/System.h"
+
 #include "ConsoleMan.h"
 #include "LoadingGUI.h"
 #include "SettingsMan.h"
