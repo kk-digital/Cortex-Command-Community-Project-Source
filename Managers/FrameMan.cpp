@@ -98,7 +98,7 @@ namespace RTE {
 	}
 
 	void FrameMan::Draw() {
-		#if 0
+#if 0
 		// Count how many split screens we'll need
 		int screenCount = (m_HSplit ? 2 : 1) * (m_VSplit ? 2 : 1);
 		// RTEAssert(screenCount <= 1 || m_PlayerScreen,
@@ -219,8 +219,7 @@ namespace RTE {
 				vline(m_BackBuffer8, (m_BackBuffer8->w / 2), 0,
 				      m_BackBuffer8->h - 1, m_AlmostBlackColor);
 			}
-
-			/*
+#ifdef NETWORK_ENABLED
 			// Replace 8 bit backbuffer contents with network received image
 			// before post-processing as it is where this buffer is copied to 32
 			// bit buffer
@@ -241,12 +240,15 @@ namespace RTE {
 			    }
 
 			    m_NetworkBitmapLock[0].unlock();
-			    }*/
+			    }
+#endif
 		}
 
+#ifdef NETWORK_ENABLED
 		if (IsInMultiplayerMode()) {
 			PrepareFrameForNetwork();
 		}
+#endif
 
 		if (g_InActivity) {
 			g_PostProcessMan.PostProcess();
@@ -263,7 +265,7 @@ namespace RTE {
 		// Reset the frame timer so we can measure how much it takes until next
 		// frame being drawn
 		g_PerformanceMan.ResetFrameTimer();
-		#endif
+#endif
 	}
 
 	void FrameMan::SetFullscreen(bool fullscreen, bool endActivity) {
