@@ -6,9 +6,13 @@
 #include "AudioMan.h"
 #include "PerformanceMan.h"
 #include "UInputMan.h"
+
+#include "System/System.h"
+
+#ifdef NETWORK_ENABLED
 #include "NetworkClient.h"
 #include "NetworkServer.h"
-
+#endif
 namespace RTE {
 
 	const std::string SettingsMan::c_ClassName = "SettingsMan";
@@ -183,6 +187,7 @@ namespace RTE {
 			reader >> m_PrintDebugInfo;
 		} else if (propName == "MeasureModuleLoadTime") {
 			reader >> m_MeasureModuleLoadTime;
+#ifdef NETWORK_ENABLED
 		} else if (propName == "PlayerNetworkName") {
 			reader >> m_PlayerNetworkName;
 		} else if (propName == "NetworkServerName") {
@@ -219,6 +224,7 @@ namespace RTE {
 			reader >> g_NetworkServer.m_SleepWhenIdle;
 		} else if (propName == "ServerSimSleepWhenIdle") {
 			reader >> g_NetworkServer.m_SimSleepWhenIdle;
+#endif
 		} else if (propName == "VisibleAssemblyGroup") {
 			m_VisibleAssemblyGroupsList.push_back(reader.ReadPropValue());
 		} else if (propName == "DisableMod") {
@@ -338,6 +344,7 @@ namespace RTE {
 		writer.NewPropertyWithValue("PrintDebugInfo", m_PrintDebugInfo);
 		writer.NewPropertyWithValue("MeasureModuleLoadTime", m_MeasureModuleLoadTime);
 
+#ifdef NETWORK_ENABLED
 		writer.NewLine(false, 2);
 		writer.NewDivider(false);
 		writer.NewLineString("// Network Settings", false);
@@ -365,7 +372,7 @@ namespace RTE {
 		writer.NewPropertyWithValue("ServerEncodingFps", g_NetworkServer.m_EncodingFps);
 		writer.NewPropertyWithValue("ServerSleepWhenIdle", g_NetworkServer.m_SleepWhenIdle);
 		writer.NewPropertyWithValue("ServerSimSleepWhenIdle", g_NetworkServer.m_SimSleepWhenIdle);
-
+#endif
 		if (!m_VisibleAssemblyGroupsList.empty()) {
 			writer.NewLine(false, 2);
 			writer.NewDivider(false);
