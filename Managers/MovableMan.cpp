@@ -15,6 +15,8 @@
 #include "PostProcessMan.h"
 #include "PerformanceMan.h"
 #include "PresetMan.h"
+#include "SceneMan.h"
+#include "FrameMan.h"
 #include "AHuman.h"
 #include "MOPixel.h"
 #include "HeldDevice.h"
@@ -1843,7 +1845,7 @@ void MovableMan::Update()
 
     {
         g_SceneMan.UnlockScene();
-        acquire_bitmap(g_SceneMan.GetTerrain()->GetMaterialBitmap());
+        g_SceneMan.GetTerrain()->LockTexture();
 
         // DEATH //////////////////////////////////////////////////////////
         // Transfer dead actors from Actor list to particle list
@@ -1975,14 +1977,14 @@ void MovableMan::Update()
         m_Particles.erase(midIt, m_Particles.end());
     }
 
-    release_bitmap(g_SceneMan.GetTerrain()->GetMaterialBitmap());
+    g_SceneMan.GetTerrain()->UnlockTexture();
 
     ////////////////////////////////////////////////////////////////////////
     // Draw the MO matter and IDs to their layers for next frame
 
 // Not anymore, we're using ClearAllMOIDDrawings instead.. much more efficient
 //    g_SceneMan.ClearMOIDLayer();
-    UpdateDrawMOIDs(g_SceneMan.GetMOIDBitmap());
+    UpdateDrawMOIDs(g_FrameMan.GetRenderer(), g_SceneMan.GetMOIDTexture());
 
 	// COUNT MOID USAGE PER TEAM  //////////////////////////////////////////////////
 	{
@@ -2007,10 +2009,13 @@ void MovableMan::Update()
     ////////////////////////////////////////////////////////////////////
     // Draw the MO colors ONLY if this is a drawn update!
 
-    if (g_TimerMan.DrawnSimUpdate())
-        Draw(g_SceneMan.GetMOColorBitmap());
+	if (g_TimerMan.DrawnSimUpdate()) {
+		g_FrameMan.PushRenderTarget(g_SceneMan.GetMOColorTexture());
+		Draw(g_FrameMan.GetRenderer());
+		g_FrameMan.PopRenderTarget();
+	}
 
-    // Sort team rosters if necessary
+	// Sort team rosters if necessary
     {
         if (m_SortTeamRoster[Activity::TeamOne])
             m_ActorRoster[Activity::TeamOne].sort(MOXPosComparison());
@@ -2030,14 +2035,14 @@ void MovableMan::Update()
 // Description:     Draws this MovableMan's all MO's current material representations to a
 //                  BITMAP of choice.
 
-void MovableMan::DrawMatter(BITMAP *pTargetBitmap, Vector &targetPos)
+void MovableMan::DrawMatter(SDL_Renderer* renderer, Vector &targetPos)
 {
     // Draw objects to accumulation bitmap
     for (deque<Actor *>::iterator aIt = --m_Actors.end(); aIt != --m_Actors.begin(); --aIt)
-        (*aIt)->Draw(pTargetBitmap, targetPos, g_DrawMaterial);
+        (*aIt)->Draw(renderer, targetPos, g_DrawMaterial);
 
     for (deque<MovableObject *>::iterator parIt = --m_Particles.end(); parIt != --m_Particles.begin(); --parIt)
-        (*parIt)->Draw(pTargetBitmap, targetPos, g_DrawMaterial);
+        (*parIt)->Draw(renderer, targetPos, g_DrawMaterial);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -2081,7 +2086,7 @@ void MovableMan::VerifyMOIDIndex()
 // Description:     Updates the MOIDs of all current MOs and draws their ID's to a BITMAP
 //                  of choice.
 
-void MovableMan::UpdateDrawMOIDs(BITMAP *pTargetBitmap)
+void MovableMan::UpdateDrawMOIDs(SDL_Renderer* renderer, std::shared_ptr<Texture> pTargetTexture)
 {
     int aCount = m_Actors.size();
     int iCount = m_Items.size();
@@ -2094,6 +2099,9 @@ void MovableMan::UpdateDrawMOIDs(BITMAP *pTargetBitmap)
     // - Update: This isnt' true anymore, but still keep 0 free just to be safe
     m_MOIDIndex.push_back(0);
 
+	// Set the render target to the target texture
+	g_FrameMan.PushRenderTarget(pTargetTexture);
+
     MOID currentMOID = 1;
     int i = 0;
 
@@ -2102,7 +2110,7 @@ void MovableMan::UpdateDrawMOIDs(BITMAP *pTargetBitmap)
         {
 			Vector notUsed;
             m_Actors[i]->UpdateMOID(m_MOIDIndex);
-            m_Actors[i]->Draw(pTargetBitmap, notUsed, g_DrawMOID, true);
+            m_Actors[i]->Draw(renderer, notUsed, g_DrawMOID, true);
             currentMOID = m_MOIDIndex.size();
         }
         else
@@ -2113,7 +2121,7 @@ void MovableMan::UpdateDrawMOIDs(BITMAP *pTargetBitmap)
         if (m_Items[i]->GetsHitByMOs() && !m_Items[i]->IsSetToDelete())
         {
             m_Items[i]->UpdateMOID(m_MOIDIndex);
-            m_Items[i]->Draw(pTargetBitmap, Vector(), g_DrawMOID, true);
+            m_Items[i]->Draw(renderer, Vector(), g_DrawMOID, true);
             currentMOID = m_MOIDIndex.size();
         }
         else
@@ -2124,12 +2132,15 @@ void MovableMan::UpdateDrawMOIDs(BITMAP *pTargetBitmap)
         if (m_Particles[i]->GetsHitByMOs() && !m_Particles[i]->IsSetToDelete())
         {
             m_Particles[i]->UpdateMOID(m_MOIDIndex);
-            m_Particles[i]->Draw(pTargetBitmap, Vector(), g_DrawMOID, true);
+            m_Particles[i]->Draw(renderer, Vector(), g_DrawMOID, true);
             currentMOID = m_MOIDIndex.size();
         }
         else
             m_Particles[i]->SetAsNoID();
     }
+
+	// Reset the render target
+	g_FrameMan.PopRenderTarget();
 }
 
 
@@ -2139,17 +2150,17 @@ void MovableMan::UpdateDrawMOIDs(BITMAP *pTargetBitmap)
 // Description:     Draws this MovableMan's current graphical representation to a
 //                  BITMAP of choice.
 
-void MovableMan::Draw(BITMAP *pTargetBitmap, const Vector &targetPos)
+void MovableMan::Draw(SDL_Renderer *renderer, const Vector &targetPos)
 {
-    // Draw objects to accumulation bitmap, in reverse order so actors appear on top.
-    for (deque<MovableObject *>::iterator parIt = m_Particles.begin(); parIt != m_Particles.end(); ++parIt)
-        (*parIt)->Draw(pTargetBitmap, targetPos);
+	// Draw objects to accumulation bitmap, in reverse order so actors appear on top.
+	for (deque<MovableObject *>::iterator parIt = m_Particles.begin(); parIt != m_Particles.end(); ++parIt)
+		(*parIt)->Draw(renderer, targetPos);
 
 	for (deque<MovableObject *>::reverse_iterator itmIt = m_Items.rbegin(); itmIt != m_Items.rend(); ++itmIt)
-        (*itmIt)->Draw(pTargetBitmap, targetPos);
+		(*itmIt)->Draw(renderer, targetPos);
 
-    for (deque<Actor *>::reverse_iterator aIt = m_Actors.rbegin(); aIt != m_Actors.rend(); ++aIt)
-        (*aIt)->Draw(pTargetBitmap, targetPos);
+	for (deque<Actor *>::reverse_iterator aIt = m_Actors.rbegin(); aIt != m_Actors.rend(); ++aIt)
+		(*aIt)->Draw(renderer, targetPos);
 }
 
 
@@ -2159,14 +2170,14 @@ void MovableMan::Draw(BITMAP *pTargetBitmap, const Vector &targetPos)
 // Description:     Draws this MovableMan's current graphical representation to a
 //                  BITMAP of choice.
 
-void MovableMan::DrawHUD(BITMAP *pTargetBitmap, const Vector &targetPos, int which, bool playerControlled)
+void MovableMan::DrawHUD(SDL_Renderer *renderer, const Vector &targetPos, int which, bool playerControlled)
 {
-    // Draw HUD elements
+	// Draw HUD elements
 	for (deque<MovableObject *>::reverse_iterator itmIt = m_Items.rbegin(); itmIt != m_Items.rend(); ++itmIt)
-        (*itmIt)->DrawHUD(pTargetBitmap, targetPos, which);
+		(*itmIt)->DrawHUD(renderer, targetPos, which);
 
-    for (deque<Actor *>::reverse_iterator aIt = m_Actors.rbegin(); aIt != m_Actors.rend(); ++aIt)
-        (*aIt)->DrawHUD(pTargetBitmap, targetPos, which);
+	for (deque<Actor *>::reverse_iterator aIt = m_Actors.rbegin(); aIt != m_Actors.rend(); ++aIt)
+		(*aIt)->DrawHUD(renderer, targetPos, which);
 }
 
 } // namespace RTE
