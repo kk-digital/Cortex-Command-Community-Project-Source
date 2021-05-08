@@ -22,3 +22,4 @@ namespace RTE {
 		float GetTime();
 	};
 } // namespace RTE
+#endif
