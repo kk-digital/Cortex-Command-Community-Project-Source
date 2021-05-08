@@ -768,6 +768,10 @@ namespace RTE {
 		//! True if the Texture exists
 		operator bool() const { return m_Texture.get(); }
 	};
+
+	typedef std::shared_ptr<Texture> SharedTexture;
+	typedef std::unique_ptr<Texture> UniqueTexture;
+
 } // namespace RTE
 
 #endif
