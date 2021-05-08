@@ -4,6 +4,9 @@
 #include "ContentFile.h"
 #include "Matrix.h"
 
+#include "SDLHelper.h"
+#include <SDL2/SDL2_gfxPrimitives.h>
+
 namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -26,26 +29,27 @@ namespace RTE {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	int PostProcessMan::Initialize() {
+
+		// Screen blend mode is SrcRGBA + (1-SrcRGBA)*DstRGBA (TODO might be DstA=DstA)
+		SDL_BlendMode screen = SDL_ComposeCustomBlendMode(
+		    SDL_BLENDFACTOR_ONE, SDL_BLENDFACTOR_ONE_MINUS_SRC_COLOR, SDL_BLENDOPERATION_ADD,
+			SDL_BLENDFACTOR_ONE, SDL_BLENDFACTOR_ONE_MINUS_SRC_ALPHA, SDL_BLENDOPERATION_ADD);
+
 		// TODO: Make more robust and load more glows!
 		ContentFile glowFile("Base.rte/Effects/Glows/YellowTiny.png");
-		m_YellowGlow = glowFile.GetAsBitmap();
+		m_YellowGlow = glowFile.GetAsTexture();
 		m_YellowGlowHash = glowFile.GetHash();
-		glowFile.SetDataPath("Base.rte/Effects/Glows/RedTiny.png");
-		m_RedGlow = glowFile.GetAsBitmap();
-		m_RedGlowHash = glowFile.GetHash();
-		glowFile.SetDataPath("Base.rte/Effects/Glows/BlueTiny.png");
-		m_BlueGlow = glowFile.GetAsBitmap();
-		m_BlueGlowHash = glowFile.GetHash();
+		m_YellowGlow->setBlendMode(screen);
 
-		// Create temporary bitmaps to rotate post effects in.
-		m_TempEffectBitmaps = {
-			{16, create_bitmap(16, 16)},
-			{32, create_bitmap(32, 32)},
-			{64, create_bitmap(64, 64)},
-			{128, create_bitmap(128, 128)},
-			{256, create_bitmap(256, 256)},
-			{512, create_bitmap(512, 512)}
-		};
+		glowFile.SetDataPath("Base.rte/Effects/Glows/RedTiny.png");
+		m_RedGlow = glowFile.GetAsTexture();
+		m_RedGlowHash = glowFile.GetHash();
+		m_RedGlow->setBlendMode(screen);
+
+		glowFile.SetDataPath("Base.rte/Effects/Glows/BlueTiny.png");
+		m_BlueGlow = glowFile.GetAsTexture();
+		m_BlueGlowHash = glowFile.GetHash();
+		m_BlueGlow->setBlendMode(screen);
 
 		return 0;
 	}
@@ -53,9 +57,6 @@ namespace RTE {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void PostProcessMan::Destroy() {
-		for (std::pair<int, BITMAP *> tempBitmapEntry : m_TempEffectBitmaps) {
-			destroy_bitmap(tempBitmapEntry.second);
-		}
 		ClearScreenPostEffects();
 		ClearScenePostEffects();
 		Clear();
@@ -63,36 +64,37 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void PostProcessMan::AdjustEffectsPosToPlayerScreen(int playerScreen, BITMAP *targetBitmap, const Vector &targetBitmapOffset, std::list<PostEffect> &screenRelativeEffectsList, std::list<Box> &screenRelativeGlowBoxesList) const {
+	void PostProcessMan::AdjustEffectsPosToPlayerScreen(int playerScreen, SharedTexture targetTexture, const Vector &targetBitmapOffset, std::list<PostEffect> &screenRelativeEffectsList, std::list<Box> &screenRelativeGlowBoxesList){
 		int screenOcclusionOffsetX = g_SceneMan.GetScreenOcclusion(playerScreen).GetFloorIntX();
 		int screenOcclusionOffsetY = g_SceneMan.GetScreenOcclusion(playerScreen).GetFloorIntY();
-		int occludedOffsetX = targetBitmap->w + screenOcclusionOffsetX;
-		int occludedOffsetY = targetBitmap->h + screenOcclusionOffsetY;
+		int occludedOffsetX = targetTexture->getW() + screenOcclusionOffsetX;
+		int occludedOffsetY = targetTexture->getH() + screenOcclusionOffsetY;
 
+#ifdef NETWORK_ENABLED
 		// Copy post effects received by client if in network mode
 		if (g_FrameMan.GetDrawNetworkBackBuffer()) { g_PostProcessMan.GetNetworkPostEffectsList(0, screenRelativeEffectsList); }
-
+#endif
 		// Adjust for the player screen's position on the final buffer
 		for (const PostEffect &postEffect : screenRelativeEffectsList) {
 			// Make sure we won't be adding any effects to a part of the screen that is occluded by menus and such
 			if (postEffect.m_Pos.GetFloorIntX() > screenOcclusionOffsetX && postEffect.m_Pos.GetFloorIntY() > screenOcclusionOffsetY && postEffect.m_Pos.GetFloorIntX() < occludedOffsetX && postEffect.m_Pos.GetFloorIntY() < occludedOffsetY) {
-				g_PostProcessMan.GetPostScreenEffectsList()->push_back(PostEffect(postEffect.m_Pos + targetBitmapOffset, postEffect.m_Bitmap, postEffect.m_BitmapHash, postEffect.m_Strength, postEffect.m_Angle));
+				m_PostSceneEffects.emplace_back(postEffect.m_Pos + targetBitmapOffset, postEffect.m_Texture, postEffect.m_BitmapHash, postEffect.m_Strength, postEffect.m_Angle);
 			}
 		}
 		// Adjust glow areas for the player screen's position on the final buffer
 		for (const Box &glowBox : screenRelativeGlowBoxesList) {
-			g_PostProcessMan.GetPostScreenGlowBoxesList()->push_back(glowBox);
+			m_PostScreenGlowBoxes.push_back(glowBox);
 			// Adjust each added glow area for the player screen's position on the final buffer
-			g_PostProcessMan.GetPostScreenGlowBoxesList()->back().m_Corner += targetBitmapOffset;
+			m_PostScreenGlowBoxes.back().m_Corner += targetBitmapOffset;
 		}
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void PostProcessMan::RegisterPostEffect(const Vector &effectPos, BITMAP *effect, size_t hash, int strength, float angle) {
+	void PostProcessMan::RegisterPostEffect(const Vector &effectPos, SharedTexture effect, size_t hash, int strength, float angle) {
 		// These effects get applied when there's a drawn frame that followed one or more sim updates.
 		// They are not only registered on drawn sim updates; flashes and stuff could be missed otherwise if they occur on undrawn sim updates.
-		if (effect && g_TimerMan.SimUpdatesSinceDrawn() >= 0) { m_PostSceneEffects.push_back(PostEffect(effectPos, effect, hash, strength, angle)); }
+		if (effect && g_TimerMan.SimUpdatesSinceDrawn() >= 0) { m_PostSceneEffects.emplace_back(effectPos, effect, hash, strength, angle); }
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -122,8 +124,8 @@ namespace RTE {
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-	BITMAP *PostProcessMan::GetTempEffectBitmap(BITMAP *bitmap) const {
+/*
+	SharedTexture PostProcessMan::GetTempEffectTexture(SharedTexture bitmap) const {
 		// Get the largest dimension of the bitmap and convert it to a multiple of 16, i.e. 16, 32, etc
 		int bitmapSizeNeeded = static_cast<int>(std::ceil(static_cast<float>(std::max(bitmap->w, bitmap->h)) / 16.0F)) * 16;
 		std::unordered_map<int, BITMAP *>::const_iterator correspondingBitmapSizeEntry = m_TempEffectBitmaps.find(bitmapSizeNeeded);
@@ -133,7 +135,7 @@ namespace RTE {
 
 		return correspondingBitmapSizeEntry->second;
 	}
-
+*/
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void PostProcessMan::RegisterGlowDotEffect(const Vector &effectPos, DotGlowColor color, int strength) {
@@ -179,7 +181,7 @@ namespace RTE {
 		ScreenRelativeEffectsMutex.at(whichScreen).lock();
 		outputList.clear();
 		for (const PostEffect &postEffect : m_ScreenRelativeEffects.at(whichScreen)) {
-			outputList.push_back(PostEffect(postEffect.m_Pos, postEffect.m_Bitmap, postEffect.m_BitmapHash, postEffect.m_Strength, postEffect.m_Angle));
+			outputList.emplace_back(postEffect.m_Pos, postEffect.m_Texture, postEffect.m_BitmapHash, postEffect.m_Strength, postEffect.m_Angle);
 		}
 		ScreenRelativeEffectsMutex.at(whichScreen).unlock();
 	}
@@ -190,7 +192,7 @@ namespace RTE {
 		ScreenRelativeEffectsMutex.at(whichScreen).lock();
 		m_ScreenRelativeEffects.at(whichScreen).clear();
 		for (const PostEffect &postEffect : inputList) {
-			m_ScreenRelativeEffects.at(whichScreen).push_back(PostEffect(postEffect.m_Pos, postEffect.m_Bitmap, postEffect.m_BitmapHash, postEffect.m_Strength, postEffect.m_Angle));
+			m_ScreenRelativeEffects.at(whichScreen).emplace_back(postEffect.m_Pos, postEffect.m_Texture, postEffect.m_BitmapHash, postEffect.m_Strength, postEffect.m_Angle);
 		}
 		ScreenRelativeEffectsMutex.at(whichScreen).unlock();
 	}
@@ -208,7 +210,7 @@ namespace RTE {
 			if (WithinBox(scenePostEffect.m_Pos, boxPos, static_cast<float>(boxWidth), static_cast<float>(boxHeight)) && !unseen) {
 				found = true;
 				postEffectPosRelativeToBox = scenePostEffect.m_Pos - boxPos;
-				effectsList.push_back(PostEffect(postEffectPosRelativeToBox, scenePostEffect.m_Bitmap, scenePostEffect.m_BitmapHash, scenePostEffect.m_Strength, scenePostEffect.m_Angle));
+				effectsList.emplace_back(postEffectPosRelativeToBox, scenePostEffect.m_Texture, scenePostEffect.m_BitmapHash, scenePostEffect.m_Strength, scenePostEffect.m_Angle);
 			}
 		}
 		return found;
@@ -227,7 +229,7 @@ namespace RTE {
 			if (WithinBox(scenePostEffect.m_Pos, static_cast<float>(left), static_cast<float>(top), static_cast<float>(right), static_cast<float>(bottom)) && !unseen) {
 				found = true;
 				postEffectPosRelativeToBox = Vector(scenePostEffect.m_Pos.m_X - static_cast<float>(left), scenePostEffect.m_Pos.m_Y - static_cast<float>(top));
-				effectsList.push_back(PostEffect(postEffectPosRelativeToBox, scenePostEffect.m_Bitmap, scenePostEffect.m_BitmapHash, scenePostEffect.m_Strength, scenePostEffect.m_Angle));
+				effectsList.emplace_back(postEffectPosRelativeToBox, scenePostEffect.m_Texture, scenePostEffect.m_BitmapHash, scenePostEffect.m_Strength, scenePostEffect.m_Angle);
 			}
 		}
 		return found;
@@ -235,7 +237,7 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	BITMAP * PostProcessMan::GetDotGlowEffect(DotGlowColor whichColor) const {
+	SharedTexture PostProcessMan::GetDotGlowEffect(DotGlowColor whichColor) const {
 		switch (whichColor) {
 			case NoDot:
 				return nullptr;
@@ -272,24 +274,11 @@ namespace RTE {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void PostProcessMan::PostProcess() {
-		// First copy the current 8bpp backbuffer to the 32bpp buffer; we'll add effects to it
-		blit(g_FrameMan.GetBackBuffer8(), g_FrameMan.GetBackBuffer32(), 0, 0, 0, 0, g_FrameMan.GetBackBuffer8()->w, g_FrameMan.GetBackBuffer8()->h);
-
 		// Set the screen blender mode for glows
-		set_screen_blender(128, 128, 128, 128);
-
-		// Reference. Do not remove.
-		//acquire_bitmap(m_BackBuffer8);
-		//acquire_bitmap(m_BackBuffer32);
+		// set_screen_blender(128, 128, 128, 128);
 
 		DrawDotGlowEffects();
 		DrawPostScreenEffects();
-
-		// Reference. Do not remove.
-		//release_bitmap(m_BackBuffer32);
-		//release_bitmap(m_BackBuffer8);
-		// Set blender mode back??
-		//set_trans_blender(128, 128, 128, 128);
 
 		// Clear the effects list for this frame
 		m_PostScreenEffects.clear();
@@ -302,7 +291,7 @@ namespace RTE {
 		int startY = 0;
 		int endX = 0;
 		int endY = 0;
-		int testpixel = 0;
+		uint32_t testpixel = 0; // TODO: this is going to be slow af
 
 		// Randomly sample the entire backbuffer, looking for pixels to put a glow on.
 		// NOTE THIS IS SLOW, especially on higher resolutions!
@@ -313,23 +302,26 @@ namespace RTE {
 			endY = startY + static_cast<int>(glowBox.m_Height);
 
 			// Sanity check a little at least
-			if (startX < 0 || startX >= g_FrameMan.GetBackBuffer8()->w || startY < 0 || startY >= g_FrameMan.GetBackBuffer8()->h ||
-				endX < 0 || endX >= g_FrameMan.GetBackBuffer8()->w || endY < 0 || endY >= g_FrameMan.GetBackBuffer8()->h) {
+			if (startX < 0 || startX >= g_FrameMan.GetResX() || startY < 0 || startY >= g_FrameMan.GetResY() ||
+				endX < 0 || endX >= g_FrameMan.GetResX() || endY < 0 || endY >= g_FrameMan.GetResY()) {
 				continue;
 			}
 
 #ifdef DEBUG_BUILD
 			// Draw a rectangle around the glow box so we see it's position and size
-			rect(g_FrameMan.GetBackBuffer32(), startX, startY, endX, endY, g_RedColor);
+			rectangleColor(g_FrameMan.GetRenderer(), startX, startY, endX, endY, g_RedColor);
 #endif
-
+			SDL_Rect pixelPos{startX,startY,1,1};
 			for (int y = startY; y < endY; ++y) {
+				pixelPos.y = y;
 				for (int x = startX; x < endX; ++x) {
-					testpixel = _getpixel(g_FrameMan.GetBackBuffer8(), x, y);
+					pixelPos.x = x;
+					SDL_RenderReadPixels(g_FrameMan.GetRenderer(), &pixelPos, SDL_PIXELFORMAT_RGBA32, &testpixel, sizeof(uint32_t));
+					// testpixel = _getpixel(g_FrameMan.GetBackBuffer8(), x, y);
 
 					// YELLOW
 					if ((testpixel == g_YellowGlowColor && RandomNum() < 0.9F) || testpixel == 98 || (testpixel == 120 && RandomNum() < 0.7F)) {
-						draw_trans_sprite(g_FrameMan.GetBackBuffer32(), m_YellowGlow, x - 2, y - 2);
+						m_YellowGlow->render(g_FrameMan.GetRenderer(), x - 2, y - 2);
 					}
 					// TODO: Enable and add more colors once we actually have something that needs these.
 					// RED
@@ -350,30 +342,22 @@ namespace RTE {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void PostProcessMan::DrawPostScreenEffects() const {
-		BITMAP *effectBitmap = nullptr;
+
+		SDL_BlendMode screen = SDL_ComposeCustomBlendMode(
+		    SDL_BLENDFACTOR_ONE, SDL_BLENDFACTOR_ONE_MINUS_SRC_COLOR, SDL_BLENDOPERATION_ADD,
+			SDL_BLENDFACTOR_ONE, SDL_BLENDFACTOR_ONE_MINUS_SRC_ALPHA, SDL_BLENDOPERATION_ADD);
+
 		int effectPosX = 0;
 		int effectPosY = 0;
-		int effectStrength = 0;
 
 		for (const PostEffect &postEffect : m_PostScreenEffects) {
-			if (postEffect.m_Bitmap) {
-				effectBitmap = postEffect.m_Bitmap;
-				effectStrength = postEffect.m_Strength;
-				effectPosX = postEffect.m_Pos.GetFloorIntX() - (effectBitmap->w / 2);
-				effectPosY = postEffect.m_Pos.GetFloorIntY() - (effectBitmap->h / 2);
-				set_screen_blender(effectStrength, effectStrength, effectStrength, effectStrength);
+			if (postEffect.m_Texture) {
+				postEffect.m_Texture->setBlendMode(screen);
+				postEffect.m_Texture->setAlphaMod(postEffect.m_Strength);
+				effectPosX = postEffect.m_Pos.GetFloorIntX() - (postEffect.m_Texture->getW() / 2);
+				effectPosY = postEffect.m_Pos.GetFloorIntY() - (postEffect.m_Texture->getH() / 2);
 
-				// Draw all the scene screen effects accumulated this frame
-				if (postEffect.m_Angle == 0) {
-					draw_trans_sprite(g_FrameMan.GetBackBuffer32(), effectBitmap, effectPosX, effectPosY);
-				} else {
-					BITMAP *targetBitmap = GetTempEffectBitmap(effectBitmap);
-					clear_to_color(targetBitmap, 0);
-
-					Matrix newAngle(postEffect.m_Angle);
-					rotate_sprite(targetBitmap, effectBitmap, 0, 0, ftofix(newAngle.GetAllegroAngle()));
-					draw_trans_sprite(g_FrameMan.GetBackBuffer32(), targetBitmap, effectPosX, effectPosY);
-				}
+				postEffect.m_Texture->render(g_FrameMan.GetRenderer(), effectPosX, effectPosY, postEffect.m_Angle);
 			}
 		}
 	}
