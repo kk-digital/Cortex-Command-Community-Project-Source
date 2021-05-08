@@ -293,7 +293,7 @@ ClassInfoGetters
 // Arguments:       None.
 // Return value:    Returns true if this module should be drawn as part of terrain on minimap.
 
-	bool const GetDisplayAsTerrain() const { return m_DisplayAsTerrain; }
+	bool GetDisplayAsTerrain() const { return m_DisplayAsTerrain; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
