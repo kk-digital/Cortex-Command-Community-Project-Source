@@ -10,7 +10,7 @@
 namespace RTE {
 
 	class SDLScreen;
-	class AllegroInput;
+	class SDLInput;
 	class GUIControlManager;
 	class Writer;
 
@@ -25,7 +25,7 @@ namespace RTE {
 		/// <summary>
 		/// Constructor method used to instantiate a LoadingGUI object in system memory.
 		/// </summary>
-		LoadingGUI() { Clear(); }
+		LoadingGUI();
 
 		/// <summary>
 		/// Creates the loading screen GUI and the log writer, then proceeds loading all the DataModules.
@@ -56,20 +56,11 @@ namespace RTE {
 #pragma endregion
 
 	protected:
-
-		/// <summary>
-		/// Custom deleters for std::unique_ptr members. Must be defined to avoid including the class headers and just rely on forward declaration.
-		/// </summary>
-		struct GUIControlManagerDeleter { void operator()(GUIControlManager *ptr) const; };
-		struct AllegroInputDeleter { void operator()(SDLScreen *ptr) const; };
-		struct AllegroScreenDeleter { void operator()(SDLScreen *ptr) const; };
-		struct WriterDeleter { void operator()(Writer *ptr) const; };
-
-		std::unique_ptr<GUIControlManager, GUIControlManagerDeleter> m_ControlManager; //!< Manager of the whole LoadingGUI.
-		std::unique_ptr<AllegroInput, AllegroInputDeleter> m_GUIInput; //!< Input interface of this.
-		std::unique_ptr<SDLScreen, AllegroScreenDeleter> m_GUIScreen; //!< Screen interface of this.
-		std::unique_ptr<Writer, WriterDeleter> m_LoadingLogWriter; //!< The Writer that generates the loading log.
-		std::shared_ptr<Texture> m_ProgressListboxBitmap; //!< BITMAP that the progress report will be drawn into.
+		std::unique_ptr<GUIControlManager> m_ControlManager; //!< Manager of the whole LoadingGUI.
+		std::unique_ptr<SDLInput> m_GUIInput; //!< Input interface of this.
+		std::unique_ptr<SDLScreen> m_GUIScreen; //!< Screen interface of this.
+		std::unique_ptr<Writer> m_LoadingLogWriter; //!< The Writer that generates the loading log.
+		std::unique_ptr<Texture> m_ProgressListboxBitmap; //!< BITMAP that the progress report will be drawn into.
 
 		int m_PosX; //!< Position of the progress report box on X axis.
 		int m_PosY; //!< Position of the progress report box on Y axis.
