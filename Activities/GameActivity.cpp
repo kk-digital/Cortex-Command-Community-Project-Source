@@ -2554,8 +2554,8 @@ void GameActivity::DrawGUI(SDL_Renderer* renderer, const Vector &targetPos, int 
 		m_pEditorGUI[PoS]->Draw(renderer, targetPos);
 
 	// Draw Banners
-	m_pBannerRed[PoS]->Draw(&pBitmapInt);
-	m_pBannerYellow[PoS]->Draw(&pBitmapInt);
+	m_pBannerRed[PoS]->Draw(renderer);
+	m_pBannerYellow[PoS]->Draw(renderer);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
