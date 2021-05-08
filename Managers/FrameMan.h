@@ -62,6 +62,11 @@ namespace RTE {
 		void Draw();
 
 		/// <summary>
+		/// Show the current Frame on the screen.
+		/// </summary>
+		void RenderPresent();
+
+		/// <summary>
 		/// Gets the horizontal resolution of the screen.
 		/// </summary>
 		/// <returns>
@@ -561,7 +566,7 @@ namespace RTE {
 		std::unique_ptr<Texture> m_PlayerScreen;
 
 		//!< A stack of the current render targets
-		std::stack<SDL_Texture*> targetStack;
+		std::stack<SDL_Texture*> m_TargetStack;
 
 		//!< Wether the screen is split horizontally across the
 		//!< screen, i.e. as two scplitscreens above another.

@@ -50,8 +50,8 @@ namespace RTE {
 		m_HSplitOverride = false;
 		m_VSplitOverride = false;
 
-		for(; !targetStack.empty(); targetStack.pop());
-		targetStack.push(nullptr);
+		for(; !m_TargetStack.empty(); m_TargetStack.pop());
+		m_TargetStack.push(nullptr);
 	}
 
 	int FrameMan::Initialize() {
@@ -95,6 +95,11 @@ namespace RTE {
 		g_PerformanceMan.Update();
 
 		g_PrimitiveMan.ClearPrimitivesQueue();
+	}
+
+	void FrameMan::RenderPresent(){
+		RTEAssert(m_TargetStack.top() == nullptr, "A render target has not been reset!");
+		SDL_RenderPresent(m_Renderer);
 	}
 
 	void FrameMan::Draw() {
@@ -280,21 +285,21 @@ namespace RTE {
 			RTEAssert(access == SDL_TEXTUREACCESS_TARGET,
 			          "Trying to set a render target to non target texture");
 		}
-		targetStack.push(target);
+		m_TargetStack.push(target);
 		SDL_SetRenderTarget(m_Renderer, target);
 	}
 
 	void FrameMan::PushRenderTarget(std::shared_ptr<Texture> target){
 		RTEAssert(target->getAccess()==SDL_TEXTUREACCESS_TARGET, "Trying to set a render target to non target texture");
 
-		targetStack.push(target->getAsRenderTarget());
-		SDL_SetRenderTarget(m_Renderer, targetStack.top());
+		m_TargetStack.push(target->getAsRenderTarget());
+		SDL_SetRenderTarget(m_Renderer, m_TargetStack.top());
 	}
 
 	void FrameMan::PopRenderTarget(){
-		RTEAssert(targetStack.size()>1, "Attempted removing the main renderer");
-		targetStack.pop();
-		SDL_SetRenderTarget(m_Renderer, targetStack.top());
+		RTEAssert(m_TargetStack.size()>1, "Attempted removing the main renderer");
+		m_TargetStack.pop();
+		SDL_SetRenderTarget(m_Renderer, m_TargetStack.top());
 	}
 
 } // namespace RTE
