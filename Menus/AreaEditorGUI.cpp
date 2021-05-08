@@ -29,6 +29,8 @@
 #include "PieMenuGUI.h"
 #include "Scene.h"
 
+#include <SDL2/SDL2_gfxPrimitives.h>
+
 using namespace RTE;
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -593,7 +595,7 @@ void AreaEditorGUI::Update()
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Draws the menu
 
-void AreaEditorGUI::Draw(BITMAP *pTargetBitmap, const Vector &targetPos) const
+void AreaEditorGUI::Draw(SDL_Renderer* renderer, const Vector &targetPos) const
 {
     // Done or can't, so don't draw the UI
     if (!m_pCurrentArea || m_EditorGUIMode == DONEEDITING)
@@ -610,11 +612,11 @@ void AreaEditorGUI::Draw(BITMAP *pTargetBitmap, const Vector &targetPos) const
         int i = 0;
         for (list<SceneObject *>::const_iterator itr = pSceneObjectList->begin(); itr != pSceneObjectList->end(); ++itr, ++i)
         {
-           (*itr)->Draw(pTargetBitmap, targetPos);
+           (*itr)->Draw(renderer, targetPos);
             // Draw basic HUD if an actor
             Actor *pActor = dynamic_cast<Actor *>(*itr);
             if (pActor)
-                pActor->DrawHUD(pTargetBitmap, targetPos);
+                pActor->DrawHUD(renderer, targetPos);
         }
     }
 
@@ -625,8 +627,7 @@ void AreaEditorGUI::Draw(BITMAP *pTargetBitmap, const Vector &targetPos) const
     {
         // Set the drawin mode to be transparent and use the
 //        g_FrameMan.SetTransTable(m_BlinkTimer.AlternateReal(333) || m_EditorGUIMode == PLACINGOBJECT ? LessTrans : HalfTrans);
-        g_FrameMan.SetTransTable(MoreTrans);
-        drawing_mode(DRAW_MODE_TRANS, 0, 0, 0);
+		SDL_SetRenderDrawColor(renderer, (g_RedColor<<24)&0xFF, (g_RedColor<<16)&0xFF, (g_RedColor<<8)&0xFF, g_FrameMan.MoreTrans());
 
         // Draw all already placed Box:es, and the currently edited one
         for (vector<Box>::const_iterator bItr = pBoxList->begin(); bItr != pBoxList->end(); ++bItr)
@@ -640,49 +641,49 @@ void AreaEditorGUI::Draw(BITMAP *pTargetBitmap, const Vector &targetPos) const
             {
                 // Draw the rectangle of each Box, adjusted for the offet of the target bitmap in the scene
                 adjCorner = (*wItr).GetCorner() - targetPos;
-                rectfill(pTargetBitmap, adjCorner.m_X, adjCorner.m_Y, adjCorner.m_X + (*wItr).GetWidth(), adjCorner.m_Y + (*wItr).GetHeight(), g_RedColor);
+
+				SDL_Rect box{adjCorner.GetFloorIntX(), adjCorner.GetFloorIntY(), static_cast<int>(wItr->GetWidth()), static_cast<int>(wItr->GetHeight())};
+				SDL_RenderFillRect(renderer, &box);
             }
         }
     }
 
     // Draw the currently edited box outline in glowing yellow
-    drawing_mode(DRAW_MODE_SOLID, 0, 0, 0);
     if (!m_EditedBox.IsEmpty())
     {
-        // Handle wrapped boxes properly
-        wrappedBoxes.clear();
-        g_SceneMan.WrapBox(m_EditedBox, wrappedBoxes);
+		SDL_SetRenderDrawColor(renderer, (g_YellowGlowColor<<24)&0xFF, (g_YellowGlowColor<<16)&0xFF, (g_YellowGlowColor<<8)&0xFF, 255);
+		// Handle wrapped boxes properly
+		wrappedBoxes.clear();
+		g_SceneMan.WrapBox(m_EditedBox, wrappedBoxes);
 
-        // Iterate through the wrapped boxes - will only be one if there's no wrapping
-        for (list<Box>::iterator wItr = wrappedBoxes.begin(); wItr != wrappedBoxes.end(); ++wItr)
-        {
-            adjCorner = (*wItr).GetCorner() - targetPos;
-            // Special 'X' drawing when deleting
-            if (m_EditorGUIMode == DELETINGBOX)
-            {
-                line(pTargetBitmap, adjCorner.m_X, adjCorner.m_Y, adjCorner.m_X + (*wItr).GetWidth(), adjCorner.m_Y + (*wItr).GetHeight(), g_YellowGlowColor);
-                line(pTargetBitmap, adjCorner.m_X, adjCorner.m_Y + (*wItr).GetHeight(), adjCorner.m_X + (*wItr).GetWidth(), adjCorner.m_Y, g_YellowGlowColor);
-            }
-            else
-                rect(pTargetBitmap, adjCorner.m_X, adjCorner.m_Y, adjCorner.m_X + (*wItr).GetWidth(), adjCorner.m_Y + (*wItr).GetHeight(), g_YellowGlowColor);
-        }
-    }
-
-    // Set drawing mode back to solid
-    drawing_mode(DRAW_MODE_SOLID, 0, 0, 0);
+		// Iterate through the wrapped boxes - will only be one if there's no wrapping
+		for (list<Box>::iterator wItr = wrappedBoxes.begin(); wItr != wrappedBoxes.end(); ++wItr)
+		{
+			adjCorner = (*wItr).GetCorner() - targetPos;
+			// Special 'X' drawing when deleting
+			if (m_EditorGUIMode == DELETINGBOX)
+			{
+				SDL_RenderDrawLineF(renderer, adjCorner.m_X, adjCorner.m_Y, adjCorner.m_X + wItr->GetWidth(), adjCorner.m_Y + wItr->GetHeight());
+				SDL_RenderDrawLineF(renderer, adjCorner.m_X, adjCorner.m_Y + wItr->GetHeight(), adjCorner.m_X + wItr->GetWidth(), adjCorner.m_Y);
+			} else {
+				SDL_FRect rect{adjCorner.m_X, adjCorner.m_Y, wItr->GetWidth(), wItr->GetHeight()};
+				SDL_RenderDrawRectF(renderer, &rect);
+			}
+		}
+	}
 
     // Draw picking Area crosshairs
     Vector center = m_CursorPos - targetPos;
-    putpixel(pTargetBitmap, center.m_X, center.m_Y, g_YellowGlowColor);
-    hline(pTargetBitmap, center.m_X - 5, center.m_Y, center.m_X - 2, g_YellowGlowColor);
-    hline(pTargetBitmap, center.m_X + 5, center.m_Y, center.m_X + 2, g_YellowGlowColor);
-    vline(pTargetBitmap, center.m_X, center.m_Y - 5, center.m_Y - 2, g_YellowGlowColor);
-    vline(pTargetBitmap, center.m_X, center.m_Y + 5, center.m_Y + 2, g_YellowGlowColor);
+    pixelColor(renderer, center.m_X, center.m_Y, g_YellowGlowColor);
+    hlineColor(renderer, center.m_X - 5, center.m_Y, center.m_X - 2, g_YellowGlowColor);
+    hlineColor(renderer, center.m_X + 5, center.m_Y, center.m_X + 2, g_YellowGlowColor);
+    vlineColor(renderer, center.m_X, center.m_Y - 5, center.m_Y - 2, g_YellowGlowColor);
+    vlineColor(renderer, center.m_X, center.m_Y + 5, center.m_Y + 2, g_YellowGlowColor);
 
-    m_pPicker->Draw(pTargetBitmap);
+    m_pPicker->Draw(renderer);
 
     // Draw the pie menu
-    m_pPieMenu->Draw(pTargetBitmap, targetPos);
+    m_pPieMenu->Draw(renderer, targetPos);
 }
 
 
