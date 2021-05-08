@@ -56,6 +56,145 @@ namespace RTE {
 		/// </summary>
 		void Update();
 
+
+
+/////////////////
+/* Splitscreen */
+/////////////////
+
+		/// <summary>
+		/// Gets wether the screen is split horizontally across the screen, i.e.
+		/// as two splitscreens one above another.
+		/// </summary>
+		/// <returns>
+		/// Wehter or not screen has horizontal split
+		/// </returns>
+		bool GetHSplit() const { return m_HSplit; }
+
+		/// <summary>
+		/// Sets wether the screen is split horizontally across the screen, i.e.
+		/// as two splitscreens one obove the other.
+		/// </summary>
+		/// <param name="hSplit">
+		/// Wether or not to have a horizontal split.
+		/// </param>
+		void SetHSplit(bool hSplit) { m_HSplit = hSplit; }
+
+		/// <summary>
+		/// Gets wether the screen is split vertically, i.e. as two splitscreens
+		/// side by side.
+		/// </summary>
+		/// <returns>
+		/// Wether the screen is split vertically
+		/// </returns>
+		bool GetVSplit() const { return m_VSplit; }
+
+		/// <summary>
+		/// Sets wether the screen is split vertically, i.e. as two splitscreens
+		/// side by side.
+		/// </summary>
+		/// <param name="">
+		/// Wether or not to have a vertical split.
+		/// </param>
+		void SetVSplit(bool vSplit) { m_VSplit = vSplit; }
+
+		/// <summary>
+		/// Sets new values for the split screen configuration
+		/// </summary>
+		/// <param name="hSplit">
+		/// Wether the new setting should be horizontally split
+		/// </param>
+		/// <param name="vSplit">
+		/// Wether the new setting should be vertically split
+		/// </param>
+		void ResetSplitScreens(bool hSplit = false, bool vSplit = false);
+
+		/// <summary>
+		/// The number of currently active screens, counting all splits
+		/// </summary>
+		/// <returns>
+		/// The number of currently active screens.
+		/// </returns>
+		unsigned short GetScreenCount() const {
+			return m_HSplit || m_VSplit ? (m_HSplit && m_VSplit ? 4 : 2) : 1;
+		}
+
+		/// <summary>
+		/// Gets the width of the individual player screens.
+		/// </summary>
+		/// <returns>
+		/// The width of the player screens.
+		/// </returns>
+		unsigned short GetPlayerScreenWidth() const {
+			return GetPlayerScreenWidth(-1);
+		}
+
+		/// <summary>
+		/// Gets the height of the individual player screens.
+		/// </summary>
+		/// <returns>
+		/// The height of the player screens.
+		/// </returns>
+		unsigned short GetPlayerScreenHeight() const {
+			return GetPlayerScreenHeight(-1);
+		}
+
+		/// <summary>
+		/// Gets the width of the specified player screen.
+		/// <summary>
+		/// <param name = "whichPlayer">
+		/// Player screen to get width for.
+		/// </param>
+		/// <returns>
+		/// The width of the specified player screen.
+		/// </returns>
+		unsigned short GetPlayerScreenWidth(short whichPlayer) const;
+
+		/// <summary>
+		/// Gets the width of the specified player screen.
+		/// <summary>
+		/// <param name = "whichPlayer">
+		/// Player screen to get width for (only used for multiplayer parts)
+		/// </param>
+		/// <returns>
+		/// The height of the specified player screen
+		/// </returns>
+		unsigned short GetPlayerScreenHeight(short whichPlayer) const;
+
+
+/////////////////////////
+/* Renderer Management */
+/////////////////////////
+
+		/// <summary>
+		/// Get the current SDL_Renderer
+		/// </summary>
+		/// <returns>
+		/// A Pointer to the current SDL_Renderer
+		/// </returns>
+		SDL_Renderer *GetRenderer() { return m_Renderer; }
+
+		/// <summary>
+		/// Set a new render target from an SDL_Texture, storing the current target. Can be nullptr
+		/// </summary>
+		/// <param name="target">
+		/// The new target.
+		/// </param>
+		void PushRenderTarget(SDL_Texture* target);
+		/// <summary>
+		/// Set a new render target from a RTE::Texture, storing the current target.
+		/// </summary>
+		/// <param name="target">
+		/// The new target
+		/// </param>
+
+		void PushRenderTarget(std::shared_ptr<Texture> target);
+
+		/// <summary>
+		/// Reset the render target to the previous target.
+		/// </summary>
+		void PopRenderTarget();
+
 		/// <summary>
 		/// Draws the current frame to the screen.
 		/// </summary>
@@ -65,6 +204,26 @@ namespace RTE {
 		/// Show the current Frame on the screen.
 		/// </summary>
 		void RenderPresent();
+
+///////////////////////
+/* Window Management */
+///////////////////////
+
+		/// <summary>
+		/// Get the current game window as SDL_Window
+		/// </summary>
+		/// <returns>
+		/// A pointer to the current SDL_Window
+		/// </returns>
+		SDL_Window *GetWindow() { return m_Window; }
+
+		/// <summary>
+		/// Get the pixelformat of the currently used window
+		/// </summary>
+		/// <returns>
+		/// An Uint32 representing a pixelformat from SDL_PixelFormatEnum
+		/// </returns>
+		uint32_t GetPixelFormat();
 
 		/// <summary>
 		/// Gets the horizontal resolution of the screen.
@@ -195,8 +354,10 @@ namespace RTE {
 
 		/// <summary>
 		/// Switches the game window into fullscreen or upscaled fullscreen
-		/// mode. <summary> <param name = "upscaled"> Wether to switch to
-		/// upscaled mode or not.
+		/// mode.
+		/// </summary>
+		/// <param name = "upscaled">
+		/// Wether to switch to upscaled mode or not.
 		/// </param>
 		/// <param name="endActivity">
 		/// Wether the current Activity should be ended before performing the
@@ -226,7 +387,7 @@ namespace RTE {
 
 		/// <summary>
 		/// Sets wether the game resolution was changed. Used to reset the flag
-		/// after the change is complete. This is called from ReinitMainMenu()
+		/// after the change is complete. This is called from ReInitMainMenu()
 		/// and should not be called anywhere else.
 		/// </summary>
 		/// <param name="resolutionChanged">
@@ -259,105 +420,10 @@ namespace RTE {
 		                     unsigned short newMultiplier = 1,
 		                     bool endActivity = false);
 
-		/// <summary>
-		/// Gets wether the screen is split horizontally across the screen, i.e.
-		/// as two splitscreens one above another.
-		/// </summary>
-		/// <returns>
-		/// Wehter or not screen has horizontal split
-		/// </returns>
-		bool GetHSplit() const { return m_HSplit; }
 
-		/// <summary>
-		/// Sets wether the screen is split horizontally across the screen, i.e.
-		/// as two splitscreens one obove the other.
-		/// </summary>
-		/// <param name="hSplit">
-		/// Wether or not to have a horizontal split.
-		/// </param>
-		void SetHSplit(bool hSplit) { m_HSplit = hSplit; }
-
-		/// <summary>
-		/// Gets wether the screen is split vertically, i.e. as two splitscreens
-		/// side by side.
-		/// </summary>
-		/// <returns>
-		/// Wether the screen is split vertically
-		/// </returns>
-		bool GetVSplit() const { return m_VSplit; }
-
-		/// <summary>
-		/// Sets wether the screen is split vertically, i.e. as two splitscreens
-		/// side by side.
-		/// </summary>
-		/// <param name="">
-		/// Wether or not to have a vertical split.
-		/// </param>
-		void SetVSplit(bool vSplit) { m_VSplit = vSplit; }
-
-		/// <summary>
-		/// Sets new values for the split screen configuration
-		/// </summary>
-		/// <param name="hSplit">
-		/// Wether the new setting should be horizontally split
-		/// </param>
-		/// <param name="vSplit">
-		/// Wether the new setting should be vertically split
-		/// </param>
-		void ResetSplitScreens(bool hSplit = false, bool vSplit = false);
-
-		/// <summary>
-		/// The number of currently active screens, counting all splits
-		/// </summary>
-		/// <returns>
-		/// The number of currently active screens.
-		/// </returns>
-		unsigned short GetScreenCount() const {
-			return m_HSplit || m_VSplit ? (m_HSplit && m_VSplit ? 4 : 2) : 1;
-		}
-
-		// TODO: Are there backbuffers???
-		/// <summary>
-		/// Gets the width of the individual player screens.
-		/// </summary>
-		/// <returns>
-		/// The width of the player screens.
-		/// </returns>
-		unsigned short GetPlayerScreenWidth() const {
-			return GetPlayerFrameBufferWidth(-1);
-		}
-
-		/// <summary>
-		/// Gets the height of the individual player screens.
-		/// </summary>
-		/// <returns>
-		/// The height of the player screens.
-		/// </returns>
-		unsigned short GetPlayerScreenHeight() const {
-			return GetPlayerFrameBufferHeight(-1);
-		}
-
-		/// <summary>
-		/// Gets the width of the specified player screen.
-		/// <summary>
-		/// <param name = "whichPlayer">
-		/// Player screen to get width for.
-		/// </param>
-		/// <returns>
-		/// The width of the specified player screen.
-		/// </returns>
-		unsigned short GetPlayerFrameBufferWidth(short whichPlayer) const;
-
-		/// <summary>
-		/// Gets the width of the specified player screen.
-		/// <summary>
-		/// <param name = "whichPlayer">
-		/// Player screen to get width for (only used for multiplayer parts)
-		/// </param>
-		/// <returns>
-		/// The height of the specified player screen
-		/// </returns>
-		unsigned short GetPlayerFrameBufferHeight(short whichPlayer) const;
+		//////////////////////////
+		/* Screen Text handling */
+		//////////////////////////
 
 		/// <summary>
 		/// Gets the small font from the GUI engine's current skin. Ownership is
@@ -376,51 +442,6 @@ namespace RTE {
 		/// A pointer to the requested font, or 0 if no small font was found.
 		/// </returns>
 		GUIFont *GetLargeFont() { return GetFont(false); }
-
-		/// <summary>
-		/// Get the current SDL_Renderer
-		/// </summary>
-		/// <returns>
-		/// A Pointer to the current SDL_Renderer
-		/// </returns>
-		SDL_Renderer *GetRenderer() { return m_Renderer; }
-
-		/// <summary>
-		/// Set a new render target from an SDL_Texture, storing the current target. Can be nullptr
-		/// </summary>
-		/// <param name="target">
-		/// The new target.
-		/// </param>
-		void PushRenderTarget(SDL_Texture* target);
-		/// <summary>
-		/// Set a new render target from a RTE::Texture, storing the current target.
-		/// </summary>
-		/// <param name="target">
-		/// The new target
-		/// </param>
-
-		void PushRenderTarget(std::shared_ptr<Texture> target);
-
-		/// <summary>
-		/// Reset the render target to the previous target.
-		/// </summary>
-		void PopRenderTarget();
-
-		/// <summary>
-		/// Get the current game window as SDL_Window
-		/// </summary>
-		/// <returns>
-		/// A pointer to the current SDL_Window
-		/// </returns>
-		SDL_Window *GetWindow() { return m_Window; }
-
-		/// <summary>
-		/// Get the pixelformat of the currently used window
-		/// </summary>
-		/// <returns>
-		/// An Uint32 representing a pixelformat from SDL_PixelFormatEnum
-		/// </returns>
-		uint32_t GetPixelFormat();
 
 		/// <summary>
 		/// Calculates the width of a text string using the given font size.
@@ -468,7 +489,7 @@ namespace RTE {
 		std::string GetScreenText(short whichScreen = 0) const {
 			return (whichScreen >= 0 && whichScreen < c_MaxScreenCount) ? ""
 			                                                            : "";
-		} // TODO: add fonts and screen text handling
+		} // TODO: add fonts and screen text handling (also move this to cpp)
 
 		/// <summary>
 		/// Sets the message to be displayed on top of each player's screen
@@ -508,6 +529,12 @@ namespace RTE {
 		/// flash will happen.
 		/// </param>
 		void FlashScreen(short screen, int color, float periodMS = 0);
+
+		/* TODO: categorize these */
+
+		int MoreTrans() { return 64; }
+		int HalfTrans() { return 128; }
+		int LessTrans() { return 192; }
 
 		int DrawLine(const Vector &start, const Vector &end, int color,
 		             int altColor = 0, int skip = 0, int skipStart = 0,
