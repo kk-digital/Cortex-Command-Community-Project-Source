@@ -458,7 +458,6 @@ public:
 	std::shared_ptr<Texture> GetMOColorTexture() const;
 
 
-#ifdef DEBUG_BUILD
 	/// <summary>
 	/// Gets the debug texture, only vaild if building with DEBUG_BUILD
 	/// </summary>
@@ -466,7 +465,6 @@ public:
 	/// shared pointer to the debug texture
 	/// </returns>
 	std::shared_ptr<Texture> GetDebugTexture() const;
-#endif
 
 	//////////////////////////////////////////////////////////////////////////////////////////
 	// Method:          GetMOIDBitmap
