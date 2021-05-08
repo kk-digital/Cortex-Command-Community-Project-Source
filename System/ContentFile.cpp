@@ -2,8 +2,10 @@
 #include "AudioMan.h"
 #include "PresetMan.h"
 #include "ConsoleMan.h"
-
 #include "FrameMan.h"
+
+#include "System/System.h"
+
 #include "SDLHelper.h"
 #include <SDL2/SDL_image.h>
 
@@ -139,7 +141,7 @@ namespace RTE {
 				    {dataPathToLoad, returnTexture});
 			}
 		}
-	return returnTexture;
+		return std::move(returnTexture);
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
