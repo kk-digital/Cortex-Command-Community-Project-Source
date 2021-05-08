@@ -16,6 +16,7 @@
 #include "MovableMan.h"
 #include "UInputMan.h"
 #include "AudioMan.h"
+#include "FrameMan.h"
 #include "SLTerrain.h"
 #include "Controller.h"
 #include "Actor.h"
@@ -27,6 +28,7 @@
 
 #include "GUI/GUI.h"
 #include "GUI/GUIFont.h"
+#include "GUI/SDLInput.h"
 #include "GUI/SDLScreen.h"
 #include "GUI/SDLGUITexture.h"
 // #include "GUI/AllegroInput.h"
@@ -224,9 +226,9 @@ int EditorActivity::Start()
     // GUI manager setup
 
     if (!m_pGUIScreen)
-        m_pGUIScreen = new AllegroScreen(g_FrameMan.GetBackBuffer8());
+        m_pGUIScreen = new SDLScreen();
     if (!m_pGUIInput)
-        m_pGUIInput = new AllegroInput(-1, true); 
+        m_pGUIInput = new SDLInput(-1, true);
     if (!m_pGUIController)
         m_pGUIController = new GUIControlManager();
     if(!m_pGUIController->Create(m_pGUIScreen, m_pGUIInput, "Base.rte/GUIs/Skins/Base"))
@@ -618,7 +620,7 @@ void EditorActivity::Update()
 
 void EditorActivity::DrawGUI(SDL_Renderer* renderer, const Vector &targetPos, int which)
 {
-    SDLScreen drawScreen(renderer);
+    SDLScreen drawScreen;
     m_pGUIController->Draw(&drawScreen);
     if (m_EditorMode != EDITINGOBJECT)
         m_pGUIController->DrawMouse();
