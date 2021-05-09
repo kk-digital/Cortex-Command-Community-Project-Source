@@ -1147,7 +1147,7 @@ ClassInfoGetters
 //                  indicator arrows or hovering HUD text and so on.
 // Return value:    None.
 
-    void Draw(SDL_Renderer *renderer, const Vector &targetPos = Vector(), DrawMode mode = g_DrawColor, bool onlyPhysical = false) const override;
+    void Draw(SDL_Renderer *renderer, const Vector &targetPos = Vector(), DrawMode mode = g_DrawColor, bool onlyPhysical = false, int alphaMod = 255) const override;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////

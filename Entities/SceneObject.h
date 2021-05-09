@@ -515,7 +515,25 @@ public:
 //                  like indicator arrows or hovering HUD text and so on.
 // Return value:    None.
 
-	virtual void Draw(SDL_Renderer* renderer, const Vector &targetPos = Vector(), DrawMode mode = g_DrawColor, bool onlyPhysical = false) const = 0;
+	/// <summary>
+	/// Draws the current graphical representation using the provided renderer.
+	/// </summary>
+	/// <param name="renderer">
+	/// The renderer to usea.
+	/// </param>
+	/// <param name="targetPos">
+	/// Where to draw the object.
+	/// </param>
+	/// <param name="mode">
+	/// Which mode to draw in, see DrawMode enum for the modes.
+	/// </param>
+	/// <param name="onlyPhysical">
+	/// Wether to not draw any extra 'ghost' items of this object (i.e indicator arrows, HUD text, etc.)
+	/// </param>
+	/// <param name="alphaMod">
+	/// The alpha value that should be multiplied onto drawing operations for DrawTrans.
+	/// </param>
+	virtual void Draw(SDL_Renderer* renderer, const Vector &targetPos = Vector(), DrawMode mode = g_DrawColor, bool onlyPhysical = false, int alphaMod = 255) const = 0;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
