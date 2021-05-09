@@ -311,6 +311,7 @@ namespace RTE {
 			// Draw a rectangle around the glow box so we see it's position and size
 			rectangleColor(g_FrameMan.GetRenderer(), startX, startY, endX, endY, g_RedColor);
 #endif
+			// TODO: this needs to be a shader program otherwise performance may be awful
 			SDL_Rect pixelPos{startX,startY,1,1};
 			for (int y = startY; y < endY; ++y) {
 				pixelPos.y = y;

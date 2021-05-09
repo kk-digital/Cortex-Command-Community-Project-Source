@@ -131,8 +131,7 @@ namespace RTE {
 				}
 			}
 			// NOTE: This takes ownership of the texture file
-			returnTexture = std::make_shared<Texture>(
-			    LoadAndReleaseImage(dataPathToLoad, streamingAccess));
+			returnTexture = std::make_shared<Texture>(std::move(LoadAndReleaseImage(dataPathToLoad, streamingAccess)));
 
 			// Insert the texture into the map, PASSING OVER OWNERSHIP OF THE
 			// LOADED DATAFILE
@@ -141,7 +140,7 @@ namespace RTE {
 				    {dataPathToLoad, returnTexture});
 			}
 		}
-		return std::move(returnTexture);
+		return returnTexture;
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -181,15 +180,14 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	Texture
-	ContentFile::LoadAndReleaseImage(const std::string &dataPathToSpecificFrame,
-	                                 bool streamingAccess) {
+	Texture ContentFile::LoadAndReleaseImage(const std::string &dataPathToSpecificFrame, bool streamingAccess) {
 
 		const std::string dataPathToLoad = dataPathToSpecificFrame.empty()
 		                                       ? m_DataPath
 		                                       : dataPathToSpecificFrame;
 		SetFormattedReaderPosition(GetFormattedReaderPosition());
 
+		// TODO: Use stbi for this instead of SDL_img (SDL_img may cause problems; stbi is generally the goto for this)
 		std::unique_ptr<SDL_Surface, sdl_deleter> tempSurface{
 		    IMG_Load(dataPathToLoad.c_str())};
 
