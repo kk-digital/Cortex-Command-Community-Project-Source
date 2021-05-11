@@ -3,10 +3,8 @@
 
 #include "Controller.h"
 
-#include "GUI.h"
-#include "GUIControlManager.h"
-#include "AllegroScreen.h"
-#include "AllegroInput.h"
+
+#include "System/SDLTexture.h"
 
 namespace RTE {
 
@@ -15,6 +13,10 @@ namespace RTE {
 	class GUIListBox;
 	class GUILabel;
 	class SceneObject;
+
+	class SDLScreen;
+	class SDLInput;
+	class GUIControlManager;
 
 	/// <summary>
 	/// A GUI for picking object instances for placement to the Scene in various editors.
@@ -27,7 +29,8 @@ namespace RTE {
 		/// <summary>
 		/// Constructor method used to instantiate a ObjectPickerGUI object in system memory. Create() should be called before using the object.
 		/// </summary>
-		ObjectPickerGUI() { Clear(); }
+		ObjectPickerGUI();
+		~ObjectPickerGUI();
 
 		/// <summary>
 		/// Makes the ObjectPickerGUI object ready for use.
@@ -76,7 +79,7 @@ namespace RTE {
 		/// </summary>
 		/// <param name="newPosX">The new X position of this entire GUI on the screen.</param>
 		/// <param name="newPosY">The new Y position of this entire GUI on the screen.</param>
-		void SetPosOnScreen(int newPosX, int newPosY) const { m_GUIControlManager->SetPosOnScreen(newPosX, newPosY); }
+		void SetPosOnScreen(int newPosX, int newPosY);
 
 		/// <summary>
 		/// Sets which DataModule space to be picking objects from. If -1, then let the player pick from all loaded modules.
@@ -146,7 +149,7 @@ namespace RTE {
 		/// Draws the ObjectPickerGUI to the specified BITMAP.
 		/// </summary>
 		/// <param name="drawBitmap">The BITMAP to draw on.</param>
-		void Draw(BITMAP *drawBitmap) const;
+		void Draw(SDL_Renderer* renderer) const;
 #pragma endregion
 
 	private:
@@ -161,11 +164,11 @@ namespace RTE {
 		/// </summary>
 		enum class PickerFocus { GroupList, ObjectList };
 
-		static BITMAP *s_Cursor; //!< The cursor image shared by all pickers.
+		static SharedTexture s_Cursor; //!< The cursor image shared by all pickers.
 		Vector m_CursorPos; //!< Screen position of the cursor.
 
-		std::unique_ptr<AllegroScreen> m_GUIScreen; //!< The GUIScreen interface that will be used by this ObjectPickerGUI's GUIControlManager.
-		std::unique_ptr<AllegroInput> m_GUIInput; //!< The GUIInput interface that will be used by this ObjectPickerGUI's GUIControlManager.
+		std::unique_ptr<SDLScreen> m_GUIScreen; //!< The GUIScreen interface that will be used by this ObjectPickerGUI's GUIControlManager.
+		std::unique_ptr<SDLInput> m_GUIInput; //!< The GUIInput interface that will be used by this ObjectPickerGUI's GUIControlManager.
 		std::unique_ptr<GUIControlManager> m_GUIControlManager; //!< The control manager which holds all the controls.
 		GUICollectionBox *m_ParentBox; //!< Collection box of the picker GUI.
 		GUICollectionBox *m_PopupBox; //!< Collection box of the buy popups that contain information about items.

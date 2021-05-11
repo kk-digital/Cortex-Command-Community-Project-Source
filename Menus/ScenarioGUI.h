@@ -60,7 +60,7 @@ public:
 //                  memory. Create() should be called before using the object.
 // Arguments:       None.
 
-    ScenarioGUI() { Clear(); }
+	ScenarioGUI() { Clear(); }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -70,7 +70,7 @@ public:
 //                  from system memory.
 // Arguments:       None.
 
-    ~ScenarioGUI() { Destroy(); }
+	~ScenarioGUI() { Destroy(); }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -82,7 +82,7 @@ public:
 // Return value:    An error return value signaling sucess or any particular failure.
 //                  Anything below 0 is an error signal.
 
-    int Create(Controller *pController);
+	int Create(Controller *pController);
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -103,7 +103,7 @@ public:
 // Arguments:       None.
 // Return value:    None.
 
-    void Destroy();
+	void Destroy();
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -113,7 +113,7 @@ public:
 // Arguments:       None.
 // Return value:    The GUIControlManager. Ownership is not transferred!
 
-    GUIControlManager * GetGUIControlManager();
+	GUIControlManager * GetGUIControlManager();
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -123,7 +123,7 @@ public:
 // Arguments:       Whether to enable or disable the menu.
 // Return value:    None.
 
-    void SetEnabled(bool enable = true);
+	void SetEnabled(bool enable = true);
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -133,7 +133,7 @@ public:
 // Arguments:       None.
 // Return value:    None.
 
-    bool IsEnabled() { return m_MenuEnabled == ENABLED || m_MenuEnabled == ENABLING; }
+	bool IsEnabled() { return m_MenuEnabled == ENABLED || m_MenuEnabled == ENABLING; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -145,7 +145,7 @@ public:
 //                  The radius, in screen pixel units, of the planet.
 // Return value:    None.
 
-    void SetPlanetInfo(const Vector &center, float radius) { m_PlanetCenter = center; m_PlanetRadius = radius; }
+	void SetPlanetInfo(const Vector &center, float radius) { m_PlanetCenter = center; m_PlanetRadius = radius; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -156,7 +156,7 @@ public:
 // Arguments:       None.
 // Return value:    Whether the activity should be restarted.
 
-    bool ActivityRestarted() { return m_ActivityRestarted; }
+	bool ActivityRestarted() { return m_ActivityRestarted; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -166,7 +166,7 @@ public:
 // Arguments:       None.
 // Return value:    Whether the activity should be resumed.
 
-    bool ActivityResumed() { return m_ActivityResumed; }
+	bool ActivityResumed() { return m_ActivityResumed; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -176,7 +176,7 @@ public:
 // Arguments:       None.
 // Return value:    Whether we should go back to main menu.
 
-    bool BackToMain() { return m_BackToMain; }
+	bool BackToMain() { return m_BackToMain; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -186,7 +186,7 @@ public:
 // Arguments:       None.
 // Return value:    Whether the program has been commanded to shit down by the user.
 
-    bool QuitProgram() { return m_Quit; }
+	bool QuitProgram() { return m_Quit; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -250,7 +250,7 @@ protected:
 // Arguments:       None.
 // Return value:    None.
 
-    void UpdateInput();
+	void UpdateInput();
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -260,7 +260,7 @@ protected:
 // Arguments:       None.
 // Return value:    None.
 
-    void HideAllScreens();
+	void HideAllScreens();
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -271,7 +271,7 @@ protected:
 //                  The amount of margin to allow the box to stay within.
 // Return value:    None.
 
-    void KeepBoxOnScreen(GUICollectionBox *pBox, int margin = 10);
+	void KeepBoxOnScreen(GUICollectionBox *pBox, int margin = 10);
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -281,7 +281,7 @@ protected:
 // Arguments:       None.
 // Return value:    None.
 
-    void SetupSkirmishActivity();
+	void SetupSkirmishActivity();
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -291,7 +291,7 @@ protected:
 // Arguments:       None.
 // Return value:    None.
 
-    void UpdateActivityBox();
+	void UpdateActivityBox();
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -301,7 +301,7 @@ protected:
 // Arguments:       None.
 // Return value:    None.
 
-    void UpdateScenesBox();
+	void UpdateScenesBox();
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -312,7 +312,7 @@ protected:
 //                  selected.
 // Return value:    None.
 
-    void UpdatePlayersBox(bool newActivity);
+	void UpdatePlayersBox(bool newActivity);
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -322,7 +322,7 @@ protected:
 // Arguments:       None.
 // Return value:    The number of players already assigned to play the selected Activity.
 
-    int PlayerCount();
+	int PlayerCount();
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -332,7 +332,7 @@ protected:
 // Arguments:       None.
 // Return value:    Whether the game was set up and started successfully.
 
-    bool StartGame();
+	bool StartGame();
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -342,7 +342,7 @@ protected:
 // Arguments:       None.
 // Return value:    None.
 
-    void GetAllScenesAndActivities();
+	void GetAllScenesAndActivities();
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -355,7 +355,7 @@ protected:
 //                  How high above the location to show the text, adjustment from a good default.
 // Return value:    None.
 
-    void UpdateSiteNameLabel(bool visible, string text = "", const Vector &location = Vector(), float height = 1.0);
+	void UpdateSiteNameLabel(bool visible, string text = "", const Vector &location = Vector(), float height = 1.0);
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -368,172 +368,171 @@ protected:
 //                  The color to draw the line in. Use makecol(r, g, b) to create the color
 // Return value:    None.
 
-    void DrawGlowLine(SDL_Renderer* renderer, const Vector &start, const Vector &end, int color) const;
+	void DrawGlowLine(SDL_Renderer* renderer, const Vector &start, const Vector &end, int color) const;
 
 
 
-    enum MenuEnabled
-    {
-        ENABLING = 0,
-        ENABLED,
-        DISABLING,
-        DISABLED
-    };
+	enum MenuEnabled
+	{
+		ENABLING = 0,
+		ENABLED,
+		DISABLING,
+		DISABLED
+	};
 
-    enum MenuScreen
-    {
-        ROOT = 0,
-        SCENESELECT,
-        PLAYERSETUP,
-        CONFIRMQUIT,
-        SCREENCOUNT
-    };
+	enum MenuScreen
+	{
+		ROOT = 0,
+		SCENESELECT,
+		PLAYERSETUP,
+		CONFIRMQUIT,
+		SCREENCOUNT
+	};
 
-    enum ScenarioButtons
-    {
-        BACKTOMAIN = 0,
-        STARTHERE,
-        STARTGAME,
+	enum ScenarioButtons
+	{
+		BACKTOMAIN = 0,
+		STARTHERE,
+		STARTGAME,
 		RESUME,
-        SCENARIOBUTTONCOUNT
-    };
+		SCENARIOBUTTONCOUNT
+	};
 
-    enum BlinkMode
-    {
-        NOBLINK = 0,
-        NOFUNDS,
-        NOCRAFT,
-        BLINKMODECOUNT
-    };
+	enum BlinkMode
+	{
+		NOBLINK = 0,
+		NOFUNDS,
+		NOCRAFT,
+		BLINKMODECOUNT
+	};
 
-    // These add on the player and team max counts
-    enum PlayerColumns
-    {
-        PLAYER_CPU = Players::MaxPlayerCount,
-        PLAYERCOLUMNCOUNT
-    };
+	// These add on the player and team max counts
+	enum PlayerColumns
+	{
+		PLAYER_CPU = Players::MaxPlayerCount,
+		PLAYERCOLUMNCOUNT
+	};
 
-    enum TeamRows
-    {
-        TEAM_DISABLED = Activity::MaxTeamCount,
-        TEAMROWCOUNT
-    };
+	enum TeamRows
+	{
+		TEAM_DISABLED = Activity::MaxTeamCount,
+		TEAMROWCOUNT
+	};
 
-    // Controller which controls this menu. Not owned
-    Controller *m_pController;
-    // GUI Screen for use by the in-game GUI
-    GUIScreen *m_pGUIScreen;
-    // Input controller
-    GUIInput *m_pGUIInput;
-    // The control manager which holds all the controls
-    GUIControlManager *m_pGUIController;
-    // Visibility state of the menu
-    int m_MenuEnabled;
-    // Screen selection state
-    int m_MenuScreen;
-    // Change in menu screens detected
-    bool m_ScreenChange;
-    // Focus state on selecting scenes
-    int m_SceneFocus;
-    // Focus change direction - 0 is none, negative is back, positive forward
-    int m_FocusChange;
-    // Speed at which the menus appear and disappear
-    float m_MenuSpeed;
-    // Notification blink timer
-    Timer m_BlinkTimer;
-    // What we're blinking
-    int m_BlinkMode;
+	// Controller which controls this menu. Not owned
+	Controller *m_pController;
+	// GUI Screen for use by the in-game GUI
+	GUIScreen *m_pGUIScreen;
+	// Input controller
+	GUIInput *m_pGUIInput;
+	// The control manager which holds all the controls
+	GUIControlManager *m_pGUIController;
+	// Visibility state of the menu
+	int m_MenuEnabled;
+	// Screen selection state
+	int m_MenuScreen;
+	// Change in menu screens detected
+	bool m_ScreenChange;
+	// Focus state on selecting scenes
+	int m_SceneFocus;
+	// Focus change direction - 0 is none, negative is back, positive forward
+	int m_FocusChange;
+	// Speed at which the menus appear and disappear
+	float m_MenuSpeed;
+	// Notification blink timer
+	Timer m_BlinkTimer;
+	// What we're blinking
+	int m_BlinkMode;
 
-    // The absolute screen position of the planet center
-    Vector m_PlanetCenter;
-    // The screen radius of the planet
-    float m_PlanetRadius;
+	// The absolute screen position of the planet center
+	Vector m_PlanetCenter;
+	// The screen radius of the planet
+	float m_PlanetRadius;
 
-    // The different dialog/floating boxes
-    GUICollectionBox *m_pRootBox;
-    GUICollectionBox *m_pActivityBox;
-    GUICollectionBox *m_pSceneInfoBox;
-    GUICollectionBox *m_pPlayerSetupBox;
-    GUICollectionBox *m_pQuitConfirmBox;
+	// The different dialog/floating boxes
+	GUICollectionBox *m_pRootBox;
+	GUICollectionBox *m_pActivityBox;
+	GUICollectionBox *m_pSceneInfoBox;
+	GUICollectionBox *m_pPlayerSetupBox;
+	GUICollectionBox *m_pQuitConfirmBox;
 
-    // The menu buttons we want to manipulate
-    GUIButton *m_aScenarioButton[SCENARIOBUTTONCOUNT];
-    // Hover name label over Scene:s
-    GUILabel *m_pScenePlanetLabel;
+	// The menu buttons we want to manipulate
+	GUIButton *m_aScenarioButton[SCENARIOBUTTONCOUNT];
+	// Hover name label over Scene:s
+	GUILabel *m_pScenePlanetLabel;
 
-    // Activity selection screen controls
-    GUIComboBox *m_pActivitySelect;
-    GUILabel *m_pActivityLabel;
-    GUILabel *m_pDifficultyLabel;
-    GUISlider *m_pDifficultySlider;
+	// Activity selection screen controls
+	GUIComboBox *m_pActivitySelect;
+	GUILabel *m_pActivityLabel;
+	GUILabel *m_pDifficultyLabel;
+	GUISlider *m_pDifficultySlider;
 
-    // Scene Info controls
-    GUIButton *m_pSceneCloseButton;
-    GUILabel *m_pSceneNameLabel;
-    GUILabel *m_pSceneInfoLabel;
+	// Scene Info controls
+	GUIButton *m_pSceneCloseButton;
+	GUILabel *m_pSceneNameLabel;
+	GUILabel *m_pSceneInfoLabel;
 
-    // Player setup controls
-    // Boxes in the matrix which detect and display where a control setting is and should be
+	// Player setup controls
+	// Boxes in the matrix which detect and display where a control setting is and should be
 //    bool m_aaControls[PLAYERCOLUMNCOUNT][TEAMROWCOUNT];
-    GUICollectionBox *m_aapPlayerBoxes[PLAYERCOLUMNCOUNT][TEAMROWCOUNT];
-    GUICollectionBox *m_apTeamBoxes[TEAMROWCOUNT];
-    GUILabel *m_apTeamNameLabels[TEAMROWCOUNT];
-    GUILabel *m_pStartErrorLabel;
-    GUILabel *m_pCPULockLabel;
-    // Which team the CPU is locked to, if any
-    int m_LockedCPUTeam;
+	GUICollectionBox *m_aapPlayerBoxes[PLAYERCOLUMNCOUNT][TEAMROWCOUNT];
+	GUICollectionBox *m_apTeamBoxes[TEAMROWCOUNT];
+	GUILabel *m_apTeamNameLabels[TEAMROWCOUNT];
+	GUILabel *m_pStartErrorLabel;
+	GUILabel *m_pCPULockLabel;
+	// Which team the CPU is locked to, if any
+	int m_LockedCPUTeam;
 
-    //Tech selection combos
+	//Tech selection combos
 	GUIComboBox *m_apTeamTechSelect[Activity::MaxTeamCount];
-	
+
 	// AI skill selection
 	GUISlider *m_apTeamAISkillSlider[Activity::MaxTeamCount];
 	GUILabel *m_apTeamAISkillLabel[Activity::MaxTeamCount];
 
-    GUILabel *m_pGoldLabel;
-    GUISlider *m_pGoldSlider;
+	GUILabel *m_pGoldLabel;
+	GUISlider *m_pGoldSlider;
 	GUICheckbox *m_pFogOfWarCheckbox;
 	GUICheckbox *m_pRequireClearPathToOrbitCheckbox;
 	GUICheckbox *m_pDeployUnitsCheckbox;
 
-    // The confirmation box and its controls
-    GUILabel *m_pQuitConfirmLabel;
-    GUIButton *m_pQuitConfirmButton;
+	// The confirmation box and its controls
+	GUILabel *m_pQuitConfirmLabel;
+	GUIButton *m_pQuitConfirmButton;
 
-	std::shared_ptr<Texture> m_pScenePreviewBitmap;
 	std::shared_ptr<Texture> m_pDefaultPreviewBitmap;
 
-    // The current set of Scenes being displayed - not owned, nor are the scenes
-    std::list<Scene *> *m_pScenes;
-    // The map of Activity:ies, and the Scene:s compatible with each, neither of which are owned here
-    std::map<Activity *, std::list<Scene *> > m_Activities;
-    // Currently dragged GUI box
-    GUICollectionBox *m_pDraggedBox;
-    // New potential drag is starting
-    bool m_EngageDrag;
-    // The scene preset currently hovered, NOT OWNED
-    Scene *m_pHoveredScene;
-    // The scene preset currently selected, NOT OWNED
-    Scene *m_pSelectedScene;
-    // Previous pos of mouse to calculate dragging
-    Vector m_PrevMousePos;
+	// The current set of Scenes being displayed - not owned, nor are the scenes
+	std::list<Scene *> *m_pScenes;
+	// The map of Activity:ies, and the Scene:s compatible with each, neither of which are owned here
+	std::map<Activity *, std::list<Scene *> > m_Activities;
+	// Currently dragged GUI box
+	GUICollectionBox *m_pDraggedBox;
+	// New potential drag is starting
+	bool m_EngageDrag;
+	// The scene preset currently hovered, NOT OWNED
+	Scene *m_pHoveredScene;
+	// The scene preset currently selected, NOT OWNED
+	Scene *m_pSelectedScene;
+	// Previous pos of mouse to calculate dragging
+	Vector m_PrevMousePos;
 
-    // Whether the game was restarted this frame or not
-    bool m_ActivityRestarted;
-    // Whether the game was resumed this frame or not
-    bool m_ActivityResumed;
-    // How many players are chosen to be in the new game
-    int m_StartPlayers;
-    // How many teams are chosen to be in the new game
-    int m_StartTeams;
-    // How much money both teams start with in the new game
-    int m_StartFunds;
-    // Difficulty setting
-    int m_StartDifficulty;
-    // Whether user has chosen to go back to the main menu
-    bool m_BackToMain;
-    // Player selected to quit the program
-    bool m_Quit;
+	// Whether the game was restarted this frame or not
+	bool m_ActivityRestarted;
+	// Whether the game was resumed this frame or not
+	bool m_ActivityResumed;
+	// How many players are chosen to be in the new game
+	int m_StartPlayers;
+	// How many teams are chosen to be in the new game
+	int m_StartTeams;
+	// How much money both teams start with in the new game
+	int m_StartFunds;
+	// Difficulty setting
+	int m_StartDifficulty;
+	// Whether user has chosen to go back to the main menu
+	bool m_BackToMain;
+	// Player selected to quit the program
+	bool m_Quit;
 	// Select tutorial activity when switched to scenario GUI
 	bool m_SelectTutorial;
 
@@ -551,10 +550,10 @@ private:
 // Arguments:       None.
 // Return value:    None.
 
-    void Clear();
+	void Clear();
 
 
-    // Disallow the use of some implicit methods.
+	// Disallow the use of some implicit methods.
 	ScenarioGUI(const ScenarioGUI &reference) = delete;
 	ScenarioGUI & operator=(const ScenarioGUI &rhs) = delete;
 

@@ -35,14 +35,16 @@
 #include "Scene.h"
 #include "SettingsMan.h"
 
+#include <SDL2/SDL2_gfxPrimitives.h>
+
 using namespace RTE;
 
 #define MAXBRAINPATHCOST 10000
 #define BLUEPRINTREVEALRATE 150
 #define BLUEPRINTREVEALPAUSE 1500
 
-BITMAP *AssemblyEditorGUI::s_pValidPathDot = 0;
-BITMAP *AssemblyEditorGUI::s_pInvalidPathDot = 0;
+SharedTexture AssemblyEditorGUI::s_pValidPathDot = nullptr;
+SharedTexture AssemblyEditorGUI::s_pInvalidPathDot = nullptr;
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          Clear
@@ -152,9 +154,9 @@ int AssemblyEditorGUI::Create(Controller *pController, FeatureSets featureSet, i
     if (!s_pValidPathDot)
     {
         ContentFile dotFile("Base.rte/GUIs/Indicators/PathDotValid.png");
-        s_pValidPathDot = dotFile.GetAsBitmap();
+        s_pValidPathDot = dotFile.GetAsTexture();
         dotFile.SetDataPath("Base.rte/GUIs/Indicators/PathDotInvalid.png");
-        s_pInvalidPathDot = dotFile.GetAsBitmap();
+        s_pInvalidPathDot = dotFile.GetAsTexture();
     }
 
     return 0;
@@ -772,7 +774,7 @@ void AssemblyEditorGUI::Update()
 					SceneObject *pSO = dynamic_cast<SceneObject *>((*oItr)->Clone());
 
 					// Convert relative coordinates to scene coordintaes
-					Vector pos = pBA->GetPos() + pSO->GetPos() + pBA->GetBitmapOffset();
+					Vector pos = pBA->GetPos() + pSO->GetPos() + pBA->GetTextureOffset();
 
 					//Wrap over seam
 					if (g_SceneMan.GetScene()->WrapsX())
@@ -970,7 +972,7 @@ void AssemblyEditorGUI::Update()
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Draws the menu
 
-void AssemblyEditorGUI::Draw(BITMAP *pTargetBitmap, const Vector &targetPos) const
+void AssemblyEditorGUI::Draw(SDL_Renderer* renderer, const Vector &targetPos) const
 {
     // Done, so don't draw the UI
     if (m_EditorGUIMode == DONEEDITING)
@@ -993,11 +995,11 @@ void AssemblyEditorGUI::Draw(BITMAP *pTargetBitmap, const Vector &targetPos) con
             // Draw the currently held object into the order of the list if it is to be placed inside
             if (m_pCurrentObject && m_DrawCurrentObject && i == m_ObjectListOrder)
             {
-                g_FrameMan.SetTransTable(m_BlinkTimer.AlternateReal(333) || m_EditorGUIMode == PLACINGOBJECT ? LessTrans : HalfTrans);
-                m_pCurrentObject->Draw(pTargetBitmap, targetPos, g_DrawTrans);
+                int alphaMod = m_BlinkTimer.AlternateReal(333) || m_EditorGUIMode == PLACINGOBJECT ? LessTrans : HalfTrans;
+                m_pCurrentObject->Draw(renderer, targetPos, g_DrawTrans, false, alphaMod);
                 pActor = dynamic_cast<Actor *>(m_pCurrentObject);
                 if (pActor)
-                    pActor->DrawHUD(pTargetBitmap, targetPos);
+                    pActor->DrawHUD(renderer, targetPos);
             }
 
             // Is the placed object an actor?
@@ -1007,18 +1009,18 @@ void AssemblyEditorGUI::Draw(BITMAP *pTargetBitmap, const Vector &targetPos) con
             // Blink trans if we are supposed to blink this one
             if ((*itr) == m_pObjectToBlink)
             {
-                g_FrameMan.SetTransTable(m_BlinkTimer.AlternateReal(333) ? LessTrans : HalfTrans);
-                (*itr)->Draw(pTargetBitmap, targetPos, g_DrawTrans);
+                int alphaMod = m_BlinkTimer.AlternateReal(333) ? LessTrans : HalfTrans;
+                (*itr)->Draw(renderer, targetPos, g_DrawTrans, alphaMod);
             }
             // Drawing of already placed objects that aren't highlighted or anything
             else
             {
-				(*itr)->Draw(pTargetBitmap, targetPos);
+				(*itr)->Draw(renderer, targetPos);
             }
 
             // Draw basic HUD if an actor - don't do this for blueprints.. it is confusing
             if (pActor)
-                pActor->DrawHUD(pTargetBitmap, targetPos);
+                pActor->DrawHUD(renderer, targetPos);
         }
     }
 
@@ -1026,29 +1028,29 @@ void AssemblyEditorGUI::Draw(BITMAP *pTargetBitmap, const Vector &targetPos) con
     if (!m_DrawCurrentObject)
     {
         Vector center = m_CursorPos - targetPos;
-        putpixel(pTargetBitmap, center.m_X, center.m_Y, g_YellowGlowColor);
-        hline(pTargetBitmap, center.m_X - 5, center.m_Y, center.m_X - 2, g_YellowGlowColor);
-        hline(pTargetBitmap, center.m_X + 5, center.m_Y, center.m_X + 2, g_YellowGlowColor);
-        vline(pTargetBitmap, center.m_X, center.m_Y - 5, center.m_Y - 2, g_YellowGlowColor);
-        vline(pTargetBitmap, center.m_X, center.m_Y + 5, center.m_Y + 2, g_YellowGlowColor);
+        pixelColor(renderer, center.m_X, center.m_Y, g_YellowGlowColor);
+        hlineColor(renderer, center.m_X - 5, center.m_Y, center.m_X - 2, g_YellowGlowColor);
+        hlineColor(renderer, center.m_X + 5, center.m_Y, center.m_X + 2, g_YellowGlowColor);
+        vlineColor(renderer, center.m_X, center.m_Y - 5, center.m_Y - 2, g_YellowGlowColor);
+        vlineColor(renderer, center.m_X, center.m_Y + 5, center.m_Y + 2, g_YellowGlowColor);
     }
     // If the held object will be placed at the end of the list, draw it last to the scene, transperent blinking
 	else if (m_pCurrentObject && (m_ObjectListOrder < 0 || (pSceneObjectList && m_ObjectListOrder == pSceneObjectList->size())))
     {
-        g_FrameMan.SetTransTable(m_BlinkTimer.AlternateReal(333) || m_EditorGUIMode == PLACINGOBJECT ? LessTrans : HalfTrans);
-        m_pCurrentObject->Draw(pTargetBitmap, targetPos, g_DrawTrans);
+		int alphaMod{m_BlinkTimer.AlternateReal(333) || m_EditorGUIMode == PLACINGOBJECT ? LessTrans : HalfTrans};
+		m_pCurrentObject->Draw(renderer, targetPos, g_DrawTrans, false, alphaMod);
         Actor *pActor = dynamic_cast<Actor *>(m_pCurrentObject);
         if (pActor)
-            pActor->DrawHUD(pTargetBitmap, targetPos);
+            pActor->DrawHUD(renderer, targetPos);
     }
 
 	if (m_pCurrentScheme)
-		m_pCurrentScheme->Draw(pTargetBitmap, targetPos);
+		m_pCurrentScheme->Draw(renderer, targetPos);
 
-    m_pPicker->Draw(pTargetBitmap);
+    m_pPicker->Draw(renderer);
 
     // Draw the pie menu
-    m_pPieMenu->Draw(pTargetBitmap, targetPos);
+    m_pPieMenu->Draw(renderer, targetPos);
 }
 
 

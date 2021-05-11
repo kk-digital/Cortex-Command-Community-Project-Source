@@ -7,9 +7,9 @@
 #include "SettingsMan.h"
 
 #include "GUI/GUI.h"
-#include "GUI/AllegroBitmap.h"
-#include "GUI/AllegroScreen.h"
-#include "GUI/AllegroInput.h"
+#include "GUI/SDLGUITexture.h"
+#include "GUI/SDLScreen.h"
+#include "GUI/SDLInput.h"
 #include "GUI/GUIControlManager.h"
 #include "GUI/GUICollectionBox.h"
 #include "GUI/GUIListBox.h"
@@ -23,9 +23,11 @@
 
 namespace RTE {
 
-	BITMAP *ObjectPickerGUI::s_Cursor = nullptr;
+	SharedTexture ObjectPickerGUI::s_Cursor;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	ObjectPickerGUI::ObjectPickerGUI() { Clear(); }
+	ObjectPickerGUI::~ObjectPickerGUI() = default;
 
 	void ObjectPickerGUI::Clear() {
 		m_CursorPos.Reset();
@@ -63,8 +65,8 @@ namespace RTE {
 		RTEAssert(controller, "No controller sent to ObjectPickerGUI on creation!");
 		m_Controller = controller;
 
-		if (!m_GUIScreen) { m_GUIScreen = std::make_unique<AllegroScreen>(g_FrameMan.GetBackBuffer8()); }
-		if (!m_GUIInput) { m_GUIInput = std::make_unique<AllegroInput>(controller->GetPlayer()); }
+		if (!m_GUIScreen) { m_GUIScreen = std::make_unique<SDLScreen>(); }
+		if (!m_GUIInput) { m_GUIInput = std::make_unique<SDLInput>(controller->GetPlayer()); }
 		if (!m_GUIControlManager) { m_GUIControlManager = std::make_unique<GUIControlManager>(); }
 		RTEAssert(m_GUIControlManager->Create(m_GUIScreen.get(), m_GUIInput.get(), "Base.rte/GUIs/Skins/Base"), "Failed to create GUI Control Manager and load it from Base.rte/GUIs/Skins/Base");
 
@@ -73,11 +75,11 @@ namespace RTE {
 
 		if (!s_Cursor) {
 			ContentFile cursorFile("Base.rte/GUIs/Skins/Cursor.png");
-			s_Cursor = cursorFile.GetAsBitmap();
+			s_Cursor = cursorFile.GetAsTexture();
 		}
 
 		if (g_FrameMan.IsInMultiplayerMode()) {
-			dynamic_cast<GUICollectionBox *>(m_GUIControlManager->GetControl("base"))->SetSize(g_FrameMan.GetPlayerFrameBufferWidth(controller->GetPlayer()), g_FrameMan.GetPlayerFrameBufferHeight(controller->GetPlayer()));
+			dynamic_cast<GUICollectionBox *>(m_GUIControlManager->GetControl("base"))->SetSize(g_FrameMan.GetPlayerFrameBufferWidth(m_Controller->GetPlayer()), g_FrameMan.GetPlayerFrameBufferHeight(controller->GetPlayer()));
 		} else {
 			dynamic_cast<GUICollectionBox *>(m_GUIControlManager->GetControl("base"))->SetSize(g_FrameMan.GetResX(), g_FrameMan.GetResY());
 		}
@@ -293,7 +295,7 @@ namespace RTE {
 		const DataModule *dataModule = g_PresetMan.GetDataModule(moduleID);
 		std::string moduleName = dataModule->GetFriendlyName();
 		std::transform(moduleName.begin(), moduleName.end(), moduleName.begin(), ::toupper);
-		GUIBitmap *dataModuleIcon = dataModule->GetIcon() ? new AllegroBitmap(dataModule->GetIcon()) : nullptr;
+		GUIBitmap *dataModuleIcon = dataModule->GetIcon() ? new SDLGUITexture(dataModule->GetIcon()) : nullptr;
 		m_ObjectsList->AddItem(moduleName, m_ExpandedModules.at(moduleID) ? "-" : "+", dataModuleIcon, nullptr, moduleID);
 	}
 
@@ -379,7 +381,7 @@ namespace RTE {
 				if (moduleID != 0) { AddObjectsListModuleGroup(moduleID); }
 				if (moduleID == 0 || m_ExpandedModules.at(moduleID)) {
 					for (SceneObject *objectListEntry : objectList) {
-						GUIBitmap *objectIcon = new AllegroBitmap(objectListEntry->GetGraphicalIcon());
+						GUIBitmap *objectIcon = new SDLGUITexture(objectListEntry->GetGraphicalIcon());
 						m_ObjectsList->AddItem(objectListEntry->GetPresetName(), objectListEntry->GetGoldValueString(m_NativeTechModuleID, m_ForeignCostMult), objectIcon, objectListEntry);
 					}
 				}
@@ -562,11 +564,17 @@ namespace RTE {
 		}
 	}
 
+	void ObjectPickerGUI::SetPosOnScreen(int newPosX, int newPosY) {
+		m_GUIControlManager->SetPosOnScreen(newPosX, newPosY);
+	}
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void ObjectPickerGUI::Draw(BITMAP *drawBitmap) const {
-		AllegroScreen drawScreen(drawBitmap);
+	void ObjectPickerGUI::Draw(SDL_Renderer *renderer) const {
+		SDLScreen drawScreen;
 		m_GUIControlManager->Draw(&drawScreen);
-		if (IsEnabled() && m_Controller->IsMouseControlled()) { draw_sprite(drawBitmap, s_Cursor, m_CursorPos.GetFloorIntX(), m_CursorPos.GetFloorIntY()); }
+		if (IsEnabled() && m_Controller->IsMouseControlled()) {
+			s_Cursor->render(renderer, m_CursorPos.GetFloorIntX(), m_CursorPos.GetFloorIntY());
+		}
 	}
 }

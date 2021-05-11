@@ -23,9 +23,9 @@
 #include "ConsoleMan.h"
 
 #include "GUI/GUI.h"
-#include "GUI/AllegroBitmap.h"
-#include "GUI/AllegroScreen.h"
-#include "GUI/AllegroInput.h"
+#include "GUI/SDLGUITexture.h"
+#include "GUI/SDLScreen.h"
+#include "GUI/SDLInput.h"
 #include "GUI/GUIControlManager.h"
 #include "GUI/GUICollectionBox.h"
 #include "GUI/GUIComboBox.h"
@@ -52,6 +52,8 @@
 #include "ActorEditor.h"
 #include "DataModule.h"
 #include "Scene.h"
+
+#include <SDL2/SDL2_gfxPrimitives.h>
 
 extern int g_IntroState;
 extern volatile bool g_Quit;
@@ -171,9 +173,9 @@ int ScenarioGUI::Create(Controller *pController)
     m_pController = pController;
 
     if (!m_pGUIScreen)
-        m_pGUIScreen = new AllegroScreen(g_FrameMan.GetBackBuffer32());
+        m_pGUIScreen = new SDLScreen();
     if (!m_pGUIInput)
-        m_pGUIInput = new AllegroInput(-1, true); 
+        m_pGUIInput = new SDLInput(-1, true);
     if (!m_pGUIController)
         m_pGUIController = new GUIControlManager();
     if(!m_pGUIController->Create(m_pGUIScreen, m_pGUIInput, "Base.rte/GUIs/Skins/MainMenu"))
@@ -313,15 +315,11 @@ int ScenarioGUI::Create(Controller *pController)
     m_pPlayerSetupBox->CenterInParent(true, true);
     m_pQuitConfirmBox->CenterInParent(true, true);
 
-	m_pScenePreviewBitmap = create_bitmap_ex(8, Scene::PREVIEW_WIDTH, Scene::PREVIEW_HEIGHT);
-
 	// Load default preview bitmap
 	ContentFile defaultPreview("Base.rte/GUIs/DefaultPreview.png");
-	m_pDefaultPreviewBitmap = defaultPreview.GetAsBitmap(COLORCONV_NONE, false);
+	m_pDefaultPreviewBitmap = defaultPreview.GetAsTexture(false);
 
-	clear_to_color(m_pScenePreviewBitmap, g_MaskColor);
-
-    // Set initial focus, category list, and label settings
+    //Set initial focus, category list, and label settings
     m_ScreenChange = true;
     m_FocusChange = 1;
 //    CategoryChange();
@@ -349,9 +347,6 @@ void ScenarioGUI::Destroy()
     delete m_pGUIController;
     delete m_pGUIInput;
     delete m_pGUIScreen;
-
-	destroy_bitmap(m_pScenePreviewBitmap);
-	destroy_bitmap(m_pDefaultPreviewBitmap);
 
     Clear();
 }
@@ -492,13 +487,13 @@ void ScenarioGUI::Update()
 		// Detect if mouse is inside UI boxes
 		GUIRect * r;
 		r = m_pActivityBox->GetRect();
-		if (mouseX > r->left && mouseX < r->right &&
-			mouseY > r->top && mouseY < r->bottom)
+		if (mouseX > r->x && mouseX < (r->x + r->w) &&
+		    mouseY > r->y &&mouseY < (r->y + r->h))
 			mouseIsInBox = true;
 
 		r = m_pSceneInfoBox->GetRect();
-		if (mouseX > r->left && mouseX < r->right &&
-			mouseY > r->top && mouseY < r->bottom)
+		if (mouseX > r->x && mouseX < (r->x + r->w) &&
+			mouseY > r->y && mouseY < (r->y + r->h))
 			mouseIsInBox = true;
 
         // Validate mouse position as being over the planet area for hover operations!
@@ -623,13 +618,15 @@ void ScenarioGUI::Update()
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Draws the menu
 
-void ScenarioGUI::Draw(BITMAP *drawBitmap) const
+void ScenarioGUI::Draw(SDL_Renderer *renderer) const
 {
-    // Transparency effect on the scene dots and lines
-    drawing_mode(DRAW_MODE_TRANS, 0, 0, 0);
+
     // Screen blend the dots and lines, with some flicekring in its intensity
 	int blendAmount = 120 + RandomNum(-55, 55);
-    set_screen_blender(blendAmount, blendAmount, blendAmount, blendAmount);
+	SDL_BlendMode screen{
+		SDL_ComposeCustomBlendMode(SDL_BLENDFACTOR_ONE, SDL_BLENDFACTOR_ONE_MINUS_SRC_COLOR, SDL_BLENDOPERATION_ADD,
+								   SDL_BLENDFACTOR_ONE, SDL_BLENDFACTOR_ONE_MINUS_SRC_ALPHA, SDL_BLENDOPERATION_ADD)};
+	SDL_SetRenderDrawBlendMode(renderer, screen);
 
     // Draw sites etc only when selecting them
     if (m_MenuScreen == SCENESELECT && m_pScenes)
@@ -648,26 +645,26 @@ void ScenarioGUI::Draw(BITMAP *drawBitmap) const
 
             screenLocation = m_PlanetCenter + (*sItr)->GetLocation() + (*sItr)->GetLocationOffset();
 			blendAmount = 85 + RandomNum(-25, 25);
-            set_screen_blender(blendAmount, blendAmount, blendAmount, blendAmount);
-            circlefill(drawBitmap, screenLocation.m_X, screenLocation.m_Y, 4, color);
-            circlefill(drawBitmap, screenLocation.m_X, screenLocation.m_Y, 2, color);
+			uint32_t blendColor{color & (0xFFFFFF00 | blendAmount)};
+            filledCircleColor(renderer, screenLocation.m_X, screenLocation.m_Y, 4, blendColor);
+            filledCircleColor(renderer, screenLocation.m_X, screenLocation.m_Y, 2, blendColor);
 			blendAmount = 200 + RandomNum(-55, 55);
-            set_screen_blender(blendAmount, blendAmount, blendAmount, blendAmount);
-            circlefill(drawBitmap, screenLocation.m_X, screenLocation.m_Y, 1, color);
+			blendColor |= 0xFF;
+			blendColor &= blendAmount;
+            filledCircleColor(renderer, screenLocation.m_X, screenLocation.m_Y, 1, color);
         }
 
         // Draw the lines etc pointing at the selected Scene from the Scene Info box
         if (m_pSelectedScene && m_pSceneInfoBox->GetVisible())
         {
             Vector sceneInfoBoxPos(m_pSceneInfoBox->GetXPos() + (m_pSceneInfoBox->GetWidth() / 2), m_pSceneInfoBox->GetYPos() + (m_pSceneInfoBox->GetHeight() / 2));
-            DrawScreenLineToSitePoint(drawBitmap, sceneInfoBoxPos, m_pSelectedScene->GetLocation() +  m_pSelectedScene->GetLocationOffset(), c_GUIColorWhite, -1, -1, (m_pSceneInfoBox->GetHeight() / 2) + CHAMFERSIZE + 6, 1.0);
+            DrawScreenLineToSitePoint(renderer, sceneInfoBoxPos, m_pSelectedScene->GetLocation() +  m_pSelectedScene->GetLocationOffset(), c_GUIColorWhite, -1, -1, (m_pSceneInfoBox->GetHeight() / 2) + CHAMFERSIZE + 6, 1.0);
 	    }
     }
 
-    // Back to solid drawing
-    drawing_mode(DRAW_MODE_SOLID, 0, 0, 0);
+	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 
-    AllegroScreen drawScreen(drawBitmap);
+    SDLScreen drawScreen;
 
 	m_pGUIController->Draw(&drawScreen);
 
@@ -676,18 +673,15 @@ void ScenarioGUI::Draw(BITMAP *drawBitmap) const
     {
 		if (m_pSelectedScene && m_pSceneInfoBox->GetVisible())
         {
-			BITMAP * preview = m_pSelectedScene->GetPreviewBitmap();
+			SharedTexture preview = m_pSelectedScene->GetPreviewBitmap();
+			SDL_Rect previewBox{m_pSceneInfoBox->GetXPos() + 10, m_pSceneInfoBox->GetYPos() + 33, Scene::PREVIEW_WIDTH, Scene::PREVIEW_HEIGHT};
+
 			if (preview)
 			{
-				int xOffset = 0;
-				int yOffset = 0;
-				blit(preview, m_pScenePreviewBitmap, xOffset, yOffset, 0, 0, m_pScenePreviewBitmap->w, m_pScenePreviewBitmap->h);
+				preview->render(renderer, previewBox);
 			} else {
-				int xOffset = 0;
-				int yOffset = 0;
-				blit(m_pDefaultPreviewBitmap, m_pScenePreviewBitmap, xOffset, yOffset, 0, 0, m_pScenePreviewBitmap->w, m_pScenePreviewBitmap->h);
+				m_pDefaultPreviewBitmap->render(renderer, previewBox);
 			}
-			draw_sprite(drawBitmap, m_pScenePreviewBitmap, m_pSceneInfoBox->GetXPos() + 10, m_pSceneInfoBox->GetYPos() + 33);
 	    }
     }
 
@@ -701,18 +695,16 @@ void ScenarioGUI::Draw(BITMAP *drawBitmap) const
             // Disabled shaded boxes
             if (pActivity && (!pActivity->TeamActive(team) || m_LockedCPUTeam == team))
             {
-// TODO: understand why the blending isnt working as desired
-                // Transparency effect on the overlay boxes
-                drawing_mode(DRAW_MODE_TRANS, 0, 0, 0);
+// TODO: understand why the blending isnt working as desired XXX: Maybe fixed?
                 // Screen blend the dots and lines, with some flicekring in its intensity
                 int blendAmount = 230;
-                set_screen_blender(blendAmount, blendAmount, blendAmount, blendAmount);
-                rectfill(drawBitmap, m_pPlayerSetupBox->GetXPos() + 110, m_pPlayerSetupBox->GetYPos() + lineY, m_pPlayerSetupBox->GetXPos() + m_pPlayerSetupBox->GetWidth() - 12, m_pPlayerSetupBox->GetYPos() + lineY + 25, c_GUIColorDarkBlue);
+				uint32_t blendColor = c_GUIColorDarkBlue & (0xFFFFFF | blendAmount);
+				SDL_SetRenderDrawBlendMode(renderer, screen);
+                boxColor(renderer, m_pPlayerSetupBox->GetXPos() + 110, m_pPlayerSetupBox->GetYPos() + lineY, m_pPlayerSetupBox->GetXPos() + m_pPlayerSetupBox->GetWidth() - 12, m_pPlayerSetupBox->GetYPos() + lineY + 25, blendColor);
             }
-            // Back to solid drawing
-            drawing_mode(DRAW_MODE_SOLID, 0, 0, 0);
+			SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
             // Cell border separator lines
-            line(drawBitmap, m_pPlayerSetupBox->GetXPos() + 110, m_pPlayerSetupBox->GetYPos() + lineY, m_pPlayerSetupBox->GetXPos() + m_pPlayerSetupBox->GetWidth() - 12, m_pPlayerSetupBox->GetYPos() + lineY, c_GUIColorLightBlue);
+            lineColor(renderer, m_pPlayerSetupBox->GetXPos() + 110, m_pPlayerSetupBox->GetYPos() + lineY, m_pPlayerSetupBox->GetXPos() + m_pPlayerSetupBox->GetWidth() - 12, m_pPlayerSetupBox->GetYPos() + lineY, c_GUIColorLightBlue);
             lineY += 25;
         }
 
@@ -746,7 +738,7 @@ void ScenarioGUI::Draw(BITMAP *drawBitmap) const
 
 		const Icon * pIcon = g_UInputMan.GetDeviceIcon(device);
 		if (pIcon)
-			draw_sprite(drawBitmap, pIcon->GetBitmaps8()[0], mouseX + 16, mouseY - 4);
+			pIcon->GetTextures()[0]->render(renderer, mouseX + 16, mouseY - 4);
 	}
 
 	// Show which joysticks are detected by the game
@@ -760,7 +752,7 @@ void ScenarioGUI::Draw(BITMAP *drawBitmap) const
 			{
 				const Icon * pIcon = g_UInputMan.GetDeviceIcon(matchedDevice);
 				if (pIcon)
-					draw_sprite(drawBitmap, pIcon->GetBitmaps8()[0], g_FrameMan.GetResX() - 30 * g_UInputMan.GetJoystickCount() + 30 * joystick, g_FrameMan.GetResY() - 25);
+					pIcon->GetTextures()[0]->render(renderer, g_FrameMan.GetResX() - 30 * g_UInputMan.GetJoystickCount() + 30 * joystick, g_FrameMan.GetResY() - 25);
 			}
 		}
 	}
@@ -778,7 +770,7 @@ void ScenarioGUI::UpdateInput()
 {
 	// TODO: if activity is running, allow esc to resume activity instead of quitting.
     // If esc pressed, show quit dialog if applicable
-    if (g_UInputMan.KeyPressed(KEY_ESC))
+    if (g_UInputMan.KeyPressed(SDLK_ESCAPE))
     {
         // Just quit if the dialog is already up
         if (m_pQuitConfirmBox->GetVisible())
@@ -1179,12 +1171,6 @@ void ScenarioGUI::UpdateScenesBox()
     {
 		// Fill combo box
         const Activity *pActivity = m_pActivitySelect->GetSelectedItem() ? dynamic_cast<const Activity *>(m_pActivitySelect->GetSelectedItem()->m_pEntity) : 0;
-		
-		if (pActivity)
-		{
-			// Clear preview bitmap
-			clear_to_color(m_pScenePreviewBitmap, g_MaskColor);
-		}
 
         // Set the currently selected scene's texts
         m_pSceneInfoBox->SetVisible(true);
@@ -1258,7 +1244,7 @@ void ScenarioGUI::UpdatePlayersBox(bool newActivity)
                         m_aapPlayerBoxes[player][team]->SetDrawType(GUICollectionBox::Image);
                         pIcon = player == PLAYER_CPU ? dynamic_cast<const Icon *>(g_PresetMan.GetEntityPreset("Icon", "Device CPU")) : g_UInputMan.GetSchemeIcon(player);
                         if (pIcon)
-                            m_aapPlayerBoxes[player][team]->SetDrawImage(new AllegroBitmap(pIcon->GetBitmaps32()[0]));
+                            m_aapPlayerBoxes[player][team]->SetDrawImage(new SDLGUITexture(pIcon->GetTextures()[0]));
                     }
                     // De-highlight all other cells initially
                     else
@@ -1275,7 +1261,7 @@ void ScenarioGUI::UpdatePlayersBox(bool newActivity)
                             m_aapPlayerBoxes[player][team]->SetDrawType(GUICollectionBox::Image);
                             pIcon = dynamic_cast<const Icon *>(g_PresetMan.GetEntityPreset("Icon", "Device CPU"));
                             if (pIcon)
-                                m_aapPlayerBoxes[player][team]->SetDrawImage(new AllegroBitmap(pIcon->GetBitmaps32()[0]));
+                                m_aapPlayerBoxes[player][team]->SetDrawImage(new SDLGUITexture(pIcon->GetTextures()[0]));
                         }
                         else
                         {
@@ -1313,7 +1299,7 @@ void ScenarioGUI::UpdatePlayersBox(bool newActivity)
 									m_aapPlayerBoxes[player][t2]->SetDrawType(GUICollectionBox::Image);
 									pIcon = player == PLAYER_CPU ? dynamic_cast<const Icon *>(g_PresetMan.GetEntityPreset("Icon", "Device CPU")) : g_UInputMan.GetSchemeIcon(player);
 									if (pIcon)
-										m_aapPlayerBoxes[player][t2]->SetDrawImage(new AllegroBitmap(pIcon->GetBitmaps32()[0]));
+										m_aapPlayerBoxes[player][t2]->SetDrawImage(new SDLGUITexture(pIcon->GetTextures()[0]));
 								} else {
 									//Select or unselect CPU cells
 									if (m_aapPlayerBoxes[player][t2]->GetDrawType() == GUICollectionBox::Image)
@@ -1325,7 +1311,7 @@ void ScenarioGUI::UpdatePlayersBox(bool newActivity)
 										if (pIcon)
 										{
 											m_aapPlayerBoxes[player][t2]->SetDrawType(GUICollectionBox::Image);
-											m_aapPlayerBoxes[player][t2]->SetDrawImage(new AllegroBitmap(pIcon->GetBitmaps32()[0]));
+											m_aapPlayerBoxes[player][t2]->SetDrawImage(new SDLGUITexture(pIcon->GetTextures()[0]));
 										}
 									}
 								}
@@ -1354,7 +1340,7 @@ void ScenarioGUI::UpdatePlayersBox(bool newActivity)
                                     m_aapPlayerBoxes[p2][TEAM_DISABLED]->SetDrawType(GUICollectionBox::Image);
                                     pIcon = g_UInputMan.GetSchemeIcon(p2);
                                     if (pIcon)
-                                        m_aapPlayerBoxes[p2][TEAM_DISABLED]->SetDrawImage(new AllegroBitmap(pIcon->GetBitmaps32()[0]));
+                                        m_aapPlayerBoxes[p2][TEAM_DISABLED]->SetDrawImage(new SDLGUITexture(pIcon->GetTextures()[0]));
                                 }
                             }
                         }
@@ -1401,7 +1387,7 @@ void ScenarioGUI::UpdatePlayersBox(bool newActivity)
 							if (pIcon)
 							{
 								m_aapPlayerBoxes[PLAYER_CPU][TEAM_DISABLED]->SetDrawType(GUICollectionBox::Image);
-								m_aapPlayerBoxes[PLAYER_CPU][TEAM_DISABLED]->SetDrawImage(new AllegroBitmap(pIcon->GetBitmaps32()[0]));
+								m_aapPlayerBoxes[PLAYER_CPU][TEAM_DISABLED]->SetDrawImage(new SDLGUITexture(pIcon->GetTextures()[0]));
 							}
 						} else {
 							m_aapPlayerBoxes[PLAYER_CPU][TEAM_DISABLED]->SetDrawType(GUICollectionBox::Color);
@@ -1465,7 +1451,7 @@ void ScenarioGUI::UpdatePlayersBox(bool newActivity)
 
                 // Finally set whatever Icon we came up with
                 if (pIcon)
-                    m_apTeamBoxes[team]->SetDrawImage(new AllegroBitmap(pIcon->GetBitmaps32()[0]));
+                    m_apTeamBoxes[team]->SetDrawImage(new SDLGUITexture(pIcon->GetTextures()[0]));
             }
 
             // Check if the team has any players assigned at all
@@ -1889,11 +1875,13 @@ void ScenarioGUI::UpdateSiteNameLabel(bool visible, string text, const Vector &l
 // Description:     Draws a fancy thick flickering line to point out scene points on the
 //                  planet.
 
-void ScenarioGUI::DrawGlowLine(BITMAP *drawBitmap, const Vector &start, const Vector &end, int color) const
+void ScenarioGUI::DrawGlowLine(SDL_Renderer *renderer, const Vector &start, const Vector &end, int color) const
 {
 	int blendAmount = 210 + RandomNum(-15, 15);
-    set_screen_blender(blendAmount, blendAmount, blendAmount, blendAmount);
-    line(drawBitmap, start.m_X, start.m_Y, end.m_X, end.m_Y, color);
+
+	uint32_t blendColor = color & (0xFFFFFF00 | blendAmount);
+
+    lineColor(renderer, start.m_X, start.m_Y, end.m_X, end.m_Y, blendColor);
 /* Looks like ass
     // Draw the thickener lines thicker in the appropriate directions
     if (fabs(end.m_X - start.m_X) > fabs(end.m_Y - start.m_Y))
@@ -1908,11 +1896,13 @@ void ScenarioGUI::DrawGlowLine(BITMAP *drawBitmap, const Vector &start, const Ve
     }
 */
 	blendAmount = 45 + RandomNum(-25, 25);
-    set_screen_blender(blendAmount, blendAmount, blendAmount, blendAmount);
-    line(drawBitmap, start.m_X + 1, start.m_Y, end.m_X + 1, end.m_Y, color);
-    line(drawBitmap, start.m_X - 1, start.m_Y, end.m_X - 1, end.m_Y, color);
-    line(drawBitmap, start.m_X, start.m_Y + 1, end.m_X, end.m_Y + 1, color);
-    line(drawBitmap, start.m_X, start.m_Y - 1, end.m_X, end.m_Y - 1, color);
+	blendColor |= 0xFF;
+	blendColor &= blendAmount;
+
+    lineColor(renderer, start.m_X + 1, start.m_Y, end.m_X + 1, end.m_Y, blendColor);
+    lineColor(renderer, start.m_X - 1, start.m_Y, end.m_X - 1, end.m_Y, blendColor);
+    lineColor(renderer, start.m_X, start.m_Y + 1, end.m_X, end.m_Y + 1, blendColor);
+    lineColor(renderer, start.m_X, start.m_Y - 1, end.m_X, end.m_Y - 1, blendColor);
 }
 
 
@@ -1922,7 +1912,7 @@ void ScenarioGUI::DrawGlowLine(BITMAP *drawBitmap, const Vector &start, const Ve
 // Description:     Draws a fancy thick flickering lines to point out scene points on the
 //                  planet, FROM an arbitrary screen point.
 
-bool ScenarioGUI::DrawScreenLineToSitePoint(BITMAP *drawBitmap,
+bool ScenarioGUI::DrawScreenLineToSitePoint(SDL_Renderer *renderer,
                                             const Vector &screenPoint,
                                             const Vector &planetPoint,
                                             int color,
@@ -1965,80 +1955,80 @@ bool ScenarioGUI::DrawScreenLineToSitePoint(BITMAP *drawBitmap,
         totalSegments = lastSegmentsToDraw = 1 + 1;
         // Draw the line to the site
         if (!(drawnFirstSegments++ >= onlyFirstSegments || lastSegmentsToDraw-- > onlyLastSegments))
-            DrawGlowLine(drawBitmap, screenPoint + Vector(sitePos.m_X - screenPoint.m_X, 0), sitePos + Vector(0, (circleRadius + 1) * -yDirMult), color);
+            DrawGlowLine(renderer, screenPoint + Vector(sitePos.m_X - screenPoint.m_X, 0), sitePos + Vector(0, (circleRadius + 1) * -yDirMult), color);
     }
     // Extra lines depending on whether there needs to be two bends due to the site being in the 'channel', ie next to the floating player bar
     else if (twoBends)
     {
         // Cap the chamfer size on the second bend appropriately
-        chamferSize = MIN((firstBend - secondBend).GetMagnitude() - 15, chamferSize);
-        chamferSize = MIN((secondBend - sitePos).GetMagnitude() - circleRadius * 3, chamferSize);
+        chamferSize = std::min(static_cast<int>((firstBend - secondBend).GetMagnitude() - 15), chamferSize);
+        chamferSize = std::min(static_cast<int>((secondBend - sitePos).GetMagnitude() - circleRadius * 3), chamferSize);
         // Snap the chamfer to not exist below a minimum size
         chamferSize = (chamferSize < 15) ? 0 : chamferSize;
         // No inverted chamfer
-        chamferSize = MAX(0, chamferSize);
+        chamferSize = std::max(0, chamferSize);
         chamferPoint1.SetXY(secondBend.m_X + chamferSize * -xDirMult, secondBend.m_Y);
         chamferPoint2.SetXY(secondBend.m_X, secondBend.m_Y + chamferSize * -yDirMult);
         // How many of the last segments to draw: to first bend + to second bend chamfer + chamfer + to site + circle
         totalSegments = lastSegmentsToDraw = 1 + 1 + (int)(chamferSize > 0) + 1 + 1;
         // Line to the first bend
         if (!(drawnFirstSegments++ >= onlyFirstSegments || lastSegmentsToDraw-- > onlyLastSegments))
-            DrawGlowLine(drawBitmap, screenPoint, firstBend, color);
+            DrawGlowLine(renderer, screenPoint, firstBend, color);
         // Line to the second bend, incl the chamfer
         if (!(drawnFirstSegments++ >= onlyFirstSegments || lastSegmentsToDraw-- > onlyLastSegments))
-            DrawGlowLine(drawBitmap, firstBend, chamferPoint1, color);
+            DrawGlowLine(renderer, firstBend, chamferPoint1, color);
         if (chamferSize > 0 && !(drawnFirstSegments++ >= onlyFirstSegments || lastSegmentsToDraw-- > onlyLastSegments))
-            DrawGlowLine(drawBitmap, chamferPoint1, chamferPoint2, color);
+            DrawGlowLine(renderer, chamferPoint1, chamferPoint2, color);
         // Line to the site
         if (!(drawnFirstSegments++ >= onlyFirstSegments || lastSegmentsToDraw-- > onlyLastSegments))
-            DrawGlowLine(drawBitmap, chamferPoint2, sitePos + Vector(0, (circleRadius + 1) * yDirMult), color);
+            DrawGlowLine(renderer, chamferPoint2, sitePos + Vector(0, (circleRadius + 1) * yDirMult), color);
     }
     // Just one bend
     else
     {
         // Cap the chamfer size on the first bend appropriately
-        chamferSize = MIN((screenPoint - firstBend).GetMagnitude() - 15, chamferSize);
-        chamferSize = MIN((firstBend - sitePos).GetMagnitude() - circleRadius * 3, chamferSize);
+        chamferSize = std::min(static_cast<int>((screenPoint - firstBend).GetMagnitude() - 15), chamferSize);
+        chamferSize = std::min(static_cast<int>((firstBend - sitePos).GetMagnitude() - circleRadius * 3), chamferSize);
         // Snap the chamfer to not exist below a minimum size
         chamferSize = (chamferSize < 15) ? 0 : chamferSize;
         // No inverted chamfer
-        chamferSize = MAX(0, chamferSize);
+        chamferSize = std::max(0, chamferSize);
         chamferPoint1.SetXY(screenPoint.m_X, firstBend.m_Y + chamferSize * -yDirMult);
         chamferPoint2.SetXY(firstBend.m_X + chamferSize * xDirMult, sitePos.m_Y);
         // How many of the last segments to draw: to first bend chamfer + chamfer + to site + circle
         totalSegments = lastSegmentsToDraw = 1 + (int)(chamferSize > 0) + 1 + 1;
         // Draw line to the first bend, incl the chamfer
         if (!(drawnFirstSegments++ >= onlyFirstSegments || lastSegmentsToDraw-- > onlyLastSegments))
-            DrawGlowLine(drawBitmap, screenPoint, chamferPoint1, color);
+            DrawGlowLine(renderer, screenPoint, chamferPoint1, color);
         if (chamferSize > 0 && !(drawnFirstSegments++ >= onlyFirstSegments || lastSegmentsToDraw-- > onlyLastSegments))
-            DrawGlowLine(drawBitmap, chamferPoint1, chamferPoint2, color);
+            DrawGlowLine(renderer, chamferPoint1, chamferPoint2, color);
         // Draw line to the site
         if (!(drawnFirstSegments++ >= onlyFirstSegments || lastSegmentsToDraw-- > onlyLastSegments))
-            DrawGlowLine(drawBitmap, chamferPoint2, sitePos + Vector((circleRadius + 1) * -xDirMult, 0), color);
+            DrawGlowLine(renderer, chamferPoint2, sitePos + Vector((circleRadius + 1) * -xDirMult, 0), color);
     }
 
     // Draw a circle around the site target
     if (!(drawnFirstSegments++ >= onlyFirstSegments || lastSegmentsToDraw-- > onlyLastSegments))
     {
 		int blendAmount = 225 + RandomNum(-20, 20);
-        set_screen_blender(blendAmount, blendAmount, blendAmount, blendAmount);
+		uint32_t blendColor = color & (0xFFFFFF00 | blendAmount);
 
         // If specified, draw a squareSite instead (with chamfered corners)
         if (squareSite)
         {
-            hline(drawBitmap, sitePos.m_X - circleRadius - 1, sitePos.m_Y - circleRadius - 1, sitePos.m_X + circleRadius, color);
-            hline(drawBitmap, sitePos.m_X - circleRadius - 1, sitePos.m_Y - circleRadius - 1 - 1, sitePos.m_X + circleRadius, color);
-            hline(drawBitmap, sitePos.m_X - circleRadius - 1, sitePos.m_Y + circleRadius, sitePos.m_X + circleRadius, color);
-            hline(drawBitmap, sitePos.m_X - circleRadius - 1, sitePos.m_Y + circleRadius + 1, sitePos.m_X + circleRadius, color);
-            vline(drawBitmap, sitePos.m_X - circleRadius - 1, sitePos.m_Y - circleRadius - 1, sitePos.m_Y + circleRadius, color);
-            vline(drawBitmap, sitePos.m_X - circleRadius - 1 - 1, sitePos.m_Y - circleRadius - 1, sitePos.m_Y + circleRadius, color);
-            vline(drawBitmap, sitePos.m_X + circleRadius, sitePos.m_Y + circleRadius, sitePos.m_Y - circleRadius - 1, color);
-            vline(drawBitmap, sitePos.m_X + circleRadius + 1, sitePos.m_Y + circleRadius, sitePos.m_Y - circleRadius - 1, color);
+            hlineColor(renderer, sitePos.m_X - circleRadius - 1, sitePos.m_Y - circleRadius - 1, sitePos.m_X + circleRadius, blendColor);
+            hlineColor(renderer, sitePos.m_X - circleRadius - 1, sitePos.m_Y - circleRadius - 1 - 1, sitePos.m_X + circleRadius, blendColor);
+            hlineColor(renderer, sitePos.m_X - circleRadius - 1, sitePos.m_Y + circleRadius, sitePos.m_X + circleRadius, blendColor);
+            hlineColor(renderer, sitePos.m_X - circleRadius - 1, sitePos.m_Y + circleRadius + 1, sitePos.m_X + circleRadius, blendColor);
+            vlineColor(renderer, sitePos.m_X - circleRadius - 1, sitePos.m_Y - circleRadius - 1, sitePos.m_Y + circleRadius, blendColor);
+            vlineColor(renderer, sitePos.m_X - circleRadius - 1 - 1, sitePos.m_Y - circleRadius - 1, sitePos.m_Y + circleRadius, blendColor);
+            vlineColor(renderer, sitePos.m_X + circleRadius, sitePos.m_Y + circleRadius, sitePos.m_Y - circleRadius - 1, blendColor);
+            vlineColor(renderer, sitePos.m_X + circleRadius + 1, sitePos.m_Y + circleRadius, sitePos.m_Y - circleRadius - 1, blendColor);
         }
         else
         {
-            circle(drawBitmap, sitePos.m_X, sitePos.m_Y, circleRadius, color);
-            circle(drawBitmap, sitePos.m_X, sitePos.m_Y, circleRadius - 1, color);            
+            circleColor(renderer, sitePos.m_X, sitePos.m_Y, circleRadius, blendColor);
+            circleColor(renderer, sitePos.m_X, sitePos.m_Y, circleRadius - 1, blendColor);
         }
     }
 

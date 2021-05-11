@@ -96,7 +96,7 @@ int GibEditorGUI::Create(Controller *pController, int whichModuleSpace)
     m_pPicker->Create(pController, whichModuleSpace, "MovableObject");
 
     // Intermediate zooming bitmap
-    m_pZoomSource = create_bitmap_ex(8, 64, 64);
+    m_pZoomSource = std::make_shared<Texture>(g_FrameMan.GetRenderer(), 64, 64);
 
     // Cursor init
     m_CursorPos = g_SceneMan.GetSceneDim() / 2;
@@ -122,8 +122,6 @@ void GibEditorGUI::Destroy()
 {
     delete m_pPieMenu;
     delete m_pPicker;
-
-    destroy_bitmap(m_pZoomSource);
 
     for (list<MovableObject *>::iterator gItr = m_PlacedGibs.begin(); gItr != m_PlacedGibs.end(); ++gItr)
          delete (*gItr);

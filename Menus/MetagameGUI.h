@@ -86,7 +86,7 @@ public:
         string m_SiteName;
         // NOT owned here
         const Scene *m_pScene;
-        int m_Color;
+        uint32_t m_Color;
         int m_OnlyFirstSegments;
         int m_OnlyLastSegments;
         int m_ChannelHeight;
@@ -100,7 +100,7 @@ public:
                  string siteName,
                  // Ownership NOT passed in
                  const Scene *pScene,
-                 int color,
+                 uint32_t color,
                  int onlyFirstSegments = -1,
                  int onlyLastSegments = -1,
                  int channelHeight = 60,
@@ -139,7 +139,7 @@ public:
         Vector m_CenterPos;
         float m_AnimProgress;
         int m_Style;
-        int m_Color;
+        uint32_t m_Color;
         double m_StartTime;
         Timer m_AnimTimer;
 
@@ -148,7 +148,7 @@ public:
         SiteTarget(const Vector &centerPos,
                    float animProgress,
                    int style,
-                   int color,
+                   uint32_t color,
                    double startTime = 0)
         {
             m_CenterPos = centerPos;
@@ -867,7 +867,7 @@ protected:
 //                  The color to draw the line in. Use makecol(r, g, b) to create the color
 // Return value:    None.
 
-    static void DrawGlowLine(SDL_Renderer* renderer, const Vector &start, const Vector &end, int color);
+    static void DrawGlowLine(SDL_Renderer* renderer, const Vector &start, const Vector &end, uint32_t color);
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -889,7 +889,7 @@ protected:
     bool DrawScreenLineToSitePoint(SDL_Renderer* renderer,
                                    const Vector &screenPoint,
                                    const Vector &planetPoint,
-                                   int color,
+                                   uint32_t color,
                                    int onlyFirstSegments = -1,
                                    int onlyLastSegments = -1,
                                    int channelHeight = 80,
@@ -922,7 +922,7 @@ protected:
                                    float startMeterAt,
                                    float meterAmount,
                                    const Vector &planetPoint,
-                                   int color,
+                                   uint32_t color,
                                    int onlyFirstSegments = -1,
                                    int onlyLastSegments = -1,
                                    int channelHeight = 60,

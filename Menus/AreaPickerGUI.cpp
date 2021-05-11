@@ -19,9 +19,9 @@
 #include "UInputMan.h"
 
 #include "GUI/GUI.h"
-#include "GUI/AllegroBitmap.h"
-#include "GUI/AllegroScreen.h"
-#include "GUI/AllegroInput.h"
+#include "GUI/SDLGUITexture.h"
+#include "GUI/SDLScreen.h"
+#include "GUI/SDLInput.h"
 #include "GUI/GUIControlManager.h"
 #include "GUI/GUICollectionBox.h"
 #include "GUI/GUITab.h"
@@ -34,7 +34,7 @@
 
 using namespace RTE;
 
-BITMAP *RTE::AreaPickerGUI::s_pCursor = 0;
+SharedTexture RTE::AreaPickerGUI::s_pCursor{nullptr};
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          Clear
@@ -74,9 +74,9 @@ int AreaPickerGUI::Create(Controller *pController, string onlyOfType)
     m_pController = pController;
 
     if (!m_pGUIScreen)
-        m_pGUIScreen = new AllegroScreen(g_FrameMan.GetBackBuffer8());
+        m_pGUIScreen = new SDLScreen;
     if (!m_pGUIInput)
-        m_pGUIInput = new AllegroInput(pController->GetPlayer());
+        m_pGUIInput = new SDLInput(pController->GetPlayer());
     if (!m_pGUIController)
         m_pGUIController = new GUIControlManager();
     if(!m_pGUIController->Create(m_pGUIScreen, m_pGUIInput, "Base.rte/GUIs/Skins/Base"))
@@ -87,7 +87,7 @@ int AreaPickerGUI::Create(Controller *pController, string onlyOfType)
     if (!s_pCursor)
     {
         ContentFile cursorFile("Base.rte/GUIs/Skins/Cursor.png");
-        s_pCursor = cursorFile.GetAsBitmap();
+        s_pCursor = cursorFile.GetAsTexture();
     }
 
     // Stretch the invisible root box to fill the screen
@@ -560,12 +560,12 @@ void AreaPickerGUI::Update()
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Draws the menu
 
-void AreaPickerGUI::Draw(BITMAP *drawBitmap) const
+void AreaPickerGUI::Draw(SDL_Renderer* renderer) const
 {
-    AllegroScreen drawScreen(drawBitmap);
+    SDLScreen drawScreen;
     m_pGUIController->Draw(&drawScreen);
 
     // Draw the cursor on top of everything
     if (IsEnabled() && m_pController->IsMouseControlled())
-        draw_sprite(drawBitmap, s_pCursor, m_CursorPos.GetFloorIntX(), m_CursorPos.GetFloorIntY());
+        s_pCursor->render(renderer, m_CursorPos.GetFloorIntX(), m_CursorPos.GetFloorIntY());
 }

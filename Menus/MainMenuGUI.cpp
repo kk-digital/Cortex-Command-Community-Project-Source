@@ -25,9 +25,9 @@
 #include "GlobalScript.h"
 
 #include "GUI/GUI.h"
-#include "GUI/AllegroBitmap.h"
-#include "GUI/AllegroScreen.h"
-#include "GUI/AllegroInput.h"
+#include "GUI/SDLGUITexture.h"
+#include "GUI/SDLScreen.h"
+#include "GUI/SDLInput.h"
 #include "GUI/GUIControlManager.h"
 #include "GUI/GUICollectionBox.h"
 #include "GUI/GUIComboBox.h"
@@ -54,7 +54,12 @@
 #include "ActorEditor.h"
 #include "AssemblyEditor.h"
 #include "EditorActivity.h"
+
+#ifdef NETWORK_ENABLED
 #include "MultiplayerGame.h"
+#endif
+
+#include "System/System.h"
 
 extern int g_IntroState;
 
@@ -132,8 +137,6 @@ void MainMenuGUI::Clear()
     for (int button = 0; button < EDITORBUTTONCOUNT; ++button)
         m_aEditorButton[button] = 0;
 
-    m_aDPadBitmaps = 0;
-    m_aDualAnalogBitmaps = 0;
     m_pRecommendationBox = 0;
     m_pRecommendationDiagram = 0;
     m_pConfigSkipButton = 0;
@@ -172,9 +175,9 @@ int MainMenuGUI::Create(Controller *pController)
     m_pController = pController;
 
     if (!m_pGUIScreen)
-        m_pGUIScreen = new AllegroScreen(g_FrameMan.GetBackBuffer32());
+        m_pGUIScreen = new SDLScreen();
     if (!m_pGUIInput)
-        m_pGUIInput = new AllegroInput(-1, true); 
+        m_pGUIInput = new SDLInput(-1, true);
     if (!m_pGUIController)
         m_pGUIController = new GUIControlManager();
     if(!m_pGUIController->Create(m_pGUIScreen, m_pGUIInput, "Base.rte/GUIs/Skins/MainMenu"))
@@ -374,9 +377,9 @@ int MainMenuGUI::Create(Controller *pController)
     m_pConfigLabel[CONFIGINSTRUCTION] = dynamic_cast<GUILabel *>(m_pGUIController->GetControl("LabelConfigInstruction"));
     m_pConfigLabel[CONFIGINPUT] = dynamic_cast<GUILabel *>(m_pGUIController->GetControl("LabelConfigInput"));
     ContentFile diagramFile("Base.rte/GUIs/Controllers/D-Pad.png");
-    m_aDPadBitmaps = diagramFile.GetAsAnimation(DPADSTEPS, COLORCONV_8_TO_32);
+    m_aDPadBitmaps = diagramFile.GetAsAnimation(DPADSTEPS);
     diagramFile.SetDataPath("Base.rte/GUIs/Controllers/DualAnalog.png");
-    m_aDualAnalogBitmaps = diagramFile.GetAsAnimation(DANALOGSTEPS, COLORCONV_8_TO_32);
+    m_aDualAnalogBitmaps = diagramFile.GetAsAnimation(DANALOGSTEPS);
     m_pRecommendationBox = dynamic_cast<GUICollectionBox *>(m_pGUIController->GetControl("BoxConfigRec"));
     m_pRecommendationDiagram = dynamic_cast<GUICollectionBox *>(m_pGUIController->GetControl("BoxConfigRecDiagram"));
     m_pConfigSkipButton = dynamic_cast<GUIButton *>(m_pGUIController->GetControl("ButtonConfigSkip"));
@@ -401,13 +404,13 @@ int MainMenuGUI::Create(Controller *pController)
     m_pXBox360TypeButton = dynamic_cast<GUIButton *>(m_pGUIController->GetControl("ButtonConfigXBox360Type"));
 
     // Put the image in and resize appropriately
-    m_pDPadTypeDiagram->Resize(m_aDPadBitmaps[0]->w, m_aDPadBitmaps[0]->h);
+    m_pDPadTypeDiagram->Resize(m_aDPadBitmaps[0]->getW(), m_aDPadBitmaps[0]->getH());
     m_pDPadTypeDiagram->CenterInParent(true, true);
     m_pDPadTypeDiagram->MoveRelative(0, -8);
-    m_pDAnalogTypeDiagram->Resize(m_aDualAnalogBitmaps[0]->w, m_aDualAnalogBitmaps[0]->h);
+    m_pDAnalogTypeDiagram->Resize(m_aDualAnalogBitmaps[0]->getW(), m_aDualAnalogBitmaps[0]->getH());
     m_pDAnalogTypeDiagram->CenterInParent(true, true);
     m_pDAnalogTypeDiagram->MoveRelative(0, -10);
-    m_pXBox360TypeDiagram->Resize(m_aDualAnalogBitmaps[0]->w, m_aDualAnalogBitmaps[0]->h);
+    m_pXBox360TypeDiagram->Resize(m_aDualAnalogBitmaps[0]->getW(), m_aDualAnalogBitmaps[0]->getH());
     m_pXBox360TypeDiagram->CenterInParent(true, true);
     m_pXBox360TypeDiagram->MoveRelative(0, -10);
 
@@ -570,10 +573,6 @@ void MainMenuGUI::Destroy()
     delete m_pGUIInput;
     delete m_pGUIScreen;
 
-    // Delete only the array, not the bitmaps themselves, we don't own them
-    delete [] m_aDPadBitmaps;
-    delete [] m_aDualAnalogBitmaps;
-
     Clear();
 }
 
@@ -633,7 +632,7 @@ void MainMenuGUI::Update()
         return;
 
     // If esc pressed, show quit dialog if applicable
-	if (g_UInputMan.KeyPressed(KEY_ESC)) {
+	if (g_UInputMan.KeyPressed(SDLK_ESCAPE)) {
 		if (m_MenuScreen == OPTIONSSCREEN || m_MenuScreen == MODMANAGERSCREEN || m_MenuScreen == EDITORSCREEN || m_MenuScreen == CREDITSSCREEN) {
 			HideAllScreens();
 			m_MainMenuButtons[BACKTOMAIN]->SetVisible(false);
@@ -980,9 +979,11 @@ void MainMenuGUI::Update()
 				g_GUISound.ExitMenuSound()->Play();
 
 				g_SceneMan.SetSceneToLoad("Editor Scene");
+#ifdef NEWTORK_ENABLED
 				MultiplayerGame *pMultiplayerGame = new MultiplayerGame;
 				pMultiplayerGame->Create();
 				g_ActivityMan.SetStartActivity(pMultiplayerGame);
+#endif
 			}
 
 			// Options button pressed
@@ -1799,9 +1800,9 @@ void MainMenuGUI::Update()
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Draws the menu
 
-void MainMenuGUI::Draw(BITMAP *drawBitmap) const
+void MainMenuGUI::Draw(SDL_Renderer *renderer) const
 {
-    AllegroScreen drawScreen(drawBitmap);
+    SDLScreen drawScreen;
     m_pGUIController->Draw(&drawScreen);
     m_pGUIController->DrawMouse();
 
@@ -1815,7 +1816,7 @@ void MainMenuGUI::Draw(BITMAP *drawBitmap) const
 
 		const Icon * pIcon = g_UInputMan.GetDeviceIcon(device);
 		if (pIcon)
-			draw_sprite(drawBitmap, pIcon->GetBitmaps8()[0], mouseX + 16, mouseY - 4);
+			pIcon->GetTextures()[0]->render(renderer, mouseX + 16, mouseY - 4);
 
 /*#ifdef DEBUG_BUILD
 		if (g_UInputMan.JoystickActive(0))
@@ -1848,7 +1849,7 @@ void MainMenuGUI::Draw(BITMAP *drawBitmap) const
 			{
 				const Icon * pIcon = g_UInputMan.GetDeviceIcon(matchedDevice);
 				if (pIcon)
-					draw_sprite(drawBitmap, pIcon->GetBitmaps8()[0], g_FrameMan.GetResX() - 30 * g_UInputMan.GetJoystickCount() + 30 * joystick, g_FrameMan.GetResY() - 25);
+					pIcon->GetTextures()[0]->render(renderer, g_FrameMan.GetResX() - 30 * g_UInputMan.GetJoystickCount() + 30 * joystick, g_FrameMan.GetResY() - 25);
 			}
 		}
 	}
@@ -2053,12 +2054,12 @@ void MainMenuGUI::UpdateTeamBoxes()
     {
         if (m_aTeamAssignments[player] == Activity::TeamOne)
         {
-            m_aSkirmishBox[player]->SetDrawColor(makecol(70, 27, 12));
+            m_aSkirmishBox[player]->SetDrawColor(0x461B0CFF);
             std::snprintf(str, sizeof(str), "Player %i: %c", player + 1, -62);
         }
         else
         {
-            m_aSkirmishBox[player]->SetDrawColor(makecol(47, 55, 40));
+            m_aSkirmishBox[player]->SetDrawColor(0x2F3728FF);
             std::snprintf(str, sizeof(str), "Player %i: %c", player + 1, -59);
         }
         m_aSkirmishButton[player]->SetText(str);
@@ -2101,37 +2102,36 @@ void MainMenuGUI::UpdateTeamBoxes()
 // Description:     Updates the contents of the screen resolution combo box
 
 void MainMenuGUI::UpdateResolutionCombo() {
-    // Refill possible resolutions
-    m_pResolutionCombo->SetText("");
-    m_pResolutionCombo->ClearList();
-	
-    if (m_pResolutionCombo->GetCount() <= 0) {
+	// Refill possible resolutions
+	m_pResolutionCombo->SetText("");
+	m_pResolutionCombo->ClearList();
+
+	if (m_pResolutionCombo->GetCount() <= 0) {
 		// Get a list of modes from the fullscreen driver even though we're not using it. This is so we don't need to populate the list manually and has all the reasonable resolutions.
-#ifdef _WIN32
-        GFX_MODE_LIST *resList = get_gfx_mode_list(GFX_DIRECTX_ACCEL);
-#elif __unix__
-        GFX_MODE_LIST *resList = get_gfx_mode_list(GFX_XWINDOWS_FULLSCREEN);
-#endif
-        int width = 0;
-        int height = 0;
-        std::string resString = "";
-        // Index of found useful resolution (32bit)
-        int foundIndex = 0;
-        int currentResIndex = -1;
+		int width = 0;
+		int height = 0;
+		std::string resString = "";
+		// Index of found useful resolution (32bit)
+		int foundIndex = 0;
+		int currentResIndex = -1;
+		int numModes = SDL_GetNumDisplayModes(0);
 
-        // Process and annotate the list
-        for (int i = 0; resList && i < resList->num_modes; ++i) {
-            // Only list 32 bpp modes
-            if (resList->mode[i].bpp == 32) {
-                width = resList->mode[i].width;
-                height = resList->mode[i].height;
 
-				// Resolutions must be multiples of 4 or we'll get 'Overlays not supported' during GFX mode init
-				if (g_FrameMan.IsValidResolution(width, height) && width % 4 == 0) {
+		// Process and annotate the list
+		for (int i = 0; i < numModes; ++i) {
+
+			SDL_DisplayMode mode;
+			SDL_GetDisplayMode(0, i, &mode);
+			// Only list 32 bpp modes
+			if (SDL_BITSPERPIXEL(mode.format) == 32) {
+				width = mode.w;
+				height = mode.h;
+
+				if (g_FrameMan.IsValidResolution(width, height)) {
 					// Fix wacky resolutions that are taller than wide
 					if (height > width) {
-						height = resList->mode[i].width;
-						width = resList->mode[i].height;
+						height = mode.w;
+						width = mode.h;
 					}
 					// Try to figure the max available resolution
 					if (width > m_MaxResX) {
@@ -2168,9 +2168,8 @@ void MainMenuGUI::UpdateResolutionCombo() {
 					// Only increment this when we find a usable 32bit resolution
 					foundIndex++;
 				}
-            }
-        }
-		if (resList) { destroy_gfx_mode_list(resList); }
+			}
+		}
 
 		// If none of the listed matched our resolution set for next start, add a 'custom' one to display as the current res
 		if (currentResIndex < 0) {
@@ -2179,9 +2178,9 @@ void MainMenuGUI::UpdateResolutionCombo() {
 			m_pResolutionCombo->AddItem(resString);
 			currentResIndex = m_pResolutionCombo->GetCount() - 1;
 		}
-        // Show the current resolution item to be the selected one
-        m_pResolutionCombo->SetSelectedIndex(currentResIndex);
-    }
+		// Show the current resolution item to be the selected one
+		m_pResolutionCombo->SetSelectedIndex(currentResIndex);
+	}
 }
 
 
@@ -2678,7 +2677,7 @@ void MainMenuGUI::UpdateConfigScreen()
     else if (m_ConfiguringDevice >= DEVICE_GAMEPAD_1 && m_ConfiguringDevice <= DEVICE_GAMEPAD_4)
     {
         int whichJoy = m_ConfiguringDevice - DEVICE_GAMEPAD_1;
-        AllegroBitmap *pDiagramBitmap = 0;
+        SDLGUITexture *pDiagramBitmap{nullptr};
 
         // Choose which gamepad type - special first step
         if (m_ConfigureStep == 0)
@@ -2696,17 +2695,17 @@ void MainMenuGUI::UpdateConfigScreen()
             m_pXBox360TypeBox->SetVisible(true);
 
             // Not passing in ownership of the BITMAP
-            pDiagramBitmap = new AllegroBitmap(m_aDPadBitmaps[0]);
-            // Passing in ownership of the AllegroBitmap, but again, not the BITMAP contained within
+            pDiagramBitmap = new SDLGUITexture(m_aDPadBitmaps[0]);
+            // Passing in ownership of the SDLGUITexture
             m_pDPadTypeDiagram->SetDrawImage(pDiagramBitmap);
-            pDiagramBitmap = 0;
+            pDiagramBitmap = nullptr;
 
             // Not passing in ownership of the BITMAP
-            pDiagramBitmap = new AllegroBitmap(m_aDualAnalogBitmaps[0]);
+            pDiagramBitmap = new SDLGUITexture(m_aDualAnalogBitmaps[0]);
             // Passing in ownership of the AllegroBitmap, but again, not the BITMAP contained within
             m_pDAnalogTypeDiagram->SetDrawImage(pDiagramBitmap);
             // Doing it again for the 360 one.. it's similar enough looking
-            pDiagramBitmap = new AllegroBitmap(m_aDualAnalogBitmaps[0]);
+            pDiagramBitmap = new SDLGUITexture(m_aDualAnalogBitmaps[0]);
             m_pXBox360TypeDiagram->SetDrawImage(pDiagramBitmap);
             pDiagramBitmap = 0;
 
@@ -2737,7 +2736,7 @@ void MainMenuGUI::UpdateConfigScreen()
                     m_pConfigLabel[CONFIGRECOMMENDATION]->SetVisible(false);
                     m_pConfigLabel[CONFIGINSTRUCTION]->SetText("Press the button or move the stick for");
                     m_pRecommendationDiagram->SetVisible(true);
-                    m_pRecommendationDiagram->Resize(m_aDPadBitmaps[0]->w, m_aDPadBitmaps[0]->h);
+                    m_pRecommendationDiagram->Resize(m_aDPadBitmaps[0]->getW(), m_aDPadBitmaps[0]->getH());
                     m_pRecommendationDiagram->CenterInParent(true, true);
                     m_pRecommendationDiagram->MoveRelative(0, 4);
                     m_ScreenChange = false;
@@ -2749,7 +2748,7 @@ void MainMenuGUI::UpdateConfigScreen()
 
                 // Diagram update
                 // Not passing in ownership of the BITMAP
-                pDiagramBitmap = new AllegroBitmap(m_aDPadBitmaps[m_BlinkTimer.AlternateReal(500) ? 0 : m_ConfigureStep]);
+                pDiagramBitmap = new SDLGUITexture(m_aDPadBitmaps[m_BlinkTimer.AlternateReal(500) ? 0 : m_ConfigureStep]);
                 // Passing in ownership of the AllegroBitmap, but again, not the BITMAP contained within
                 m_pRecommendationDiagram->SetDrawImage(pDiagramBitmap);
                 pDiagramBitmap = 0;
@@ -2903,7 +2902,7 @@ void MainMenuGUI::UpdateConfigScreen()
                     m_pConfigLabel[CONFIGRECOMMENDATION]->SetVisible(false);
                     m_pConfigLabel[CONFIGINSTRUCTION]->SetText("Press the button or move the stick for");
                     m_pRecommendationDiagram->SetVisible(true);
-                    m_pRecommendationDiagram->Resize(m_aDualAnalogBitmaps[0]->w, m_aDualAnalogBitmaps[0]->h);
+                    m_pRecommendationDiagram->Resize(m_aDualAnalogBitmaps[0]->getW(), m_aDualAnalogBitmaps[0]->getH());
                     m_pRecommendationDiagram->CenterInParent(true, true);
                     m_pRecommendationDiagram->MoveRelative(0, 8);
                     m_ScreenChange = false;
@@ -2915,7 +2914,7 @@ void MainMenuGUI::UpdateConfigScreen()
 
                 // Diagram update
                 // Not passing in ownership of the BITMAP
-                pDiagramBitmap = new AllegroBitmap(m_aDualAnalogBitmaps[m_BlinkTimer.AlternateReal(500) ? 0 : m_ConfigureStep]);
+                pDiagramBitmap = new SDLGUITexture(m_aDualAnalogBitmaps[m_BlinkTimer.AlternateReal(500) ? 0 : m_ConfigureStep]);
                 // Passing in ownership of the AllegroBitmap, but again, not the BITMAP contained within
                 m_pRecommendationDiagram->SetDrawImage(pDiagramBitmap);
                 pDiagramBitmap = 0;
@@ -3126,7 +3125,7 @@ void MainMenuGUI::UpdateConfigScreen()
     }
 
 	g_UInputMan.SetInputClass(NULL);
-	
+
     if (m_ScreenChange)
         g_GUISound.ExitMenuSound()->Play();
 }

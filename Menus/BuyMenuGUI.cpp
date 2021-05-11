@@ -21,9 +21,9 @@
 #include "SettingsMan.h"
 
 #include "GUI/GUI.h"
-#include "GUI/AllegroBitmap.h"
-#include "GUI/AllegroScreen.h"
-#include "GUI/AllegroInput.h"
+#include "GUI/SDLGUITexture.h"
+#include "GUI/SDLScreen.h"
+#include "GUI/SDLInput.h"
 #include "GUI/GUIControlManager.h"
 #include "GUI/GUICollectionBox.h"
 #include "GUI/GUITab.h"
@@ -43,7 +43,7 @@
 
 using namespace RTE;
 
-BITMAP *RTE::BuyMenuGUI::s_pCursor = 0;
+std::shared_ptr<Texture> RTE::BuyMenuGUI::s_pCursor;
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          Clear
@@ -126,10 +126,12 @@ int BuyMenuGUI::Create(Controller *pController)
     RTEAssert(pController, "No controller sent to BuyMenyGUI on creation!");
     m_pController = pController;
 
+#ifdef NEWTORK_ENABLED
     if (!m_pGUIScreen)
         m_pGUIScreen = new AllegroScreen(g_FrameMan.GetNetworkBackBufferGUI8Current(pController->GetPlayer()));
+#endif
     if (!m_pGUIInput)
-        m_pGUIInput = new AllegroInput(pController->GetPlayer()); 
+        m_pGUIInput = new SDLInput(pController->GetPlayer());
     if (!m_pGUIController)
         m_pGUIController = new GUIControlManager();
     if(!m_pGUIController->Create(m_pGUIScreen, m_pGUIInput, "Base.rte/GUIs/Skins/Base"))
@@ -140,7 +142,7 @@ int BuyMenuGUI::Create(Controller *pController)
     if (!s_pCursor)
     {
         ContentFile cursorFile("Base.rte/GUIs/Skins/Cursor.png");
-        s_pCursor = cursorFile.GetAsBitmap();
+        s_pCursor = cursorFile.GetAsTexture();
     }
 
     // Stretch the invisible root box to fill the screen
@@ -167,11 +169,12 @@ int BuyMenuGUI::Create(Controller *pController)
         m_pLogo = dynamic_cast<GUICollectionBox *>(m_pGUIController->GetControl("CatalogLogo"));
         ContentFile headerFile("Base.rte/GUIs/Skins/BuyMenu/BuyMenuHeader.png");
         ContentFile logoFile("Base.rte/GUIs/Skins/BuyMenu/BuyMenuLogo.png");
-        pHeader->SetDrawImage(new AllegroBitmap(headerFile.GetAsBitmap()));
-        m_pLogo->SetDrawImage(new AllegroBitmap(logoFile.GetAsBitmap()));
+        pHeader->SetDrawImage(new SDLGUITexture(headerFile.GetAsTexture()));
+        m_pLogo->SetDrawImage(new SDLGUITexture(logoFile.GetAsTexture()));
         pHeader->SetDrawType(GUICollectionBox::Image);
         m_pLogo->SetDrawType(GUICollectionBox::Image);
     }
+
     m_pParentBox->SetPositionAbs(-m_pParentBox->GetWidth(), 0);
     m_pParentBox->SetEnabled(false);
     m_pParentBox->SetVisible(false);
@@ -311,7 +314,7 @@ void BuyMenuGUI::SetHeaderImage(string path)
 {
 	GUICollectionBox *pHeader = dynamic_cast<GUICollectionBox *>(m_pGUIController->GetControl("CatalogHeader"));
 	ContentFile headerFile(path.c_str());
-	pHeader->SetDrawImage(new AllegroBitmap(headerFile.GetAsBitmap()));
+	pHeader->SetDrawImage(new SDLGUITexture(headerFile.GetAsTexture()));
 	pHeader->SetDrawType(GUICollectionBox::Image);
 }
 
@@ -324,7 +327,7 @@ void BuyMenuGUI::SetLogoImage(string path)
 {
 	m_pLogo = dynamic_cast<GUICollectionBox *>(m_pGUIController->GetControl("CatalogLogo"));
 	ContentFile logoFile(path.c_str());
-	m_pLogo->SetDrawImage(new AllegroBitmap(logoFile.GetAsBitmap()));
+	m_pLogo->SetDrawImage(new SDLGUITexture(logoFile.GetAsTexture()));
 	m_pLogo->SetDrawType(GUICollectionBox::Image);
 }
 
@@ -357,7 +360,7 @@ bool BuyMenuGUI::LoadAllLoadoutsFromFile()
         // Start loading any additional stuff from the custom user file
         std::snprintf(loadoutPath, sizeof(loadoutPath), "Metagames.rte/%s - LoadoutsMP%d.ini", g_MetaMan.GetGameName().c_str(), m_MetaPlayer + 1);
 
-        if (!exists(loadoutPath))
+        if (!std::filesystem::exists(loadoutPath))
         {
             // If the file doesn't exist, then we're not loading it, are we?
             loadoutPath[0] = 0;
@@ -367,7 +370,6 @@ bool BuyMenuGUI::LoadAllLoadoutsFromFile()
     else
 	{
         std::snprintf(loadoutPath, sizeof(loadoutPath), "Base.rte/LoadoutsP%d.ini", m_pController->GetPlayer() + 1);
-
 	}
 
     // Open the file
@@ -1297,7 +1299,7 @@ void BuyMenuGUI::Update()
                 else
                 {
                     // Gotto make a copy of the bitmap to pass it to the next list
-                    GUIBitmap *pItemBitmap = new AllegroBitmap(dynamic_cast<AllegroBitmap *>(pItem->m_pBitmap)->GetBitmap());
+                    GUIBitmap *pItemBitmap = new SDLGUITexture(*dynamic_cast<SDLGUITexture *>(pItem->m_pBitmap));
                     m_pCartList->AddItem(pItem->m_Name, pItem->m_RightText, pItemBitmap, pItem->m_pEntity);
                 }
                 g_GUISound.ItemChangeSound()->Play(m_pController->GetPlayer());
@@ -1592,7 +1594,7 @@ void BuyMenuGUI::Update()
                         else
                         {
                             // Gotto make a copy of the bitmap to pass it to the next list
-                            GUIBitmap *pItemBitmap = new AllegroBitmap(dynamic_cast<AllegroBitmap *>(pItem->m_pBitmap)->GetBitmap());
+                            GUIBitmap *pItemBitmap = new SDLGUITexture(*dynamic_cast<SDLGUITexture *>(pItem->m_pBitmap));
 
 							if (m_OwnedItems.size() > 0 || m_OnlyShowOwnedItems)
 							{
@@ -1744,15 +1746,15 @@ void BuyMenuGUI::Update()
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Draws the menu
 
-void BuyMenuGUI::Draw(BITMAP *drawBitmap) const
+void BuyMenuGUI::Draw(SDL_Renderer* renderer) const
 {
-    AllegroScreen drawScreen(drawBitmap);
+    SDLScreen drawScreen;
     m_pGUIController->Draw(&drawScreen);
 
-    // Draw the cursor on top of everything 
+    // Draw the cursor on top of everything
     if (IsEnabled() && m_pController->IsMouseControlled())
 //        m_pGUIController->DrawMouse();
-        draw_sprite(drawBitmap, s_pCursor, m_CursorPos.GetFloorIntX(), m_CursorPos.GetFloorIntY());
+        s_pCursor->render(renderer, m_CursorPos.GetFloorIntX(), m_CursorPos.GetFloorIntY());
 }
 
 /*
@@ -1892,7 +1894,7 @@ void BuyMenuGUI::CategoryChange(bool focusOnCategoryTabs)
                 // Add the DataModule separator in the shop list, with appropriate name and perhaps icon? Don't add for first base module
                 if (moduleID != 0 && (pModule = g_PresetMan.GetDataModule(moduleID)))
                 {
-                    pItemBitmap = pModule->GetIcon() ? new AllegroBitmap(pModule->GetIcon()) : 0;
+                    pItemBitmap = pModule->GetIcon() ? new SDLGUITexture(pModule->GetIcon()) : 0;
                     // Passing in ownership of the bitmap, making uppercase the name
                     string name = pModule->GetFriendlyName();
                     transform(name.begin(), name.end(), name.begin(), ::toupper);
@@ -1906,7 +1908,7 @@ void BuyMenuGUI::CategoryChange(bool focusOnCategoryTabs)
                     for (list<SceneObject *>::iterator tItr = tempList.begin(); tItr != tempList.end(); ++tItr)
                     {
                         // Get a good icon and wrap it, while not passing ownership into the AllegroBitmap
-                        pItemBitmap = new AllegroBitmap((*tItr)->GetGraphicalIcon());
+                        pItemBitmap = new SDLGUITexture((*tItr)->GetGraphicalIcon());
                         // Passing in ownership of the bitmap, but not of the pSpriteObj
 						if (m_OwnedItems.size() > 0 || m_OnlyShowOwnedItems)
 						{ 
@@ -2018,11 +2020,11 @@ bool BuyMenuGUI::DeployLoadout(int index)
 
     // Get and add all the stuff in the selected loadout
     list<const SceneObject *> *pCargo = m_Loadouts[index].GetCargoList();
-    AllegroBitmap *pItemBitmap = 0;
-    for (list<const SceneObject *>::iterator cItr = pCargo->begin(); cItr != pCargo->end(); ++cItr)
+	SDLGUITexture *pItemBitmap{nullptr};
+	for (list<const SceneObject *>::iterator cItr = pCargo->begin(); cItr != pCargo->end(); ++cItr)
     {
         // Get a good icon and wrap it, while not passing ownership into the AllegroBitmap
-        pItemBitmap = new AllegroBitmap(const_cast<SceneObject *>(*cItr)->GetGraphicalIcon());
+        pItemBitmap = new SDLGUITexture(const_cast<SceneObject *>(*cItr)->GetGraphicalIcon());
         // Take into account whether these are native or not, and multiply the cost accordingly
 		bool canAdd = true;
 
@@ -2250,7 +2252,7 @@ void BuyMenuGUI::AddPresetsToItemList()
         std::snprintf(costString, sizeof(costString), "%.0f", loadoutCost);
         // Get a good icon and wrap it, while not passing ownership into the AllegroBitmap
         // We're trying to pick the icon of the first passenger, or the first item if there's no passengers in the loadout
-        pItemBitmap = new AllegroBitmap(pPassenger ? const_cast<Actor *>(pPassenger)->GetGraphicalIcon() : const_cast<SceneObject *>((*lItr).GetCargoList()->front())->GetGraphicalIcon());
+        pItemBitmap = new SDLGUITexture(pPassenger ? const_cast<Actor *>(pPassenger)->GetGraphicalIcon() : const_cast<SceneObject *>((*lItr).GetCargoList()->front())->GetGraphicalIcon());
         // Passing in ownership of the bitmap, but not of the pSpriteObj
         m_pShopList->AddItem(loadoutLabel, costString, pItemBitmap, 0);
     }
