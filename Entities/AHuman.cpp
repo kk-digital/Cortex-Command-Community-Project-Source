@@ -4391,13 +4391,13 @@ void AHuman::DrawThrowingReticule(SDL_Renderer* renderer, const Vector &targetPo
 // Description:     Draws this AHuman's current graphical representation to a
 //                  BITMAP of choice.
 
-void AHuman::Draw(SDL_Renderer* renderer, const Vector &targetPos, DrawMode mode, bool onlyPhysical) const {
-    Actor::Draw(renderer, targetPos, mode, onlyPhysical);
+void AHuman::Draw(SDL_Renderer* renderer, const Vector &targetPos, DrawMode mode, bool onlyPhysical, int alphaMod) const {
+    Actor::Draw(renderer, targetPos, mode, onlyPhysical, alphaMod);
 
     DrawMode realMode = (mode == g_DrawColor && m_FlashWhiteMS) ? g_DrawWhite : mode;
     // Note: For some reason the ordering of the attachables list can get messed up. The most important thing here is that the FGArm is on top of everything else.
-    if (m_pHead && m_pHead->IsDrawnAfterParent()) { m_pHead->Draw(renderer, targetPos, realMode, onlyPhysical); }
-    if (m_pFGArm) { m_pFGArm->Draw(renderer, targetPos, realMode, onlyPhysical); }
+    if (m_pHead && m_pHead->IsDrawnAfterParent()) { m_pHead->Draw(renderer, targetPos, realMode, onlyPhysical, alphaMod); }
+    if (m_pFGArm) { m_pFGArm->Draw(renderer, targetPos, realMode, onlyPhysical, alphaMod); }
 
     //TODO simplify this complex if check when arm is cleaned up like turret so all it can hold are HeldDevices and children
     // Draw background Arm's hand after the HeldDevice of FGArm is drawn if the FGArm is holding a weapon.
@@ -4406,17 +4406,17 @@ void AHuman::Draw(SDL_Renderer* renderer, const Vector &targetPos, DrawMode mode
     }
 
     if (mode == g_DrawColor && !onlyPhysical && g_SettingsMan.DrawHandAndFootGroupVisualizations()) {
-        m_pFGFootGroup->Draw(pTargetBitmap, targetPos, true, 13);
-        m_pBGFootGroup->Draw(pTargetBitmap, targetPos, true, 13);
-        m_pFGHandGroup->Draw(pTargetBitmap, targetPos, true, 13);
-        m_pBGHandGroup->Draw(pTargetBitmap, targetPos, true, 13);
+        m_pFGFootGroup->Draw(renderer, targetPos, true, 13); // TODO: Magic Number 13
+        m_pBGFootGroup->Draw(renderer, targetPos, true, 13); // TODO: Magic Number 13
+        m_pFGHandGroup->Draw(renderer, targetPos, true, 13); // TODO: Magic Number 13
+        m_pBGHandGroup->Draw(renderer, targetPos, true, 13); // TODO: Magic Number 13
     }
 
     if (mode == g_DrawColor && !onlyPhysical && g_SettingsMan.DrawLimbPathVisualizations()) {
-        m_Paths[m_HFlipped][WALK].Draw(pTargetBitmap, targetPos, 122);
-        m_Paths[m_HFlipped][CRAWL].Draw(pTargetBitmap, targetPos, 122);
-        m_Paths[m_HFlipped][ARMCRAWL].Draw(pTargetBitmap, targetPos, 13);
-        m_Paths[m_HFlipped][CLIMB].Draw(pTargetBitmap, targetPos, 165);
+        m_Paths[m_HFlipped][WALK].Draw(renderer, targetPos, 122); //TODO: Magic Number
+        m_Paths[m_HFlipped][CRAWL].Draw(renderer, targetPos, 122); //TODO: Magic Number
+        m_Paths[m_HFlipped][ARMCRAWL].Draw(renderer, targetPos, 13); //TODO: Magic Number
+        m_Paths[m_HFlipped][CLIMB].Draw(renderer, targetPos, 165); //TODO: Magic Number
     }
 }
 
@@ -4445,15 +4445,15 @@ void AHuman::DrawHUD(SDL_Renderer* renderer, const Vector &targetPos, int whichS
 
 #ifdef DEBUG_BUILD
     // Limbpath debug drawing
-    m_Paths[FGROUND][WALK].Draw(pTargetBitmap, targetPos, 122);
-    m_Paths[FGROUND][CRAWL].Draw(pTargetBitmap, targetPos, 122);
-    m_Paths[FGROUND][ARMCRAWL].Draw(pTargetBitmap, targetPos, 13);
-    m_Paths[FGROUND][CLIMB].Draw(pTargetBitmap, targetPos, 98);
+    m_Paths[FGROUND][WALK].Draw(renderer, targetPos, 122); //TODO: Magic Number
+    m_Paths[FGROUND][CRAWL].Draw(renderer, targetPos, 122); //TODO: Magic Number
+    m_Paths[FGROUND][ARMCRAWL].Draw(renderer, targetPos, 13); //TODO: Magic Number
+    m_Paths[FGROUND][CLIMB].Draw(renderer, targetPos, 98); //TODO: Magic Number
 
-    m_Paths[BGROUND][WALK].Draw(pTargetBitmap, targetPos, 122);
-    m_Paths[BGROUND][CRAWL].Draw(pTargetBitmap, targetPos, 122);
-    m_Paths[BGROUND][ARMCRAWL].Draw(pTargetBitmap, targetPos, 13);
-    m_Paths[BGROUND][CLIMB].Draw(pTargetBitmap, targetPos, 98);
+    m_Paths[BGROUND][WALK].Draw(renderer, targetPos, 122); //TODO: Magic Number
+    m_Paths[BGROUND][CRAWL].Draw(renderer, targetPos, 122); //TODO: Magic Number
+    m_Paths[BGROUND][ARMCRAWL].Draw(renderer, targetPos, 13); //TODO: Magic Number
+    m_Paths[BGROUND][CLIMB].Draw(renderer, targetPos, 98); //TODO: Magic Number
 
     // Draw the AI paths
     list<Vector>::iterator last = m_MovePath.begin();
@@ -4462,15 +4462,15 @@ void AHuman::DrawHUD(SDL_Renderer* renderer, const Vector &targetPos, int whichS
     {
         lastPoint = (*last) - targetPos;
         waypoint = lastPoint + g_SceneMan.ShortestDistance(lastPoint, (*lItr) - targetPos);
-        line(pTargetBitmap, lastPoint.m_X, lastPoint.m_Y, waypoint.m_X, waypoint.m_Y, g_RedColor);
+        lineColor(renderer, lastPoint.m_X, lastPoint.m_Y, waypoint.m_X, waypoint.m_Y, g_RedColor);
         last = lItr;
     }
     waypoint = m_MoveTarget - targetPos;
-    circlefill(pTargetBitmap, waypoint.m_X, waypoint.m_Y, 3, g_RedColor);
+    filledCircleColor(renderer, waypoint.m_X, waypoint.m_Y, 3, g_RedColor);
     lastPoint = m_PrevPathTarget - targetPos;
-    circlefill(pTargetBitmap, lastPoint.m_X, lastPoint.m_Y, 2, g_YellowGlowColor);
+    filledCircleColor(renderer, lastPoint.m_X, lastPoint.m_Y, 2, g_YellowGlowColor);
     lastPoint = m_DigTunnelEndPos - targetPos;
-    circlefill(pTargetBitmap, lastPoint.m_X, lastPoint.m_Y, 2, g_YellowGlowColor);
+    filledCircleColor(renderer, lastPoint.m_X, lastPoint.m_Y, 2, g_YellowGlowColor);
     // Raidus
 //    waypoint = m_Pos - targetPos;
 //    circle(pTargetBitmap, waypoint.m_X, waypoint.m_Y, m_MoveProximityLimit, g_RedColor);  
@@ -4565,14 +4565,11 @@ void AHuman::DrawHUD(SDL_Renderer* renderer, const Vector &targetPos, int whichS
 				static_cast<int>(drawPos.GetFloorIntX() + (16 * jetTimeRatio)),
 				drawPos.GetFloorIntY() + m_HUDStack + 7};
 
-			uint8_t r,g,b,a;
-			SDL_GetRenderDrawColor(renderer, &r, &g, &b, &a);
 			SDL_SetRenderDrawColor(renderer, (gaugeColor & 0xFF000000) >> 3,
 				                   (gaugeColor & 0x00FF0000) >> 2,
 				                   (gaugeColor & 0x0000FF00) >> 1,
 				                   (gaugeColor & 0x000000FF));
 			SDL_RenderFillRect(renderer, &guageRect);
-			SDL_SetRenderDrawColor(renderer, r, g, b, a);
 
 			//                    rect(pTargetBitmap, drawPos.m_X, drawPos.m_Y +
 			//                    m_HUDStack - 2, drawPos.m_X + 24, drawPos.m_Y
@@ -4725,7 +4722,7 @@ void AHuman::DrawHUD(SDL_Renderer* renderer, const Vector &targetPos, int whichS
     // AI mode state debugging
 #ifdef DEBUG_BUILD
 
-    AllegroBitmap allegroBitmap(pTargetBitmap);
+    SDLGUITexture guiBitmap;
     Vector drawPos = m_Pos - targetPos;
 
     // Dig state
@@ -4741,7 +4738,7 @@ void AHuman::DrawHUD(SDL_Renderer* renderer, const Vector &targetPos, int whichS
         std::snprintf(str, sizeof(str), "PAUSEDIGGER");
     else
         std::snprintf(str, sizeof(str), "NOTDIGGING");
-    pSmallFont->DrawAligned(&allegroBitmap, drawPos.m_X + 2, drawPos.m_Y + m_HUDStack + 3, str, GUIFont::Centre);
+    pSmallFont->DrawAligned(&guiBitmap, drawPos.m_X + 2, drawPos.m_Y + m_HUDStack + 3, str, GUIFont::Centre);
     m_HUDStack += -9;
 
     // Device State
@@ -4759,7 +4756,7 @@ void AHuman::DrawHUD(SDL_Renderer* renderer, const Vector &targetPos, int whichS
         std::snprintf(str, sizeof(str), "DIGGING");
     else
         std::snprintf(str, sizeof(str), "STILL");
-    pSmallFont->DrawAligned(&allegroBitmap, drawPos.m_X + 2, drawPos.m_Y + m_HUDStack + 3, str, GUIFont::Centre);
+    pSmallFont->DrawAligned(&guiBitmap, drawPos.m_X + 2, drawPos.m_Y + m_HUDStack + 3, str, GUIFont::Centre);
     m_HUDStack += -9;
 
     // Jump State
@@ -4775,14 +4772,14 @@ void AHuman::DrawHUD(SDL_Renderer* renderer, const Vector &targetPos, int whichS
         std::snprintf(str, sizeof(str), "LANDJUMP");
     else
         std::snprintf(str, sizeof(str), "NOTJUMPING");
-    pSmallFont->DrawAligned(&allegroBitmap, drawPos.m_X + 2, drawPos.m_Y + m_HUDStack + 3, str, GUIFont::Centre);
+    pSmallFont->DrawAligned(&guiBitmap, drawPos.m_X + 2, drawPos.m_Y + m_HUDStack + 3, str, GUIFont::Centre);
     m_HUDStack += -9;
 
     if (m_Status == STABLE)
         std::snprintf(str, sizeof(str), "STABLE");
     else if (m_Status == UNSTABLE)
         std::snprintf(str, sizeof(str), "UNSTABLE");
-    pSmallFont->DrawAligned(&allegroBitmap, drawPos.m_X + 2, drawPos.m_Y + m_HUDStack + 3, str, GUIFont::Centre);
+    pSmallFont->DrawAligned(&guiBitmap, drawPos.m_X + 2, drawPos.m_Y + m_HUDStack + 3, str, GUIFont::Centre);
     m_HUDStack += -9;
 
 #endif

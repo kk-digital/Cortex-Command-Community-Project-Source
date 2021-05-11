@@ -1392,10 +1392,9 @@ bool MOSRotating::DrawMOIDIfOverlapping(MovableObject *pOverlapMO)
         if (g_SceneMan.ShortestDistance(m_Pos, otherPos, g_SceneMan.SceneWrapsX()).GetMagnitude() < combinedRadii)
         {
             // They may be overlapping, so draw the MOID rep of this to the MOID layer
-			SDL_Texture* activeTarget = SDL_GetRenderTarget(g_FrameMan.GetRenderer());
-			SDL_SetRenderTarget(g_FrameMan.GetRenderer(), g_SceneMan.GetMOIDTexture()->getAsRenderTarget());
+			g_FrameMan.PushRenderTarget(g_SceneMan.GetMOIDTexture());
             Draw(g_FrameMan.GetRenderer(), Vector(), g_DrawMOID, true);
-			SDL_SetRenderTarget(g_FrameMan.GetRenderer(), activeTarget);
+			g_FrameMan.PopRenderTarget();
             return true;
         }
     }

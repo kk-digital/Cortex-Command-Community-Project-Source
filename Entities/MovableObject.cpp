@@ -872,10 +872,9 @@ void MovableObject::PreTravel()
 {
 	// Temporarily remove the representation of this from the scene MO layers
 	if (m_GetsHitByMOs) {
-		SDL_Texture* activeTarget{SDL_GetRenderTarget(g_FrameMan.GetRenderer())};
-		SDL_SetRenderTarget(g_FrameMan.GetRenderer(), g_SceneMan.GetMOIDTexture()->getAsRenderTarget());
+		g_FrameMan.PushRenderTarget(g_SceneMan.GetMOIDTexture()->getAsRenderTarget());
 		Draw(g_FrameMan.GetRenderer(), Vector(), g_DrawNoMOID, true);
-		SDL_SetRenderTarget(g_FrameMan.GetRenderer(), activeTarget);
+		g_FrameMan.PopRenderTarget();
 	}
 
     // Save previous position and velocities before moving
@@ -913,10 +912,9 @@ void MovableObject::PostTravel()
 
 	if (m_GetsHitByMOs) {
 		// Replace updated MOID representation to scene after Update
-		SDL_Texture* activeTarget{SDL_GetRenderTarget(g_FrameMan.GetRenderer())};
-		SDL_SetRenderTarget(g_FrameMan.GetRenderer(), g_SceneMan.GetMOIDTexture()->getAsRenderTarget());
+		g_FrameMan.PushRenderTarget(g_SceneMan.GetMOIDTexture());
 		Draw(g_FrameMan.GetRenderer(), Vector(), g_DrawMOID, true);
-		SDL_SetRenderTarget(g_FrameMan.GetRenderer(), activeTarget);
+		g_FrameMan.PopRenderTarget();
 		m_AlreadyHitBy.clear();
 	}
 	m_IsUpdated = true;
