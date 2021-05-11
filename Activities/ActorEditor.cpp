@@ -15,6 +15,7 @@
 #include "PresetMan.h"
 #include "MovableMan.h"
 #include "UInputMan.h"
+#include "FrameMan.h"
 //#include "AHuman.h"
 //#include "MOPixel.h"
 #include "SLTerrain.h"
