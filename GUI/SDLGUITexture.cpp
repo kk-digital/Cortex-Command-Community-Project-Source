@@ -1,129 +1,162 @@
 #include "SDLGUITexture.h"
 #include "GUI.h"
+
 #include "Managers/FrameMan.h"
-#include "System/RTEError.h"
+
+#include "System/SDLHelper.h"
 
 namespace RTE {
-	SDLGUITexture::SDLGUITexture() {
-		m_TextureFile.Reset();
-		m_Texture = nullptr;
-		m_SelfCreated = false;
-		m_ClipRect.x = 0;
-		m_ClipRect.y = 0;
-		m_ClipRect.w = 0;
-		m_ClipRect.h = 0;
-	}
-
-	SDLGUITexture::SDLGUITexture(SDL_Texture *pTexture, bool needPixelAccess) {
-		m_TextureFile.Reset();
+	SDLGUITexture::SDLGUITexture() {}
+	SDLGUITexture::SDLGUITexture(SharedTexture &pTexture) {
 		m_Texture = pTexture;
-		m_SelfCreated = false;
-		m_ClipRect.x = 0;
-		m_ClipRect.y = 0;
-		m_ClipRect.w = 0;
-		m_ClipRect.h = 0;
+		m_Width = m_Texture->getW();
+		m_Height = m_Texture->getH();
+		m_ClipRect = nullptr;
 	}
 
-	SDLGUITexture::~SDLGUITexture(){
-		Destroy();
+	SDLGUITexture::SDLGUITexture(const SDLGUITexture &reference) {
+		m_TextureFile = reference.m_TextureFile;
+		m_Texture = reference.m_Texture;
+		m_Width = reference.m_Width;
+		m_Height = reference.m_Height;
+		m_ClipRect = std::make_unique<SDL_Rect>(*reference.m_ClipRect);
 	}
 
-	bool SDLGUITexture::Create(int width, int height, int depth) {
-		m_SelfCreated = true;
+	SDLGUITexture::SDLGUITexture(int width, int height) { Create(width, height); }
 
-		m_TextureFile.Reset();
-		m_Texture = SDL_CreateTexture(
-		    g_FrameMan.GetRenderer(), g_FrameMan.GetPixelFormat(),
-		    SDL_TEXTUREACCESS_STREAMING, width, height);
-		if (m_Texture == NULL) {
-			return false;
-		}
-		return true;
-	}
+	SDLGUITexture::~SDLGUITexture() = default;
 
 	bool SDLGUITexture::Create(const std::string filename) {
-		m_SelfCreated = false;
-
-		m_TextureFile.Create(filename.c_str());
-
-		//TODO: Implement in ContentFile
+		m_TextureFile.SetDataPath(filename);
 		m_Texture = m_TextureFile.GetAsTexture();
-		RTEAssert(m_Texture,
-		          "Could not load bitmap from file into SDLTexture!");
-
-		return true;
+		m_Width = m_Texture->getW();
+		m_Height = m_Texture->getH();
+		m_Locked = false;
+		return m_Texture.get();
 	}
 
-	void SDLGUITexture::Destroy() {
-		if (m_SelfCreated && m_Texture)
-			SDL_DestroyTexture(m_Texture);
-
-		m_Texture = nullptr;
+	bool SDLGUITexture::Create(int width, int height, int) {
+		m_Width = width;
+		m_Height = height;
+		m_Texture = std::make_shared<Texture>(g_FrameMan.GetRenderer(), width, height, SDL_TEXTUREACCESS_STREAMING);
+		m_Locked = false;
+		return m_Texture.get();
 	}
 
-	void SDLGUITexture::Draw(int x, int y, GUIRect *pRect) {
-		SDL_Rect destRect{pRect->x, pRect->y, m_ClipRect.w, m_ClipRect.h};
-		SDL_RenderCopy(g_FrameMan.GetRenderer(), m_Texture, &m_ClipRect,
-		               &destRect);
+	void SDLGUITexture::Destroy() {}
+
+	void SDLGUITexture::Render(int x, int y, GUIRect *pRect, bool trans) {
+		SDL_Rect src{pRect->x, pRect->y, pRect->w, pRect->h};
+		SDL_Rect dest{x, y, pRect->w, pRect->h};
+
+		if(!trans)
+			m_Texture->setBlendMode(SDL_BLENDMODE_NONE);
+
+		m_Texture->render(g_FrameMan.GetRenderer(), src, dest);
+		if(!trans)
+			m_Texture->setBlendMode(SDL_BLENDMODE_NONE);
 	}
 
-	void SDLGUITexture::DrawTransScaled(GUIBitmap *pDestBitmap, int x, int y,
-	                                 int width, int height) {}
+	void SDLGUITexture::RenderScaled(int x, int y, int width, int height, bool trans) {
+		SDL_Rect dest{x, y, width, height};
+		if(!trans)
+			m_Texture->setBlendMode(SDL_BLENDMODE_NONE);
+		m_Texture->render(g_FrameMan.GetRenderer(), dest);
+		if(!trans)
+			m_Texture->setBlendMode(SDL_BLENDMODE_BLEND);
+	}
 
-	void SDLGUITexture::DrawLine(int x1, int y1, int x2, int y2,
-	                          unsigned long color) {}
+	void SDLGUITexture::Blit(GUIBitmap *pDestBitmap, int x, int y, GUIRect *pRect, bool trans) {
+		SDLGUITexture *temp = dynamic_cast<SDLGUITexture *>(pDestBitmap);
+		RTEAssert(temp, "GUIBitmap passed to SDLGUITexture Draw");
 
-	void SDLGUITexture::DrawRectangle(int x, int y, int width, int height,
-	                               unsigned long color, bool filled) {}
+		temp->GetTexture()->lock();
+
+		SDL_Rect src{pRect->x, pRect->y, pRect->w, pRect->h};
+		SDL_Rect dest{x, y, 0, 0};
+		std::unique_ptr<SDL_Surface, sdl_deleter> srcSurface{m_Texture->getPixelsAsSurface()};
+		std::unique_ptr<SDL_Surface, sdl_deleter> destSurface{temp->GetTexture()->getPixelsAsSurface()};
+		if(!trans)
+			SDL_SetSurfaceBlendMode(srcSurface.get(), SDL_BLENDMODE_NONE);
+
+		SDL_BlitSurface(srcSurface.get(), &src, destSurface.get(), &dest);
+		temp->GetTexture()->unlock();
+	}
+
+	void SDLGUITexture::BlitScaled(GUIBitmap *pDestBitmap, int x, int y, int width, int height, bool trans) {
+		SDLGUITexture *temp = dynamic_cast<SDLGUITexture *>(pDestBitmap);
+		RTEAssert(temp, "GUIBitmap passed to SDLGUITexture Draw");
+
+		temp->GetTexture()->lock();
+
+		SDL_Rect dest{x, y, width, height};
+		std::unique_ptr<SDL_Surface, sdl_deleter> srcSurface{m_Texture->getPixelsAsSurface()};
+		std::unique_ptr<SDL_Surface, sdl_deleter> destSurface{temp->GetTexture()->getPixelsAsSurface()};
+
+		if(!trans)
+			SDL_SetSurfaceBlendMode(srcSurface.get(), SDL_BLENDMODE_NONE);
+
+		SDL_BlitScaled(srcSurface.get(), nullptr, destSurface.get(), &dest);
+		temp->GetTexture()->unlock();
+	}
+
+	void SDLGUITexture::DrawLine(int x1, int y1, int x2, int y2, unsigned long color) {
+		// TODO: bresenham
+	}
+
+	void SDLGUITexture::DrawRectangle(int x, int y, int width, int height, unsigned long color, bool filled) {
+		if (!m_Locked)
+			m_Texture->lock();
+
+		SDL_Rect rect{x, y, width, height};
+		if (filled) {
+			m_Texture->fillRect(rect, color);
+		} else {
+			m_Texture->rect(rect, color);
+		}
+		if (!m_Locked)
+			m_Texture->unlock();
+	}
 
 	unsigned long SDLGUITexture::GetPixel(int x, int y) {
-		Uint32 *pixels = (Uint32 *)m_Pixels_ro;
-
-		return pixels[(y * m_Pitch / 4) + x];
+		return m_Texture->getPixel(x, y);
 	}
 
 	void SDLGUITexture::SetPixel(int x, int y, unsigned long color) {
-		Uint32 *pixels = (Uint32 *)m_Pixels_wo;
-		pixels[(y * m_Pitch / 4) + x] = color;
-	}
-
-	bool SDLGUITexture::LockTexture(SDL_Rect *rect) {
-		RTEAssert(SDL_LockTexture(m_Texture, rect, &m_Pixels_wo, &m_Pitch) == 0,
-		          "Failed to lock Texture with error: " +
-		              std::string(SDL_GetError()));
-
-		return true;
-	}
-
-	bool SDLGUITexture::UnlockTexture() {
-		SDL_UnlockTexture(m_Texture);
-		m_Pixels_wo = nullptr;
-
-		m_Pitch = 0;
-
-		return true;
+		m_Texture->setPixel(x, y, color);
 	}
 
 	void SDLGUITexture::GetClipRect(GUIRect *rect) {
-		rect->x = m_ClipRect.x;
-		rect->y = m_ClipRect.y;
-		rect->w = m_ClipRect.x + m_ClipRect.w;
-		rect->h = m_ClipRect.y + m_ClipRect.h;
+		if (m_ClipRect && rect) {
+			rect->x = m_ClipRect->x;
+			rect->y = m_ClipRect->y;
+			rect->w = m_ClipRect->w;
+			rect->h = m_ClipRect->h;
+			return;
+		}
 	}
 
 	void SDLGUITexture::SetClipRect(GUIRect *rect) {
-		m_ClipRect.x = rect->x;
-		m_ClipRect.y = rect->y;
-		m_ClipRect.w = rect->w;
-		m_ClipRect.h = rect->h;
+		if (!rect)
+			return;
+
+		m_ClipRect->x = rect->x;
+		m_ClipRect->y = rect->y;
+		m_ClipRect->w = rect->w;
+		m_ClipRect->h = rect->h;
+	}
+
+	void SDLGUITexture::ResetClipRect() {
+		m_ClipRect.reset();
 	}
 
 	void SDLGUITexture::AddClipRect(GUIRect *rect) {
-		m_ClipRect.x = std::max(m_ClipRect.x, rect->x);
-		m_ClipRect.y = std::max(m_ClipRect.y, rect->y);
-		m_ClipRect.w =
-		    std::min(m_ClipRect.w, rect->w);
-		m_ClipRect.h =
-		    std::min(m_ClipRect.h, rect->h);
+		SDL_Rect intersectRect;
+		SDL_Rect tempRect{rect->x, rect->y, rect->w, rect->h};
+		if (SDL_IntersectRect(m_ClipRect.get(), &tempRect, &intersectRect))
+			m_ClipRect = std::make_unique<SDL_Rect>(intersectRect);
+		else
+			m_ClipRect = std::make_unique<SDL_Rect>(SDL_Rect{0, 0, 0, 0});
 	}
+
 } // namespace RTE
