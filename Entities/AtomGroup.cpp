@@ -6,6 +6,10 @@
 #include "SceneMan.h"
 #include "Managers/FrameMan.h"
 
+#include "System/SDLTexture.h"
+#include "System/SDLHelper.h"
+#include <SDL2/SDL2_gfxPrimitives.h>
+
 namespace RTE {
 
 	ConcreteClassInfo(AtomGroup, Entity, 500)
@@ -326,6 +330,9 @@ namespace RTE {
 		// Lock all bitmaps involved outside the loop - only relevant for video bitmaps so disabled at the moment.
 		//if (!scenePreLocked) { g_SceneMan.LockScene(); }
 
+		// set render target to the MOID render layer, so we can read MOIDs
+		g_FrameMan.PushRenderTarget(g_SceneMan.GetMOIDTexture());
+
 		// Loop for all the different straight segments (between bounces etc) that have to be traveled during the travelTime.
 		do {
 			// First see what Atoms are inside either the terrain or another MO, and cause collisions responses before even starting the segment
@@ -462,9 +469,11 @@ namespace RTE {
 						}
 #ifdef DEBUG_BUILD
 						// TODO: Remove this once AtomGroup drawing in Material layer draw mode is implemented.
+						g_FrameMan.PushRenderTarget(g_SceneMan.GetMOColorTexture());
 						Vector tPos = atom->GetCurrentPos();
 						Vector tNorm = m_OwnerMOSR->RotateOffset(atom->GetNormal()) * 7;
-						line(g_SceneMan.GetMOColorBitmap(), tPos.GetFloorIntX(), tPos.GetFloorIntY(), tPos.GetFloorIntX() + tNorm.GetFloorIntX(), tPos.GetFloorIntY() + tNorm.GetFloorIntY(), 244);
+						lineColor(g_FrameMan.GetRenderer(), tPos.GetFloorIntX(), tPos.GetFloorIntY(), tPos.GetFloorIntX() + tNorm.GetFloorIntX(), tPos.GetFloorIntY() + tNorm.GetFloorIntY(), 0xEF374FFF);
+						g_FrameMan.PopRenderTarget();
 						// Draw the positions of the hit points on screen for easy debugging.
 						//putpixel(g_SceneMan.GetMOColorBitmap(), tPos.GetFloorIntX(), tPos.GetFloorIntY(), 5);
 #endif
@@ -708,6 +717,8 @@ namespace RTE {
 			}
 		}
 
+		// Reset the render target
+		g_FrameMan.PopRenderTarget();
 		// Travel along the remaining trajectory if we didn't hit anything on the last segment and weren't told to halt.
 		if (!hitStep && !halted) {
 			/*
@@ -768,10 +779,11 @@ namespace RTE {
 		std::deque<std::pair<Vector, Vector>> impulseForces; // First Vector is the impulse force in kg * m/s, the second is force point, or its offset from the origin of the AtomGroup.
 
 		// Lock all bitmaps involved outside the loop - only relevant for video bitmaps so disabled at the moment.
-		//if (!scenePreLocked) { g_SceneMan.LockScene(); }
+		if (!scenePreLocked) {g_SceneMan.LockScene();}
 
 		// Before the very first step of the first leg of this travel, we find that we're already intersecting with another MO, then we completely ignore collisions with that MO for this entire travel.
 		// This is to prevent MO's from getting stuck in each other.
+		g_FrameMan.PushRenderTarget(g_SceneMan.GetMOIDTexture());
 		if (hitMOs) {
 			intPos[X] = position.GetFloorIntX();
 			intPos[Y] = position.GetFloorIntY();
@@ -1032,6 +1044,9 @@ namespace RTE {
 					hitTerrAtoms.clear();
 				}
 
+				// MOID layer is no longer needed from here
+				g_FrameMan.PopRenderTarget();
+
 				// TERRAIN COLLISION RESPONSE /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 				bool somethingPenetrated = false;
@@ -1173,7 +1188,7 @@ namespace RTE {
 			++legCount;
 		} while ((hit[X] || hit[Y]) && timeLeft > 0.0F && /*!trajectory.GetFloored().IsZero() &&*/ !halted && hitCount < 3);
 
-		//if (!scenePreLocked) { g_SceneMan.UnlockScene(); }
+		if (!scenePreLocked) { g_SceneMan.UnlockScene(); }
 
 		// Travel along the remaining trajectory.
 		if (!(hit[X] || hit[Y]) && !halted) {
@@ -1512,11 +1527,9 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void AtomGroup::Draw(BITMAP *targetBitmap, const Vector &targetPos, bool useLimbPos, unsigned char color) const {
+	void AtomGroup::Draw(SDL_Renderer* renderer, const Vector &targetPos, bool useLimbPos, uint32_t color) const {
 		Vector atomPos;
 		Vector normal;
-
-		acquire_bitmap(targetBitmap);
 
 		for (const Atom *atom : m_Atoms) {
 			if (!useLimbPos) {
@@ -1526,21 +1539,20 @@ namespace RTE {
 			}
 			if (!atom->GetNormal().IsZero()) {
 				normal = atom->GetNormal().GetXFlipped(m_OwnerMOSR->m_HFlipped) * 5;
-				line(targetBitmap, atomPos.GetFloorIntX() - targetPos.GetFloorIntX(), atomPos.GetFloorIntY() - targetPos.GetFloorIntY(), atomPos.GetFloorIntX() - targetPos.GetFloorIntX(), atomPos.GetFloorIntY() - targetPos.GetFloorIntY(), 244);
+				lineColor(renderer, atomPos.GetFloorIntX() - targetPos.GetFloorIntX(), atomPos.GetFloorIntY() - targetPos.GetFloorIntY(), atomPos.GetFloorIntX() - targetPos.GetFloorIntX(), atomPos.GetFloorIntY() - targetPos.GetFloorIntY(), 244);
 			}
-			putpixel(targetBitmap, atomPos.GetFloorIntX() - targetPos.GetFloorIntX(), atomPos.GetFloorIntY() - targetPos.GetFloorIntY(), color);
+			pixelColor(renderer, atomPos.GetFloorIntX() - targetPos.GetFloorIntX(), atomPos.GetFloorIntY() - targetPos.GetFloorIntY(), color);
 		}
-		release_bitmap(targetBitmap);
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	// TODO: dan pls.
 	void AtomGroup::GenerateAtomGroup(MOSRotating *ownerMOSRotating) {
-		BITMAP *refSprite = ownerMOSRotating->GetSpriteFrame();
+		SharedTexture refSprite = ownerMOSRotating->GetSpriteFrame();
 		const Vector spriteOffset = ownerMOSRotating->GetSpriteOffset();
-		const int spriteWidth = refSprite->w * static_cast<int>(m_OwnerMOSR->GetScale());
-		const int spriteHeight = refSprite->h * static_cast<int>(m_OwnerMOSR->GetScale());
+		const int spriteWidth = refSprite->getW() * static_cast<int>(m_OwnerMOSR->GetScale());
+		const int spriteHeight = refSprite->getH() * static_cast<int>(m_OwnerMOSR->GetScale());
 
 		// Only try to generate AtomGroup if scaled width and height are > 0 as we're playing with fire trying to create 0x0 bitmap. 
 		if (spriteWidth > 0 && spriteHeight > 0) {
@@ -1548,11 +1560,10 @@ namespace RTE {
 			int y;
 			bool inside;
 
-			BITMAP *checkBitmap = create_bitmap_ex(8, spriteWidth, spriteHeight);
-			clear_to_color(checkBitmap, g_MaskColor);
+			Texture checkBitmap(g_FrameMan.GetRenderer(), spriteWidth, spriteHeight, SDL_TEXTUREACCESS_STREAMING);
 
-			acquire_bitmap(refSprite);
-			acquire_bitmap(checkBitmap);
+			refSprite->lock();
+			checkBitmap.lock();
 
 			// If Atoms are to be placed right at (below) the bitmap of the sprite.
 			if (m_Depth <= 0) {
@@ -1561,9 +1572,9 @@ namespace RTE {
 					// Scan LEFT to RIGHT, placing one Atom on each first encountered silhouette edge
 					for (x = 0; x < spriteWidth; ++x) {
 						// Detect if we are crossing a silhouette boundary.
-						if (getpixel(refSprite, x, y) != g_MaskColor) {
+						if (refSprite->getPixel(x, y) != 0) {
 							// Mark that an Atom has been put in this location, to avoid duplicate Atoms
-							putpixel(checkBitmap, x, y, 99);
+							checkBitmap.setPixel(x, y, 0xF9F9E4FF);
 							AddAtomToGroup(ownerMOSRotating, spriteOffset, x, y, true);
 							break;
 						}
@@ -1571,9 +1582,9 @@ namespace RTE {
 					// Scan RIGHT to LEFT, placing one Atom on each first encountered silhouette edge
 					for (x = spriteWidth - 1; x >= 0; --x) {
 						// Detect if we are crossing a silhouette boundary.
-						if (getpixel(refSprite, x, y) != g_MaskColor && getpixel(checkBitmap, x, y) == g_MaskColor) {
+						if (refSprite->getPixel(x, y) != g_AlphaZero && checkBitmap.getPixel(x, y) == g_AlphaZero) {
 							// Mark that an Atom has been put in this location, to avoid duplicate Atoms
-							putpixel(checkBitmap, x, y, 99);
+							checkBitmap.setPixel(x, y, 0xF9F9E4FF);
 							AddAtomToGroup(ownerMOSRotating, spriteOffset, x, y, true);
 							break;
 						}
@@ -1585,8 +1596,8 @@ namespace RTE {
 					// Scan TOP to BOTTOM, placing one Atom on each first encountered silhouette edge
 					for (y = 0; y < spriteHeight; ++y) {
 						// Detect if we are crossing a silhouette boundary, but make sure Atom wasn't already placed during the horizontal scans.
-						if (getpixel(refSprite, x, y) != g_MaskColor && getpixel(checkBitmap, x, y) == g_MaskColor) {
-							putpixel(checkBitmap, x, y, 99);
+						if (refSprite->getPixel(x, y) != g_AlphaZero && checkBitmap.getPixel(x, y) == g_AlphaZero) {
+							checkBitmap.setPixel(x, y, 0xF9F9E4FF);
 							AddAtomToGroup(ownerMOSRotating, spriteOffset, x, y, true);
 							break;
 						}
@@ -1594,7 +1605,7 @@ namespace RTE {
 					// Scan BOTTOM to TOP, placing one Atom on each first encountered silhouette edge
 					for (y = spriteHeight - 1; y >= 0; --y) {
 						// Detect if we are crossing a silhouette boundary, but make sure Atom wasn't already placed during the horizontal scans.
-						if (getpixel(refSprite, x, y) != g_MaskColor && getpixel(checkBitmap, x, y) == g_MaskColor) {
+						if (refSprite->getPixel(x, y) != g_AlphaZero && checkBitmap.getPixel(x, y) == g_AlphaZero) {
 							AddAtomToGroup(ownerMOSRotating, spriteOffset, x, y, true);
 							break;
 						}
@@ -1610,7 +1621,7 @@ namespace RTE {
 					inside = false;
 					for (x = 0; x < spriteWidth; ++x) {
 						// Detect if we are crossing a silhouette boundary.
-						if ((getpixel(refSprite, x, y) != g_MaskColor && !inside) || (getpixel(refSprite, x, y) == g_MaskColor && inside)) {
+						if ((refSprite->getPixel(x, y) != g_AlphaZero && !inside) || (refSprite->getPixel(x, y) == g_AlphaZero && inside)) {
 							// Reset the depth counter
 							depthCount = 0;
 							inside = !inside;
@@ -1621,13 +1632,13 @@ namespace RTE {
 								clear = true;
 								// Check whether depth is sufficient in the other cardinal directions.
 								for (int i = 1; i <= m_Depth && clear; ++i) {
-									if (x + i >= refSprite->w || y + i >= refSprite->h || y - i < 0 || getpixel(refSprite, x + i, y) == g_MaskColor || getpixel(refSprite, x, y + i) == g_MaskColor || getpixel(refSprite, x, y - i) == g_MaskColor) {
+									if (x + i >= refSprite->getW() || y + i >= refSprite->getH() || y - i < 0 || refSprite->getPixel(x + i, y) == g_AlphaZero || refSprite->getPixel(x, y + i) == g_AlphaZero || refSprite->getPixel(x, y - i) == g_AlphaZero) {
 										clear = false;
 									}
 								}
-								if (clear && getpixel(checkBitmap, x, y) == g_MaskColor) {
+								if (clear && checkBitmap.getPixel(x, y) == g_AlphaZero) {
 									// Mark that an Atom has been put in this location, to avoid duplicate Atoms.
-									putpixel(checkBitmap, x, y, 99);
+									checkBitmap.setPixel(x, y, 0xF9F9E4FF);
 									AddAtomToGroup(ownerMOSRotating, spriteOffset, x, y, true);
 								}
 							}
@@ -1640,7 +1651,7 @@ namespace RTE {
 					inside = false;
 					for (x = spriteWidth - 1; x >= 0; --x) {
 						// Detect if we are crossing a silhouette boundary.
-						if ((getpixel(refSprite, x, y) != g_MaskColor && !inside) || (getpixel(refSprite, x, y) == g_MaskColor && inside)) {
+						if ((refSprite->getPixel(x, y) != g_AlphaZero && !inside) || (refSprite->getPixel(x, y) == g_AlphaZero && inside)) {
 							// Reset the depth counter
 							depthCount = 0;
 							inside = !inside;
@@ -1651,13 +1662,13 @@ namespace RTE {
 								clear = true;
 								// Check whether depth is sufficient in the other cardinal directions.
 								for (int i = 1; i <= m_Depth && clear; ++i) {
-									if (x - i < 0 || y + i >= refSprite->h || y - i < 0 || getpixel(refSprite, x - i, y) == g_MaskColor || getpixel(refSprite, x, y + i) == g_MaskColor || getpixel(refSprite, x, y - i) == g_MaskColor) {
+									if (x - i < 0 || y + i >= refSprite->getH() || y - i < 0 || refSprite->getPixel(x - i, y) == g_AlphaZero || refSprite->getPixel(x, y + i) == g_AlphaZero || refSprite->getPixel(x, y - i) == g_AlphaZero) {
 										clear = false;
 									}
 								}
-								if (clear && getpixel(checkBitmap, x, y) == g_MaskColor) {
+								if (clear && checkBitmap.getPixel(x, y) == g_AlphaZero) {
 									// Mark that an Atom has been put in this location, to avoid duplicate Atoms
-									putpixel(checkBitmap, x, y, 99);
+									checkBitmap.setPixel(x, y, 0xF9F9E4FF);
 									AddAtomToGroup(ownerMOSRotating, spriteOffset, x, y, true);
 								}
 							}
@@ -1670,7 +1681,7 @@ namespace RTE {
 					inside = false;
 					for (y = 0; y < spriteHeight; ++y) {
 						// Detect if we are crossing a silhouette boundary.
-						if ((getpixel(refSprite, x, y) != g_MaskColor && !inside) || (getpixel(refSprite, x, y) == g_MaskColor && inside)) {
+						if ((refSprite->getPixel(x, y) != g_AlphaZero && !inside) || (refSprite->getPixel(x, y) == g_AlphaZero && inside)) {
 							// Reset the depth counter
 							depthCount = 0;
 							inside = !inside;
@@ -1681,14 +1692,14 @@ namespace RTE {
 								clear = true;
 								// Check whether depth is sufficient in the other cardinal directions.
 								for (int i = 1; i <= m_Depth && clear; ++i) {
-									if (x + i >= refSprite->w || x - i < 0 || y + i >= refSprite->h || getpixel(refSprite, x + i, y) == g_MaskColor || getpixel(refSprite, x - i, y) == g_MaskColor || getpixel(refSprite, x, y + i) == g_MaskColor) {
+									if (x + i >= refSprite->getW() || x - i < 0 || y + i >= refSprite->getH() || refSprite->getPixel(x + i, y) == g_AlphaZero || refSprite->getPixel(x - i, y) == g_AlphaZero || refSprite->getPixel(x, y + i) == g_AlphaZero) {
 										clear = false;
 									}
 								}
 								// Depth is cleared in all directions, so go ahead and place Atom.
-								if (clear && getpixel(checkBitmap, x, y) == g_MaskColor) {
+								if (clear && checkBitmap.getPixel(x, y) == g_AlphaZero) {
 									// Mark that an Atom has been put in this location, to avoid duplicate Atoms.
-									putpixel(checkBitmap, x, y, 99);
+									checkBitmap.setPixel(x, y, 0xF9F9E4FF);
 									AddAtomToGroup(ownerMOSRotating, spriteOffset, x, y, true);
 								}
 							}
@@ -1701,7 +1712,7 @@ namespace RTE {
 					inside = false;
 					for (y = spriteHeight - 1; y >= 0; --y) {
 						// Detect if we are crossing a silhouette boundary.
-						if ((getpixel(refSprite, x, y) != g_MaskColor && !inside) || (getpixel(refSprite, x, y) == g_MaskColor && inside)) {
+						if ((refSprite->getPixel(x, y) != g_AlphaZero && !inside) || (refSprite->getPixel(x, y) == g_AlphaZero && inside)) {
 							// Reset the depth counter
 							depthCount = 0;
 							inside = !inside;
@@ -1712,14 +1723,14 @@ namespace RTE {
 								clear = true;
 								// Check whether depth is sufficient in the other cardinal directions.
 								for (int i = 1; i <= m_Depth && clear; ++i) {
-									if (x + i >= refSprite->w || x - i < 0 || y - i < 0 || getpixel(refSprite, x + i, y) == g_MaskColor || getpixel(refSprite, x - i, y) == g_MaskColor || getpixel(refSprite, x, y - i) == g_MaskColor) {
+									if (x + i >= refSprite->getW() || x - i < 0 || y - i < 0 || refSprite->getPixel(x + i, y) == g_AlphaZero || refSprite->getPixel(x - i, y) == g_AlphaZero || refSprite->getPixel(x, y - i) == g_AlphaZero) {
 										clear = false;
 									}
 								}
 								// Depth is cleared in all directions, so go ahead and place Atom.
-								if (clear && getpixel(checkBitmap, x, y) == g_MaskColor) {
+								if (clear && checkBitmap.getPixel(x, y) == g_AlphaZero) {
 									// Mark that an Atom has been put in this location, to avoid duplicate Atoms.
-									putpixel(checkBitmap, x, y, 99);
+									checkBitmap.setPixel(x, y, 0xF9F9E4FF);
 									AddAtomToGroup(ownerMOSRotating, spriteOffset, x, y, true);
 								}
 							}
@@ -1727,11 +1738,8 @@ namespace RTE {
 					}
 				}
 			}
-			release_bitmap(refSprite);
-			release_bitmap(checkBitmap);
-
-			destroy_bitmap(checkBitmap);
-			checkBitmap = nullptr;
+			refSprite->unlock();
+			checkBitmap.unlock();
 		}
 
 		// If no Atoms were made, just place a default one in the middle
