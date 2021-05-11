@@ -309,11 +309,12 @@ void Magazine::Update()
 //                  BITMAP of choice.
 
 void Magazine::Draw(SDL_Renderer* renderer,
-                      const Vector &targetPos,
-                      DrawMode mode,
-                      bool onlyPhysical) const
+					const Vector &targetPos,
+					DrawMode mode,
+					bool onlyPhysical,
+					int alphaMod) const
 {
-    Attachable::Draw(renderer, targetPos, mode, onlyPhysical);
+    Attachable::Draw(renderer, targetPos, mode, onlyPhysical, alphaMod);
 }
 
 } // namespace RTE

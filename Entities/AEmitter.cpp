@@ -590,21 +590,22 @@ void AEmitter::Update()
 //                  BITMAP of choice.
 
 void AEmitter::Draw(SDL_Renderer* renderer,
-                      const Vector &targetPos,
-                      DrawMode mode,
-                      bool onlyPhysical) const
+					const Vector &targetPos,
+					DrawMode mode,
+					bool onlyPhysical,
+					int alphaMod) const
 {
     // Draw flash if there is one
     if (m_pFlash && !m_pFlash->IsDrawnAfterParent() &&
         !onlyPhysical && mode == g_DrawColor && m_EmitEnabled && (!m_FlashOnlyOnBurst || m_BurstTriggered))
-        m_pFlash->Draw(renderer, targetPos, mode, onlyPhysical);
+        m_pFlash->Draw(renderer, targetPos, mode, onlyPhysical, alphaMod);
 
-    Attachable::Draw(renderer, targetPos, mode, onlyPhysical);
+    Attachable::Draw(renderer, targetPos, mode, onlyPhysical, alphaMod);
 
     // Update and Draw flash if there is one
     if (m_pFlash && m_pFlash->IsDrawnAfterParent() &&
         !onlyPhysical && mode == g_DrawColor && m_EmitEnabled && (!m_FlashOnlyOnBurst || m_BurstTriggered))
-        m_pFlash->Draw(renderer, targetPos, mode, onlyPhysical);
+        m_pFlash->Draw(renderer, targetPos, mode, onlyPhysical, alphaMod);
 
     // Set the screen flash effect to draw at the final post processing stage
     if (m_EmitEnabled && (!m_FlashOnlyOnBurst || m_BurstTriggered) && m_pFlash && m_pFlash->GetScreenEffect() && mode == g_DrawColor && !onlyPhysical)

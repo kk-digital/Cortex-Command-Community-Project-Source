@@ -1054,15 +1054,15 @@ float HDFirearm::EstimateDigStrenght()
 // Description:     Draws this HDFirearm's current graphical representation to a
 //                  BITMAP of choice.
 
-void HDFirearm::Draw(SDL_Renderer* renderer, const Vector &targetPos, DrawMode mode, bool onlyPhysical) const {
+void HDFirearm::Draw(SDL_Renderer* renderer, const Vector &targetPos, DrawMode mode, bool onlyPhysical, int alphaMod) const {
     if (m_pFlash && m_FireFrame && !m_pFlash->IsDrawnAfterParent() && mode == g_DrawColor && !onlyPhysical) {
-        m_pFlash->Draw(renderer, targetPos, mode, onlyPhysical);
+        m_pFlash->Draw(renderer, targetPos, mode, onlyPhysical, alphaMod);
     }
 
-    HeldDevice::Draw(renderer, targetPos, mode, onlyPhysical);
+    HeldDevice::Draw(renderer, targetPos, mode, onlyPhysical, alphaMod);
 
     if (m_pFlash && m_FireFrame && m_pFlash->IsDrawnAfterParent() && mode == g_DrawColor && !onlyPhysical) {
-        m_pFlash->Draw(renderer, targetPos, mode, onlyPhysical);
+        m_pFlash->Draw(renderer, targetPos, mode, onlyPhysical, alphaMod);
     }
 
     // Fudge the muzzle pos forward a little bit so the glow aligns nicely
@@ -1148,16 +1148,12 @@ void HDFirearm::DrawHUD(SDL_Renderer* renderer, const Vector &targetPos, int whi
 			SDL_Point{aimPoint3.GetFloorIntX(), aimPoint3.GetFloorIntY()},
 			SDL_Point{aimPoint4.GetFloorIntX(), aimPoint4.GetFloorIntY()}
 		};
-		uint8_t r,g,b,a;
-		SDL_GetRenderDrawColor(renderer, &r, &g, &b, &a);
 		SDL_SetRenderDrawColor(renderer, (g_YellowGlowColor >> 24) & 0xFF,
 			                   (g_YellowGlowColor >> 16) & 0xFF,
 			                   (g_YellowGlowColor >> 8) & 0xFF,
 			                   g_YellowGlowColor & 0xFF);
 
 		SDL_RenderDrawPoints(renderer, drawPoints.data(),4);
-
-		SDL_SetRenderDrawColor(renderer, r, g, b, a);
     }
     else
     {
@@ -1188,16 +1184,12 @@ void HDFirearm::DrawHUD(SDL_Renderer* renderer, const Vector &targetPos, int whi
 		std::array<SDL_Point, 4> drawPoints{
 			SDL_Point{aimPoint2.GetFloorIntX(), aimPoint2.GetFloorIntY()},
 			SDL_Point{aimPoint3.GetFloorIntX(), aimPoint3.GetFloorIntY()}};
-		uint8_t r, g, b, a;
-		SDL_GetRenderDrawColor(renderer, &r, &g, &b, &a);
 		SDL_SetRenderDrawColor(renderer, (g_YellowGlowColor >> 24) & 0xFF,
 			                   (g_YellowGlowColor >> 16) & 0xFF,
 			                   (g_YellowGlowColor >> 8) & 0xFF,
 			                   g_YellowGlowColor & 0xFF);
 
 		SDL_RenderDrawPoints(renderer, drawPoints.data(), 4);
-
-		SDL_SetRenderDrawColor(renderer, r, g, b, a);
     }
 }
 

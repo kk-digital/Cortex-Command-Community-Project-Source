@@ -1544,7 +1544,8 @@ void MOSRotating::SetWhichMOToNotHit(MovableObject *moToNotHit, float forHowLong
 void MOSRotating::Draw(SDL_Renderer *renderer,
                        const Vector &targetPos,
                        DrawMode mode,
-                       bool onlyPhysical) const
+                       bool onlyPhysical,
+					   int alphaMod) const
 {
     RTEAssert(!m_aSprite.empty(), "No sprite bitmaps loaded to draw!");
     RTEAssert(m_Frame >= 0 && m_Frame < m_FrameCount, "Frame is out of bounds!");
@@ -1557,13 +1558,13 @@ void MOSRotating::Draw(SDL_Renderer *renderer,
     // Only draw attachables and emitters which are not drawn after parent, so we draw them before
     if (mode == g_DrawColor || (!onlyPhysical && mode == g_DrawMaterial)) {
         for (const AEmitter *woundToDraw : m_Wounds) {
-            if (!woundToDraw->IsDrawnAfterParent()) { woundToDraw->Draw(renderer, targetPos, mode, onlyPhysical); }
+            if (!woundToDraw->IsDrawnAfterParent()) { woundToDraw->Draw(renderer, targetPos, mode, onlyPhysical, alphaMod); }
         }
     }
 
     // Draw all the attached attachables
     for (const Attachable *attachableToDraw : m_Attachables) {
-        if (!attachableToDraw->IsDrawnAfterParent() && attachableToDraw->IsDrawnNormallyByParent()) { attachableToDraw->Draw(renderer, targetPos, mode, onlyPhysical); }
+        if (!attachableToDraw->IsDrawnAfterParent() && attachableToDraw->IsDrawnNormallyByParent()) { attachableToDraw->Draw(renderer, targetPos, mode, onlyPhysical, alphaMod); }
     }
 
 	// Only draw MOID if this gets hit by MO's and it has a valid MOID assigned
@@ -1636,7 +1637,7 @@ void MOSRotating::Draw(SDL_Renderer *renderer,
 	if (mode == g_DrawColor || (!onlyPhysical && mode == g_DrawMaterial)) {
 		for (const AEmitter *woundToDraw: m_Wounds) {
 			if (!woundToDraw->IsDrawnAfterParent()) {
-				woundToDraw->Draw(renderer, targetPos, mode, onlyPhysical);
+				woundToDraw->Draw(renderer, targetPos, mode, onlyPhysical, alphaMod);
 			}
 		}
 	}
@@ -1645,7 +1646,7 @@ void MOSRotating::Draw(SDL_Renderer *renderer,
 	for (const Attachable *attachableToDraw: m_Attachables) {
 		if (!attachableToDraw->IsDrawnAfterParent() &&
 			attachableToDraw->IsDrawnNormallyByParent()) {
-			attachableToDraw->Draw(renderer, targetPos, mode, onlyPhysical);
+			attachableToDraw->Draw(renderer, targetPos, mode, onlyPhysical, alphaMod);
 		}
 	}
 
@@ -1693,7 +1694,7 @@ void MOSRotating::Draw(SDL_Renderer *renderer,
 	if (mode == g_DrawColor || (!onlyPhysical && mode == g_DrawMaterial)) {
 		for (const AEmitter *woundToDraw: m_Wounds) {
 			if (woundToDraw->IsDrawnAfterParent()) {
-				woundToDraw->Draw(renderer, targetPos, mode, onlyPhysical);
+				woundToDraw->Draw(renderer, targetPos, mode, onlyPhysical, alphaMod);
 			}
 		}
 	}
@@ -1702,7 +1703,7 @@ void MOSRotating::Draw(SDL_Renderer *renderer,
 	for (const Attachable *attachableToDraw: m_Attachables) {
 		if (attachableToDraw->IsDrawnAfterParent() &&
 			attachableToDraw->IsDrawnNormallyByParent()) {
-			attachableToDraw->Draw(renderer, targetPos, mode, onlyPhysical);
+			attachableToDraw->Draw(renderer, targetPos, mode, onlyPhysical, alphaMod);
 		}
 	}
 

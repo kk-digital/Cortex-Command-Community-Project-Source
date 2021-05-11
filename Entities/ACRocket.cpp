@@ -1003,13 +1003,12 @@ void ACRocket::ResetEmissionTimers()
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#ifdef DEBUG_BUILD
-void ACRocket::Draw(SDL_Renderer* renderer, const Vector &targetPos, DrawMode mode, bool onlyPhysical) const {
-    ACraft::Draw(renderer, targetPos, mode, onlyPhysical);
+void ACRocket::Draw(SDL_Renderer* renderer, const Vector &targetPos, DrawMode mode, bool onlyPhysical, int alphaMod) const {
+    ACraft::Draw(renderer, targetPos, mode, onlyPhysical, alphaMod);
 
     if (mode == g_DrawColor && !onlyPhysical && g_SettingsMan.DrawHandAndFootGroupVisualizations()) {
-        m_pRFootGroup->Draw(renderer, targetPos, true, 13);
-        m_pLFootGroup->Draw(renderer, targetPos, true, 13);
+        m_pRFootGroup->Draw(renderer, targetPos, true, 13); //TODO: Magic Numbers 13
+        m_pLFootGroup->Draw(renderer, targetPos, true, 13); //TODO: Magic Numbers 13
     }
 }
 

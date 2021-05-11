@@ -22,6 +22,8 @@
 #include "GUI/SDLGUITexture.h"
 
 
+#include "System/SDLHelper.h"
+
 namespace RTE {
 
 ConcreteClassInfo(HeldDevice, Attachable, 50)
@@ -492,11 +494,12 @@ void HeldDevice::Update()
 //                  BITMAP of choice.
 
 void HeldDevice::Draw(SDL_Renderer* renderer,
-                      const Vector &targetPos,
-                      DrawMode mode,
-                      bool onlyPhysical) const
+						const Vector &targetPos,
+						DrawMode mode,
+						bool onlyPhysical,
+						int alphaMod) const
 {
-    Attachable::Draw(renderer, targetPos, mode, onlyPhysical);
+    Attachable::Draw(renderer, targetPos, mode, onlyPhysical, alphaMod);
 /*
     // Draw suporting hand if applicable.
     if (m_Supported) {

@@ -439,12 +439,12 @@ void Arm::UpdateArmFrame() {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Arm::Draw(SDL_Renderer* renderer, const Vector &targetPos, DrawMode mode, bool onlyPhysical) const {
-    Attachable::Draw(renderer, targetPos, mode, onlyPhysical);
+void Arm::Draw(SDL_Renderer* renderer, const Vector &targetPos, DrawMode mode, bool onlyPhysical, int alphaMod) const {
+    Attachable::Draw(renderer, targetPos, mode, onlyPhysical, alphaMod);
 
     if (!onlyPhysical && (mode == g_DrawColor || mode == g_DrawWhite || mode == g_DrawTrans) && (!m_Parent || m_pHeldMO || (!m_pHeldMO && !m_DidReach))) {
         DrawHand(renderer, targetPos, mode);
-        if (m_pHeldMO && m_pHeldMO->IsDrawnAfterParent()) { m_pHeldMO->Draw(renderer, targetPos, mode, onlyPhysical); }
+        if (m_pHeldMO && m_pHeldMO->IsDrawnAfterParent()) { m_pHeldMO->Draw(renderer, targetPos, mode, onlyPhysical, alphaMod); }
     }
 }
 

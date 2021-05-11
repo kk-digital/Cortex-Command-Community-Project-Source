@@ -700,7 +700,7 @@ bool Deployment::IsOnScenePoint(Vector &scenePoint) const
 // Description:     Draws this Deployment's current graphical representation to a
 //                  BITMAP of choice.
 
-void Deployment::Draw(SDL_Renderer* renderer, const Vector &targetPos, DrawMode mode, bool onlyPhysical) const
+void Deployment::Draw(SDL_Renderer* renderer, const Vector &targetPos, DrawMode mode, bool onlyPhysical, int alphaMod) const
 {
     if (m_Icon.GetTextures().empty() || !(m_Icon.GetTextures()[0]))
         RTEAbort("Deployment's Icon bitmaps are null when drawing!");
@@ -772,9 +772,12 @@ void Deployment::Draw(SDL_Renderer* renderer, const Vector &targetPos, DrawMode 
 			}
 			else if (mode == g_DrawTrans)
 			{
+				pTexture->setAlphaMod(alphaMod);
 				pTexture->render(renderer, aDrawPos[i].GetFloorIntX(), aDrawPos[i].GetFloorIntY());
+				pTexture->setAlphaMod(255);
 				// Draw the spawn radius circle too
-				circleColor(renderer, aDrawPos[i].GetFloorIntX() + (pTexture->getW() / 2), aDrawPos[i].GetFloorIntY() + (pTexture->getH() / 2), m_SpawnRadius, c_GUIColorGray);
+				uint32_t color = (c_GUIColorGray&0xFFFFFF00)|alphaMod;
+				circleColor(renderer, aDrawPos[i].GetFloorIntX() + (pTexture->getW() / 2), aDrawPos[i].GetFloorIntY() + (pTexture->getH() / 2), m_SpawnRadius, color);
 			}
 		}
 	}
@@ -848,7 +851,9 @@ void Deployment::Draw(SDL_Renderer* renderer, const Vector &targetPos, DrawMode 
 			}
 			else if (mode == g_DrawTrans)
 			{
+				pTexture->setAlphaMod(alphaMod);
 				pTexture->render(renderer, aDrawPos[i].GetFloorIntX(), aDrawPos[i].GetFloorIntY());
+				pTexture->setAlphaMod(255);
 			}
 		}
 	}

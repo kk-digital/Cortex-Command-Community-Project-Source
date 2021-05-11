@@ -411,7 +411,7 @@ bool MOSprite::IsOnScenePoint(Vector &scenePoint) const
 
         uint32_t pixel = m_aSprite[m_Frame]->getPixel(spritePoint.m_X - m_SpriteOffset.m_X, spritePoint.m_Y - m_SpriteOffset.m_Y);
         // Check that it isn't outside the sprite or transparent
-        if (pixel&0xFF000000)
+        if (pixel&0xFF)
            return true;
     }
 
@@ -513,11 +513,7 @@ void MOSprite::Update() {
 // Description:     Draws this MOSprite's current graphical representation to a
 //                  BITMAP of choice.
 
-void MOSprite::Draw(SDL_Renderer* renderer,
-                    const Vector &targetPos,
-                    DrawMode mode,
-                    bool onlyPhysical) const
-{
+void MOSprite::Draw(SDL_Renderer* renderer, const Vector &targetPos, DrawMode mode, bool onlyPhysical, int alphaMod) const {
     if (!m_aSprite[m_Frame])
         RTEAbort("Sprite frame pointer is null when drawing MOSprite!");
 

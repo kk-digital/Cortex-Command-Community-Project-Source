@@ -209,7 +209,7 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void MOPixel::Draw(SDL_Renderer* renderer, const Vector &targetPos, DrawMode mode, bool onlyPhysical) const {
+	void MOPixel::Draw(SDL_Renderer* renderer, const Vector &targetPos, DrawMode mode, bool onlyPhysical, int alphaMod) const {
 		// Don't draw color if this isn't a drawing frame
 		if (!g_TimerMan.DrawnSimUpdate() && mode == g_DrawColor) {
 			return;
@@ -238,15 +238,11 @@ namespace RTE {
 				break;
 		}
 
-		uint8_t r,g,b,a;
-		SDL_GetRenderDrawColor(renderer, &r, &g, &b, &a);
-		SDL_SetRenderDrawColor(renderer, (drawColor>>24)&0xFF, (drawColor>>16)&0xFF,(drawColor>>8)&0xFF, (drawColor)&0xFF);
+		SDL_SetRenderDrawColor(renderer, (drawColor>>24)&0xFF, (drawColor>>16)&0xFF,(drawColor>>8)&0xFF, (((drawColor)&0xFF) / 255.0) * alphaMod);
 
 		SDL_RenderDrawPoint(renderer,
 		                    m_Pos.GetFloorIntX() - targetPos.GetFloorIntX(),
 		                    m_Pos.GetFloorIntY() - targetPos.GetFloorIntY());
-
-		SDL_SetRenderDrawColor(renderer, r, g, b, a);
 
 		if (mode == g_DrawMOID) {
 			g_SceneMan.RegisterMOIDDrawing(m_Pos - targetPos, 1);

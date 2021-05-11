@@ -1616,10 +1616,11 @@ void Actor::Update()
 void Actor::Draw(SDL_Renderer* renderer,
                  const Vector &targetPos,
                  DrawMode mode,
-                 bool onlyPhysical) const
+                 bool onlyPhysical,
+				 int alphaMod) const
 {
     // Make it draw white if is going to be drawn as color
-    MOSRotating::Draw(renderer, targetPos, mode == g_DrawColor && m_FlashWhiteMS ? g_DrawWhite : mode, onlyPhysical);
+    MOSRotating::Draw(renderer, targetPos, mode == g_DrawColor && m_FlashWhiteMS ? g_DrawWhite : mode, onlyPhysical, alphaMod);
 }
 
 

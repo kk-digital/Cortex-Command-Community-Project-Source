@@ -144,7 +144,7 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void MOSParticle::Draw(SDL_Renderer* renderer, const Vector &targetPos, DrawMode mode, bool onlyPhysical) const {
+	void MOSParticle::Draw(SDL_Renderer* renderer, const Vector &targetPos, DrawMode mode, bool onlyPhysical, int alphaMod) const {
 		Vector spritePos(m_Pos + m_SpriteOffset - targetPos);
 
 		int spriteX = 0;
@@ -182,7 +182,9 @@ namespace RTE {
 				m_aSprite[m_Frame]->renderFillColor(renderer, spritePos.GetFloorIntX(), spritePos.GetFloorIntY(), g_NoMOID);
 				break;
 			case g_DrawTrans:
+				m_aSprite[m_Frame]->setAlphaMod(alphaMod);
 				m_aSprite[m_Frame]->render(renderer, spritePos.GetFloorIntX(), spritePos.GetFloorIntY());
+				m_aSprite[m_Frame]->setAlphaMod(255);
 				break;
 			case g_DrawAlpha:
 				m_aSprite[m_Frame]->render(renderer, spritePos.GetFloorIntX(), spritePos.GetFloorIntY());

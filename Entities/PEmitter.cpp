@@ -535,9 +535,10 @@ namespace RTE {
 	void PEmitter::Draw(SDL_Renderer* renderer,
 		const Vector &targetPos,
 		DrawMode mode,
-		bool onlyPhysical) const
+		bool onlyPhysical,
+		int alphaMod) const
 	{
-		MOSParticle::Draw(renderer, targetPos, mode, onlyPhysical);
+		MOSParticle::Draw(renderer, targetPos, mode, onlyPhysical, alphaMod);
 	}
 
 } // namespace RTE
