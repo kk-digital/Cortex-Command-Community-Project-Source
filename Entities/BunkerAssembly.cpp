@@ -21,6 +21,9 @@
 #include "BunkerAssemblyScheme.h"
 #include "Deployment.h"
 
+#include "FrameMan.h"
+#include "System/SDLHelper.h"
+
 namespace RTE {
 
 ConcreteClassInfo(BunkerAssembly, SceneObject, 0)
@@ -37,10 +40,10 @@ void BunkerAssembly::Clear()
     m_FGColorFile.Reset();
     m_MaterialFile.Reset();
     m_BGColorFile.Reset();
-    m_pFGColor = 0;
-    m_pMaterial = 0;
-    m_pBGColor = 0;
-    m_BitmapOffset.Reset();
+    m_pFGColor.reset();
+    m_pMaterial.reset();
+    m_pBGColor.reset();
+    m_TextureOffset.Reset();
     m_OffsetDefined = false;
     m_ChildObjects.clear();
 	m_PlacedObjects.clear();
@@ -68,7 +71,7 @@ int BunkerAssembly::Create()
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          AddPlacedObject
 //////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Adds placed object to the internallist of placed objects for this assembly,
+// Description:     Adds placed object to the internal list of placed objects for this assembly,
 //					applies it's image to presentation bitmap and sets assembly price accordingly.
 //					Added scene object MUST have coordinates relative to this assembly.
 
@@ -86,17 +89,39 @@ void BunkerAssembly::AddPlacedObject(SceneObject * pSO)
 	TerrainObject * pTObject = dynamic_cast<TerrainObject *>(pSO);
 	if (pTObject)
 	{
-		Vector loc = pTObject->GetPos() + pTObject->GetBitmapOffset();
+		Vector loc = pTObject->GetPos() + pTObject->GetTextureOffset();
+
+		// Own Texture surfaces
+		m_pMaterial->lock();
+		m_pBGColor->lock();
+		m_pFGColor->lock();
+		m_pPresentationBitmap->lock();
+
+		std::unique_ptr<SDL_Surface, sdl_deleter> matSurface{m_pMaterial->getPixelsAsSurface()};
+
+		std::unique_ptr<SDL_Surface, sdl_deleter> bgSurface{m_pBGColor->getPixelsAsSurface()};
+
+		std::unique_ptr<SDL_Surface, sdl_deleter> fgSurface{m_pFGColor->getPixelsAsSurface()};
+
+		std::unique_ptr<SDL_Surface, sdl_deleter> presentationSurface{m_pPresentationBitmap->getPixelsAsSurface()};
+
+		// TO surfaces
+		std::unique_ptr<SDL_Surface, sdl_deleter> toMatSurface{pTObject->GetMaterialTexture()->getPixelsAsSurface()};
+
+		std::unique_ptr<SDL_Surface, sdl_deleter> toBGSurface{pTObject->GetBGColorTexture()->getPixelsAsSurface()};
+
+		std::unique_ptr<SDL_Surface, sdl_deleter> toFGSurface{pTObject->GetFGColorTexture()->getPixelsAsSurface()};
 
 		// Regular drawing
-		draw_sprite(m_pMaterial, pTObject->GetMaterialBitmap(), loc.m_X, loc.m_Y);
+		SDL_Rect destPos{static_cast<int>(loc.m_X), static_cast<int>(loc.m_Y), 0, 0};
+		SDL_BlitSurface(toMatSurface.get(), nullptr, matSurface.get(), &destPos);
 		if (pTObject->HasBGColor())
 		{
-			draw_sprite(m_pBGColor, pTObject->GetBGColorBitmap(), loc.m_X, loc.m_Y);
-			draw_sprite(m_pPresentationBitmap, pTObject->GetBGColorBitmap(), loc.m_X, loc.m_Y);
+			SDL_BlitSurface(toBGSurface.get(), nullptr, bgSurface.get(), &destPos);
+			SDL_BlitSurface(toBGSurface.get(), nullptr, presentationSurface.get(), &destPos);
 		}
-		draw_sprite(m_pFGColor, pTObject->GetFGColorBitmap(), loc.m_X, loc.m_Y);
-		draw_sprite(m_pPresentationBitmap, pTObject->GetFGColorBitmap(), loc.m_X, loc.m_Y);
+		SDL_BlitSurface(toFGSurface.get(), nullptr, fgSurface.get(), &destPos);
+		SDL_BlitSurface(toFGSurface.get(), nullptr, presentationSurface.get(), &destPos);
 
 		// Read and add all child objects
 		pTObject->SetTeam(GetTeam());
@@ -105,9 +130,13 @@ void BunkerAssembly::AddPlacedObject(SceneObject * pSO)
 			SOPlacer newPlacer = (*itr);
 			newPlacer.SetTeam(pTObject->GetTeam());
 			// Explicitly set child object's offset, because it will be a part of a bigger 'terrain object'
-			newPlacer.SetOffset(newPlacer.GetOffset() + pTObject->GetPos() + m_BitmapOffset);
+			newPlacer.SetOffset(newPlacer.GetOffset() + pTObject->GetPos() + m_TextureOffset);
 			m_ChildObjects.push_back(newPlacer);
 		}
+		m_pPresentationBitmap->unlock();
+		m_pFGColor->unlock();
+		m_pBGColor->unlock();
+		m_pMaterial->unlock();
 	}
 }
 
@@ -118,22 +147,18 @@ void BunkerAssembly::AddPlacedObject(SceneObject * pSO)
 
 int BunkerAssembly::Create(BunkerAssemblyScheme * pScheme)
 {
-    if (TerrainObject::Create() < 0)
-        return -1;
+	if (TerrainObject::Create() < 0)
+		return -1;
 
-	m_pPresentationBitmap = create_bitmap_ex(8, pScheme->GetBitmapWidth() , pScheme->GetBitmapHeight());
-	clear_to_color(m_pPresentationBitmap, g_MaskColor);
+	m_pPresentationBitmap = std::make_shared<Texture>(g_FrameMan.GetRenderer(), pScheme->GetBitmapWidth(), pScheme->GetBitmapHeight(), SDL_TEXTUREACCESS_STREAMING);
 
-	m_pFGColor = create_bitmap_ex(8, pScheme->GetBitmapWidth() , pScheme->GetBitmapHeight());
-	clear_to_color(m_pFGColor, g_MaskColor);
+	m_pFGColor = std::make_shared<Texture>(g_FrameMan.GetRenderer(), pScheme->GetBitmapWidth(), pScheme->GetBitmapHeight(), SDL_TEXTUREACCESS_STREAMING);
 
-	m_pMaterial = create_bitmap_ex(8, pScheme->GetBitmapWidth() , pScheme->GetBitmapHeight());
-	clear_to_color(m_pMaterial, g_MaskColor);
+	m_pMaterial = std::make_shared<Texture>(g_FrameMan.GetRenderer(), pScheme->GetBitmapWidth() , pScheme->GetBitmapHeight(), SDL_TEXTUREACCESS_STREAMING);
 
-	m_pBGColor = create_bitmap_ex(8, pScheme->GetBitmapWidth() , pScheme->GetBitmapHeight());
-	clear_to_color(m_pBGColor, g_MaskColor);
+	m_pBGColor = std::make_shared<Texture>(g_FrameMan.GetRenderer(), pScheme->GetBitmapWidth() , pScheme->GetBitmapHeight(), SDL_TEXTUREACCESS_STREAMING);
 
-	m_BitmapOffset = pScheme->GetBitmapOffset();
+	m_TextureOffset = pScheme->GetBitmapOffset();
 	m_ParentAssemblyScheme = pScheme->GetPresetName();
 	m_Pos = pScheme->GetPos();
 
@@ -229,24 +254,16 @@ int BunkerAssembly::ReadProperty(const std::string_view &propName, Reader &reade
 				pScheme->GetGoldValue();
 
 			//Delete existing bitmaps to avoid leaks if someone adds assembly to multiple groups by mistake
-			delete m_pPresentationBitmap;
-			m_pPresentationBitmap = create_bitmap_ex(8, pScheme->GetBitmapWidth() , pScheme->GetBitmapHeight());
-			clear_to_color(m_pPresentationBitmap, g_MaskColor);
+			m_pPresentationBitmap = std::make_shared<Texture>(g_FrameMan.GetRenderer(), pScheme->GetBitmapWidth() , pScheme->GetBitmapHeight(), SDL_TEXTUREACCESS_STREAMING);
 
-			delete m_pFGColor;
-			m_pFGColor = create_bitmap_ex(8, pScheme->GetBitmapWidth() , pScheme->GetBitmapHeight());
-			clear_to_color(m_pFGColor, g_MaskColor);
+			m_pFGColor = std::make_shared<Texture>(g_FrameMan.GetRenderer(), pScheme->GetBitmapWidth() , pScheme->GetBitmapHeight(), SDL_TEXTUREACCESS_STREAMING);
 
-			delete m_pMaterial;
-			m_pMaterial = create_bitmap_ex(8, pScheme->GetBitmapWidth() , pScheme->GetBitmapHeight());
-			clear_to_color(m_pMaterial, g_MaskColor);
+			m_pMaterial = std::make_shared<Texture>(g_FrameMan.GetRenderer(), pScheme->GetBitmapWidth() , pScheme->GetBitmapHeight(), SDL_TEXTUREACCESS_STREAMING);
 
-			delete m_pBGColor;
-			m_pBGColor = create_bitmap_ex(8, pScheme->GetBitmapWidth() , pScheme->GetBitmapHeight());
-			clear_to_color(m_pBGColor, g_MaskColor);
+			m_pBGColor = std::make_shared<Texture>(g_FrameMan.GetRenderer(), pScheme->GetBitmapWidth() , pScheme->GetBitmapHeight(), SDL_TEXTUREACCESS_STREAMING);
 
 			m_ParentAssemblyScheme = parentScheme;
-			m_BitmapOffset = pScheme->GetBitmapOffset();
+			m_TextureOffset = pScheme->GetBitmapOffset();
 			if (pScheme->GetAssemblyGroup().length() > 0)
 			{
 				AddToGroup(pScheme->GetAssemblyGroup());
@@ -442,12 +459,12 @@ bool BunkerAssembly::IsOnScenePoint(Vector &scenePoint) const
     if (!m_pPresentationBitmap)
         return false;
 
-    Vector bitmapPos = m_Pos + m_BitmapOffset;
-    if (WithinBox(scenePoint, bitmapPos, m_pPresentationBitmap->w, m_pPresentationBitmap->h))
+    Vector bitmapPos = m_Pos + m_TextureOffset;
+    if (WithinBox(scenePoint, bitmapPos, m_pPresentationBitmap->getW(), m_pPresentationBitmap->getH()))
     {
         // Scene point on the bitmap
         Vector bitmapPoint = scenePoint - bitmapPos;
-        if (getpixel(m_pPresentationBitmap, bitmapPoint.m_X, bitmapPoint.m_Y) != g_MaskColor)
+        if (m_pPresentationBitmap->getPixel(bitmapPoint.m_X, bitmapPoint.m_Y) != g_AlphaZero)
            return true;
     }
 
@@ -476,29 +493,32 @@ void BunkerAssembly::SetTeam(int team)
 // Description:     Draws this TerrainObject's current graphical representation to a
 //                  BITMAP of choice.
 
-void BunkerAssembly::Draw(BITMAP *pTargetBitmap, const Vector &targetPos, DrawMode mode, bool onlyPhysical) const
+void BunkerAssembly::Draw(SDL_Renderer *renderer, const Vector &targetPos, DrawMode mode, bool onlyPhysical, int alphaMod) const
 {
     if (!m_pFGColor)
         RTEAbort("TerrainObject's bitmaps are null when drawing!");
 
+	SDL_Rect viewport;
+	SDL_RenderGetViewport(renderer, &viewport);
+
     // Take care of wrapping situations
     Vector aDrawPos[4];
-    aDrawPos[0] = m_Pos + m_BitmapOffset - targetPos;
+    aDrawPos[0] = m_Pos + m_TextureOffset - targetPos;
     int passes = 1;
 
     // See if need to double draw this across the scene seam if we're being drawn onto a scenewide bitmap
-	if (targetPos.IsZero() && g_SceneMan.GetSceneWidth() <= pTargetBitmap->w)
+	if (targetPos.IsZero() && g_SceneMan.GetSceneWidth() <= viewport.w)
     {
-        if (aDrawPos[0].m_X < m_pFGColor->w)
+        if (aDrawPos[0].m_X < m_pFGColor->getW())
         {
             aDrawPos[passes] = aDrawPos[0];
-            aDrawPos[passes].m_X += pTargetBitmap->w;
+            aDrawPos[passes].m_X += viewport.w;
             passes++;
         }
-        else if (aDrawPos[0].m_X > pTargetBitmap->w - m_pFGColor->w)
+        else if (aDrawPos[0].m_X > viewport.w - m_pFGColor->getW())
         {
             aDrawPos[passes] = aDrawPos[0];
-            aDrawPos[passes].m_X -= pTargetBitmap->w;
+            aDrawPos[passes].m_X -= viewport.w;
             passes++;
         }
     }
@@ -514,7 +534,7 @@ void BunkerAssembly::Draw(BITMAP *pTargetBitmap, const Vector &targetPos, DrawMo
                 aDrawPos[passes].m_X -= sceneWidth;
                 passes++;
             }
-            if (targetPos.m_X + pTargetBitmap->w > sceneWidth)
+            if (targetPos.m_X + viewport.w > sceneWidth)
             {
                 aDrawPos[passes] = aDrawPos[0];
                 aDrawPos[passes].m_X += sceneWidth;
@@ -528,21 +548,17 @@ void BunkerAssembly::Draw(BITMAP *pTargetBitmap, const Vector &targetPos, DrawMo
     {
         if (mode == g_DrawColor)
         {
-            masked_blit(m_pPresentationBitmap, pTargetBitmap, 0, 0, aDrawPos[i].GetFloorIntX(), aDrawPos[i].GetFloorIntY(), m_pBGColor->w, m_pBGColor->h);
-        }
-        else if (mode == g_DrawMaterial)
-        {
-            masked_blit(m_pMaterial, pTargetBitmap, 0, 0, aDrawPos[i].GetFloorIntX(), aDrawPos[i].GetFloorIntY(), m_pMaterial->w, m_pMaterial->h);
-        }
-        else if (mode == g_DrawLess)
-        {
-            masked_blit(m_pPresentationBitmap, pTargetBitmap, 0, 0, aDrawPos[i].GetFloorIntX(), aDrawPos[i].GetFloorIntY(), m_pFGColor->w, m_pFGColor->h);
-        }
-        else if (mode == g_DrawTrans)
-        {
-            draw_trans_sprite(pTargetBitmap, m_pPresentationBitmap, aDrawPos[i].GetFloorIntX(), aDrawPos[i].GetFloorIntY());
-        }
-    }
+			m_pPresentationBitmap->render(renderer, aDrawPos[i].GetFloorIntX(), aDrawPos[i].GetFloorIntY());
+		} else if (mode == g_DrawMaterial) {
+			m_pMaterial->render(renderer, aDrawPos[i].GetFloorIntX(), aDrawPos[i].GetFloorIntY());
+		} else if (mode == g_DrawLess) {
+			m_pPresentationBitmap->render(renderer, aDrawPos[i].GetFloorIntX(), aDrawPos[i].GetFloorIntY());
+		} else if (mode == g_DrawTrans) {
+			m_pPresentationBitmap->setAlphaMod(alphaMod);
+			m_pPresentationBitmap->render(renderer, aDrawPos[i].GetFloorIntX(), aDrawPos[i].GetFloorIntY());
+			m_pPresentationBitmap->setAlphaMod(255);
+		}
+	}
 }
 
 

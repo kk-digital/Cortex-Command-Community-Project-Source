@@ -1,6 +1,8 @@
 #include "TerrainDebris.h"
 #include "SLTerrain.h"
 
+#include "System/SDLHelper.h"
+
 namespace RTE {
 
 	ConcreteClassInfo(TerrainDebris, Entity, 0)
@@ -9,7 +11,7 @@ namespace RTE {
 
 	void TerrainDebris::Clear() {
 		m_DebrisFile.Reset();
-		m_Bitmaps = 0;
+		m_Textures.clear();
 		m_BitmapCount = 0;
 		m_Material.Reset();
 		m_TargetMaterial.Reset();
@@ -26,8 +28,8 @@ namespace RTE {
 		if (Entity::Create() < 0) {
 			return -1;
 		}
-		m_Bitmaps = m_DebrisFile.GetAsAnimation(m_BitmapCount);
-		RTEAssert(m_Bitmaps && m_Bitmaps[0], "Failed to load debris bitmaps!");
+		m_Textures = m_DebrisFile.GetAsAnimation(m_BitmapCount);
+		RTEAssert(!m_Textures.empty() && m_Textures[0], "Failed to load debris bitmaps!");
 
 		return 0;
 	}
@@ -38,7 +40,7 @@ namespace RTE {
 		Entity::Create(reference);
 
 		m_DebrisFile = reference.m_DebrisFile;
-		m_Bitmaps = reference.m_Bitmaps;
+		m_Textures = reference.m_Textures;
 		m_BitmapCount = reference.m_BitmapCount;
 		m_Material = reference.m_Material;
 		m_TargetMaterial = reference.m_TargetMaterial;
@@ -108,41 +110,40 @@ namespace RTE {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void TerrainDebris::ApplyDebris(SLTerrain *terrain) {
-		RTEAssert(m_Bitmaps && m_BitmapCount > 0, "No bitmaps loaded for terrain debris!");
+		// TODO: move all this to SLTerrain
+		RTEAssert(!m_Textures.empty() && m_BitmapCount > 0, "No bitmaps loaded for terrain debris!");
 
-		BITMAP *terrBitmap = terrain->GetFGColorBitmap();
-		BITMAP *matBitmap = terrain->GetMaterialBitmap();
+		SharedTexture terrTexture = terrain->GetFGColorTexture();
+		SharedTexture matTexture = terrain->GetMaterialTexture();
+
 
 		// How many pieces of debris we're spreading out.
-		unsigned int terrainWidth = terrBitmap->w;	
+		unsigned int terrainWidth = terrTexture->getW();
 		unsigned int pieceCount = (terrainWidth * c_MPP) * m_Density;
 
 		// First is index in the bitmap array, Second is blit location
 		std::list<std::pair<int, Vector>> piecesToPlace;
 		Vector location;
 		Box pieceBox;
-		
-		unsigned char checkPixel;
 
-		acquire_bitmap(terrBitmap);
-		acquire_bitmap(matBitmap);
+		unsigned char checkPixel;
 
 		for (unsigned int piece = 0; piece < pieceCount; ++piece) {
 			bool place = false;
 			unsigned short currentBitmap = RandomNum<unsigned short>(0, m_BitmapCount - 1);
 			RTEAssert(currentBitmap >= 0 && currentBitmap < m_BitmapCount, "Bitmap index is out of bounds!");
 
-			pieceBox.SetWidth(m_Bitmaps[currentBitmap]->w);
-			pieceBox.SetHeight(m_Bitmaps[currentBitmap]->h);
+			pieceBox.SetWidth(m_Textures[currentBitmap]->getW());
+			pieceBox.SetHeight(m_Textures[currentBitmap]->getH());
 
 			int x = RandomNum<int>(0, terrainWidth);
 			int y = 0;
 			int depth = RandomNum(m_MinDepth, m_MaxDepth);
 
-			while (y < terrBitmap->h) {
+			while (y < terrTexture->getW()) {
 				// Find the air-terrain boundary
-				for (; y < terrBitmap->h; ++y) {
-					checkPixel = _getpixel(matBitmap, x, y);
+				for (; y < terrTexture->getH(); ++y) {
+					checkPixel = matTexture->getPixel(x, y);
 					// Check for terrain hit
 					if (checkPixel != g_MaterialAir) {
 						if (checkPixel == m_TargetMaterial.GetIndex()) {
@@ -171,16 +172,32 @@ namespace RTE {
 			}
 		}
 
-		for (const std::pair<int, Vector> &pieceListEntry : piecesToPlace) {
-			// Draw the color sprite onto the terrain color layer.
-			draw_sprite(terrBitmap, m_Bitmaps[pieceListEntry.first], pieceListEntry.second.m_X, pieceListEntry.second.m_Y);
-			// Draw the material representation onto the terrain's material layer
-			draw_character_ex(matBitmap, m_Bitmaps[pieceListEntry.first], pieceListEntry.second.m_X, pieceListEntry.second.m_Y, m_Material.GetIndex(), -1);
-		}
+		terrTexture->lock();
+		matTexture->lock();
 
-		release_bitmap(terrBitmap);
-		release_bitmap(matBitmap);
-		terrBitmap = 0;
-		matBitmap = 0;
+		std::unique_ptr<SDL_Surface, sdl_deleter> terrMatSurface{matTexture->getPixelsAsSurface()};
+		std::unique_ptr<SDL_Surface, sdl_deleter> terrFGSurface{terrTexture->getPixelsAsSurface()};
+
+		for (const std::pair<int, Vector> &pieceListEntry : piecesToPlace) {
+			std::unique_ptr<SDL_Surface, sdl_deleter> piece{m_Textures[pieceListEntry.first]->getPixelsAsSurface()};
+			SDL_Rect pos{pieceListEntry.second.GetFloorIntX(), pieceListEntry.second.GetFloorIntY(), 0, 0};
+			// Draw the color sprite onto the terrain color layer.
+			SDL_BlitSurface(piece.get(), nullptr, terrFGSurface.get(), &pos);
+			// Draw the material representation onto the terrain's material layer
+			SDL_Surface *pieceMatter{SDL_DuplicateSurface(piece.get())};
+
+			if(SDL_MUSTLOCK(pieceMatter))
+				SDL_LockSurface(pieceMatter);
+
+			std::replace_if((uint32_t*)pieceMatter->pixels, (uint32_t*)pieceMatter->pixels + (pieceMatter->w * pieceMatter->h), [](auto x){ return x != 0; }, m_Material.GetIndex());
+
+			if(SDL_MUSTLOCK(pieceMatter))
+				SDL_UnlockSurface(pieceMatter);
+
+			SDL_BlitSurface(pieceMatter, nullptr, terrMatSurface.get(), &pos);
+			SDL_FreeSurface(pieceMatter);
+		}
+		terrTexture->unlock();
+		matTexture->unlock();
 	}
 }

@@ -16,7 +16,11 @@
 #include "FrameMan.h"
 
 #include "GUI/GUI.h"
-#include "GUI/AllegroBitmap.h"
+#include "GUI/SDLGUITexture.h"
+
+#include "System/Color.h"
+#include "System/SDLHelper.h"
+#include <SDL2/SDL2_gfxPrimitives.h>
 
 namespace RTE {
 
@@ -97,103 +101,109 @@ int BunkerAssemblyScheme::ReadProperty(const std::string_view &propName, Reader 
     if (propName == "BitmapFile")
     {
         reader >> m_BitmapFile;
-        m_pBitmap = m_BitmapFile.GetAsBitmap();
+        m_pBitmap = m_BitmapFile.GetAsTexture();
 
-		m_pPresentationBitmap = create_bitmap_ex(8, m_pBitmap->w * ScaleX, m_pBitmap->h * ScaleY);
-		clear_to_color(m_pPresentationBitmap, g_MaskColor);
-
+		m_pPresentationBitmap = std::make_shared<Texture>(g_FrameMan.GetRenderer(), m_pBitmap->getW() * ScaleX, m_pBitmap->getH() * ScaleY);
+		Texture tempPresentation(g_FrameMan.GetRenderer(), m_pBitmap->getW(), m_pBitmap->getH());
+		g_FrameMan.PushRenderTarget(tempPresentation.getAsRenderTarget());
 		// Create internal presentation bitmap which will be drawn by editor
 		// Create horizontal outlines
-        for (int x = 0; x < m_pBitmap->w; ++x)
+        for (int x = 0; x < m_pBitmap->getW(); ++x)
 		{
 	        //Top to bottom
-			for (int y = 0; y < m_pBitmap->h ; ++y)
+			for (int y = 0; y < m_pBitmap->getH() ; ++y)
             {
-				int px = getpixel(m_pBitmap, x, y);
-				int pxp = getpixel(m_pBitmap, x, y - 1) == -1 ? SCHEME_COLOR_EMPTY : getpixel(m_pBitmap, x, y - 1);
+				uint32_t px = m_pBitmap->getPixel(x, y);
+				uint32_t pxp = m_pBitmap->getPixel(x, y - 1) == 0xFFFFFF00 ? SCHEME_COLOR_EMPTY : m_pBitmap->getPixel(x, y - 1);
 
 				if (px == SCHEME_COLOR_WALL && pxp != SCHEME_COLOR_WALL)
-					for (int w = 0; w < SchemeWidth; w++)
-						line(m_pPresentationBitmap, x * ScaleX, y * ScaleY + w, x * ScaleX + ScaleX - 1, y * ScaleY + w, PAINT_COLOR_WALL);
+					for (int w = 0; w < SchemeWidth; w++) {
+						lineColor(g_FrameMan.GetRenderer(), x * ScaleX, y * ScaleY + w, x * ScaleX + ScaleX - 1, y * ScaleY + w, PAINT_COLOR_WALL);
+					}
 
 				if (px == SCHEME_COLOR_PASSABLE && pxp != SCHEME_COLOR_PASSABLE)
 					for (int w = 0; w < SchemeWidth; w++)
-						line(m_pPresentationBitmap, x * ScaleX, y * ScaleY + w, x * ScaleX + ScaleX -1, y * ScaleY + w, PAINT_COLOR_PASSABLE);
+						lineColor(g_FrameMan.GetRenderer(), x * ScaleX, y * ScaleY + w, x * ScaleX + ScaleX -1, y * ScaleY + w, PAINT_COLOR_PASSABLE);
 
 				if (px == SCHEME_COLOR_VARIABLE && pxp != SCHEME_COLOR_VARIABLE)
 					for (int w = 0; w < SchemeWidth; w++)
-						line(m_pPresentationBitmap, x * ScaleX, y * ScaleY + w, x * ScaleX + ScaleX -1, y * ScaleY + w, PAINT_COLOR_VARIABLE);
+						lineColor(g_FrameMan.GetRenderer(), x * ScaleX, y * ScaleY + w, x * ScaleX + ScaleX -1, y * ScaleY + w, PAINT_COLOR_VARIABLE);
             }
 
 			//Bottom to top
-	        for (int y = m_pBitmap->h - 1; y >= 0 ; --y)
+	        for (int y = m_pBitmap->getH() - 1; y >= 0 ; --y)
             {
-				int px = getpixel(m_pBitmap, x, y);
-				int pxp = getpixel(m_pBitmap, x, y + 1) == -1 ? SCHEME_COLOR_EMPTY : getpixel(m_pBitmap, x, y + 1);
+				uint32_t px = m_pBitmap->getPixel(x, y);
+				uint32_t pxp = m_pBitmap->getPixel(x, y + 1) == 0xFFFFFF00 ? SCHEME_COLOR_EMPTY : m_pBitmap->getPixel(x, y + 1);
 
 				if (px == SCHEME_COLOR_WALL && pxp != SCHEME_COLOR_WALL)
 					for (int w = 0; w < SchemeWidth; w++)
-						line(m_pPresentationBitmap, x * ScaleX, y * ScaleY + ScaleX - 1 - w, x * ScaleX + ScaleX - 1, y * ScaleY + ScaleY - 1 - w, PAINT_COLOR_WALL);
+						lineColor(g_FrameMan.GetRenderer(), x * ScaleX, y * ScaleY + ScaleX - 1 - w, x * ScaleX + ScaleX - 1, y * ScaleY + ScaleY - 1 - w, PAINT_COLOR_WALL);
 
 				if (px == SCHEME_COLOR_PASSABLE && pxp != SCHEME_COLOR_PASSABLE)
 					for (int w = 0; w < SchemeWidth; w++)
-						line(m_pPresentationBitmap, x * ScaleX, y * ScaleY + ScaleX - 1 - w, x * ScaleX + ScaleX - 1, y * ScaleY + ScaleY - 1 - w, PAINT_COLOR_PASSABLE);
+						lineColor(g_FrameMan.GetRenderer(), x * ScaleX, y * ScaleY + ScaleX - 1 - w, x * ScaleX + ScaleX - 1, y * ScaleY + ScaleY - 1 - w, PAINT_COLOR_PASSABLE);
 
 				if (px == SCHEME_COLOR_VARIABLE && pxp != SCHEME_COLOR_VARIABLE)
 					for (int w = 0; w < SchemeWidth; w++)
-						line(m_pPresentationBitmap, x * ScaleX, y * ScaleY + ScaleX - 1 - w, x * ScaleX + ScaleX - 1, y * ScaleY + ScaleY - 1 - w, PAINT_COLOR_VARIABLE);
+						lineColor(g_FrameMan.GetRenderer(), x * ScaleX, y * ScaleY + ScaleX - 1 - w, x * ScaleX + ScaleX - 1, y * ScaleY + ScaleY - 1 - w, PAINT_COLOR_VARIABLE);
             }
 		}
 
 		// Create vertical outlines
-        for (int y = 0; y < m_pBitmap->h; ++y)
+        for (int y = 0; y < m_pBitmap->getH(); ++y)
 		{
-			// Left 
-	        for (int x = 0; x < m_pBitmap->w ; ++x)
+			// Left
+	        for (int x = 0; x < m_pBitmap->getW() ; ++x)
             {
-				int px = getpixel(m_pBitmap, x, y);
-				int pxp = getpixel(m_pBitmap, x - 1, y) == -1 ? SCHEME_COLOR_EMPTY : getpixel(m_pBitmap, x - 1, y);
+				uint32_t px = m_pBitmap->getPixel(x, y);
+				uint32_t pxp = m_pBitmap->getPixel(x - 1, y) == 0xFFFFFF00 ? SCHEME_COLOR_EMPTY : m_pBitmap->getPixel(x - 1, y);
 
 				if (px == SCHEME_COLOR_WALL && pxp != SCHEME_COLOR_WALL)
 					for (int w = 0; w < SchemeWidth; w++)
-						line(m_pPresentationBitmap, x * ScaleX + w, y * ScaleY, x * ScaleX + w, y * ScaleY + ScaleY - 1, PAINT_COLOR_WALL);
+						lineColor(g_FrameMan.GetRenderer(), x * ScaleX + w, y * ScaleY, x * ScaleX + w, y * ScaleY + ScaleY - 1, PAINT_COLOR_WALL);
 
 				if (px == SCHEME_COLOR_PASSABLE && pxp != SCHEME_COLOR_PASSABLE)
 					for (int w = 0; w < SchemeWidth; w++)
-						line(m_pPresentationBitmap, x * ScaleX + w, y * ScaleY, x * ScaleX + w, y * ScaleY + ScaleY - 1, PAINT_COLOR_PASSABLE);
+						lineColor(g_FrameMan.GetRenderer(), x * ScaleX + w, y * ScaleY, x * ScaleX + w, y * ScaleY + ScaleY - 1, PAINT_COLOR_PASSABLE);
 
 				if (px == SCHEME_COLOR_VARIABLE && pxp != SCHEME_COLOR_VARIABLE)
 					for (int w = 0; w < SchemeWidth; w++)
-						line(m_pPresentationBitmap, x * ScaleX + w, y * ScaleY, x * ScaleX + w, y * ScaleY + ScaleY - 1, PAINT_COLOR_VARIABLE);
+						lineColor(g_FrameMan.GetRenderer(), x * ScaleX + w, y * ScaleY, x * ScaleX + w, y * ScaleY + ScaleY - 1, PAINT_COLOR_VARIABLE);
 			}
 
-	        for (int x = m_pBitmap->w - 1; x >= 0 ; --x)
+	        for (int x = m_pBitmap->getW() - 1; x >= 0 ; --x)
             {
-				int px = getpixel(m_pBitmap, x, y);
-				int pxp = getpixel(m_pBitmap, x + 1, y) == -1 ? SCHEME_COLOR_EMPTY : getpixel(m_pBitmap, x + 1, y);
+				uint32_t px = m_pBitmap->getPixel(x, y);
+				uint32_t pxp = m_pBitmap->getPixel(x + 1, y) == 0xFFFFFF00 ? SCHEME_COLOR_EMPTY : m_pBitmap->getPixel(x + 1, y);
 
 				if (px == SCHEME_COLOR_WALL && pxp != SCHEME_COLOR_WALL)
 					for (int w = 0; w < SchemeWidth; w++)
-						line(m_pPresentationBitmap, x * ScaleX + ScaleX - 1 - w, y * ScaleY, x * ScaleX + ScaleX - 1 - w, y * ScaleY + ScaleY - 1,PAINT_COLOR_WALL);
+						lineColor(g_FrameMan.GetRenderer(), x * ScaleX + ScaleX - 1 - w, y * ScaleY, x * ScaleX + ScaleX - 1 - w, y * ScaleY + ScaleY - 1,PAINT_COLOR_WALL);
 
 				if (px == SCHEME_COLOR_PASSABLE && pxp != SCHEME_COLOR_PASSABLE)
 					for (int w = 0; w < SchemeWidth; w++)
-						line(m_pPresentationBitmap, x * ScaleX + ScaleX - 1 - w, y * ScaleY, x * ScaleX + ScaleX - 1 - w, y * ScaleY + ScaleY - 1,PAINT_COLOR_PASSABLE);
+						lineColor(g_FrameMan.GetRenderer(), x * ScaleX + ScaleX - 1 - w, y * ScaleY, x * ScaleX + ScaleX - 1 - w, y * ScaleY + ScaleY - 1,PAINT_COLOR_PASSABLE);
 
 				if (px == SCHEME_COLOR_VARIABLE && pxp != SCHEME_COLOR_VARIABLE)
 					for (int w = 0; w < SchemeWidth; w++)
-						line(m_pPresentationBitmap, x * ScaleX + ScaleX - 1 - w, y * ScaleY, x * ScaleX + ScaleX - 1 - w, y * ScaleY + ScaleY - 1,PAINT_COLOR_VARIABLE);
+						lineColor(g_FrameMan.GetRenderer(), x * ScaleX + ScaleX - 1 - w, y * ScaleY, x * ScaleX + ScaleX - 1 - w, y * ScaleY + ScaleY - 1,PAINT_COLOR_VARIABLE);
             }
 		}
 
+		m_pPresentationBitmap->lock();
+		SDL_RenderReadPixels(g_FrameMan.GetRenderer(), nullptr, m_pPresentationBitmap->getFormat(), m_pPresentationBitmap->getPixels(), m_pPresentationBitmap->getW() * sizeof(uint32_t));
+		g_FrameMan.PopRenderTarget();
+		m_pPresentationBitmap->unlock();
+
 		// Print scheme name
 		GUIFont *pSmallFont = g_FrameMan.GetSmallFont();
-		AllegroBitmap allegroBitmap(m_pPresentationBitmap);
-		pSmallFont->DrawAligned(&allegroBitmap, 4, 4, m_PresetName, GUIFont::Left);
+		SDLGUITexture guiBitmap;
+		pSmallFont->DrawAligned(&guiBitmap, 4, 4, m_PresetName, GUIFont::Left);
 
 		// Calculate bitmap offset
-		int width = m_pBitmap->w / 2;
-		int height = m_pBitmap->h / 2;
+		int width = m_pBitmap->getW() / 2;
+		int height = m_pBitmap->getH() / 2;
 		m_BitmapOffset = Vector(-width * ScaleX, -height * ScaleY);
 
 		// Count max deployments if not set
@@ -204,22 +214,23 @@ int BunkerAssemblyScheme::ReadProperty(const std::string_view &propName, Reader 
 				m_MaxDeployments = 1;
 		}
 
-		float scale = (float)ICON_WIDTH / (float)m_pPresentationBitmap->w;
+		float scale = (float)ICON_WIDTH / (float)m_pPresentationBitmap->getW();
 
-		m_pIconBitmap = create_bitmap_ex(8, m_pPresentationBitmap->w * scale, m_pPresentationBitmap->h * scale);
-		clear_to_color(m_pIconBitmap, g_MaskColor);
+		m_pIconBitmap = std::make_shared<Texture>(g_FrameMan.GetRenderer(), m_pPresentationBitmap->getW() * scale, m_pPresentationBitmap->getH() * scale, SDL_TEXTUREACCESS_STATIC);
+		m_pIconBitmap->lock();
 
-        for (int x = 0; x < m_pBitmap->w ; ++x)
-	        for (int y = 0; y < m_pBitmap->h; ++y)
+        for (int x = 0; x < m_pBitmap->getW() ; ++x)
+	        for (int y = 0; y < m_pBitmap->getH(); ++y)
             {
-				int px = getpixel(m_pBitmap, x, y);
+				SDL_Rect fill{static_cast<int>(x * ScaleX * scale), static_cast<int>(y * ScaleX * scale), ScaleX - 1, ScaleY - 1};
+				uint32_t px = m_pBitmap->getPixel(x, y);
 
-				if (px == SCHEME_COLOR_WALL)
-					rectfill(m_pIconBitmap, x * ScaleX * scale, y * ScaleY * scale, x * ScaleX * scale + ScaleX-1, y * ScaleY + ScaleY-1, PAINT_COLOR_WALL);
-				else if (px == SCHEME_COLOR_PASSABLE)
-					rectfill(m_pIconBitmap, x * ScaleX * scale, y * ScaleY * scale, x * ScaleX * scale + ScaleX-1, y * ScaleY + ScaleY-1, PAINT_COLOR_PASSABLE);
+				if (px == SCHEME_COLOR_WALL) {
+					m_pIconBitmap->fillRect(fill, PAINT_COLOR_WALL);
+				} else if (px == SCHEME_COLOR_PASSABLE)
+					m_pIconBitmap->fillRect(fill, PAINT_COLOR_PASSABLE);
 				else if (px == SCHEME_COLOR_VARIABLE)
-					rectfill(m_pIconBitmap, x * ScaleX * scale, y * ScaleY * scale, x * ScaleX * scale + ScaleX-1, y * ScaleY + ScaleY-1, PAINT_COLOR_VARIABLE);
+					m_pIconBitmap->fillRect(fill, PAINT_COLOR_VARIABLE);
 			}
     }
     else if (propName == "AddChildObject")
@@ -292,7 +303,7 @@ void BunkerAssemblyScheme::Destroy(bool notInherited)
 // Description:     Gets a bitmap showing a good identifyable icon of this, for use in
 //                  GUI lists etc.
 
-BITMAP * BunkerAssemblyScheme::GetGraphicalIcon()
+SharedTexture BunkerAssemblyScheme::GetGraphicalIcon()
 {
 	return m_pIconBitmap;
 }
@@ -310,7 +321,7 @@ bool BunkerAssemblyScheme::IsOnScenePoint(Vector &scenePoint) const
         return false;
 
     Vector bitmapPos = m_Pos + m_BitmapOffset;
-    if (WithinBox(scenePoint, bitmapPos, m_pPresentationBitmap->w, m_pPresentationBitmap->h))
+    if (WithinBox(scenePoint, bitmapPos, m_pPresentationBitmap->getW(), m_pPresentationBitmap->getH()))
     {
         // Scene point on the bitmap
         Vector bitmapPoint = scenePoint - bitmapPos;
@@ -318,7 +329,7 @@ bool BunkerAssemblyScheme::IsOnScenePoint(Vector &scenePoint) const
 		int x = bitmapPoint.m_X / ScaleX;
 		int y = bitmapPoint.m_Y / ScaleY;
 
-        if (getpixel(m_pBitmap, x, y) != SCHEME_COLOR_EMPTY)
+        if (m_pBitmap->getPixel(x, y) != SCHEME_COLOR_EMPTY)
            return true;
     }
 
@@ -347,10 +358,13 @@ void BunkerAssemblyScheme::SetTeam(int team)
 // Description:     Draws this BunkerAssemblyScheme's current graphical representation to a
 //                  BITMAP of choice.
 
-void BunkerAssemblyScheme::Draw(BITMAP *pTargetBitmap, const Vector &targetPos, DrawMode mode, bool onlyPhysical) const
+void BunkerAssemblyScheme::Draw(SDL_Renderer *renderer, const Vector &targetPos, DrawMode mode, bool onlyPhysical, int alphaMod) const
 {
     if (!m_pPresentationBitmap)
         RTEAbort("BunkerAssemblyScheme's bitmaps are null when drawing!");
+
+	SDL_Rect viewport;
+	SDL_RenderGetViewport(renderer, &viewport);
 
     // Take care of wrapping situations
     Vector aDrawPos[4];
@@ -358,18 +372,18 @@ void BunkerAssemblyScheme::Draw(BITMAP *pTargetBitmap, const Vector &targetPos, 
     int passes = 1;
 
     // See if need to double draw this across the scene seam if we're being drawn onto a scenewide bitmap
-	if (targetPos.IsZero() && g_SceneMan.GetSceneWidth() <= pTargetBitmap->w)
+	if (targetPos.IsZero() && g_SceneMan.GetSceneWidth() <= viewport.w)
     {
-        if (aDrawPos[0].m_X < m_pPresentationBitmap->w)
+        if (aDrawPos[0].m_X < m_pPresentationBitmap->getW())
         {
             aDrawPos[passes] = aDrawPos[0];
-            aDrawPos[passes].m_X += pTargetBitmap->w;
+            aDrawPos[passes].m_X += viewport.w;
             passes++;
         }
-        else if (aDrawPos[0].m_X > pTargetBitmap->w - m_pPresentationBitmap->w)
+        else if (aDrawPos[0].m_X > viewport.w - m_pPresentationBitmap->getW())
         {
             aDrawPos[passes] = aDrawPos[0];
-            aDrawPos[passes].m_X -= pTargetBitmap->w;
+            aDrawPos[passes].m_X -= viewport.w;
             passes++;
         }
     }
@@ -385,7 +399,7 @@ void BunkerAssemblyScheme::Draw(BITMAP *pTargetBitmap, const Vector &targetPos, 
                 aDrawPos[passes].m_X -= sceneWidth;
                 passes++;
             }
-            if (targetPos.m_X + pTargetBitmap->w > sceneWidth)
+            if (targetPos.m_X + viewport.w > sceneWidth)
             {
                 aDrawPos[passes] = aDrawPos[0];
                 aDrawPos[passes].m_X += sceneWidth;
@@ -398,13 +412,15 @@ void BunkerAssemblyScheme::Draw(BITMAP *pTargetBitmap, const Vector &targetPos, 
     for (int i = 0; i < passes; ++i)
     {
         if (mode == g_DrawColor)
-            masked_blit(m_pPresentationBitmap, pTargetBitmap, 0, 0, aDrawPos[i].GetFloorIntX(), aDrawPos[i].GetFloorIntY(), m_pPresentationBitmap->w, m_pPresentationBitmap->h);
+            m_pPresentationBitmap->render(renderer, aDrawPos[i].GetFloorIntX(), aDrawPos[i].GetFloorIntY());
         else if (mode == g_DrawMaterial)
-            masked_blit(m_pPresentationBitmap, pTargetBitmap, 0, 0, aDrawPos[i].GetFloorIntX(), aDrawPos[i].GetFloorIntY(), m_pPresentationBitmap->w, m_pPresentationBitmap->h);
+            m_pPresentationBitmap->render(renderer, aDrawPos[i].GetFloorIntX(), aDrawPos[i].GetFloorIntY());
         else if (mode == g_DrawLess)
-            masked_blit(m_pPresentationBitmap, pTargetBitmap, 0, 0, aDrawPos[i].GetFloorIntX(), aDrawPos[i].GetFloorIntY(), m_pPresentationBitmap->w, m_pPresentationBitmap->h);
+            m_pPresentationBitmap->render(renderer, aDrawPos[i].GetFloorIntX(), aDrawPos[i].GetFloorIntY());
         else if (mode == g_DrawTrans)
-            draw_trans_sprite(pTargetBitmap, m_pPresentationBitmap, aDrawPos[i].GetFloorIntX(), aDrawPos[i].GetFloorIntY());
+			m_pPresentationBitmap->setAlphaMod(alphaMod);
+		m_pPresentationBitmap->render(renderer, aDrawPos[i].GetFloorIntX(), aDrawPos[i].GetFloorIntY());
+			m_pPresentationBitmap->setAlphaMod(255);
     }
 }
 

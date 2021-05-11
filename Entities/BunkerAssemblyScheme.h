@@ -47,20 +47,20 @@ class BunkerAssemblyScheme:
 public:
 
 	// Different scheme properties are encoded on colors of scheme bitmap
-	enum SchemeColor 
-	{
-		SCHEME_COLOR_EMPTY = g_MaskColor,  // Empty sections, MUST BE ALWAYS EMPTY
-		SCHEME_COLOR_PASSABLE = 5,		  // Passable sections, MUST BE ALWAYS PASSBLE, I.E. HAVE ONLY BACKGROUNDS
-		SCHEME_COLOR_VARIABLE = 4,		  // May be passable or not. Expect air.
-		SCHEME_COLOR_WALL = 3			  // Always impassable, but may be empty. Expect terrain.
+	enum SchemeColor : unsigned long {
+		SCHEME_COLOR_EMPTY = g_AlphaZero, // Empty sections, MUST BE ALWAYS EMPTY
+		SCHEME_COLOR_PASSABLE = 0x45f1ffFF, // Passable sections, MUST BE ALWAYS
+			                             // PASSBLE, I.E. HAVE ONLY BACKGROUNDS
+		SCHEME_COLOR_VARIABLE = 0xF9E9E6FF, // May be passable or not. Expect air.
+		SCHEME_COLOR_WALL = 0x746060FF // Always impassable, but may be empty. Expect terrain.
 	};
 
 	// Scheme properties, when drawed in game UIs
-	enum PresentationColor 
+	enum PresentationColor: unsigned long
 	{
-		PAINT_COLOR_PASSABLE = 5,
-		PAINT_COLOR_VARIABLE = 48,
-		PAINT_COLOR_WALL = 13
+		PAINT_COLOR_PASSABLE = 0x45F1FFFF,
+		PAINT_COLOR_VARIABLE = 0xEC7F18FF,
+		PAINT_COLOR_WALL = 0xEA1507FF
 	};
 
 	const static int ScaleX = 24;
