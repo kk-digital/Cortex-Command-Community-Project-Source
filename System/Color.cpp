@@ -10,17 +10,16 @@ namespace RTE {
 		if (Serializable::Create()) {
 			return -1;
 		}
-		RecalculateIndex();
 		return 0;
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	int Color::Create(int inputR, int inputG, int inputB) {
+	int Color::Create(int inputR, int inputG, int inputB, int inputA) {
 		SetR(inputR);
 		SetG(inputG);
 		SetB(inputB);
-		RecalculateIndex();
+		SetA(inputA);
 		return 0;
 	}
 
@@ -28,13 +27,15 @@ namespace RTE {
 
 	int Color::ReadProperty(const std::string_view &propName, Reader &reader) {
 		if (propName == "Index") {
-			SetRGBWithIndex(std::stoi(reader.ReadPropValue()));
+			SetRGBAFromColor(std::stoi(reader.ReadPropValue()));
 		} else if (propName == "R") {
 			SetR(std::stoi(reader.ReadPropValue()));
 		} else if (propName == "G") {
 			SetG(std::stoi(reader.ReadPropValue()));
 		} else if (propName == "B") {
 			SetB(std::stoi(reader.ReadPropValue()));
+		} else if (propName == "A"){
+			SetA(std::stoi(reader.ReadPropValue()));
 		} else {
 			return Serializable::ReadProperty(propName, reader);
 		}
@@ -49,13 +50,19 @@ namespace RTE {
 		writer.NewPropertyWithValue("R", m_R);
 		writer.NewPropertyWithValue("G", m_G);
 		writer.NewPropertyWithValue("B", m_B);
+		writer.NewPropertyWithValue("A", m_A);
 
 		return 0;
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void Color::SetRGBWithIndex(int index) {
+	void Color::SetRGBAFromColor(uint32_t color) {
+		m_R = (color>>24)&0xFF;
+		m_G = (color>>16)&0xFF;
+		m_B = (color>>8)&0xFF;
+		m_A = (color)&0xFF;
+#if 0
 		m_Index = std::clamp(index, 0, 255);
 
 		RGB rgbColor;
@@ -65,11 +72,14 @@ namespace RTE {
 		m_R = rgbColor.r * 4;
 		m_G = rgbColor.g * 4;
 		m_B = rgbColor.b * 4;
+#endif
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#if 0
 	int Color::RecalculateIndex() {
 		return m_Index = makecol8(m_R, m_G, m_B);
 	}
+#endif
 }

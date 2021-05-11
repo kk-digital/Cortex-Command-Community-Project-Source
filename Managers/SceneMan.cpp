@@ -1055,10 +1055,10 @@ int SceneMan::RemoveOrphans(int posX, int posY,
 		if (spawnMat->UsesOwnColor())
 			spawnColor = spawnMat->GetColor();
 		else
-			spawnColor.SetRGBWithIndex(m_pCurrentScene->GetTerrain()->GetFGColorPixel(posX, posY));
+			spawnColor.SetRGBAFromColor(m_pCurrentScene->GetTerrain()->GetFGColorPixel(posX, posY));
 
 		// No point generating a key-colored MOPixel
-		if (spawnColor.GetIndex() != g_MaskColor)
+		if (spawnColor.GetRGBA() != g_MaskColor)
 		{
 			// TEST COLOR
 			// spawnColor = 5;
@@ -1255,10 +1255,10 @@ bool SceneMan::TryPenetrate(const int posX,
 			if (spawnMat->UsesOwnColor())
 				spawnColor = spawnMat->GetColor();
 			else
-				spawnColor.SetRGBWithIndex(m_pCurrentScene->GetTerrain()->GetFGColorPixel(posX, posY));
+				spawnColor.SetRGBAFromColor(m_pCurrentScene->GetTerrain()->GetFGColorPixel(posX, posY));
 
 			// No point generating a key-colored MOPixel
-			if (spawnColor.GetIndex() != g_MaskColor)
+			if (spawnColor.GetRGBA() != g_MaskColor)
 			{
 				// Get the new pixel from the pre-allocated pool, should be faster than dynamic allocation
 				// Density is used as the mass for the new MOPixel
@@ -1345,10 +1345,10 @@ bool SceneMan::TryPenetrate(const int posX,
 							if (spawnMat->UsesOwnColor())
 								spawnColor = spawnMat->GetColor();
 							else
-								spawnColor.SetRGBWithIndex(m_pCurrentScene->GetTerrain()->GetFGColorPixel(posX, testY));
+								spawnColor.SetRGBAFromColor(m_pCurrentScene->GetTerrain()->GetFGColorPixel(posX, testY));
 
 							// No point generating a key-colored MOPixel
-							if (spawnColor.GetIndex() != g_MaskColor)
+							if (spawnColor.GetRGBA() != g_MaskColor)
 							{
 								// Figure out the randomized velocity the spray should have upward
 								sprayVel.SetXY(sprayMag* RandomNormalNum() * 0.5F, (-sprayMag * 0.5F) + (-sprayMag * RandomNum(0.0F, 0.5F)));

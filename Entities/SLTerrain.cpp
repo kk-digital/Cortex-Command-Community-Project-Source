@@ -365,7 +365,7 @@ int SLTerrain::LoadData()
             {
                 // If the color hasn't been retrieved yet, then do so
                 if (!aColors[matIndex])
-                    aColors[matIndex] = pMaterial->GetColor().GetIndex();
+                    aColors[matIndex] = pMaterial->GetColor().GetRGBA();
                 // Use the color
                 pixelColor = aColors[matIndex];
             }
@@ -438,7 +438,7 @@ int SLTerrain::LoadData()
                     if (pFrostingTex)
                         pixelColor = pFrostingTex->getPixel(xPos % pFrostingTex->getW(), yPos % pFrostingTex->getH());
                     else
-                        pixelColor = (*tfItr).GetFrostingMaterial().GetColor().GetIndex();
+                        pixelColor = (*tfItr).GetFrostingMaterial().GetColor().GetRGBA();
 
                     // Put the frosting pixel color on the FG color layer
                     m_pFGColor->SetPixel(xPos, yPos, pixelColor);

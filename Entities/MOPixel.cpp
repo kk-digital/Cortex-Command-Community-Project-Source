@@ -234,7 +234,7 @@ namespace RTE {
 				drawColor = g_NoMOID;
 				break;
 			default:
-				drawColor = m_Color.GetIndex();
+				drawColor = m_Color.GetRGBA();
 				break;
 		}
 
