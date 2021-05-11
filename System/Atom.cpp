@@ -3,7 +3,11 @@
 #include "MovableObject.h"
 #include "MOSRotating.h"
 #include "PresetMan.h"
+#include "FrameMan.h"
 #include "Actor.h"
+
+#include "System/SDLHelper.h"
+#include <SDL2/SDL2_gfxPrimitives.h>
 
 namespace RTE {
 
@@ -167,8 +171,8 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	bool Atom::CalculateNormal(BITMAP *sprite, Vector spriteCenter) {
-		RTEAssert(sprite, "Trying to set up Atom normal without passing in bitmap");
+	bool Atom::CalculateNormal(SharedTexture sprite, Vector spriteCenter) {
+		RTEAssert(sprite.get(), "Trying to set up Atom normal without passing in bitmap");
 
 		// Can't set up a normal on an atom that doesn't have an offset from its parent's center
 		if (m_Offset.IsZero()) {
@@ -177,7 +181,7 @@ namespace RTE {
 		}
 		// See if the atom even ends up in the sprite at all
 		Vector atomPos = spriteCenter + m_Offset;
-		if (atomPos.m_X < 0 || atomPos.m_Y < 0 || atomPos.m_X >= sprite->w || atomPos.m_Y >= sprite->h) {
+		if (atomPos.m_X < 0 || atomPos.m_Y < 0 || atomPos.m_X >= sprite->getW() || atomPos.m_Y >= sprite->getH()) {
 			return false;
 		}
 		// Go through all the check positions from the atom's position on the sprite
@@ -185,7 +189,7 @@ namespace RTE {
 		int checkPixel = 0;
 		for (int check = 0; check < c_NormalCheckCount; ++check) {
 			// Establish the current integer position to check for nothingness on the sprite
-			checkPixel = getpixel(sprite, atomPos.m_X + s_NormalChecks[check][X], atomPos.m_Y + s_NormalChecks[check][Y]);
+			checkPixel = sprite->getPixel(atomPos.m_X + s_NormalChecks[check][X], atomPos.m_Y + s_NormalChecks[check][Y]);
 
 			// If the pixel was outside of the bitmap, or on the key color, then that's a valid direction for normal, add it to the accumulated normal
 			if (checkPixel < 0 || checkPixel == g_MaskColor) {
@@ -590,8 +594,6 @@ namespace RTE {
 		bool &didWrap = m_OwnerMO->m_DidWrap;
 		m_LastHit.Reset();
 
-		BITMAP *trailBitmap = 0;
-
 		int hitCount = 0;
 		int error = 0;
 		int dom = 0;
@@ -640,7 +642,10 @@ namespace RTE {
 		position += m_Offset;
 
 		// Lock all bitmaps involved outside the loop.
-		if (!scenePreLocked) { g_SceneMan.LockScene(); }
+		if (!scenePreLocked) {
+			g_SceneMan.LockScene();
+			g_FrameMan.PushRenderTarget(g_SceneMan.GetMOColorTexture());
+		}
 
 		// Loop for all the different straight segments (between bounces etc) that have to be traveled during the timeLeft.
 		do {
@@ -649,7 +654,6 @@ namespace RTE {
 
 			// Get trail bitmap and put first pixel.
 			if (m_TrailLength) {
-				trailBitmap = g_SceneMan.GetMOColorBitmap();
 				trailPoints.push_back({ intPos[X], intPos[Y] });
 			}
 			// Compute and scale the actual on-screen travel trajectory for this segment, based on the velocity, the travel time and the pixels-per-meter constant.
@@ -851,7 +855,7 @@ namespace RTE {
 					++hitCount;
 
 #ifdef DEBUG_BUILD
-					if (m_TrailLength) { putpixel(trailBitmap, intPos[X], intPos[Y], 199); }
+					if (m_TrailLength) { pixelColor(g_FrameMan.GetRenderer(), intPos[X], intPos[Y], 0x12161AFF); }
 #endif
 					// Try penetration of the terrain.
 					if (hitMaterial->GetIndex() != g_MaterialOutOfBounds && g_SceneMan.TryPenetrate(intPos[X], intPos[Y], velocity * mass * sharpness, velocity, retardation, 0.65F, m_NumPenetrations, removeOrphansRadius, removeOrphansMaxArea, removeOrphansRate)) {
@@ -964,7 +968,7 @@ namespace RTE {
 		if (g_TimerMan.DrawnSimUpdate() && m_TrailLength) {
 			int length = m_TrailLength /* + 3 * RandomNum()*/;
 			for (int i = trailPoints.size() - std::min(length, static_cast<int>(trailPoints.size())); i < trailPoints.size(); ++i) {
-				putpixel(trailBitmap, trailPoints[i].first, trailPoints[i].second, m_TrailColor.GetIndex());
+				pixelColor(g_FrameMan.GetRenderer(), trailPoints[i].first, trailPoints[i].second, m_TrailColor.GetIndex());
 			}
 		}
 
