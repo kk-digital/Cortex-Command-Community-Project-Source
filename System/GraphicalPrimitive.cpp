@@ -40,7 +40,6 @@ namespace RTE {
 			Vector drawStart = m_StartPos - targetPos;
 			Vector drawEnd = m_EndPos - targetPos;
 
-			uint8_t r,g,b,a;
 			lineColor(renderer, drawStart.GetFloorIntX(), drawStart.GetFloorIntY(), drawEnd.GetFloorIntX(), drawEnd.GetFloorIntY(), m_Color);
 		} else {
 			Vector drawStartLeft;
@@ -50,8 +49,6 @@ namespace RTE {
 
 			TranslateCoordinates(targetPos, m_StartPos, drawStartLeft, drawStartRight);
 			TranslateCoordinates(targetPos, m_EndPos, drawEndLeft, drawEndRight);
-
-			uint8_t r,g,b,a;
 
 			lineColor(renderer, drawStartLeft.GetFloorIntX(),
 			          drawStartLeft.GetFloorIntY(), drawEndLeft.GetFloorIntX(),
@@ -165,8 +162,8 @@ namespace RTE {
 			    static_cast<Sint16>(drawGuideBRight.GetFloorIntY()),
 			    static_cast<Sint16>(drawEndRight.GetFloorIntY())
 			};
-			bezierColor(renderer, guidePointsLeftX.data(), guidePointsLeftY.data(), 4, 16, m_Color); //TODO: Interpolate!!!!
-			bezierColor(renderer, guidePointsRightX.data(), guidePointsRightY.data(), 4, 16, m_Color); //TODO: Interpolation!
+			bezierColor(renderer, guidePointsLeftX.data(), guidePointsLeftY.data(), 4, 16, m_Color); //TODO: Interpolation
+			bezierColor(renderer, guidePointsRightX.data(), guidePointsRightY.data(), 4, 16, m_Color); //TODO: Interpolation
 		}
 	}
 
