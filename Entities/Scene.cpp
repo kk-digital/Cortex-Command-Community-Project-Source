@@ -14,6 +14,7 @@
 #include "Scene.h"
 #include "PresetMan.h"
 #include "MovableMan.h"
+#include "FrameMan.h"
 #include "ConsoleMan.h"
 #include "SettingsMan.h"
 #include "MetaMan.h"
@@ -32,6 +33,8 @@
 #include "AHuman.h"
 #include "Arm.h"
 #include "HeldDevice.h"
+
+#include "System/SDLHelper.h"
 
 namespace RTE {
 
@@ -544,14 +547,7 @@ int Scene::Create(const Scene &reference)
 	// Deep copy of the bitmap
     if (reference.m_pPreviewBitmap)
     {
-        // Copy the bitmap from the ContentFile, because we're going to be changing it!
-        BITMAP *pCopyFrom = reference.m_pPreviewBitmap;
-		// Destination
-		m_pPreviewBitmap = create_bitmap_ex(8, pCopyFrom->w, pCopyFrom->h);
-		RTEAssert(m_pPreviewBitmap, "Failed to allocate BITMAP in Scene::Create");
-
-		// Copy!
-		blit(pCopyFrom, m_pPreviewBitmap, 0, 0, 0, 0, pCopyFrom->w, pCopyFrom->h);
+		m_pPreviewBitmap = std::make_shared<Texture>(g_FrameMan.GetRenderer(), *reference.m_pPreviewBitmap);
 	}
 
 	m_MetasceneParent = reference.m_MetasceneParent;
@@ -587,10 +583,11 @@ int Scene::LoadData(bool placeObjects, bool initPathfinding, bool placeUnits)
         if (!m_UnseenPixelSize[team].IsZero())
         {
             // Create the bitmap to make the unseen scene layer out of
-            BITMAP *pUnseenBitmap = create_bitmap_ex(8, GetWidth() / m_UnseenPixelSize[team].m_X, GetHeight() / m_UnseenPixelSize[team].m_Y);
-            clear_to_color(pUnseenBitmap, g_BlackColor);
+            Texture pUnseenBitmap(g_FrameMan.GetRenderer(), GetWidth() / m_UnseenPixelSize[team].m_X, GetHeight() / m_UnseenPixelSize[team].m_Y, SDL_TEXTUREACCESS_STREAMING);
+
             // Replace any old unseen layer with the new one that is generated
             delete m_apUnseenLayer[team];
+
             m_apUnseenLayer[team] = new SceneLayer();
             m_apUnseenLayer[team]->Create(pUnseenBitmap, true, Vector(), WrapsX(), WrapsY(), Vector(1.0, 1.0));
             m_apUnseenLayer[team]->SetScaleFactor(m_UnseenPixelSize[team]);
@@ -810,7 +807,7 @@ int Scene::LoadData(bool placeObjects, bool initPathfinding, bool placeUnits)
 							{
 								// Create a copy of deployment because assemblies own their placed objects and scenes own theirs
 								SceneObject * so = (SceneObject *)(*itr)->Clone();
-								so->SetPos(so->GetPos() + pBA->GetPos() + pBA->GetBitmapOffset());
+								so->SetPos(so->GetPos() + pBA->GetPos() + pBA->GetTextureOffset());
 								so->SetTeam(pBA->GetTeam());
 								so->SetPlacedByPlayer(pBA->GetPlacedByPlayer());
 								m_PlacedObjects[PLACEONLOAD].push_back(so);
@@ -822,31 +819,37 @@ int Scene::LoadData(bool placeObjects, bool initPathfinding, bool placeUnits)
 					if (pTO)
                     {
                         // First clear out the box of unseen layer for whichever team placed this
-                        if (pTO->GetFGColorBitmap() && pTO->GetPlacedByPlayer() != Players::NoPlayer && g_ActivityMan.GetActivity())
+                        if (pTO->GetFGColorTexture() && pTO->GetPlacedByPlayer() != Players::NoPlayer && g_ActivityMan.GetActivity())
                         {
                             // Learn which team placed this thing so we can reveal for them only
                             int ownerTeam = pTO->GetTeam();
-                            if (ownerTeam != Activity::NoTeam && m_apUnseenLayer[ownerTeam] && m_apUnseenLayer[ownerTeam]->GetBitmap())
+                            if (ownerTeam != Activity::NoTeam && m_apUnseenLayer[ownerTeam] && m_apUnseenLayer[ownerTeam]->GetTexture())
                             {
                                 // Translate to the scaled unseen layer's coordinates
+								m_apUnseenLayer[ownerTeam]->LockTexture();
                                 Vector scale = m_apUnseenLayer[ownerTeam]->GetScaleInverse();
-                                int scaledX = std::floor((pTO->GetPos().m_X - (float)(pTO->GetFGColorBitmap()->w / 2)) * scale.m_X);
-                                int scaledY = std::floor((pTO->GetPos().m_Y - (float)(pTO->GetFGColorBitmap()->h / 2)) * scale.m_Y);
-                                int scaledW = std::ceil(pTO->GetFGColorBitmap()->w * scale.m_X);
-                                int scaledH = std::ceil(pTO->GetFGColorBitmap()->h * scale.m_Y);
-                                // Fill the box with key color for the owner ownerTeam, revealing the area that this thing is on
-                                rectfill(m_apUnseenLayer[ownerTeam]->GetBitmap(), scaledX, scaledY, scaledX + scaledW, scaledY + scaledH, g_MaskColor);
+								SDL_Rect scaled;
+                                scaled.x = std::floor((pTO->GetPos().m_X - (float)(pTO->GetFGColorTexture()->getW() / 2)) * scale.m_X);
+                                scaled.y = std::floor((pTO->GetPos().m_Y - (float)(pTO->GetFGColorTexture()->getH() / 2)) * scale.m_Y);
+                                scaled.w = std::ceil(pTO->GetFGColorTexture()->getW() * scale.m_X);
+                                scaled.h = std::ceil(pTO->GetFGColorTexture()->getH() * scale.m_Y);
+                                // FILL the box with key color for the owner ownerTeam, revealing the area that this thing is on
+                                m_apUnseenLayer[ownerTeam]->GetTexture()->fillRect(scaled, g_MaskColor);
+								m_apUnseenLayer[ownerTeam]->UnlockTexture();
                                 // Expand the box a little so the whole placed object is going to be hidden
-                                scaledX -= 1;
-                                scaledY -= 1;
-                                scaledW += 2;
-                                scaledH += 2;
+                                scaled.x -= 1;
+                                scaled.y -= 1;
+                                scaled.w += 2;
+                                scaled.h += 2;
                                 // Fill the box with BLACK for all the other teams so they can't see the new developments here!
                                 for (int t = Activity::TeamOne; t < Activity::MaxTeamCount; ++t)
                                 {
-                                    if (t != ownerTeam && m_apUnseenLayer[t] && m_apUnseenLayer[t]->GetBitmap())
-                                        rectfill(m_apUnseenLayer[t]->GetBitmap(), scaledX, scaledY, scaledX + scaledW, scaledY + scaledH, g_BlackColor);
-                                }
+									if (t != ownerTeam && m_apUnseenLayer[t] && m_apUnseenLayer[t]->GetTexture()) {
+										m_apUnseenLayer[t]->LockTexture();
+										m_apUnseenLayer[t]->GetTexture()->fillRect(scaled, g_BlackColor);
+										m_apUnseenLayer[t]->UnlockTexture();
+									}
+								}
                             }
                         }
                         // Now actually stamp the terrain object onto the terrain's scene layers
@@ -973,7 +976,7 @@ int Scene::ExpandAIPlanAssemblySchemes()
 				{
 					// Create a copy of deployment because assemblies own their placed objects and scenes own theirs
 					SceneObject * so = (SceneObject *)(*itr)->Clone();
-					so->SetPos(so->GetPos() + pBA->GetPos() + pBA->GetBitmapOffset());
+					so->SetPos(so->GetPos() + pBA->GetPos() + pBA->GetTextureOffset());
 					so->SetTeam(pBA->GetTeam());
 					so->SetPlacedByPlayer(pBA->GetPlacedByPlayer());
 					newAIPlan.push_back(so);
@@ -1054,39 +1057,41 @@ int Scene::SavePreview(const std::string &bitmapPath) {
 		return -1;
 	}
 
-	if (m_pPreviewBitmap && (m_pPreviewBitmap->w != PREVIEW_WIDTH || m_pPreviewBitmap->h != PREVIEW_HEIGHT)) {
-		destroy_bitmap(m_pPreviewBitmap);
-		m_pPreviewBitmap = nullptr;
+	if (m_pPreviewBitmap && (m_pPreviewBitmap->getW() != PREVIEW_WIDTH || m_pPreviewBitmap->getH() != PREVIEW_HEIGHT)) {
+		m_pPreviewBitmap.reset();
 	}
-	if (!m_pPreviewBitmap) { m_pPreviewBitmap = create_bitmap_ex(8, PREVIEW_WIDTH, PREVIEW_HEIGHT); }
+	if (!m_pPreviewBitmap) { m_pPreviewBitmap = std::make_shared<Texture>(g_FrameMan.GetRenderer(), PREVIEW_WIDTH, PREVIEW_HEIGHT, SDL_TEXTUREACCESS_STATIC); }
 
 	ContentFile scenePreviewGradient("Base.rte/GUIs/PreviewSkyGradient.png");
-	draw_sprite(m_pPreviewBitmap, scenePreviewGradient.GetAsBitmap(COLORCONV_NONE, true), 0, 0);
+	SharedTexture previewGradient = scenePreviewGradient.GetAsTexture();
 
-	int sceneWidth = m_pTerrain->GetBitmap()->w;
-	int sceneHeight = m_pTerrain->GetBitmap()->h;
-	BITMAP *previewBuffer = create_bitmap_ex(8, sceneWidth, sceneHeight);
-	clear_to_color(previewBuffer, ColorKeys::g_MaskColor);
+	int sceneWidth = m_pTerrain->GetTexture()->getW();
+	int sceneHeight = m_pTerrain->GetTexture()->getH();
+	Texture previewBuffer(g_FrameMan.GetRenderer(), sceneWidth, sceneHeight);
+	SDL_Rect previewDimensions{0, 0, sceneHeight, sceneWidth};
 
-	masked_blit(m_pTerrain->GetBGColorBitmap(), previewBuffer, 0, 0, 0, 0, sceneWidth, sceneHeight);
-	masked_blit(m_pTerrain->GetFGColorBitmap(), previewBuffer, 0, 0, 0, 0, sceneWidth, sceneHeight);
+	SDL_Renderer* renderer = g_FrameMan.GetRenderer();
+
+	g_FrameMan.PushRenderTarget(previewBuffer.getAsRenderTarget());
+	previewGradient->render(renderer, previewDimensions);
+	m_pTerrain->GetBGColorTexture()->render(renderer, previewDimensions);
 
 	for (SceneObject *sceneObject : m_PlacedObjects[PlacedObjectSets::PLACEONLOAD]) {
 		if (const TerrainObject *terrainObject = dynamic_cast<TerrainObject *>(sceneObject)) {
-			Vector pos = terrainObject->GetPos() + terrainObject->GetBitmapOffset();
-			BITMAP *terrainObjectBG = terrainObject->GetBGColorBitmap();
-			BITMAP *terrainObjectFG = terrainObject->GetFGColorBitmap();
+			Vector pos = terrainObject->GetPos() + terrainObject->GetTextureOffset();
+			SharedTexture terrainObjectBG = terrainObject->GetBGColorTexture();
+			SharedTexture terrainObjectFG = terrainObject->GetFGColorTexture();
 
 			// Wrapped drawing
 			if (pos.GetFloorIntX() < 0) {
-				masked_blit(terrainObjectBG, previewBuffer, 0, 0, pos.GetFloorIntX() + sceneWidth, pos.GetFloorIntY(), terrainObjectBG->w, terrainObjectBG->h);
-				masked_blit(terrainObjectFG, previewBuffer, 0, 0, pos.GetFloorIntX() + sceneWidth, pos.GetFloorIntY(), terrainObjectFG->w, terrainObjectFG->h);
-			} else if (pos.GetFloorIntX() + terrainObject->GetBitmapWidth() >= sceneWidth) {
-				masked_blit(terrainObjectBG, previewBuffer, 0, 0, pos.GetFloorIntX() - sceneWidth, pos.GetFloorIntY(), terrainObjectBG->w, terrainObjectBG->h);
-				masked_blit(terrainObjectFG, previewBuffer, 0, 0, pos.GetFloorIntX() - sceneWidth, pos.GetFloorIntY(), terrainObjectFG->w, terrainObjectFG->h);
+				terrainObjectBG->render(renderer, 0, 0, pos.GetFloorIntX() + sceneWidth, pos.GetFloorIntY());
+				terrainObjectFG->render(renderer, 0, 0, pos.GetFloorIntX() + sceneWidth, pos.GetFloorIntY());
+			} else if (pos.GetFloorIntX() + terrainObject->GetTextureWidth() >= sceneWidth) {
+				terrainObjectBG->render(renderer, 0, 0, pos.GetFloorIntX() - sceneWidth, pos.GetFloorIntY());
+				terrainObjectFG->render(renderer, 0, 0, pos.GetFloorIntX() - sceneWidth, pos.GetFloorIntY());
 			}
-			masked_blit(terrainObjectBG, previewBuffer, 0, 0, pos.GetFloorIntX(), pos.GetFloorIntY(), terrainObjectBG->w, terrainObjectBG->h);
-			masked_blit(terrainObjectFG, previewBuffer, 0, 0, pos.GetFloorIntX(), pos.GetFloorIntY(), terrainObjectFG->w, terrainObjectFG->h);
+			terrainObjectBG->render(renderer, 0, 0, pos.GetFloorIntX(), pos.GetFloorIntY());
+			terrainObjectFG->render(renderer, 0, 0, pos.GetFloorIntX(), pos.GetFloorIntY());
 		}
 
 		// TODO: Figure out how to draw the actual modules that compose an assembly that is part of the scheme. For now just disable.
@@ -1105,10 +1110,15 @@ int Scene::SavePreview(const std::string &bitmapPath) {
 		*/
 	}
 
-	masked_stretch_blit(previewBuffer, m_pPreviewBitmap, 0, 0, previewBuffer->w, previewBuffer->h, 0, 0, m_pPreviewBitmap->w, m_pPreviewBitmap->h);
-	destroy_bitmap(previewBuffer);
+	g_FrameMan.PopRenderTarget();
+	Texture preview(renderer, PREVIEW_WIDTH, PREVIEW_HEIGHT);
+	g_FrameMan.PushRenderTarget(preview.getAsRenderTarget());
+	previewBuffer.render(renderer, 0,0);
 
-	if (g_FrameMan.SaveBitmapToPNG(m_pPreviewBitmap, bitmapPath.c_str()) == 0) { m_PreviewBitmapFile.SetDataPath(bitmapPath); }
+	if (g_FrameMan.SaveTextureToPNG(m_pPreviewBitmap, bitmapPath.c_str()) == 0) {
+		m_PreviewBitmapFile.SetDataPath(bitmapPath);
+		m_pPreviewBitmap = m_PreviewBitmapFile.GetAsTexture();
+	}
 
 	return 0;
 }
@@ -1215,7 +1225,7 @@ int Scene::ReadProperty(const std::string_view &propName, Reader &reader)
     else if (propName == "PreviewBitmapFile")
 	{
         reader >> m_PreviewBitmapFile;
-		m_pPreviewBitmap = m_PreviewBitmapFile.GetAsBitmap(COLORCONV_NONE, false);
+		m_pPreviewBitmap = m_PreviewBitmapFile.GetAsTexture();
 	}
     else if (propName == "Terrain")
     {
@@ -1652,10 +1662,6 @@ void Scene::Destroy(bool notInherited)
     delete m_apUnseenLayer[Activity::TeamThree];
     delete m_apUnseenLayer[Activity::TeamFour];
 
-	//if (m_PreviewBitmapOwned)
-	destroy_bitmap(m_pPreviewBitmap);
-	m_pPreviewBitmap = 0;
-
     if (!notInherited)
         Entity::Destroy();
     Clear();
@@ -1696,14 +1702,15 @@ void Scene::FillUnseenLayer(Vector pixelSize, int team, bool createNow)
     // Create the bitmap to make the unseen scene layer out of
     if (createNow)
     {
-        BITMAP *pUnseenBitmap = create_bitmap_ex(8, GetWidth() / m_UnseenPixelSize[team].m_X, GetHeight() / m_UnseenPixelSize[team].m_Y);
-        clear_to_color(pUnseenBitmap, g_BlackColor);
+		Texture pUnseenBitmap(g_FrameMan.GetRenderer(), GetWidth() / m_UnseenPixelSize[team].m_X, GetHeight() / m_UnseenPixelSize[team].m_Y);
+		pUnseenBitmap.lock();
+		pUnseenBitmap.clearAll(g_BlackColor);
         // Replace any old unseen layer with the new one that is generated
         delete m_apUnseenLayer[team];
         m_apUnseenLayer[team] = new SceneLayer();
         m_apUnseenLayer[team]->Create(pUnseenBitmap, true, Vector(), WrapsX(), WrapsY(), Vector(1.0, 1.0));
         // Calculate how many times smaller the unseen map is compared to the entire terrain's dimensions, and set it as the scale factor on the Unseen layer
-        m_apUnseenLayer[team]->SetScaleFactor(Vector((float)GetTerrain()->GetBitmap()->w / (float)m_apUnseenLayer[team]->GetBitmap()->w, (float)GetTerrain()->GetBitmap()->h / (float)m_apUnseenLayer[team]->GetBitmap()->h));
+        m_apUnseenLayer[team]->SetScaleFactor(Vector((float)GetTerrain()->GetTexture()->getW() / (float)m_apUnseenLayer[team]->GetTexture()->getW(), (float)GetTerrain()->GetTexture()->getH() / (float)m_apUnseenLayer[team]->GetTexture()->getH()));
     }
 }
 
@@ -1722,7 +1729,8 @@ void Scene::SetUnseenLayer(SceneLayer *pNewLayer, int team)
     delete m_apUnseenLayer[team];
     m_apUnseenLayer[team] = pNewLayer;
     // Calculate how many times smaller the unseen map is compared to the entire terrain's dimensions, and set it as the scale factor on the Unseen layer
-    m_apUnseenLayer[team]->SetScaleFactor(Vector((float)GetTerrain()->GetBitmap()->w / (float)m_apUnseenLayer[team]->GetBitmap()->w, (float)GetTerrain()->GetBitmap()->h / (float)m_apUnseenLayer[team]->GetBitmap()->h));
+    m_apUnseenLayer[team]->SetScaleFactor(Vector((float)GetTerrain()->GetTexture()->getW() / (float)m_apUnseenLayer[team]->GetTexture()->getW(),
+												 (float)GetTerrain()->GetTexture()->getH() / (float)m_apUnseenLayer[team]->GetTexture()->getH()));
 }
 
 
@@ -1738,9 +1746,11 @@ void Scene::ClearSeenPixels(int team)
         // Clear all the pixels off the map, set them to key color
         if (m_apUnseenLayer[team])
         {
+			m_apUnseenLayer[team]->LockTexture();
             for (list<Vector>::iterator itr = m_SeenPixels[team].begin(); itr != m_SeenPixels[team].end(); ++itr)
             {
-                putpixel(m_apUnseenLayer[team]->GetBitmap(), (*itr).m_X, (*itr).m_Y, g_MaskColor);
+                m_apUnseenLayer[team]->SetPixel((*itr).m_X, (*itr).m_Y, 0);
+
 
                 // Clean up around the removed pixels too
                 CleanOrphanPixel((*itr).m_X + 1, (*itr).m_Y, W, team);
@@ -1752,6 +1762,7 @@ void Scene::ClearSeenPixels(int team)
                 CleanOrphanPixel((*itr).m_X - 1, (*itr).m_Y - 1, SE, team);
                 CleanOrphanPixel((*itr).m_X + 1, (*itr).m_Y - 1, SW, team);
             }
+			m_apUnseenLayer[team]->UnlockTexture();
         }
 
         // Now actually clear the list too
@@ -1782,7 +1793,7 @@ bool Scene::CleanOrphanPixel(int posX, int posY, NeighborDirection checkingFrom,
     m_apUnseenLayer[team]->WrapPosition(posX, posY, false);
 
     // First check the actual position of the checked pixel, it may already been seen.
-    if (getpixel(m_apUnseenLayer[team]->GetBitmap(), posX, posY) == g_MaskColor)
+    if (m_apUnseenLayer[team]->GetPixel(posX, posY) == 0)
         return false;
 
     // Ok, not seen, so check surrounding pixels for 'support', ie unseen ones that will keep this also unseen
@@ -1793,65 +1804,65 @@ bool Scene::CleanOrphanPixel(int posX, int posY, NeighborDirection checkingFrom,
         testPosX = posX + 1;
         testPosY = posY;
         m_apUnseenLayer[team]->WrapPosition(testPosX, testPosY, false);
-        support += getpixel(m_apUnseenLayer[team]->GetBitmap(), testPosX, testPosY) != g_MaskColor ? 1 : 0;
+        support += m_apUnseenLayer[team]->GetPixel(testPosX, testPosY) != 0 ? 1 : 0;
     }
     if (checkingFrom != W)
     {
         testPosX = posX - 1;
         testPosY = posY;
         m_apUnseenLayer[team]->WrapPosition(testPosX, testPosY, false);
-        support += getpixel(m_apUnseenLayer[team]->GetBitmap(), testPosX, testPosY) != g_MaskColor ? 1 : 0;
+        support += m_apUnseenLayer[team]->GetPixel(testPosX, testPosY) != 0 ? 1 : 0;
     }
     if (checkingFrom != S)
     {
         testPosX = posX;
         testPosY = posY + 1;
         m_apUnseenLayer[team]->WrapPosition(testPosX, testPosY, false);
-        support += getpixel(m_apUnseenLayer[team]->GetBitmap(), testPosX, testPosY) != g_MaskColor ? 1 : 0;
+        support += m_apUnseenLayer[team]->GetPixel(testPosX, testPosY) != 0 ? 1 : 0;
     }
     if (checkingFrom != N)
     {
         testPosX = posX;
         testPosY = posY - 1;
         m_apUnseenLayer[team]->WrapPosition(testPosX, testPosY, false);
-        support += getpixel(m_apUnseenLayer[team]->GetBitmap(), testPosX, testPosY) != g_MaskColor ? 1 : 0;
+        support += m_apUnseenLayer[team]->GetPixel(testPosX, testPosY) != 0 ? 1 : 0;
     }
     if (checkingFrom != SE)
     {
         testPosX = posX + 1;
         testPosY = posY + 1;
         m_apUnseenLayer[team]->WrapPosition(testPosX, testPosY, false);
-        support += getpixel(m_apUnseenLayer[team]->GetBitmap(), testPosX, testPosY) != g_MaskColor ? 0.5f : 0;
+        support += m_apUnseenLayer[team]->GetPixel(testPosX, testPosY) != 0 ? 0.5f : 0;
     }
     if (checkingFrom != SW)
     {
         testPosX = posX - 1;
         testPosY = posY + 1;
         m_apUnseenLayer[team]->WrapPosition(testPosX, testPosY, false);
-        support += getpixel(m_apUnseenLayer[team]->GetBitmap(), testPosX, testPosY) != g_MaskColor ? 0.5f : 0;
+        support += m_apUnseenLayer[team]->GetPixel(testPosX, testPosY) != 0 ? 0.5f : 0;
     }
     if (checkingFrom != NW)
     {
         testPosX = posX - 1;
         testPosY = posY - 1;
         m_apUnseenLayer[team]->WrapPosition(testPosX, testPosY, false);
-        support += getpixel(m_apUnseenLayer[team]->GetBitmap(), testPosX, testPosY) != g_MaskColor ? 0.5f : 0;
+        support += m_apUnseenLayer[team]->GetPixel(testPosX, testPosY) != 0 ? 0.5f : 0;
     }
     if (checkingFrom != NE)
     {
         testPosX = posX + 1;
         testPosY = posY - 1;
         m_apUnseenLayer[team]->WrapPosition(testPosX, testPosY, false);
-        support += getpixel(m_apUnseenLayer[team]->GetBitmap(), testPosX, testPosY) != g_MaskColor ? 0.5f : 0;
+        support += m_apUnseenLayer[team]->GetPixel(testPosX, testPosY) != 0 ? 0.5f : 0;
     }
 
     // Orphaned enough to remove?
     if (support <= 2.5)
     {
-        putpixel(m_apUnseenLayer[team]->GetBitmap(), posX, posY, g_MaskColor);
+        m_apUnseenLayer[team]->SetPixel(posX, posY, 0);
         m_CleanedPixels[team].push_back(Vector(posX, posY));
         return true;
-    }    
+    }
 
     return false;
 }
@@ -1864,7 +1875,7 @@ bool Scene::CleanOrphanPixel(int posX, int posY, NeighborDirection checkingFrom,
 
 Vector Scene::GetDimensions() const
 {
-    return m_pTerrain ? Vector(m_pTerrain->GetBitmap()->w, m_pTerrain->GetBitmap()->h) : Vector();
+    return m_pTerrain ? Vector(m_pTerrain->GetTexture()->getW(), m_pTerrain->GetTexture()->getH()) : Vector();
 }
 
 
@@ -1873,7 +1884,7 @@ Vector Scene::GetDimensions() const
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Gets the total width of the scene, in pixels.
 
-int Scene::GetWidth() const { return m_pTerrain ? m_pTerrain->GetBitmap()->w : 0; }
+int Scene::GetWidth() const { return m_pTerrain ? m_pTerrain->GetTexture()->getW() : 0; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -1881,7 +1892,7 @@ int Scene::GetWidth() const { return m_pTerrain ? m_pTerrain->GetBitmap()->w : 0
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Gets the total height of the scene, in pixels.
 
-int Scene::GetHeight() const { return m_pTerrain ? m_pTerrain->GetBitmap()->h : 0; }
+int Scene::GetHeight() const { return m_pTerrain ? m_pTerrain->GetTexture()->getH() : 0; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -2732,10 +2743,10 @@ float Scene::ApplyBuildBudget(int player, int *pObjectsBuilt)
 							Scene::Area * metaBase = GetArea(METABASE_AREA_NAME);
 							if (metaBase)
 							{
-								float x1 = pTO->GetPos().m_X + pTO->GetBitmapOffset().m_X;
-								float y1 = pTO->GetPos().m_Y + pTO->GetBitmapOffset().m_Y;
-								float x2 = x1 + pTO->GetBitmapWidth();
-								float y2 = y1 + pTO->GetBitmapHeight();
+								float x1 = pTO->GetPos().m_X + pTO->GetTextureOffset().m_X;
+								float y1 = pTO->GetPos().m_Y + pTO->GetTextureOffset().m_Y;
+								float x2 = x1 + pTO->GetTextureWidth();
+								float y2 = y1 + pTO->GetTextureHeight();
 
 								metaBase->AddBox(Box(x1, y1, x2, y2));
 							}
@@ -2971,7 +2982,7 @@ void Scene::Lock()
 //    RTEAssert(!m_Locked, "Hey, locking already locked scene!");
     if (!m_Locked)
     {
-        m_pTerrain->LockBitmaps();
+        m_pTerrain->LockTexture();
         m_Locked = true;
     }
 }
@@ -2990,7 +3001,7 @@ void Scene::Unlock()
 //    RTEAssert(m_Locked, "Hey, unlocking already unlocked scene!");
     if (m_Locked)
     {
-        m_pTerrain->UnlockBitmaps();
+        m_pTerrain->UnlockTexture();
         m_Locked = false;
     }
 }
@@ -3013,10 +3024,12 @@ void Scene::Update()
 		{
 			if (m_apUnseenLayer[team])
 			{
+				m_apUnseenLayer[team]->LockTexture();
 				for (list<Vector>::iterator itr = m_SeenPixels[team].begin(); itr != m_SeenPixels[team].end(); ++itr)
 				{
-					putpixel(m_apUnseenLayer[team]->GetBitmap(), (*itr).m_X, (*itr).m_Y, g_WhiteColor);
+					m_apUnseenLayer[team]->SetPixel((*itr).m_X, (*itr).m_Y, g_WhiteColor);
 				}
+				m_apUnseenLayer[team]->UnlockTexture();
 			}
 		}
 	}
