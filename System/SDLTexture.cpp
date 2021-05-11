@@ -29,8 +29,7 @@ namespace RTE {
 
 	Texture::Texture(SDL_Renderer *renderer, const Texture &texture) {
 		Reset();
-		std::copy(texture.m_PixelsRO.begin(), texture.m_PixelsRO.end(),
-		          m_PixelsRO);
+		std::copy(texture.m_PixelsRO.begin(), texture.m_PixelsRO.end(), m_PixelsRO.begin());
 		w = texture.w;
 		h = texture.h;
 
@@ -276,12 +275,13 @@ namespace RTE {
 	}
 
 	int Texture::lock() {
+		m_Updated = false;
 		return SDL_LockTexture(m_Texture.get(), nullptr, &m_PixelsWO, &m_Pitch);
 	}
 
 	int Texture::lock(const SDL_Rect &region) {
 		if (m_Access == SDL_TEXTUREACCESS_STREAMING) {
-			m_LockedRect = std::make_unique<SDL_Rect>(region.x, region.y, 0, 0);
+			m_LockedRect = std::make_unique<SDL_Rect>(SDL_Rect{region.x, region.y, 0, 0});
 
 			if ((region.x + region.w) < w)
 				m_LockedRect->w = region.w;
@@ -292,6 +292,7 @@ namespace RTE {
 			else
 				m_LockedRect->h = h - region.y;
 
+			m_Updated = false;
 			return SDL_LockTexture(m_Texture.get(), m_LockedRect.get(),
 			                       &m_PixelsWO, &m_Pitch);
 		}
@@ -299,9 +300,9 @@ namespace RTE {
 	}
 
 	void Texture::unlock() {
-		if (m_LockedRect)
+		if (m_LockedRect||m_Updated)
 			SDL_UpdateTexture(m_Texture.get(), m_LockedRect.get(),
-			                  getPixelsRW(), w * sizeof(uint32_t));
+			                  getPixels(), w * sizeof(uint32_t));
 		SDL_UnlockTexture(m_Texture.get());
 		m_PixelsWO = nullptr;
 		m_Pitch = 0;
@@ -351,15 +352,25 @@ namespace RTE {
 	void Texture::fillRect(const SDL_Rect &rect, uint32_t color) {
 		if (!m_LockedRect && m_PixelsWO) {
 			std::unique_ptr<SDL_Surface, sdl_deleter> temp{
-			    SDL_CreateRGBSurfaceWithFormatFrom(getPixelsRW(), w, h, 32,
+			    SDL_CreateRGBSurfaceWithFormatFrom(getPixels(), w, h, 32,
 			                                       sizeof(uint32_t), m_Format)};
 			uint32_t formattedColor = SDL_MapRGBA(
 			    m_PixelFormat.get(), (color >> 24) & 0xFF, (color >> 16) & 0xFF,
 			    (color >> 8) & 0xFF, (color)&0xFF);
 			SDL_FillRect(temp.get(), &rect, formattedColor);
-			SDL_ConvertPixels(w, h, m_Format, getPixelsRW(),
+			SDL_ConvertPixels(w, h, m_Format, getPixels(),
 			                  w * sizeof(uint32_t), m_Format, m_PixelsWO,
 			                  m_Pitch);
+		}
+	}
+
+	void Texture::rect(const SDL_Rect &rect, uint32_t color) {
+		if(m_PixelsWO){
+			std::unique_ptr<SDL_Surface, sdl_deleter> temp{getPixelsAsSurface()};
+			uint32_t formattedColor = SDL_MapRGBA(m_PixelFormat.get(), (color >> 24)&0xFF, (color >> 16)&0xFF, (color >> 8)&0xFF, (color)&0xFF);
+			SDL_FillRect(temp.get(), &rect, formattedColor);
+			SDL_Rect innerRect{rect.x + 1,rect.y + 1, rect.w - 2, rect.h - 2};
+			SDL_FillRect(temp.get(), &innerRect, formattedColor);
 		}
 	}
 
@@ -369,7 +380,7 @@ namespace RTE {
 			    m_PixelFormat.get(), (color >> 24) & 0xFF, (color >> 16) & 0xFF,
 			    (color >> 8) & 0xFF, (color)&0xFF);
 			std::unique_ptr<SDL_Surface, sdl_deleter> temp{
-				SDL_CreateRGBSurfaceWithFormatFrom(getPixelsRW(), w, h, 32,
+				SDL_CreateRGBSurfaceWithFormatFrom(getPixels(), w, h, 32,
 				                                   w * sizeof(32), m_Format)
 			};
 			SDL_FillRect(temp.get(), nullptr, formattedColor);
@@ -411,13 +422,18 @@ namespace RTE {
 		return SDL_SetTextureColorMod(m_Texture.get(), r, g, b);
 	}
 
-	uint32_t *Texture::getPixelsRW() {
+	uint32_t *Texture::getPixels() {
+		m_Updated = true;
 		if (m_LockedRect) {
 			return m_PixelsRO.data() + m_LockedRect->x +
 			       m_LockedRect->w * sizeof(uint32_t);
 		} else {
 			return m_PixelsRO.data();
 		}
+	}
+
+	std::unique_ptr<SDL_Surface, sdl_deleter> Texture::getPixelsAsSurface(){
+		return std::unique_ptr<SDL_Surface, sdl_deleter>(SDL_CreateRGBSurfaceWithFormatFrom(getPixels(), w, h, 32, w * sizeof(uint32_t), m_Format));
 	}
 
 	uint32_t Texture::getNativeAlphaFormat(SDL_Renderer *renderer) {

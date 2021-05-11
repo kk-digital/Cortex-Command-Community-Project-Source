@@ -1,14 +1,19 @@
 #ifndef _SDLSYSTEMTEXTURE_
 #define _SDLSYSTEMTEXTURE_
 
+
 // Forward declarations
-struct SDL_Texture;
-struct SDL_PixelFormat;
+extern "C" {
 
-struct SDL_Renderer;
-struct SDL_Point;
-struct SDL_Rect;
+	struct SDL_Surface;
+	struct SDL_Texture;
+	struct SDL_PixelFormat;
 
+	struct SDL_Renderer;
+	struct SDL_Point;
+	typedef struct SDL_Rect SDL_Rect;
+
+}
 //! Deleter structs for unique_ptr
 struct sdl_texture_deleter {
 	void operator()(SDL_Texture *p);
@@ -16,6 +21,8 @@ struct sdl_texture_deleter {
 struct sdl_format_deleter {
 	void operator()(SDL_PixelFormat *p);
 };
+
+struct sdl_deleter;
 
 namespace RTE {
 	/// <summary>
@@ -641,10 +648,29 @@ namespace RTE {
 		void fillLocked(uint32_t color);
 
 		/// <summary>
-		/// Get the raw Pixels of the Texture for RW ops, offset by the locked
-		/// area
+		/// For a locked streamable texture draw the outline of a rectangle in color.
 		/// </summary>
-		uint32_t *getPixelsRW();
+		/// <param name="rect">
+		/// The rectangle to draw.
+		/// </param>
+		/// <param name="color">
+		/// The color the outline should have in RGBA32.
+		/// </param>
+		void rect(const SDL_Rect &rect, uint32_t color);
+
+		/// <summary>
+		/// Get the raw Pixels of the Texture for RW ops, offset by the locked
+		/// area. If the Texture is locked modifying these will result in undefined behaviour
+		/// </summary>
+		uint32_t *getPixels();
+
+		/// <summary>
+		/// Get the writable pixels of this textures as a software surface.
+		/// </summary>
+		/// <returns>
+		/// A unique_ptr of the SDL_Surface, which can be safely used with sdl blit functions
+		/// </returns>
+		std::unique_ptr<SDL_Surface, sdl_deleter> getPixelsAsSurface();
 
 		/// <summary>
 		/// Get the alpha value that will be multiplied onto all render
@@ -733,6 +759,8 @@ namespace RTE {
 		std::vector<uint32_t> m_PixelsRO;
 		//! WRITE ONLY pixel array. Only accessible while Texture is locked
 		void *m_PixelsWO;
+
+		bool m_Updated; //!< Wether the texture needs to be updated on unlock
 
 		//! Non NULL if locked with lock(SDL_Rect);
 		std::unique_ptr<SDL_Rect> m_LockedRect;
