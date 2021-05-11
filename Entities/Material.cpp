@@ -93,7 +93,7 @@ namespace RTE {
 			reader >> m_UseOwnColor;
 		} else if (propName == "TextureFile") {
 			reader >> m_TextureFile;
-			m_TerrainTexture = m_TextureFile.GetAsBitmap();
+			m_TerrainTexture = m_TextureFile.GetAsTexture();
 		} else {
 			return Entity::ReadProperty(propName, reader);
 		}
