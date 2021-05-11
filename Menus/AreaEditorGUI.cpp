@@ -627,7 +627,7 @@ void AreaEditorGUI::Draw(SDL_Renderer* renderer, const Vector &targetPos) const
     {
         // Set the drawin mode to be transparent and use the
 //        g_FrameMan.SetTransTable(m_BlinkTimer.AlternateReal(333) || m_EditorGUIMode == PLACINGOBJECT ? LessTrans : HalfTrans);
-		SDL_SetRenderDrawColor(renderer, (g_RedColor<<24)&0xFF, (g_RedColor<<16)&0xFF, (g_RedColor<<8)&0xFF, g_FrameMan.MoreTrans());
+		SDL_SetRenderDrawColor(renderer, (g_RedColor<<24)&0xFF, (g_RedColor<<16)&0xFF, (g_RedColor<<8)&0xFF, MoreTrans);
 
         // Draw all already placed Box:es, and the currently edited one
         for (vector<Box>::const_iterator bItr = pBoxList->begin(); bItr != pBoxList->end(); ++bItr)
