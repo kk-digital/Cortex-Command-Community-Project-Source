@@ -2,6 +2,7 @@
 #include "PresetMan.h"
 #include "SceneMan.h"
 #include "LuaMan.h"
+#include "System.h"
 
 namespace RTE {
 
@@ -116,7 +117,7 @@ namespace RTE {
 			}
 		} else if (propName == "IconFile") {
 			reader >> m_IconFile;
-			m_Icon = m_IconFile.GetAsBitmap();
+			m_Icon = m_IconFile.GetAsTexture();
 		} else if (propName == "AddMaterial") {
 			return g_SceneMan.ReadProperty(propName, reader);
 		} else {
