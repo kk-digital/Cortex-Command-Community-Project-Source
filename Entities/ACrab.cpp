@@ -2830,19 +2830,19 @@ void ACrab::Update()
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void ACrab::Draw(SDL_Renderer* renderer, const Vector &targetPos, DrawMode mode, bool onlyPhysical) const {
+void ACrab::Draw(SDL_Renderer* renderer, const Vector &targetPos, DrawMode mode, bool onlyPhysical, int alphaMod) const {
     Actor::Draw(renderer, targetPos, mode, onlyPhysical);
 
     if (mode == g_DrawColor && !onlyPhysical && g_SettingsMan.DrawHandAndFootGroupVisualizations()) {
-        m_pLFGFootGroup->Draw(renderer, targetPos, true, 13);
-        m_pLBGFootGroup->Draw(renderer, targetPos, true, 13);
-        m_pRFGFootGroup->Draw(renderer, targetPos, true, 13);
-        m_pRBGFootGroup->Draw(renderer, targetPos, true, 13);
+        m_pLFGFootGroup->Draw(renderer, targetPos, true, 13); // TODO: Magic Number 13
+        m_pLBGFootGroup->Draw(renderer, targetPos, true, 13); // TODO: Magic Number 13
+        m_pRFGFootGroup->Draw(renderer, targetPos, true, 13); // TODO: Magic Number 13
+        m_pRBGFootGroup->Draw(renderer, targetPos, true, 13); // TODO: Magic Number 13
     }
 
     if (mode == g_DrawColor && !onlyPhysical && g_SettingsMan.DrawLimbPathVisualizations()) {
-        m_Paths[LEFTSIDE][WALK]->Draw(pTargetBitmap, targetPos, 122);
-        m_Paths[RIGHTSIDE][WALK]->Draw(pTargetBitmap, targetPos, 122);
+        m_Paths[LEFTSIDE][WALK]->Draw(renderer, targetPos, 122);  //TODO: Magic Number 112
+        m_Paths[RIGHTSIDE][WALK]->Draw(renderer, targetPos, 122); //TODO: Magic Number 112
     }
 }
 
