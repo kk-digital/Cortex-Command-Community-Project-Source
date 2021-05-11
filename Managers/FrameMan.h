@@ -532,9 +532,6 @@ namespace RTE {
 
 		/* TODO: categorize these */
 
-		int MoreTrans() { return 64; }
-		int HalfTrans() { return 128; }
-		int LessTrans() { return 192; }
 
 		int DrawLine(const Vector &start, const Vector &end, int color,
 		             int altColor = 0, int skip = 0, int skipStart = 0,
