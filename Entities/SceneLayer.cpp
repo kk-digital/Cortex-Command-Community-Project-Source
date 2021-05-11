@@ -107,7 +107,7 @@ int SceneLayer::Create(ContentFile textureFile,
                        Vector scrollInfo)
 {
 
-	RTEAssert(!texture.getPixelsRW(), "Null bitmap passed in when creating SceneLayer");
+	RTEAssert(!texture.getPixels(), "Null bitmap passed in when creating SceneLayer");
 
 	RTEAssert(texture.getAccess() == SDL_TEXTUREACCESS_STREAMING,
 		      "Non streaming access texture passed in when creating SceneLayer")
@@ -268,7 +268,7 @@ int SceneLayer::SaveData(string bitmapPath)
     // Save out the bitmap
     if (m_pMainTexture)
     {
-		SDL_Surface *savePNG = SDL_CreateRGBSurfaceWithFormatFrom(m_pMainTexture->getPixelsRW(), m_pMainTexture->getW(), m_pMainTexture->getH(), 32, m_pMainTexture->getW() * sizeof(uint32_t), m_pMainTexture->getFormat());
+		SDL_Surface *savePNG = SDL_CreateRGBSurfaceWithFormatFrom(m_pMainTexture->getPixels(), m_pMainTexture->getW(), m_pMainTexture->getH(), 32, m_pMainTexture->getW() * sizeof(uint32_t), m_pMainTexture->getFormat());
 		if(!savePNG){
 			return -1;
 		}

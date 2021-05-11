@@ -923,7 +923,7 @@ deque<MOPixel *> SLTerrain::EraseSilhouette(std::shared_ptr<Texture> pSprite,
 	// because the pixels are not copied)
 	std::unique_ptr<SDL_Surface, sdl_deleter> tempSpriteSurface{
 		SDL_CreateRGBSurfaceWithFormatFrom(
-		    pSprite->getPixelsRW(), pSprite->getW(), pSprite->getH(), 32,
+		    pSprite->getPixels(), pSprite->getW(), pSprite->getH(), 32,
 		    pSprite->getW() * sizeof(uint32_t), pSprite->getFormat())
 	};
 
@@ -1101,7 +1101,7 @@ void SLTerrain::ApplyMovableObject(MovableObject *pMObject)
 
 		SDL_RenderReadPixels(renderer, nullptr,
 			                 GetFGColorTexture()->getFormat(),
-			                 GetFGColorTexture()->getPixelsRW(),
+			                 GetFGColorTexture()->getPixels(),
 			                 GetFGColorTexture()->getW() * sizeof(uint32_t));
 
 		GetFGColorTexture()->unlock();
@@ -1121,7 +1121,7 @@ void SLTerrain::ApplyMovableObject(MovableObject *pMObject)
 				       g_SceneMan.GetSceneWidth()) {
 				GetFGColorTexture()->lock(SDL_Rect{static_cast<int>(bitmapScroll.m_X)-g_SceneMan.GetSceneWidth(), static_cast<int>(bitmapScroll.m_Y), spriteDiameter, spriteDiameter});
 			}
-			SDL_RenderReadPixels(renderer, nullptr, GetFGColorTexture()->getFormat(), GetFGColorTexture()->getPixelsRW(), GetFGColorTexture()->getW()*sizeof(uint32_t));
+			SDL_RenderReadPixels(renderer, nullptr, GetFGColorTexture()->getFormat(), GetFGColorTexture()->getPixels(), GetFGColorTexture()->getW()*sizeof(uint32_t));
 			GetFGColorTexture()->unlock();
         }
         if (g_SceneMan.SceneWrapsY())
@@ -1134,7 +1134,7 @@ void SLTerrain::ApplyMovableObject(MovableObject *pMObject)
 			}
 			SDL_RenderReadPixels(renderer, nullptr,
 				                 GetFGColorTexture()->getFormat(),
-				                 GetFGColorTexture()->getPixelsRW(),
+				                 GetFGColorTexture()->getPixels(),
 				                 GetFGColorTexture()->getW() * sizeof(uint32_t));
 			GetFGColorTexture()->unlock();
 		}
@@ -1155,7 +1155,7 @@ void SLTerrain::ApplyMovableObject(MovableObject *pMObject)
 
 		SDL_RenderReadPixels(renderer, nullptr,
 			                 GetMaterialTexture()->getFormat(),
-			                 GetMaterialTexture()->getPixelsRW(),
+			                 GetMaterialTexture()->getPixels(),
 			                 GetMaterialTexture()->getW() * sizeof(uint32_t));
 
 		GetMaterialTexture()->unlock();
@@ -1181,7 +1181,7 @@ void SLTerrain::ApplyMovableObject(MovableObject *pMObject)
 			}
 			SDL_RenderReadPixels(renderer, nullptr,
 				                 GetFGColorTexture()->getFormat(),
-				                 GetFGColorTexture()->getPixelsRW(),
+				                 GetFGColorTexture()->getPixels(),
 				                 GetFGColorTexture()->getW() * sizeof(uint32_t));
 			GetFGColorTexture()->unlock();
 		}
@@ -1203,7 +1203,7 @@ void SLTerrain::ApplyMovableObject(MovableObject *pMObject)
 			}
 			SDL_RenderReadPixels(renderer, nullptr,
 				                 GetFGColorTexture()->getFormat(),
-				                 GetFGColorTexture()->getPixelsRW(),
+				                 GetFGColorTexture()->getPixels(),
 				                 GetFGColorTexture()->getW() * sizeof(uint32_t));
 			GetFGColorTexture()->unlock();
 		}
@@ -1277,9 +1277,9 @@ void SLTerrain::ApplyTerrainObject(TerrainObject *pTObject)
 		m_pMainTexture->lock(lockBox+offset);
 		SDL_ConvertPixels(
 			lockBox.w, lockBox.h, pTObject->GetMaterialTexture()->getFormat(),
-			pTObject->GetMaterialTexture()->getPixelsRW(),
+			pTObject->GetMaterialTexture()->getPixels(),
 			lockBox.w * sizeof(uint32_t), m_pMainTexture->getFormat(),
-			m_pMainTexture->getPixelsRW(),
+			m_pMainTexture->getPixels(),
 			m_pMainTexture->getW()* sizeof(uint32_t));
 		m_pMainTexture->unlock();
 
@@ -1287,9 +1287,9 @@ void SLTerrain::ApplyTerrainObject(TerrainObject *pTObject)
 		m_pFGColor->GetTexture()->lock(lockBox+offset);
 		SDL_ConvertPixels(
 			lockBox.w, lockBox.h, pTObject->GetFGColorTexture()->getFormat(),
-			pTObject->GetFGColorTexture()->getPixelsRW(),
+			pTObject->GetFGColorTexture()->getPixels(),
 			lockBox.w * sizeof(uint32_t), m_pFGColor->GetTexture()->getFormat(),
-			m_pFGColor->GetTexture()->getPixelsRW(),
+			m_pFGColor->GetTexture()->getPixels(),
 			m_pFGColor->GetTexture()->getW() * sizeof(uint32_t));
 		m_pFGColor->GetTexture()->unlock();
 
@@ -1299,10 +1299,10 @@ void SLTerrain::ApplyTerrainObject(TerrainObject *pTObject)
 
 			SDL_ConvertPixels(lockBox.w, lockBox.h,
 				              pTObject->GetFGColorTexture()->getFormat(),
-				              pTObject->GetFGColorTexture()->getPixelsRW(),
+				              pTObject->GetFGColorTexture()->getPixels(),
 				              lockBox.w * sizeof(uint32_t),
 				              m_pBGColor->GetTexture()->getFormat(),
-				              m_pBGColor->GetTexture()->getPixelsRW(),
+				              m_pBGColor->GetTexture()->getPixels(),
 				              m_pBGColor->GetTexture()->getW() *
 				                  sizeof(uint32_t));
 			m_pBGColor->GetTexture()->unlock();
@@ -1314,9 +1314,9 @@ void SLTerrain::ApplyTerrainObject(TerrainObject *pTObject)
 		m_pMainTexture->lock(lockBox + offset);
 		SDL_ConvertPixels(
 			lockBox.w, lockBox.h, pTObject->GetMaterialTexture()->getFormat(),
-			pTObject->GetMaterialTexture()->getPixelsRW(),
+			pTObject->GetMaterialTexture()->getPixels(),
 			lockBox.w * sizeof(uint32_t), m_pMainTexture->getFormat(),
-			m_pMainTexture->getPixelsRW(),
+			m_pMainTexture->getPixels(),
 			m_pMainTexture->getW() * sizeof(uint32_t));
 		m_pMainTexture->unlock();
 
@@ -1324,9 +1324,9 @@ void SLTerrain::ApplyTerrainObject(TerrainObject *pTObject)
 		m_pFGColor->GetTexture()->lock(lockBox + offset);
 		SDL_ConvertPixels(
 			lockBox.w, lockBox.h, pTObject->GetMaterialTexture()->getFormat(),
-			pTObject->GetMaterialTexture()->getPixelsRW(),
+			pTObject->GetMaterialTexture()->getPixels(),
 			lockBox.w * sizeof(uint32_t), m_pFGColor->GetTexture()->getFormat(),
-			m_pFGColor->GetTexture()->getPixelsRW(),
+			m_pFGColor->GetTexture()->getPixels(),
 			m_pFGColor->GetTexture()->getW() * sizeof(uint32_t));
 		m_pFGColor->GetTexture()->unlock();
         if (pTObject->HasBGColor()){
@@ -1334,10 +1334,10 @@ void SLTerrain::ApplyTerrainObject(TerrainObject *pTObject)
 			m_pBGColor->GetTexture()->lock(lockBox + offset);
 			SDL_ConvertPixels(lockBox.w, lockBox.h,
 				              pTObject->GetMaterialTexture()->getFormat(),
-				              pTObject->GetMaterialTexture()->getPixelsRW(),
+				              pTObject->GetMaterialTexture()->getPixels(),
 				              lockBox.w * sizeof(uint32_t),
 				              m_pBGColor->GetTexture()->getFormat(),
-				              m_pBGColor->GetTexture()->getPixelsRW(),
+				              m_pBGColor->GetTexture()->getPixels(),
 				              m_pBGColor->GetTexture()->getW() *
 				                  sizeof(uint32_t));
 			m_pBGColor->GetTexture()->unlock();
@@ -1348,18 +1348,18 @@ void SLTerrain::ApplyTerrainObject(TerrainObject *pTObject)
 	m_pMainTexture->lock(lockBox);
 	SDL_ConvertPixels(lockBox.w, lockBox.h,
 		              pTObject->GetMaterialTexture()->getFormat(),
-		              pTObject->GetMaterialTexture()->getPixelsRW(),
+		              pTObject->GetMaterialTexture()->getPixels(),
 		              lockBox.w * sizeof(uint32_t), m_pMainTexture->getFormat(),
-		              m_pMainTexture->getPixelsRW(),
+		              m_pMainTexture->getPixels(),
 		              m_pMainTexture->getW() * sizeof(uint32_t));
 	m_pMainTexture->unlock();
 
 	m_pFGColor->GetTexture()->lock(lockBox);
 	SDL_ConvertPixels(
 		lockBox.w, lockBox.h, pTObject->GetMaterialTexture()->getFormat(),
-		pTObject->GetMaterialTexture()->getPixelsRW(),
+		pTObject->GetMaterialTexture()->getPixels(),
 		lockBox.w * sizeof(uint32_t), m_pFGColor->GetTexture()->getFormat(),
-		m_pFGColor->GetTexture()->getPixelsRW(),
+		m_pFGColor->GetTexture()->getPixels(),
 		m_pFGColor->GetTexture()->getW() * sizeof(uint32_t));
 	m_pFGColor->GetTexture()->unlock();
 
@@ -1369,9 +1369,9 @@ void SLTerrain::ApplyTerrainObject(TerrainObject *pTObject)
 		m_pBGColor->GetTexture()->lock(lockBox);
 		SDL_ConvertPixels(
 			lockBox.w, lockBox.h, pTObject->GetMaterialTexture()->getFormat(),
-			pTObject->GetMaterialTexture()->getPixelsRW(),
+			pTObject->GetMaterialTexture()->getPixels(),
 			lockBox.w * sizeof(uint32_t), m_pBGColor->GetTexture()->getFormat(),
-			m_pBGColor->GetTexture()->getPixelsRW(),
+			m_pBGColor->GetTexture()->getPixels(),
 			m_pBGColor->GetTexture()->getW() * sizeof(uint32_t));
 		m_pBGColor->GetTexture()->unlock();
 
