@@ -14,11 +14,7 @@
 #include "GUI.h"
 #include "GUITextPanel.h"
 
-#ifdef _WIN32
-#include "WinUtil.h"
-#elif defined(__unix__)
-#include "LinuxUtil.h"
-#endif
+#include "GUIUtil.h"
 
 using namespace RTE;
 
@@ -296,11 +292,7 @@ void GUITextPanel::OnKeyPress(int KeyCode, int Modifier) {
 	// ModKey-X (Cut)
 	if (asciiChar == 'x' && ModKey) {
 		if (m_GotSelection) {
-#ifdef _WIN32
-			WinUtil::SetClipboardText(GetSelectionText());
-#elif defined(__unix__)
-			LinuxUtil::SetClipboardText(GetSelectionText());
-#endif
+			GUIUtil::SetClipboardText(GetSelectionText());
 			RemoveSelectionText();
 			SendSignal(Changed, 0);
 		}
@@ -310,11 +302,7 @@ void GUITextPanel::OnKeyPress(int KeyCode, int Modifier) {
 	// ModKey-C (Copy)
 	if (asciiChar == 'c' && ModKey) {
 		if (m_GotSelection) {
-#ifdef _WIN32
-			WinUtil::SetClipboardText(GetSelectionText());
-#elif defined(__unix__)
-			LinuxUtil::SetClipboardText(GetSelectionText());
-#endif
+			GUIUtil::SetClipboardText(GetSelectionText());
 		}
 		return;
 	}
@@ -323,11 +311,7 @@ void GUITextPanel::OnKeyPress(int KeyCode, int Modifier) {
 	if (asciiChar == 'v' && ModKey) {
 		RemoveSelectionText();
 		string Text = "";
-#ifdef _WIN32
-		WinUtil::GetClipboardText(&Text);
-#elif defined(__unix__)
-		LinuxUtil::GetClipboardText(&Text);
-#endif
+		GUIUtil::GetClipboardText(&Text);
 		m_Text.insert(m_CursorIndex, Text);
 		m_CursorIndex += Text.size();
 		UpdateText(true, true);
