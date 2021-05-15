@@ -31,7 +31,7 @@ namespace RTE {
 		/// <summary>
 		///  Destroys and frees the bitmap.
 		/// </summary>
-		virtual void Destroy() = 0;
+		virtual void Destroy() {};
 #pragma endregion
 
 #pragma region Getters and Setters
@@ -206,7 +206,7 @@ namespace RTE {
 		/// <summary>
 		/// Destroy the screen.
 		/// </summary>
-		virtual void Destroy() =0;
+		virtual void Destroy() {};
 #pragma endregion
 
 #pragma region Getters
