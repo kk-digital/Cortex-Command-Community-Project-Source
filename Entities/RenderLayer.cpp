@@ -4,6 +4,11 @@
 #include "System/SDLHelper.h"
 
 namespace RTE {
+
+	RenderLayer::RenderLayer(){
+	}
+	RenderLayer::~RenderLayer() = default;
+
 	int RenderLayer::Create(int width, int height, Vector offset, bool wrapX,
 	                        bool wrapY, Vector scrollInfo) {
 		m_DrawTrans = true;
