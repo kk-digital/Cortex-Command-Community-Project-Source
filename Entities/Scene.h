@@ -58,8 +58,8 @@ public:
 		PLACEDSETSCOUNT
 	};
 
-	const static int PREVIEW_WIDTH = 140;
-	const static int PREVIEW_HEIGHT = 55;
+	constexpr static int PREVIEW_WIDTH = 140;
+	constexpr static int PREVIEW_HEIGHT = 55;
 
     //////////////////////////////////////////////////////////////////////////////////////////
     // Nested class:    Area

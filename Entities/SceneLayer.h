@@ -133,7 +133,7 @@ ClassInfoGetters
 //                  Anything below 0 is an error signal.
 
 // TODO: streamline interface")
-	int Create(Texture &pTexture, bool drawTrans, Vector offset, bool wrapX, bool wrapY, Vector scrollInfo);
+	int Create(SharedTexture &pTexture, bool drawTrans, Vector offset, bool wrapX, bool wrapY, Vector scrollInfo);
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          Create

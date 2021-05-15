@@ -40,7 +40,8 @@ namespace RTE {
 
 ConcreteClassInfo(Scene, Entity, 0)
 const string Scene::Area::c_ClassName = "Area";
-
+	constexpr int Scene::PREVIEW_WIDTH;
+	constexpr int Scene::PREVIEW_HEIGHT;
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          Clear
@@ -583,7 +584,7 @@ int Scene::LoadData(bool placeObjects, bool initPathfinding, bool placeUnits)
         if (!m_UnseenPixelSize[team].IsZero())
         {
             // Create the bitmap to make the unseen scene layer out of
-            Texture pUnseenBitmap(g_FrameMan.GetRenderer(), GetWidth() / m_UnseenPixelSize[team].m_X, GetHeight() / m_UnseenPixelSize[team].m_Y, SDL_TEXTUREACCESS_STREAMING);
+            SharedTexture pUnseenBitmap = std::make_shared<Texture>(g_FrameMan.GetRenderer(), GetWidth() / m_UnseenPixelSize[team].m_X, GetHeight() / m_UnseenPixelSize[team].m_Y, SDL_TEXTUREACCESS_STREAMING);
 
             // Replace any old unseen layer with the new one that is generated
             delete m_apUnseenLayer[team];
@@ -1702,9 +1703,9 @@ void Scene::FillUnseenLayer(Vector pixelSize, int team, bool createNow)
     // Create the bitmap to make the unseen scene layer out of
     if (createNow)
     {
-		Texture pUnseenBitmap(g_FrameMan.GetRenderer(), GetWidth() / m_UnseenPixelSize[team].m_X, GetHeight() / m_UnseenPixelSize[team].m_Y);
-		pUnseenBitmap.lock();
-		pUnseenBitmap.clearAll(g_BlackColor);
+		SharedTexture pUnseenBitmap = std::make_shared<Texture>(g_FrameMan.GetRenderer(), GetWidth() / m_UnseenPixelSize[team].m_X, GetHeight() / m_UnseenPixelSize[team].m_Y);
+		pUnseenBitmap->lock();
+		pUnseenBitmap->clearAll(g_BlackColor);
         // Replace any old unseen layer with the new one that is generated
         delete m_apUnseenLayer[team];
         m_apUnseenLayer[team] = new SceneLayer();
