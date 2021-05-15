@@ -117,7 +117,7 @@ void SceneMan::Clear()
 //    m_CalcTimer.Reset();
 	m_CleanTimer.Reset();
 
-	m_pOrphanSearchBitmap =  std::make_unique<Texture>(g_FrameMan.GetRenderer(), MAXORPHANRADIUS, MAXORPHANRADIUS, SDL_TEXTUREACCESS_STREAMING);
+	m_pOrphanSearchBitmap = std::make_unique<Texture>(g_FrameMan.GetRenderer(), MAXORPHANRADIUS, MAXORPHANRADIUS, SDL_TEXTUREACCESS_STREAMING);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -223,12 +223,10 @@ int SceneMan::LoadScene(Scene *pNewScene, bool placeObjects, bool placeUnits) {
 
   if(m_DrawRayCastVisualizations || m_DrawPixelCheckVisualizations){
 	// Create the Debug SceneLayer
-	  m_pDebugLayer = std::make_unique<SceneLayer>();
-	Texture debugTexture(g_FrameMan.GetRenderer(), GetSceneWidth(),
-		                 GetSceneHeight(), SDL_TEXTUREACCESS_STREAMING);
-		m_pDebugLayer->Create(debugTexture,
-		                      true, Vector(), m_pCurrentScene->WrapsX(),
-		                      m_pCurrentScene->WrapsY(), Vector(1.0, 1.0));
+	m_pDebugLayer = std::make_unique<SceneLayer>();
+	SharedTexture debugTexture = std::make_shared<Texture>(g_FrameMan.GetRenderer(), GetSceneWidth(), GetSceneHeight(), SDL_TEXTUREACCESS_STREAMING);
+
+	m_pDebugLayer->Create(debugTexture, true, Vector(), m_pCurrentScene->WrapsX(), m_pCurrentScene->WrapsY(), Vector(1.0, 1.0));
   }
 
 	// Finally draw the ID:s of the MO:s to the MOID layers for the first time
