@@ -85,7 +85,7 @@ namespace RTE {
 
 	int SettingsMan::ReadProperty(const std::string_view &propName, Reader &reader) {
 		if (propName == "PaletteFile") {
-			// reader >> g_FrameMan.m_PaletteFile;
+			reader >> g_FrameMan.m_PaletteFile;
 		} else if (propName == "ResolutionX") {
 			reader >> g_FrameMan.m_ResX;
 			g_FrameMan.m_NewResX = g_FrameMan.m_ResX;
@@ -255,7 +255,7 @@ namespace RTE {
 		writer.NewDivider(false);
 		writer.NewLineString("// Display Settings", false);
 		writer.NewLine(false);
-		// writer.NewPropertyWithValue("PaletteFile", g_FrameMan.m_PaletteFile);
+		writer.NewPropertyWithValue("PaletteFile", g_FrameMan.m_PaletteFile);
 		writer.NewPropertyWithValue("ResolutionX", g_FrameMan.m_NewResX);
 		writer.NewPropertyWithValue("ResolutionY", g_FrameMan.m_NewResY);
 		writer.NewPropertyWithValue("ResolutionMultiplier", g_FrameMan.m_ResMultiplier);
