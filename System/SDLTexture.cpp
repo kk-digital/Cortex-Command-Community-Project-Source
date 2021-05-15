@@ -3,13 +3,17 @@
 
 #include "Constants.h"
 
+#include "RTEError.h"
+
 void sdl_format_deleter::operator()(SDL_PixelFormat *p) { SDL_FreeFormat(p); }
 void sdl_texture_deleter::operator()(SDL_Texture *p) { SDL_DestroyTexture(p); }
 
 namespace RTE {
 	std::unique_ptr<Texture> Texture::fillTarget;
 
-	Texture::Texture() { Reset(); }
+	Texture::Texture() {
+		Reset();
+	}
 
 	Texture::Texture(Texture &&texture) {
 		texture.unlock();
@@ -17,11 +21,6 @@ namespace RTE {
 		w = texture.w;
 		h = texture.h;
 		m_Format = texture.m_Format;
-		m_PixelFormat = std::move(texture.m_PixelFormat);
-		m_Rmask = texture.m_Rmask;
-		m_Gmask = texture.m_Gmask;
-		m_Bmask = texture.m_Bmask;
-		m_Amask = texture.m_Amask;
 		m_Access = texture.m_Access;
 		m_PixelsRO = std::move(texture.m_PixelsRO);
 		texture.Reset();
@@ -29,16 +28,13 @@ namespace RTE {
 
 	Texture::Texture(SDL_Renderer *renderer, const Texture &texture) {
 		Reset();
-		std::copy(texture.m_PixelsRO.begin(), texture.m_PixelsRO.end(), m_PixelsRO.begin());
+		std::copy(texture.m_PixelsRO.begin(), texture.m_PixelsRO.end(), std::back_inserter(m_PixelsRO));
 		w = texture.w;
 		h = texture.h;
 
 		m_Format = getNativeAlphaFormat(renderer);
-		m_PixelFormat.reset(SDL_AllocFormat(m_Format));
-		setRGBAMasks();
 
-		m_Texture.reset(SDL_CreateTexture(renderer, m_Format, texture.m_Access,
-		                                  texture.w, texture.h));
+		m_Texture = std::unique_ptr<SDL_Texture, sdl_texture_deleter>(SDL_CreateTexture(renderer, m_Format, texture.m_Access, texture.w, texture.h));
 
 		if (texture.m_Access == SDL_TEXTUREACCESS_STREAMING) {
 			lock();
@@ -51,35 +47,30 @@ namespace RTE {
 		}
 	}
 
-	Texture::Texture(SDL_Renderer *renderer, int width, int height,
-	                 int access) :
-	    w{width},
-	    h{height}, m_Access{access} {
+	Texture::Texture(SDL_Renderer *renderer, int width, int height, int access) :
+	    w{width}, h{height}, m_Access{access} {
+
+
 		m_Format = getNativeAlphaFormat(renderer);
-		m_PixelFormat.reset(SDL_AllocFormat(m_Format));
-		setRGBAMasks();
 		m_PixelsWO = nullptr;
 		m_Pitch = 0;
 		m_PixelsRO.clear();
 		m_PixelsRO.resize(width * height);
-		m_Texture.reset(
-		    SDL_CreateTexture(renderer, m_Format, access, width, height));
+		m_Texture.reset(SDL_CreateTexture(renderer, m_Format, access, width, height));
+		RTEAssert(m_Texture.get(), "Texture was not created");
 		SDL_SetTextureBlendMode(m_Texture.get(), SDL_BLENDMODE_BLEND);
 	}
 
-	Texture::~Texture() { Reset(); }
+	Texture::~Texture() {
+		Reset();
+	}
 
 	void Texture::Reset() {
 		m_Texture.reset();
 		w = 0;
 		h = 0;
 		m_Access = SDL_TEXTUREACCESS_STATIC;
-		m_PixelFormat.reset();
 		m_Format = SDL_PIXELFORMAT_UNKNOWN;
-		m_Rmask = 0;
-		m_Gmask = 0;
-		m_Bmask = 0;
-		m_Amask = 0;
 		m_PixelsRO.clear();
 		m_PixelsWO = nullptr;
 		m_Pitch = 0;
@@ -112,6 +103,10 @@ namespace RTE {
 	                    int flip) {
 		return SDL_RenderCopyEx(pRenderer, m_Texture.get(), nullptr, &dest, 0,
 		                        nullptr, static_cast<SDL_RendererFlip>(flip));
+	}
+
+	int Texture::render(SDL_Renderer *pRenderer, int x, int y, int flip) {
+		return render(pRenderer, SDL_Rect{x,y,w,h}, flip);
 	}
 
 	int Texture::render(SDL_Renderer *pRenderer, int x, int y, double angle,
@@ -214,6 +209,14 @@ namespace RTE {
 		                       SDL_Rect{x, y, w, h}, color, angle, flip);
 	}
 
+	int Texture::renderFillColor(SDL_Renderer *renderer, int x, int y, uint32_t color, double angle, int flip, double scale){
+		SDL_Rect scaleDest{x,y,w,h};
+		scaleDest.w *= scale;
+		scaleDest.h *= scale;
+
+		return renderFillColor(renderer, SDL_Rect{0,0,w,h}, scaleDest, color, angle, flip);
+	}
+
 	int Texture::renderFillColor(SDL_Renderer *renderer, const SDL_Rect &source,
 	                             const SDL_Rect &dest, uint32_t color,
 	                             double angle, int flip) {
@@ -310,9 +313,10 @@ namespace RTE {
 
 	uint32_t Texture::getPixel(int x, int y) const {
 		if (!m_PixelsRO.empty() && x < w && y < h) {
+			SDL_PixelFormat *pf{SDL_AllocFormat(m_Format)};
 			uint8_t r, g, b, a;
-			SDL_GetRGBA(m_PixelsRO[y * w + x], m_PixelFormat.get(), &r, &g, &b,
-			            &a);
+			SDL_GetRGBA(m_PixelsRO[y * w + x], pf, &r, &g, &b, &a);
+			SDL_FreeFormat(pf);
 			return (static_cast<uint32_t>(r) << 24) |
 			       (static_cast<uint32_t>(g) << 16) |
 			       (static_cast<uint32_t>(b) << 8) | (a);
@@ -325,10 +329,26 @@ namespace RTE {
 		return getPixel(pos.x, pos.y);
 	}
 
+	uint32_t Texture::getPixel(size_t index) const {
+		if (index < m_PixelsRO.size()){
+			SDL_PixelFormat *pf{SDL_AllocFormat(m_Format)};
+			uint8_t r,g,b,a;
+			SDL_GetRGBA(m_PixelsRO[index], pf, &r, &g, &b, &a);
+			SDL_FreeFormat(pf);
+			return (static_cast<uint32_t>(r) << 24) |
+			       (static_cast<uint32_t>(g) << 16) |
+			       (static_cast<uint32_t>(b) << 8) | (a);
+		} else {
+			return 0xFFFFFF00;
+		}
+	}
+
 	void Texture::setPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b,
 	                       uint8_t a) {
 		if (m_PixelsWO && x < w && y < h) {
-			uint32_t color = SDL_MapRGBA(m_PixelFormat.get(), r, g, b, a);
+			SDL_PixelFormat* pf{SDL_AllocFormat(m_Format)};
+			uint32_t color = SDL_MapRGBA(pf, r, g, b, a);
+			SDL_FreeFormat(pf);
 			static_cast<uint32_t *>(m_PixelsWO)[x + y * w] = color;
 			m_PixelsRO[x + y * w] = color;
 		}
@@ -341,8 +361,11 @@ namespace RTE {
 
 	void Texture::clearAll(uint32_t color) {
 		uint32_t fillColor{color};
-		if (fillColor)
-			fillColor = SDL_MapRGBA(m_PixelFormat.get(), (color<<24)&0xff, (color<<16)&0xff, (color<<8)&0xff, (color)&0xff);
+		if (fillColor) {
+			SDL_PixelFormat* pf{SDL_AllocFormat(m_Format)};
+			fillColor = SDL_MapRGBA(pf, (color << 24) & 0xff, (color << 16) & 0xff, (color << 8) & 0xff, (color)&0xff);
+			SDL_FreeFormat(pf);
+		}
 
 		std::fill(m_PixelsRO.begin(), m_PixelsRO.end(), fillColor);
 		if(m_PixelsWO)
@@ -354,9 +377,9 @@ namespace RTE {
 			std::unique_ptr<SDL_Surface, sdl_deleter> temp{
 			    SDL_CreateRGBSurfaceWithFormatFrom(getPixels(), w, h, 32,
 			                                       sizeof(uint32_t), m_Format)};
-			uint32_t formattedColor = SDL_MapRGBA(
-			    m_PixelFormat.get(), (color >> 24) & 0xFF, (color >> 16) & 0xFF,
-			    (color >> 8) & 0xFF, (color)&0xFF);
+			SDL_PixelFormat* pf = SDL_AllocFormat(m_Format);
+			uint32_t formattedColor = SDL_MapRGBA(pf, (color >> 24) & 0xFF, (color >> 16) & 0xFF, (color >> 8) & 0xFF, (color)&0xFF);
+			SDL_FreeFormat(pf);
 			SDL_FillRect(temp.get(), &rect, formattedColor);
 			SDL_ConvertPixels(w, h, m_Format, getPixels(),
 			                  w * sizeof(uint32_t), m_Format, m_PixelsWO,
@@ -367,7 +390,9 @@ namespace RTE {
 	void Texture::rect(const SDL_Rect &rect, uint32_t color) {
 		if(m_PixelsWO){
 			std::unique_ptr<SDL_Surface, sdl_deleter> temp{getPixelsAsSurface()};
-			uint32_t formattedColor = SDL_MapRGBA(m_PixelFormat.get(), (color >> 24)&0xFF, (color >> 16)&0xFF, (color >> 8)&0xFF, (color)&0xFF);
+			SDL_PixelFormat* pf{SDL_AllocFormat(m_Format)};
+			uint32_t formattedColor = SDL_MapRGBA(pf, (color >> 24)&0xFF, (color >> 16)&0xFF, (color >> 8)&0xFF, (color)&0xFF);
+			SDL_FreeFormat(pf);
 			SDL_FillRect(temp.get(), &rect, formattedColor);
 			SDL_Rect innerRect{rect.x + 1,rect.y + 1, rect.w - 2, rect.h - 2};
 			SDL_FillRect(temp.get(), &innerRect, formattedColor);
@@ -376,9 +401,9 @@ namespace RTE {
 
 	void Texture::fillLocked(uint32_t color) {
 		if (m_PixelsWO && m_LockedRect) {
-			uint32_t formattedColor = SDL_MapRGBA(
-			    m_PixelFormat.get(), (color >> 24) & 0xFF, (color >> 16) & 0xFF,
-			    (color >> 8) & 0xFF, (color)&0xFF);
+			SDL_PixelFormat* pf{SDL_AllocFormat(m_Format)};
+			uint32_t formattedColor = SDL_MapRGBA(pf, (color >> 24) & 0xFF, (color >> 16) & 0xFF, (color >> 8) & 0xFF, (color)&0xFF);
+			SDL_FreeFormat(pf);
 			std::unique_ptr<SDL_Surface, sdl_deleter> temp{
 				SDL_CreateRGBSurfaceWithFormatFrom(getPixels(), w, h, 32,
 				                                   w * sizeof(32), m_Format)
@@ -413,7 +438,9 @@ namespace RTE {
 
 		SDL_GetTextureColorMod(m_Texture.get(), &r, &g, &b);
 
-		uint32_t colorMod{SDL_MapRGB(m_PixelFormat.get(), r, g, b)};
+		SDL_PixelFormat* pf{SDL_AllocFormat(m_Format)};
+		uint32_t colorMod{SDL_MapRGB(pf, r, g, b)};
+		SDL_FreeFormat(pf);
 
 		return colorMod;
 	}
@@ -445,13 +472,6 @@ namespace RTE {
 				return info.texture_formats[i];
 		}
 		return SDL_PIXELFORMAT_UNKNOWN;
-	}
-
-	void Texture::setRGBAMasks() {
-		m_Rmask = m_PixelFormat->Rmask;
-		m_Gmask = m_PixelFormat->Gmask;
-		m_Bmask = m_PixelFormat->Bmask;
-		m_Amask = m_PixelFormat->Amask;
 	}
 
 	Texture &Texture::operator=(Texture &&texture) {

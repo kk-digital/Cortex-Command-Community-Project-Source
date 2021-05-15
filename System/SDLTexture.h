@@ -34,6 +34,11 @@ namespace RTE {
 
 	public:
 		/// <summary>
+		/// Create an empty Texture. Only for use by friend classes
+		/// </summary>
+		Texture();
+
+		/// <summary>
 		/// Create a texture object from an existing one.
 		/// </summary>
 		/// <param name="texture">
@@ -563,7 +568,7 @@ namespace RTE {
 		/// y position of the pixel to get.
 		/// </param>
 		/// <reutrns>
-		/// A uint32_t in the pixel format of the texture
+		/// A uint32_t in the pixel format of the texture.
 		/// </returns>
 		uint32_t getPixel(int x, int y) const;
 
@@ -575,33 +580,20 @@ namespace RTE {
 		/// Position of the pixel to get.
 		/// </param>
 		/// <reutrns>
-		/// A uint32_t in the pixel format of the texture
+		/// A uint32_t in the pixel format of the texture.
 		/// </returns>
 		uint32_t getPixel(SDL_Point pos) const;
 
 		/// <summary>
-		/// Returns the bitmask for red in a 32bit color of the textures pixel
-		/// format
+		/// Get the color directly from the pixel array.
 		/// </summary>
-		uint32_t getRmask() { return m_Rmask; }
-
-		/// <summary>
-		/// Returns the bitmask for green in a 32bit color of the textures pixel
-		/// format
-		/// </summary>
-		uint32_t getGmask() { return m_Gmask; }
-
-		/// <summary>
-		/// Returns the bitmask for blue in a 32bit color of the textures pixel
-		/// format
-		/// </summary>
-		uint32_t getBmask() { return m_Bmask; }
-
-		/// <summary>
-		/// Returns the bitmask for alpha in a 32bit color of the textures pixel
-		/// format
-		/// </summary>
-		uint32_t getAmask() const { return m_Amask; }
+		/// <param name="index">
+		/// Which item to  get.
+		/// </param>
+		/// <returns>
+		/// A RGBA32 color.
+		/// </returns>
+		uint32_t getPixel(size_t index) const;
 
 		/// <summary>
 		/// Set a pixel at (x,y) to color
@@ -744,16 +736,8 @@ namespace RTE {
 		//! Texture Access specifier
 		int m_Access;
 
-		//! Internal SDL_PixelFormat to avoid repeated allocation on every
-		//! setPixel
-		std::unique_ptr<SDL_PixelFormat, sdl_format_deleter> m_PixelFormat;
-
 		//! Pixel Format specifier
 		uint32_t m_Format;
-		uint32_t m_Rmask;
-		uint32_t m_Gmask;
-		uint32_t m_Bmask;
-		uint32_t m_Amask;
 
 		//! READ ONLY pixel array
 		std::vector<uint32_t> m_PixelsRO;
@@ -778,13 +762,8 @@ namespace RTE {
 		/// </summary>
 		void Reset();
 
-		/// <summary>
-		/// Create an empty Texture. Only for use by friend classes
-		/// </summary>
-		Texture();
 
 		uint32_t getNativeAlphaFormat(SDL_Renderer *renderer);
-		void setRGBAMasks();
 
 		Texture(const Texture &copy) = delete;
 		Texture &operator=(const Texture &copy) = delete;
