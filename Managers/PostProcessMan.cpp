@@ -64,11 +64,11 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void PostProcessMan::AdjustEffectsPosToPlayerScreen(int playerScreen, SharedTexture targetTexture, const Vector &targetBitmapOffset, std::list<PostEffect> &screenRelativeEffectsList, std::list<Box> &screenRelativeGlowBoxesList){
+	void PostProcessMan::AdjustEffectsPosToPlayerScreen(int playerScreen, int screenWidth, int screenHeight, const Vector &targetBitmapOffset, std::list<PostEffect> &screenRelativeEffectsList, std::list<Box> &screenRelativeGlowBoxesList){
 		int screenOcclusionOffsetX = g_SceneMan.GetScreenOcclusion(playerScreen).GetFloorIntX();
 		int screenOcclusionOffsetY = g_SceneMan.GetScreenOcclusion(playerScreen).GetFloorIntY();
-		int occludedOffsetX = targetTexture->getW() + screenOcclusionOffsetX;
-		int occludedOffsetY = targetTexture->getH() + screenOcclusionOffsetY;
+		int occludedOffsetX = screenWidth + screenOcclusionOffsetX;
+		int occludedOffsetY = screenHeight + screenOcclusionOffsetY;
 
 #ifdef NETWORK_ENABLED
 		// Copy post effects received by client if in network mode

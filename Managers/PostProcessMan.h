@@ -83,11 +83,16 @@ namespace RTE {
 		/// Adjusts the offsets of all effects relative to the specified player screen and adds them to the total screen effects list so they can be drawn in PostProcess().
 		/// </summary>
 		/// <param name="playerScreen">Player screen to adjust effect offsets for.</param>
-		/// <param name="targetBitmap">Bitmap representing the player screen.</param>
+		/// <param name="screenWidth">
+		/// The width  of the current player screen.
+		/// </param>
+		/// <param name="screenHeight">
+		/// The height of the current player screen.
+		/// </param>
 		/// <param name="targetBitmapOffset">The position of the specified player's draw screen on the backbuffer.</param>
 		/// <param name="screenRelativeEffectsList">List of the specified player's accumulated post effects for this frame.</param>
 		/// <param name="screenRelativeGlowBoxesList">List of the specified player's accumulated glow boxes for this frame.</param>
-		void AdjustEffectsPosToPlayerScreen(int playerScreen, SharedTexture targetTexture, const Vector &targetBitmapOffset, std::list<PostEffect> &screenRelativeEffectsList, std::list<Box> &screenRelativeGlowBoxesList);
+		void AdjustEffectsPosToPlayerScreen(int playerScreen, int screenWidth, int screenHeight, const Vector &targetBitmapOffset, std::list<PostEffect> &screenRelativeEffectsList, std::list<Box> &screenRelativeGlowBoxesList);
 #pragma endregion
 
 #pragma region Post Effect Handling
