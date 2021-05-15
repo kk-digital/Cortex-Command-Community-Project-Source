@@ -369,7 +369,7 @@ namespace RTE {
 
 		std::fill(m_PixelsRO.begin(), m_PixelsRO.end(), fillColor);
 		if(m_PixelsWO)
-			std::fill((uint32_t*)m_PixelsWO, (uint32_t*)m_PixelsWO + m_Pitch * h, fillColor);
+			SDL_ConvertPixels(w, h, m_Format, m_PixelsRO.data(), sizeof(uint32_t), m_Format, m_PixelsWO, m_Pitch);
 	}
 
 	void Texture::fillRect(const SDL_Rect &rect, uint32_t color) {

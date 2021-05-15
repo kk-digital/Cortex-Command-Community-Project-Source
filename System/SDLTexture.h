@@ -763,7 +763,7 @@ namespace RTE {
 		void Reset();
 
 
-		uint32_t getNativeAlphaFormat(SDL_Renderer *renderer);
+		static uint32_t getNativeAlphaFormat(SDL_Renderer *renderer);
 
 		Texture(const Texture &copy) = delete;
 		Texture &operator=(const Texture &copy) = delete;
