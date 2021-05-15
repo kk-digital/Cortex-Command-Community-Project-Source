@@ -14,7 +14,7 @@ namespace RTE {
 		void Update() override;
 
 	private:
-		void ConvertKeyEvent(int sdlKey, int guilibKey, float elapsedS) {};
+		void ConvertKeyEvent(int sdlKey, int guilibKey, float elapsedS);
 	};
 } // namespace RTE
 #endif
