@@ -20,6 +20,7 @@
 
 #include "MetaMan.h"
 #include "SettingsMan.h"
+#include "FrameMan.h"
 #include "ConsoleMan.h"
 #include "PresetMan.h"
 #include "PerformanceMan.h"
@@ -27,7 +28,7 @@
 #include "UInputMan.h"
 
 #include "GUI/GUI.h"
-#include "GUI/AllegroBitmap.h"
+#include "GUI/SDLGUITexture.h"
 #include "LoadingGUI.h"
 #include "MainMenuGUI.h"
 #include "ScenarioGUI.h"
@@ -40,8 +41,20 @@
 #include "MOSRotating.h"
 #include "Controller.h"
 
+#include "System/System.h"
+
+#include "System/SDLTexture.h"
+#include "System/SDLHelper.h"
+#include <SDL2/SDL_image.h>
+
+#ifdef NETWORK_ENABLED
 #include "MultiplayerServerLobby.h"
 #include "NetworkServer.h"
+#include <string>
+#include <algorithm>
+#include <cstdio>
+
+#endif
 
 extern "C" { FILE __iob_func[3] = { *stdin,*stdout,*stderr }; }
 
@@ -138,7 +151,7 @@ enum StarSize {
 };
 
 struct Star {
-	BITMAP *m_Bitmap = nullptr;
+	SharedTexture m_Bitmap = nullptr;
 	int m_PosX = 0;
 	int m_PosY = 0;
 	float m_ScrollRatio = 1.0F;
@@ -149,27 +162,22 @@ struct Star {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// <summary>
-/// This handles when the quit or exit button is pressed on the window.
-/// </summary>
-void QuitHandler(void) { g_Quit = true; }
-END_OF_FUNCTION(QuitHandler)
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-/// <summary>
 /// Load and initialize the Main Menu.
 /// </summary>
 void InitMainMenu() {
-    g_FrameMan.LoadPalette("Base.rte/palette.bmp");
+    // g_FrameMan.LoadPalette("Base.rte/palette.bmp"); //TODO: maybe use that to hold the palette for color conversions
 
     // Create the main menu interface
 	g_pMainMenuGUI = new MainMenuGUI();
+    g_ConsoleMan.PrintString("SYSTEM: Created MainMenu");
     g_pMainMenuController = new Controller(Controller::CIM_PLAYER, 0);
     g_pMainMenuController->SetTeam(0);
     g_pMainMenuGUI->Create(g_pMainMenuController);
+    g_ConsoleMan.PrintString("SYSTEM: Main Menu initialized");
     // As well as the Scenario setup menu interface
 	g_pScenarioGUI = new ScenarioGUI();
     g_pScenarioGUI->Create(g_pMainMenuController);
+    g_ConsoleMan.PrintString("SYSTEM: Scenario GUI init");
     // And the Metagame GUI too
     g_MetaMan.GetGUI()->Create(g_pMainMenuController);
 }
@@ -189,7 +197,6 @@ void ReinitMainMenu() {
 	g_ConsoleMan.Initialize();
 
 	InitMainMenu();
-	g_FrameMan.DestroyTempBackBuffers();
 	g_HadResolutionChange = true;
 }
 
@@ -204,8 +211,8 @@ bool ResetActivity() {
     g_ResetActivity = false;
 
     // Clear and reset out things
-    g_FrameMan.ClearBackBuffer8();
-    g_FrameMan.FlipFrameBuffers();
+    g_FrameMan.RenderClear();
+    g_FrameMan.RenderPresent();
     g_AudioMan.StopAll();
 
     // Quit if we should
@@ -219,8 +226,8 @@ bool ResetActivity() {
     // Have to reset TimerMan before creating anything else because all timers are reset against it
     g_TimerMan.ResetTime();
 
-    g_FrameMan.LoadPalette("Base.rte/palette.bmp");
-    g_FrameMan.FlipFrameBuffers();
+    // g_FrameMan.LoadPalette("Base.rte/palette.bmp");
+    g_FrameMan.RenderPresent();
 
     // Reset TimerMan again after loading so there's no residual delay
     g_TimerMan.ResetTime();
@@ -254,9 +261,9 @@ void ResumeActivity() {
 		g_InActivity = true;
 		g_ResumeActivity = false;
 
-		g_FrameMan.ClearBackBuffer8();
-		g_FrameMan.FlipFrameBuffers();
-		g_FrameMan.LoadPalette("Base.rte/palette.bmp");
+		g_FrameMan.RenderClear();
+		g_FrameMan.RenderPresent();
+		// g_FrameMan.LoadPalette("Base.rte/palette.bmp");
 
 		g_PerformanceMan.ResetFrameTimer();
         // Enable time averaging since it helps with animation jerkiness
@@ -267,7 +274,7 @@ void ResumeActivity() {
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+#ifdef NETWORK_ENABLED
 /// <summary>
 /// Launch multiplayer lobby activity.
 /// </summary>
@@ -286,7 +293,7 @@ void EnterMultiplayerLobby() {
 	g_ActivityMan.SetStartActivity(pMultiplayerServerLobby);
 	g_ResetActivity = true;
 }
-
+#endif
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// <summary>
@@ -330,37 +337,36 @@ bool PlayIntroTitle() {
 	// Don't stop the music if reiniting after a resolution change
 	if (!g_FrameMan.ResolutionChanged()) { g_AudioMan.StopAll(); }
 
-    g_FrameMan.ClearBackBuffer32();
-    g_FrameMan.FlipFrameBuffers();
+    g_FrameMan.RenderClear();
+    g_FrameMan.RenderClear();
     int resX = g_FrameMan.GetResX();
     int resY = g_FrameMan.GetResY();
 
     // The fade-in/out screens
-    BITMAP *pFadeScreen = create_bitmap_ex(32, resX, resY);
-    clear_to_color(pFadeScreen, 0);
+    // BITMAP *pFadeScreen = create_bitmap_ex(32, resX, resY);
+    // clear_to_color(pFadeScreen, 0);
     int fadePos = 0;
 
     // Load the Intro slides
-    BITMAP **apIntroSlides = new BITMAP *[SLIDECOUNT];
+	std::array<SharedTexture, SLIDECOUNT> apIntroSlides;
     ContentFile introSlideFile("Base.rte/GUIs/Title/Intro/IntroSlideA.png");
-    apIntroSlides[SLIDEPAST] = introSlideFile.GetAsBitmap(COLORCONV_NONE, false);
+    apIntroSlides[SLIDEPAST] = introSlideFile.GetAsTexture(false);
     introSlideFile.SetDataPath("Base.rte/GUIs/Title/Intro/IntroSlideB.png");
-    apIntroSlides[SLIDENOW] = introSlideFile.GetAsBitmap(COLORCONV_NONE, false);
+    apIntroSlides[SLIDENOW] = introSlideFile.GetAsTexture(false);
     introSlideFile.SetDataPath("Base.rte/GUIs/Title/Intro/IntroSlideC.png");
-    apIntroSlides[SLIDEVR] = introSlideFile.GetAsBitmap(COLORCONV_NONE, false);
+    apIntroSlides[SLIDEVR] = introSlideFile.GetAsTexture(false);
     introSlideFile.SetDataPath("Base.rte/GUIs/Title/Intro/IntroSlideD.png");
-    apIntroSlides[SLIDETRAVEL] = introSlideFile.GetAsBitmap(COLORCONV_NONE, false);
+    apIntroSlides[SLIDETRAVEL] = introSlideFile.GetAsTexture(false);
     introSlideFile.SetDataPath("Base.rte/GUIs/Title/Intro/IntroSlideE.png");
-    apIntroSlides[SLIDEALIENS] = introSlideFile.GetAsBitmap(COLORCONV_NONE, false);
+    apIntroSlides[SLIDEALIENS] = introSlideFile.GetAsTexture(false);
     introSlideFile.SetDataPath("Base.rte/GUIs/Title/Intro/IntroSlideF.png");
-    apIntroSlides[SLIDETRADE] = introSlideFile.GetAsBitmap(COLORCONV_NONE, false);
+    apIntroSlides[SLIDETRADE] = introSlideFile.GetAsTexture(false);
     introSlideFile.SetDataPath("Base.rte/GUIs/Title/Intro/IntroSlideG.png");
-    apIntroSlides[SLIDEPEACE] = introSlideFile.GetAsBitmap(COLORCONV_NONE, false);
+    apIntroSlides[SLIDEPEACE] = introSlideFile.GetAsTexture(false);
     introSlideFile.SetDataPath("Base.rte/GUIs/Title/Intro/IntroSlideH.png");
-    apIntroSlides[SLIDEFRONTIER] = introSlideFile.GetAsBitmap(COLORCONV_NONE, false);
+    apIntroSlides[SLIDEFRONTIER] = introSlideFile.GetAsTexture(false);
 
     ContentFile alphaFile;
-    BITMAP *pAlpha = 0;
 
     MOSParticle *pDRLogo = new MOSParticle();
     pDRLogo->Create(ContentFile("Base.rte/GUIs/Title/Intro/DRLogo5x.png"));
@@ -374,6 +380,7 @@ bool PlayIntroTitle() {
     pBackdrop->Create(ContentFile("Base.rte/GUIs/Title/Nebula.png"), false, Vector(), false, false, Vector(0, -1.0));//startYOffset + resY));
     float backdropScrollRatio = 1.0F / 3.0F;
 
+
     MOSParticle *pTitle = new MOSParticle();
     pTitle->Create(ContentFile("Base.rte/GUIs/Title/Title.png"));
     pTitle->SetWrapDoubleDrawing(false);
@@ -381,33 +388,21 @@ bool PlayIntroTitle() {
     MOSParticle *pTitleGlow = new MOSParticle();
     pTitleGlow->Create(ContentFile("Base.rte/GUIs/Title/TitleGlow.png"));
     pTitleGlow->SetWrapDoubleDrawing(false);
-    // Add alpha
-    alphaFile.SetDataPath("Base.rte/GUIs/Title/TitleAlpha.png");
-    set_write_alpha_blender();
-    draw_trans_sprite(pTitle->GetSpriteFrame(0), alphaFile.GetAsBitmap(), 0, 0);
 
     MOSParticle *pPlanet = new MOSParticle();
     pPlanet->Create(ContentFile("Base.rte/GUIs/Title/Planet.png"));
     pPlanet->SetWrapDoubleDrawing(false);
-    // Add alpha
-    alphaFile.SetDataPath("Base.rte/GUIs/Title/PlanetAlpha.png");
-    set_write_alpha_blender();
-    draw_trans_sprite(pPlanet->GetSpriteFrame(0), alphaFile.GetAsBitmap(), 0, 0);
 
     MOSParticle *pMoon = new MOSParticle();
     pMoon->Create(ContentFile("Base.rte/GUIs/Title/Moon.png"));
     pMoon->SetWrapDoubleDrawing(false);
-    // Add alpha
-    alphaFile.SetDataPath("Base.rte/GUIs/Title/MoonAlpha.png");
-    set_write_alpha_blender();
-    draw_trans_sprite(pMoon->GetSpriteFrame(0), alphaFile.GetAsBitmap(), 0, 0);
 
     MOSRotating *pStation = new MOSRotating();
     pStation->Create(ContentFile("Base.rte/GUIs/Title/Station.png"));
     pStation->SetWrapDoubleDrawing(false);
 
     // Generate stars!
-    int starArea = resX * pBackdrop->GetBitmap()->h;
+    int starArea = resX * pBackdrop->GetTexture()->getH();
     int starCount = starArea / 1000;
     ContentFile starSmallFile("Base.rte/GUIs/Title/Stars/StarSmall.png");
     ContentFile starLargeFile("Base.rte/GUIs/Title/Stars/StarLarge.png");
@@ -415,9 +410,9 @@ bool PlayIntroTitle() {
     int starSmallBitmapCount = 4;
     int starLargeBitmapCount = 1;
     int starHugeBitmapCount = 2;
-    BITMAP **apStarSmallBitmaps = starSmallFile.GetAsAnimation(starSmallBitmapCount);
-    BITMAP **apStarLargeBitmaps = starLargeFile.GetAsAnimation(starLargeBitmapCount);
-    BITMAP **apStarHugeBitmaps = starHugeFile.GetAsAnimation(starHugeBitmapCount);
+	std::vector<SharedTexture> apStarSmallBitmaps = starSmallFile.GetAsAnimation(starSmallBitmapCount);
+	std::vector<SharedTexture> apStarLargeBitmaps = starLargeFile.GetAsAnimation(starLargeBitmapCount);
+	std::vector<SharedTexture> apStarHugeBitmaps = starHugeFile.GetAsAnimation(starHugeBitmapCount);
     Star *stars = new Star[starCount];
 
 	for (int star = 0; star < starCount; ++star) {
@@ -435,7 +430,7 @@ bool PlayIntroTitle() {
 			stars[star].m_Intensity = RandomNum(166, 185);
 		}
 		stars[star].m_PosX = RandomNum(0, resX);
-		stars[star].m_PosY = RandomNum(0, pBackdrop->GetBitmap()->h);
+		stars[star].m_PosY = RandomNum(0, pBackdrop->GetTexture()->getH());
         // To match the nebula scroll
         stars[star].m_ScrollRatio = backdropScrollRatio;
     }
@@ -443,7 +438,6 @@ bool PlayIntroTitle() {
     // Font stuff
     GUISkin *pSkin = g_pMainMenuGUI->GetGUIControlManager()->GetSkin();
     GUIFont *pFont = pSkin->GetFont("fatfont.png");
-    AllegroBitmap backBuffer(g_FrameMan.GetBackBuffer32());
     int yTextPos = 0;
     // Timers
     Timer totalTimer, songTimer, sectionTimer;
@@ -463,7 +457,7 @@ bool PlayIntroTitle() {
     float orbitRadius = 274;
     float orbitRotation = c_HalfPI - c_EighthPI;
     // Set the start so that the nebula is fully scrolled up
-    int startYOffset = pBackdrop->GetBitmap()->h / backdropScrollRatio - (resY / backdropScrollRatio);
+    int startYOffset = pBackdrop->GetTexture()->getH() / backdropScrollRatio - (resY / backdropScrollRatio);
     int titleAppearYOffset = 900;
     int preMenuYOffset = 100;
     int topMenuYOffset = 0;
@@ -471,10 +465,13 @@ bool PlayIntroTitle() {
     int planetViewYOffset = 325 + planetRadius - (resY / 2);
     // Set Y to title offset so there's no jump when entering the main menu
     Vector scrollOffset(0, preMenuYOffset), planetPos, stationOffset, capsuleOffset, slidePos;
-
+    g_ConsoleMan.PrintString("SYSTEM: Started playing intro");
     totalTimer.Reset();
     sectionTimer.Reset();
     while (!g_Quit && g_IntroState != END && !g_ResumeActivity) {
+		SDL_SetRenderDrawColor(g_FrameMan.GetRenderer(), 0, 0, 0, 0);
+		g_FrameMan.RenderClear();
+
         keyPressed = g_UInputMan.AnyStartPress();
 //        g_Quit = key[KEY_ESC];
         // Reset the key press states
@@ -492,8 +489,10 @@ bool PlayIntroTitle() {
         // Clamp the sectionProgress scalar
         sectionProgress = min(sectionProgress, 0.9999);
 
+		#ifdef NETWORK_ENABLED
 		if (g_NetworkServer.IsServerModeEnabled()) { g_NetworkServer.Update(); }
-			
+		#endif
+
         ////////////////////////////////
         // Scrolling logic
 
@@ -544,18 +543,18 @@ bool PlayIntroTitle() {
         if (g_IntroState >= LOGOFADEIN && g_IntroState <= LOGOFADEOUT)
         {
             // Draw the early build notice
-            g_FrameMan.ClearBackBuffer32();
+            g_FrameMan.RenderClear();
             pDRLogo->SetPos(Vector(g_FrameMan.GetResX() / 2, (g_FrameMan.GetResY() / 2) - 35));
-            pDRLogo->Draw(g_FrameMan.GetBackBuffer32());
+            pDRLogo->Draw(g_FrameMan.GetRenderer());
         }
 
 		///////////////////////////////////////////////////////
 		// FMOD Logo drawing
 
 		if (g_IntroState >= FMODLOGOFADEIN && g_IntroState <= FMODLOGOFADEOUT) {
-			g_FrameMan.ClearBackBuffer32();
+			g_FrameMan.RenderClear();
 			pFMODLogo->SetPos(Vector(g_FrameMan.GetResX() / 2, (g_FrameMan.GetResY() / 2) - 35));
-			pFMODLogo->Draw(g_FrameMan.GetBackBuffer32());
+			pFMODLogo->Draw(g_FrameMan.GetRenderer());
 		}
 
         ///////////////////////////////////////////////////////
@@ -564,55 +563,58 @@ bool PlayIntroTitle() {
         if (g_IntroState >= NOTICEFADEIN && g_IntroState <= NOTICEFADEOUT)
         {
             // Draw the early build notice
-            g_FrameMan.ClearBackBuffer32();
+            g_FrameMan.RenderClear();
             yTextPos = g_FrameMan.GetResY() / 3;
-            pFont->DrawAligned(&backBuffer, g_FrameMan.GetResX() / 2, yTextPos, string("N O T E :"), GUIFont::Centre);
+            pFont->DrawAligned(nullptr, g_FrameMan.GetResX() / 2, yTextPos, string("N O T E :"), GUIFont::Centre);
             yTextPos += pFont->GetFontHeight() * 2;
-            pFont->DrawAligned(&backBuffer, g_FrameMan.GetResX() / 2, yTextPos, string("This game plays great with up to FOUR people on a BIG-SCREEN TV!"), GUIFont::Centre);
+            pFont->DrawAligned(nullptr, g_FrameMan.GetResX() / 2, yTextPos, string("This game plays great with up to FOUR people on a BIG-SCREEN TV!"), GUIFont::Centre);
             yTextPos += pFont->GetFontHeight() * 2;
-            pFont->DrawAligned(&backBuffer, g_FrameMan.GetResX() / 2, yTextPos, string("So invite some friends/enemies over, plug in those USB controllers, and have a blast -"), GUIFont::Centre);
+            pFont->DrawAligned(nullptr, g_FrameMan.GetResX() / 2, yTextPos, string("So invite some friends/enemies over, plug in those USB controllers, and have a blast -"), GUIFont::Centre);
             yTextPos += pFont->GetFontHeight() * 4;
-            pFont->DrawAligned(&backBuffer, g_FrameMan.GetResX() / 2, yTextPos, string("Press ALT+ENTER to toggle FULLSCREEN mode"), GUIFont::Centre);
+            pFont->DrawAligned(nullptr, g_FrameMan.GetResX() / 2, yTextPos, string("Press ALT+ENTER to toggle FULLSCREEN mode"), GUIFont::Centre);
 
             // Draw the copyright notice
             yTextPos = g_FrameMan.GetResY() - pFont->GetFontHeight();
             char copyRight[512];
             std::snprintf(copyRight, sizeof(copyRight), "Cortex Command is TM and %c 2017 Data Realms, LLC", -35);
-            pFont->DrawAligned(&backBuffer, g_FrameMan.GetResX() / 2, yTextPos, copyRight, GUIFont::Centre);
+            pFont->DrawAligned(nullptr, g_FrameMan.GetResX() / 2, yTextPos, copyRight, GUIFont::Centre);
         }
 
         //////////////////////////////////////////////////////////
         // Scene drawing
+		SDL_BlendMode screen{SDL_ComposeCustomBlendMode(SDL_BLENDFACTOR_ONE, SDL_BLENDFACTOR_ONE_MINUS_SRC_COLOR, SDL_BLENDOPERATION_ADD, SDL_BLENDFACTOR_ONE, SDL_BLENDFACTOR_ONE_MINUS_SRC_ALPHA, SDL_BLENDOPERATION_ADD)};
 
         if (g_IntroState >= FADEIN)
         {
-            g_FrameMan.ClearBackBuffer32();
+            g_FrameMan.RenderClear();
 
 			Box backdropBox;
-            pBackdrop->Draw(g_FrameMan.GetBackBuffer32(), backdropBox, scrollOffset * backdropScrollRatio);
+            pBackdrop->Draw(g_FrameMan.GetRenderer(), backdropBox, scrollOffset * backdropScrollRatio);
 
             for (int star = 0; star < starCount; ++star)
             {
 				const int intensity = stars[star].m_Intensity + RandomNum(0, (stars[star].m_Size == StarSmall) ? 35 : 70);
-				set_screen_blender(intensity, intensity, intensity, intensity);
 				const int &starDrawPosX = stars[star].m_PosX;
 				int starDrawPosY = stars[star].m_PosY - static_cast<int>(scrollOffset.m_Y * stars[star].m_ScrollRatio);
-				draw_trans_sprite(g_FrameMan.GetBackBuffer32(), stars[star].m_Bitmap, starDrawPosX, starDrawPosY);
+				stars[star].m_Bitmap->setBlendMode(screen);
+				stars[star].m_Bitmap->setAlphaMod(intensity);
+				stars[star].m_Bitmap->render(g_FrameMan.GetRenderer(), starDrawPosX, starDrawPosY);
             }
 
             planetPos.SetXY(g_FrameMan.GetResX() / 2, 567 - scrollOffset.GetFloorIntY());
             pMoon->SetPos(Vector(planetPos.m_X + 200, 364 - scrollOffset.GetFloorIntY() * 0.60));
             pPlanet->SetPos(planetPos);
 
-            pMoon->Draw(g_FrameMan.GetBackBuffer32(), Vector(), g_DrawAlpha);
-            pPlanet->Draw(g_FrameMan.GetBackBuffer32(), Vector(), g_DrawAlpha);
-				
+            pMoon->Draw(g_FrameMan.GetRenderer(), Vector(), g_DrawAlpha);
+
+            pPlanet->Draw(g_FrameMan.GetRenderer(), Vector(), g_DrawAlpha);
+
 			// Place, rotate and draw station
 			stationOffset.SetXY(orbitRadius, 0);
 			stationOffset.RadRotate(orbitRotation);
 			pStation->SetPos(planetPos + stationOffset);
 			pStation->SetRotAngle(-c_HalfPI + orbitRotation);
-			pStation->Draw(g_FrameMan.GetBackBuffer32());
+			pStation->Draw(g_FrameMan.GetRenderer());
 
 			orbitRotation -= 0.0020; //0.0015
 
@@ -628,24 +630,27 @@ bool PlayIntroTitle() {
 
         if ((g_IntroState >= TITLEAPPEAR && g_IntroState < SCENARIOFADEIN) || g_IntroState == MAINTOCAMPAIGN)
         {
-            if (g_IntroState == TITLEAPPEAR)
-                pTitle->SetPos(Vector(resX / 2, (resY / 2) - 20));
-            else if (g_IntroState == PLANETSCROLL && sectionProgress > 0.5)
-                pTitle->SetPos(Vector(resX / 2, EaseIn((resY / 2) - 20, 120, (sectionProgress - 0.5) / 0.5)));//LERP(0.5, 1.0, (resY / 2) - 20, 120, sectionProgress)));
-            else if (g_IntroState == MENUAPPEAR)
-                pTitle->SetPos(Vector(resX / 2, EaseOut(120, 64, sectionProgress)));
-            else if (g_IntroState == MAINTOSCENARIO || g_IntroState == MAINTOCAMPAIGN)
-                pTitle->SetPos(Vector(resX / 2, EaseOut(64, -150, sectionProgress)));
-            else if (g_IntroState >= MENUAPPEAR)
-                pTitle->SetPos(Vector(resX / 2, 64));
+			Vector titlePos;
+			if (g_IntroState == TITLEAPPEAR)
+				pTitle->SetPos(Vector(resX / 2, (resY / 2) - 20));
+			else if (g_IntroState == PLANETSCROLL && sectionProgress > 0.5)
+				pTitle->SetPos(Vector(resX / 2, EaseIn((resY / 2) - 20, 120, (sectionProgress - 0.5) / 0.5))); //LERP(0.5, 1.0, (resY / 2) - 20, 120, sectionProgress)));
+			else if (g_IntroState == MENUAPPEAR)
+				pTitle->SetPos(Vector(resX / 2, EaseOut(120, 64, sectionProgress)));
+			else if (g_IntroState == MAINTOSCENARIO || g_IntroState == MAINTOCAMPAIGN)
+				pTitle->SetPos(Vector(resX / 2, EaseOut(64, -150, sectionProgress)));
+			else if (g_IntroState >= MENUAPPEAR)
+				pTitle->SetPos(Vector(resX / 2, 64));
 
-            pTitleGlow->SetPos(pTitle->GetPos());
+			pTitleGlow->SetPos(pTitle->GetPos());
 
-            pTitle->Draw(g_FrameMan.GetBackBuffer32(), Vector(), g_DrawAlpha);
+            pTitle->Draw(g_FrameMan.GetRenderer(), Vector(), g_DrawAlpha);
+
             // Screen blend the title glow on top, with some flickering in its intensity
 			int blendAmount = 220 + RandomNum(-35, 35);
-            set_screen_blender(blendAmount, blendAmount, blendAmount, blendAmount);
-            pTitleGlow->Draw(g_FrameMan.GetBackBuffer32(), Vector(), g_DrawTrans);
+			pTitleGlow->GetSpriteFrame()->setBlendMode(screen);
+			pTitleGlow->GetSpriteFrame()->setColorMod(blendAmount, blendAmount, blendAmount);
+            pTitleGlow->Draw(g_FrameMan.GetRenderer(), Vector(), g_DrawTrans);
         }
 
         /////////////////////////////
@@ -669,7 +674,7 @@ bool PlayIntroTitle() {
 					break;
 				}
 				g_pMainMenuGUI->Update();
-				g_pMainMenuGUI->Draw(g_FrameMan.GetBackBuffer32());
+				g_pMainMenuGUI->Draw(g_FrameMan.GetRenderer());
 			}
 		}
 
@@ -678,7 +683,7 @@ bool PlayIntroTitle() {
         {
             g_pScenarioGUI->SetPlanetInfo(planetPos, planetRadius);
             g_pScenarioGUI->Update();
-            g_pScenarioGUI->Draw(g_FrameMan.GetBackBuffer32());
+            g_pScenarioGUI->Draw(g_FrameMan.GetRenderer());
         }
 
         // Metagame menu update and drawing
@@ -686,7 +691,7 @@ bool PlayIntroTitle() {
         {
             g_MetaMan.GetGUI()->SetPlanetInfo(planetPos, planetRadius);
             g_MetaMan.Update();
-            g_MetaMan.Draw(g_FrameMan.GetBackBuffer32());
+            g_MetaMan.Draw(g_FrameMan.GetRenderer());
         }
 
         ////////////////////////////////////
@@ -695,20 +700,20 @@ bool PlayIntroTitle() {
         if (g_IntroState >= SHOWSLIDE1 && g_IntroState <= SHOWSLIDE8)
         {
             int slide = g_IntroState - SHOWSLIDE1;
-            Vector slideCenteredPos((resX / 2) - (apIntroSlides[slide]->w / 2), (resY / 2) - (apIntroSlides[slide]->h / 2));
+            Vector slideCenteredPos((resX / 2) - (apIntroSlides[slide]->getW() / 2), (resY / 2) - (apIntroSlides[slide]->getH() / 2));
 
             // Screen wide slide
-            if (apIntroSlides[slide]->w <= resX)
-                slidePos.m_X = (resX / 2) - (apIntroSlides[slide]->w / 2);
+            if (apIntroSlides[slide]->getW() <= resX)
+                slidePos.m_X = (resX / 2) - (apIntroSlides[slide]->getW() / 2);
             // The slides wider than the screen, pan sideways
             else
             {
                 if (elapsed < slideFadeInDuration)
                     slidePos.m_X = 0;
                 else if (elapsed < duration - slideFadeOutDuration)
-                    slidePos.m_X = EaseInOut(0, resX - apIntroSlides[slide]->w, (elapsed - slideFadeInDuration) / (duration - slideFadeInDuration - slideFadeOutDuration));
+                    slidePos.m_X = EaseInOut(0, resX - apIntroSlides[slide]->getW(), (elapsed - slideFadeInDuration) / (duration - slideFadeInDuration - slideFadeOutDuration));
                 else
-                    slidePos.m_X = resX - apIntroSlides[slide]->w;
+                    slidePos.m_X = resX - apIntroSlides[slide]->getW();
             }
 
             // TEMP?
@@ -732,8 +737,8 @@ bool PlayIntroTitle() {
 
             if (fadePos > 0)
             {
-                set_trans_blender(fadePos, fadePos, fadePos, fadePos);
-                draw_trans_sprite(g_FrameMan.GetBackBuffer32(), apIntroSlides[slide], slidePos.m_X, slidePos.m_Y);
+				apIntroSlides[slide]->setAlphaMod(fadePos);
+				apIntroSlides[slide]->render(g_FrameMan.GetRenderer(), slidePos.m_X, slidePos.m_Y);
             }
         }
 
@@ -751,15 +756,14 @@ bool PlayIntroTitle() {
             {
                 // Play juicy logo signature jingle/sound
 				g_GUISound.SplashSound()->Play();
-                // Black fade
-                clear_to_color(pFadeScreen, 0);
                 duration = 0.25;
                 sectionSwitch = false;
             }
 
             fadePos = 255 - (255 * sectionProgress);
-            set_trans_blender(fadePos, fadePos, fadePos, fadePos);
-            draw_trans_sprite(g_FrameMan.GetBackBuffer32(), pFadeScreen, 0, 0);
+			SDL_SetRenderDrawColor(g_FrameMan.GetRenderer(), 0, 0, 0, fadePos);
+			SDL_Rect fill{0,0,g_FrameMan.GetResX(), g_FrameMan.GetResY()};
+			SDL_RenderFillRect(g_FrameMan.GetRenderer(), &fill);
 
             if (elapsed >= duration)
             {
@@ -789,15 +793,14 @@ bool PlayIntroTitle() {
         {
             if (sectionSwitch)
             {
-                // Black fade
-                clear_to_color(pFadeScreen, 0);
                 duration = 0.25;
                 sectionSwitch = false;
             }
 
             fadePos = 255 * sectionProgress;
-            set_trans_blender(fadePos, fadePos, fadePos, fadePos);
-            draw_trans_sprite(g_FrameMan.GetBackBuffer32(), pFadeScreen, 0, 0);
+			SDL_Rect fill{0,0,g_FrameMan.GetResX(), g_FrameMan.GetResY()};
+			SDL_SetRenderDrawColor(g_FrameMan.GetRenderer(), 0, 0, 0, fadePos);
+			SDL_RenderFillRect(g_FrameMan.GetRenderer(), &fill);
 
             if (elapsed >= duration || keyPressed)
             {
@@ -807,15 +810,14 @@ bool PlayIntroTitle() {
         }
 		else if (g_IntroState == FMODLOGOFADEIN) {
 			if (sectionSwitch) {
-				// Black fade
-				clear_to_color(pFadeScreen, 0);
 				duration = 0.25;
 				sectionSwitch = false;
 			}
 
 			fadePos = 255 - (255 * sectionProgress);
-			set_trans_blender(fadePos, fadePos, fadePos, fadePos);
-			draw_trans_sprite(g_FrameMan.GetBackBuffer32(), pFadeScreen, 0, 0);
+			SDL_Rect fill{0, 0, g_FrameMan.GetResX(), g_FrameMan.GetResY()};
+			SDL_SetRenderDrawColor(g_FrameMan.GetRenderer(), 0, 0, 0, fadePos);
+			SDL_RenderFillRect(g_FrameMan.GetRenderer(), &fill);
 
 			if (elapsed >= duration) {
 				g_IntroState = FMODLOGODISPLAY;
@@ -835,14 +837,13 @@ bool PlayIntroTitle() {
 			}
 		} else if (g_IntroState == FMODLOGOFADEOUT) {
 			if (sectionSwitch) {
-				// Black fade
-				clear_to_color(pFadeScreen, 0);
 				duration = 0.25;
 				sectionSwitch = false;
 			}
 			fadePos = 255 * sectionProgress;
-			set_trans_blender(fadePos, fadePos, fadePos, fadePos);
-			draw_trans_sprite(g_FrameMan.GetBackBuffer32(), pFadeScreen, 0, 0);
+			SDL_Rect fill{0, 0, g_FrameMan.GetResX(), g_FrameMan.GetResY()};
+			SDL_SetRenderDrawColor(g_FrameMan.GetRenderer(), 0, 0, 0, fadePos);
+			SDL_RenderFillRect(g_FrameMan.GetRenderer(), &fill);
 
 			if (elapsed >= duration || keyPressed) {
 				g_IntroState = NOTICEFADEIN;
@@ -853,15 +854,14 @@ bool PlayIntroTitle() {
         {
             if (sectionSwitch)
             {
-                // Black fade
-                clear_to_color(pFadeScreen, 0);
                 duration = 0.5;
                 sectionSwitch = false;
             }
 
             fadePos = 255 - (255 * sectionProgress);
-            set_trans_blender(fadePos, fadePos, fadePos, fadePos);
-            draw_trans_sprite(g_FrameMan.GetBackBuffer32(), pFadeScreen, 0, 0);
+			SDL_Rect fill{0, 0, g_FrameMan.GetResX(), g_FrameMan.GetResY()};
+			SDL_SetRenderDrawColor(g_FrameMan.GetRenderer(), 0, 0, 0, fadePos);
+			SDL_RenderFillRect(g_FrameMan.GetRenderer(), &fill);
 
             if (elapsed >= duration)
             {
@@ -891,15 +891,14 @@ bool PlayIntroTitle() {
         {
             if (sectionSwitch)
             {
-                // Black fade
-                clear_to_color(pFadeScreen, 0);
                 duration = 0.5;
                 sectionSwitch = false;
             }
 
             fadePos = 255 * sectionProgress;
-            set_trans_blender(fadePos, fadePos, fadePos, fadePos);
-            draw_trans_sprite(g_FrameMan.GetBackBuffer32(), pFadeScreen, 0, 0);
+			SDL_Rect fill{0, 0, g_FrameMan.GetResX(), g_FrameMan.GetResY()};
+			SDL_SetRenderDrawColor(g_FrameMan.GetRenderer(), 0, 0, 0, fadePos);
+			SDL_RenderFillRect(g_FrameMan.GetRenderer(), &fill);
 
             if (elapsed >= duration || keyPressed)
             {
@@ -913,8 +912,6 @@ bool PlayIntroTitle() {
             {
                 // Start scroll at the bottom
                 scrollOffset.m_Y = startYOffset;
-                // Black fade
-                clear_to_color(pFadeScreen, 0);
 
                 duration = 1.0;
                 sectionSwitch = false;
@@ -930,8 +927,9 @@ bool PlayIntroTitle() {
             }
 
             fadePos = 255 - (255 * sectionProgress);
-            set_trans_blender(fadePos, fadePos, fadePos, fadePos);
-            draw_trans_sprite(g_FrameMan.GetBackBuffer32(), pFadeScreen, 0, 0);
+			SDL_Rect fill{0, 0, g_FrameMan.GetResX(), g_FrameMan.GetResY()};
+			SDL_SetRenderDrawColor(g_FrameMan.GetRenderer(), 0, 0, 0, fadePos);
+			SDL_RenderFillRect(g_FrameMan.GetRenderer(), &fill);
 
             if (elapsed >= duration)
             {
@@ -965,9 +963,9 @@ bool PlayIntroTitle() {
                 sectionSwitch = false;
             }
 
-            yTextPos = (g_FrameMan.GetResY() / 2) + (apIntroSlides[g_IntroState - SHOWSLIDE1]->h / 2) + 12;
+            yTextPos = (g_FrameMan.GetResY() / 2) + (apIntroSlides[g_IntroState - SHOWSLIDE1]->getH() / 2) + 12;
             if (elapsed > 1.25)
-                pFont->DrawAligned(&backBuffer, g_FrameMan.GetResX() / 2, yTextPos, "At the end of humanity's darkest century...", GUIFont::Centre);
+                pFont->DrawAligned(nullptr, g_FrameMan.GetResX() / 2, yTextPos, "At the end of humanity's darkest century...", GUIFont::Centre);
 
             if (elapsed >= duration)
             {
@@ -986,9 +984,9 @@ bool PlayIntroTitle() {
                 sectionSwitch = false;
             }
 
-            yTextPos = (g_FrameMan.GetResY() / 2) + (apIntroSlides[g_IntroState - SHOWSLIDE1]->h / 2) + 12;
+            yTextPos = (g_FrameMan.GetResY() / 2) + (apIntroSlides[g_IntroState - SHOWSLIDE1]->getH() / 2) + 12;
             if (elapsed < duration - 1.75)
-                pFont->DrawAligned(&backBuffer, g_FrameMan.GetResX() / 2, yTextPos, "...a curious symbiosis between man and machine emerged.", GUIFont::Centre);
+                pFont->DrawAligned(nullptr, g_FrameMan.GetResX() / 2, yTextPos, "...a curious symbiosis between man and machine emerged.", GUIFont::Centre);
 
             if (elapsed >= duration)
             {
@@ -1007,11 +1005,11 @@ bool PlayIntroTitle() {
                 sectionSwitch = false;
             }
 
-            yTextPos = (g_FrameMan.GetResY() / 2) + (apIntroSlides[g_IntroState - SHOWSLIDE1]->h / 2) + 12;
+            yTextPos = (g_FrameMan.GetResY() / 2) + (apIntroSlides[g_IntroState - SHOWSLIDE1]->getH() / 2) + 12;
             if (/*elapsed > 0.75 && */sectionProgress < 0.49)
-                pFont->DrawAligned(&backBuffer, g_FrameMan.GetResX() / 2, yTextPos, "This eventually enabled humans to leave their natural bodies...", GUIFont::Centre);
+                pFont->DrawAligned(nullptr, g_FrameMan.GetResX() / 2, yTextPos, "This eventually enabled humans to leave their natural bodies...", GUIFont::Centre);
             else if (sectionProgress > 0.51)
-                pFont->DrawAligned(&backBuffer, g_FrameMan.GetResX() / 2, yTextPos, "...and to free their minds from obsolete constraints.", GUIFont::Centre);
+                pFont->DrawAligned(nullptr, g_FrameMan.GetResX() / 2, yTextPos, "...and to free their minds from obsolete constraints.", GUIFont::Centre);
 
             if (elapsed >= duration)
             {
@@ -1030,8 +1028,8 @@ bool PlayIntroTitle() {
                 sectionSwitch = false;
             }
 
-            yTextPos = (g_FrameMan.GetResY() / 2) + (apIntroSlides[g_IntroState - SHOWSLIDE1]->h / 2) + 12;
-            pFont->DrawAligned(&backBuffer, g_FrameMan.GetResX() / 2, yTextPos, "With their brains sustained by artificial means, space travel also became feasible.", GUIFont::Centre);
+            yTextPos = (g_FrameMan.GetResY() / 2) + (apIntroSlides[g_IntroState - SHOWSLIDE1]->getH() / 2) + 12;
+            pFont->DrawAligned(nullptr, g_FrameMan.GetResX() / 2, yTextPos, "With their brains sustained by artificial means, space travel also became feasible.", GUIFont::Centre);
 
             if (elapsed >= duration)
             {
@@ -1050,8 +1048,8 @@ bool PlayIntroTitle() {
                 sectionSwitch = false;
             }
 
-            yTextPos = (g_FrameMan.GetResY() / 2) + (apIntroSlides[g_IntroState - SHOWSLIDE1]->h / 2) + 12;
-            pFont->DrawAligned(&backBuffer, g_FrameMan.GetResX() / 2, yTextPos, "Other civilizations were encountered...", GUIFont::Centre);
+            yTextPos = (g_FrameMan.GetResY() / 2) + (apIntroSlides[g_IntroState - SHOWSLIDE1]->getH() / 2) + 12;
+            pFont->DrawAligned(nullptr, g_FrameMan.GetResX() / 2, yTextPos, "Other civilizations were encountered...", GUIFont::Centre);
 
             if (elapsed >= duration)
             {
@@ -1070,8 +1068,8 @@ bool PlayIntroTitle() {
                 sectionSwitch = false;
             }
 
-            yTextPos = (g_FrameMan.GetResY() / 2) + (apIntroSlides[g_IntroState - SHOWSLIDE1]->h / 2) + 12;
-            pFont->DrawAligned(&backBuffer, g_FrameMan.GetResX() / 2, yTextPos, "...and peaceful intragalactic trade soon established.", GUIFont::Centre);
+            yTextPos = (g_FrameMan.GetResY() / 2) + (apIntroSlides[g_IntroState - SHOWSLIDE1]->getH() / 2) + 12;
+            pFont->DrawAligned(nullptr, g_FrameMan.GetResX() / 2, yTextPos, "...and peaceful intragalactic trade soon established.", GUIFont::Centre);
 
             if (elapsed >= duration)
             {
@@ -1090,8 +1088,8 @@ bool PlayIntroTitle() {
                 sectionSwitch = false;
             }
 
-            yTextPos = (g_FrameMan.GetResY() / 2) + (apIntroSlides[g_IntroState - SHOWSLIDE1]->h / 2) + 12;
-            pFont->DrawAligned(&backBuffer, g_FrameMan.GetResX() / 2, yTextPos, "Now, the growing civilizations create a huge demand for resources...", GUIFont::Centre);
+            yTextPos = (g_FrameMan.GetResY() / 2) + (apIntroSlides[g_IntroState - SHOWSLIDE1]->getH() / 2) + 12;
+            pFont->DrawAligned(nullptr, g_FrameMan.GetResX() / 2, yTextPos, "Now, the growing civilizations create a huge demand for resources...", GUIFont::Centre);
 
             if (elapsed >= duration)
             {
@@ -1110,13 +1108,13 @@ bool PlayIntroTitle() {
                 sectionSwitch = false;
             }
 
-            yTextPos = (g_FrameMan.GetResY() / 2) + (apIntroSlides[g_IntroState - SHOWSLIDE1]->h / 2) + 12;
+            yTextPos = (g_FrameMan.GetResY() / 2) + (apIntroSlides[g_IntroState - SHOWSLIDE1]->getH() / 2) + 12;
             if (sectionProgress < 0.30)
-                pFont->DrawAligned(&backBuffer, g_FrameMan.GetResX() / 2, yTextPos, "...which can only be satisfied by the ever-expanding frontier.", GUIFont::Centre);
+                pFont->DrawAligned(nullptr, g_FrameMan.GetResX() / 2, yTextPos, "...which can only be satisfied by the ever-expanding frontier.", GUIFont::Centre);
             else if (sectionProgress > 0.33 && sectionProgress < 0.64)
-                pFont->DrawAligned(&backBuffer, g_FrameMan.GetResX() / 2, yTextPos, "Competition is brutal and anything goes in this galactic gold rush.", GUIFont::Centre);
+                pFont->DrawAligned(nullptr, g_FrameMan.GetResX() / 2, yTextPos, "Competition is brutal and anything goes in this galactic gold rush.", GUIFont::Centre);
             else if (sectionProgress > 0.67)
-                pFont->DrawAligned(&backBuffer, g_FrameMan.GetResX() / 2, yTextPos, "You will now join it on a venture to an untapped planet...", GUIFont::Centre);
+                pFont->DrawAligned(nullptr, g_FrameMan.GetResX() / 2, yTextPos, "You will now join it on a venture to an untapped planet...", GUIFont::Centre);
 
             if (elapsed >= duration)
             {
@@ -1135,7 +1133,7 @@ bool PlayIntroTitle() {
 
             yTextPos = (g_FrameMan.GetResY() / 2);
             if (elapsed > 0.05)
-                pFont->DrawAligned(&backBuffer, g_FrameMan.GetResX() / 2, yTextPos, "Prepare to assume...", GUIFont::Centre);
+                pFont->DrawAligned(nullptr, g_FrameMan.GetResX() / 2, yTextPos, "Prepare to assume...", GUIFont::Centre);
 
             if (elapsed >= duration)
             {
@@ -1147,8 +1145,6 @@ bool PlayIntroTitle() {
         {
             if (sectionSwitch)
             {
-                // White fade
-                clear_to_color(pFadeScreen, 0xFFFFFFFF);
                 sectionSongEnd = 68.2;
                 duration = sectionSongEnd - songTimer.GetElapsedRealTimeS();
                 sectionSwitch = false;
@@ -1157,8 +1153,9 @@ bool PlayIntroTitle() {
             fadePos = LERP(0, 0.5, 255, 0, sectionProgress);
             if (fadePos >= 0)
             {
-                set_trans_blender(fadePos, fadePos, fadePos, fadePos);
-                draw_trans_sprite(g_FrameMan.GetBackBuffer32(), pFadeScreen, 0, 0);
+				SDL_Rect fill{0, 0, g_FrameMan.GetResX(), g_FrameMan.GetResY()};
+				SDL_SetRenderDrawColor(g_FrameMan.GetRenderer(), 255, 255, 255, fadePos);
+				SDL_RenderFillRect(g_FrameMan.GetRenderer(), &fill);
             }
 
             if (elapsed >= duration)
@@ -1210,7 +1207,11 @@ bool PlayIntroTitle() {
                 g_AudioMan.PlayMusic("Base.rte/Music/Hubnester/ccmenu.ogg", -1);
             }
 
-            if (elapsed >= duration || g_NetworkServer.IsServerModeEnabled())
+            if (elapsed >= duration
+				#ifdef NETWORK_ENABLED
+				|| g_NetworkServer.IsServerModeEnabled()
+				#endif
+				)
             {
                 g_IntroState = MENUACTIVE;
                 sectionSwitch = true;
@@ -1259,13 +1260,14 @@ bool PlayIntroTitle() {
                 g_IntroState = FADESCROLLOUT;
                 sectionSwitch = true;
             }
-
+#ifdef NERWORK_ENABLED
 			if (g_NetworkServer.IsServerModeEnabled())
 			{
 				EnterMultiplayerLobby();
 				g_IntroState = FADESCROLLOUT;
 				sectionSwitch = true;
 			}
+#endif
         }
         else if (g_IntroState == MAINTOSCENARIO)
         {
@@ -1282,7 +1284,7 @@ bool PlayIntroTitle() {
                 g_AudioMan.PlayMusic("Base.rte/Music/dBSoundworks/thisworld5.ogg", -1);
             }
 
-            if (elapsed >= duration || g_NetworkServer.IsServerModeEnabled())// || keyPressed)
+            if (elapsed >= duration) //|| g_NetworkServer.IsServerModeEnabled())// || keyPressed)
             {
                 g_IntroState = SCENARIOMENU;
                 sectionSwitch = true;
@@ -1294,16 +1296,15 @@ bool PlayIntroTitle() {
             {
                 // Scroll to planet pos
                 scrollOffset.m_Y = planetViewYOffset;
-                // Black fade
-                clear_to_color(pFadeScreen, 0);
 
 				duration = 1.0F * g_SettingsMan.GetMenuTransitionDurationMultiplier();
                 sectionSwitch = false;
             }
 
             fadePos = 255 - (255 * sectionProgress);
-            set_trans_blender(fadePos, fadePos, fadePos, fadePos);
-            draw_trans_sprite(g_FrameMan.GetBackBuffer32(), pFadeScreen, 0, 0);
+			SDL_Rect fill{0, 0, g_FrameMan.GetResX(), g_FrameMan.GetResY()};
+			SDL_SetRenderDrawColor(g_FrameMan.GetRenderer(), 0, 0, 0, fadePos);
+			SDL_RenderFillRect(g_FrameMan.GetRenderer(), &fill);
 
             if (elapsed >= duration)
             {
@@ -1343,17 +1344,16 @@ bool PlayIntroTitle() {
                 sectionSwitch = true;
             }
 
-			// In server mode once we exited to main or scenario menu we need to start Lobby activity 
-			if (g_NetworkServer.IsServerModeEnabled())
-			{
+#ifdef NETWORK_ENABLED
+			// In server mode once we exited to main or scenario menu we need to start Lobby activity
+			if (g_NetworkServer.IsServerModeEnabled()) {
 				EnterMultiplayerLobby();
 				g_IntroState = FADEOUT;
 				sectionSwitch = true;
 			}
-        }
-        else if (g_IntroState == MAINTOCAMPAIGN)
-        {
-            if (sectionSwitch)
+#endif
+		} else if (g_IntroState == MAINTOCAMPAIGN) {
+			if (sectionSwitch)
             {
 				duration = 2.0F * g_SettingsMan.GetMenuTransitionDurationMultiplier();
                 sectionSwitch = false;
@@ -1368,33 +1368,28 @@ bool PlayIntroTitle() {
                 g_IntroState = CAMPAIGNPLAY;
                 sectionSwitch = true;
             }
-        }
-        else if (g_IntroState == CAMPAIGNFADEIN)
-        {
-            if (sectionSwitch)
+		} else if (g_IntroState == CAMPAIGNFADEIN) {
+			if (sectionSwitch)
             {
                 // Scroll to campaign pos
                 scrollOffset.m_Y = planetViewYOffset;
-                // Black fade
-                clear_to_color(pFadeScreen, 0);
 
 				duration = 1.0F * g_SettingsMan.GetMenuTransitionDurationMultiplier();
                 sectionSwitch = false;
             }
 
             fadePos = 255 - (255 * sectionProgress);
-            set_trans_blender(fadePos, fadePos, fadePos, fadePos);
-            draw_trans_sprite(g_FrameMan.GetBackBuffer32(), pFadeScreen, 0, 0);
+			SDL_Rect fill{0, 0, g_FrameMan.GetResX(), g_FrameMan.GetResY()};
+			SDL_SetRenderDrawColor(g_FrameMan.GetRenderer(), 0, 0, 0, fadePos);
+			SDL_RenderFillRect(g_FrameMan.GetRenderer(), &fill);
 
             if (elapsed >= duration)
             {
                 g_IntroState = CAMPAIGNPLAY;
                 sectionSwitch = true;
             }
-        }
-        else if (g_IntroState == CAMPAIGNPLAY)
-        {
-            if (sectionSwitch)
+		} else if (g_IntroState == CAMPAIGNPLAY) {
+			if (sectionSwitch)
             {
                 scrollOffset.m_Y = planetViewYOffset;
                 sectionSwitch = false;
@@ -1422,10 +1417,8 @@ bool PlayIntroTitle() {
             // Detect if the current game has been commanded to resume
             if (g_MetaMan.GetGUI()->ActivityResumed())
                 g_ResumeActivity = true;
-        }
-        else if (g_IntroState == PLANETTOMAIN)
-        {
-            if (sectionSwitch)
+		} else if (g_IntroState == PLANETTOMAIN) {
+			if (sectionSwitch)
             {
 				duration = 2.0F * g_SettingsMan.GetMenuTransitionDurationMultiplier();
                 sectionSwitch = false;
@@ -1436,13 +1429,9 @@ bool PlayIntroTitle() {
                 g_IntroState = MENUACTIVE;
                 sectionSwitch = true;
             }
-        }
-        else if (g_IntroState == FADESCROLLOUT)
-        {
-            if (sectionSwitch)
+		} else if (g_IntroState == FADESCROLLOUT) {
+			if (sectionSwitch)
             {
-                // Black fade
-                clear_to_color(pFadeScreen, 0x00000000);
 				duration = 1.5F * g_SettingsMan.GetMenuTransitionDurationMultiplier();
                 sectionSwitch = false;
             }
@@ -1450,8 +1439,9 @@ bool PlayIntroTitle() {
             scrollOffset.m_Y = EaseIn(topMenuYOffset, 250, sectionProgress);
 
             fadePos = EaseIn(0, 255, sectionProgress);
-            set_trans_blender(fadePos, fadePos, fadePos, fadePos);
-            draw_trans_sprite(g_FrameMan.GetBackBuffer32(), pFadeScreen, 0, 0);
+			SDL_Rect fill{0, 0, g_FrameMan.GetResX(), g_FrameMan.GetResY()};
+			SDL_SetRenderDrawColor(g_FrameMan.GetRenderer(), 0, 0, 0, fadePos);
+			SDL_RenderFillRect(g_FrameMan.GetRenderer(), &fill);
 
             // Fade out the music as well
             g_AudioMan.SetTempMusicVolume(EaseIn(g_AudioMan.GetMusicVolume(), 0, sectionProgress));
@@ -1460,15 +1450,11 @@ bool PlayIntroTitle() {
             {
                 g_IntroState = END;
                 sectionSwitch = true;
-                g_FrameMan.ClearBackBuffer32();
+                g_FrameMan.RenderClear();
             }
-        }
-        else if (g_IntroState == FADEOUT)
-        {
-            if (sectionSwitch)
+		} else if (g_IntroState == FADEOUT) {
+			if (sectionSwitch)
             {
-                // White fade
-                clear_to_color(pFadeScreen, 0x00000000);
 				duration = 1.5F * g_SettingsMan.GetMenuTransitionDurationMultiplier();
                 sectionSwitch = false;
             }
@@ -1476,8 +1462,9 @@ bool PlayIntroTitle() {
 //            scrollOffset.m_Y = EaseIn(topMenuYOffset, 250, sectionProgress);
 
             fadePos = EaseIn(0, 255, sectionProgress);
-            set_trans_blender(fadePos, fadePos, fadePos, fadePos);
-            draw_trans_sprite(g_FrameMan.GetBackBuffer32(), pFadeScreen, 0, 0);
+			SDL_Rect fill{0, 0, g_FrameMan.GetResX(), g_FrameMan.GetResY()};
+			SDL_SetRenderDrawColor(g_FrameMan.GetRenderer(), 0, 0, 0, fadePos);
+			SDL_RenderFillRect(g_FrameMan.GetRenderer(), &fill);
 
             // Fade out the music as well
 //            g_AudioMan.SetTempMusicVolume(g_AudioMan.GetMusicVolume() * 1.0 - sectionProgress);
@@ -1487,11 +1474,11 @@ bool PlayIntroTitle() {
             {
                 g_IntroState = END;
                 sectionSwitch = true;
-                g_FrameMan.ClearBackBuffer32();
+                g_FrameMan.RenderClear();
             }
-        }
+		}
 
-        ////////////////////////////////
+		////////////////////////////////
         // Additional user input and skipping handling
         
         if (g_IntroState >= FADEIN && g_IntroState <= SHOWSLIDE8 && keyPressed)
@@ -1506,22 +1493,11 @@ bool PlayIntroTitle() {
         }
 
         // Draw the console in the menu
-        g_ConsoleMan.Draw(g_FrameMan.GetBackBuffer32());
+        g_ConsoleMan.Draw(g_FrameMan.GetRenderer());
 
-        // Wait for vertical sync before flipping frames
-        vsync();
-        g_FrameMan.FlipFrameBuffers();
+        g_FrameMan.RenderPresent();
     }
 
-    // Clean up heap data
-    destroy_bitmap(pFadeScreen);
-	pFadeScreen = nullptr;
-	for (int slide = 0; slide < SLIDECOUNT; ++slide) {
-		destroy_bitmap(apIntroSlides[slide]);
-		apIntroSlides[slide] = nullptr;
-	}
-	delete[] apIntroSlides;
-	apIntroSlides = nullptr;
     delete pBackdrop;
 	pBackdrop = nullptr;
     delete pTitle;
@@ -1572,7 +1548,7 @@ bool RunGameLoop() {
 
 	while (!g_Quit) {
 		// Need to clear this out; sometimes background layers don't cover the whole back
-		g_FrameMan.ClearBackBuffer8();
+		g_FrameMan.RenderClear();
 
 		// Update the real time measurement and increment
 		g_TimerMan.Update();
@@ -1591,11 +1567,13 @@ bool RunGameLoop() {
 
 			g_UInputMan.Update();
 
+#ifdef NETWORK_ENABLED
 			// It is vital that server is updated after input manager but before activity because input manager will clear received pressed and released events on next update.
 			if (g_NetworkServer.IsServerModeEnabled()) {
 				g_NetworkServer.Update(true);
 				serverUpdated = true;
 			}
+#endif
 			g_FrameMan.Update();
 			g_LuaMan.Update();
 			g_PerformanceMan.StartPerformanceMeasurement(PerformanceMan::ActivityUpdate);
@@ -1633,7 +1611,7 @@ bool RunGameLoop() {
 			// Resuming the simulation
 			if (g_ResumeActivity) { ResumeActivity(); }
 		}
-
+#ifdef NETWORK_ENABLED
 		if (g_NetworkServer.IsServerModeEnabled()) {
 			// Pause sim while we're waiting for scene transmission or scene will start changing before clients receive them and those changes will be lost.
 			if (!g_NetworkServer.ReadyForSimulation()) {
@@ -1654,8 +1632,9 @@ bool RunGameLoop() {
 				}
 			}
 		}
+#endif
 		g_FrameMan.Draw();
-		g_FrameMan.FlipFrameBuffers();
+		g_FrameMan.RenderClear();
 	}
 	return true;
 }
@@ -1695,9 +1674,11 @@ void HandleMainArgs(int argCount, char **argValue) {
 		if (!launchModeSet) {
 			// Launch game in server mode
 			if (currentArg == "-server") {
+#ifdef NETWORK_ENABLED
 				g_NetworkServer.EnableServerMode();
 				g_NetworkServer.SetServerPort(!lastArg ? argValue[++i] : "8000");
 				launchModeSet = true;
+#endif
 			// Launch game directly into editor activity
 			} else if (!lastArg && currentArg == "-editor") {
 				g_EditorToLaunch = argValue[++i];
@@ -1719,31 +1700,33 @@ int main(int argc, char **argv) {
 	///////////////////////////////////////////////////////////////////
     // Initialize Allegro
 
-    set_config_file("Base.rte/AllegroConfig.txt");
-    allegro_init();
-	loadpng_init();
-
-    // Enable the exit button on the window
-    LOCK_FUNCTION(QuitHandler);
-    set_close_button_callback(QuitHandler);
+	RTEAssert(SDL_Init(SDL_INIT_TIMER|SDL_INIT_VIDEO|SDL_INIT_EVENTS) == 0, "ERROR: " + std::string(SDL_GetError()));
+	IMG_Init(IMG_INIT_PNG);
 
     // Seed the random number generator
     SeedRNG();
 
 	System::Initialize();
 
+	g_FrameMan.CreateWindowAndRenderer();
+	std::cout << "Created Window" << std::endl;
+
     ///////////////////////////////////////////////////////////////////
     // Create the essential managers
 
 	Reader settingsReader("Base.rte/Settings.ini", false, nullptr, true);
     g_SettingsMan.Initialize(settingsReader);
+	std::cout << "Loaded Settings" << std::endl;
 
 	g_LuaMan.Initialize();
+#ifdef NETWORK_ENABLED
 	g_NetworkServer.Initialize();
 	g_NetworkClient.Initialize();
+#endif
     g_TimerMan.Initialize();
 	g_PerformanceMan.Initialize();
     g_FrameMan.Initialize();
+	std::cout << "Init: Timers, Performance, Frames" << std::endl;
     g_PostProcessMan.Initialize();
     if (g_AudioMan.Initialize() >= 0) {
         g_GUISound.Initialize();
@@ -1756,9 +1739,12 @@ int main(int argc, char **argv) {
 
 	HandleMainArgs(argc, argv);
 
+	std::cout << "all managers loaded. starting loading screen" << std::endl;
+
     ///////////////////////////////////////////////////////////////////
     // Main game driver
 
+#ifdef NETWORK_ENABLED
 	if (g_NetworkServer.IsServerModeEnabled()) {
 		g_NetworkServer.Start();
 		g_UInputMan.SetMultiplayerMode(true);
@@ -1767,11 +1753,17 @@ int main(int argc, char **argv) {
 		g_AudioMan.SetSoundsVolume(0);
 		g_AudioMan.SetMusicVolume(0);
 	}
+#endif
 
 	g_LoadingGUI.InitLoadingScreen();
+
+	g_ConsoleMan.PrintString("SYSTEM: Done Loading");
+
 	InitMainMenu();
 
-	g_FrameMan.PrintForcedGfxDriverMessage();
+    g_ConsoleMan.PrintString("SYSTEM: menus initialized");
+
+	// g_FrameMan.PrintForcedGfxDriverMessage();
 
 	if (g_ConsoleMan.LoadWarningsExist()) {
 		g_ConsoleMan.PrintString("WARNING: References to files that could not be located or failed to load detected during module loading!\nSee \"LogLoadingWarning.txt\" for a list of bad references.");
@@ -1782,8 +1774,9 @@ int main(int argc, char **argv) {
 		// Delete an existing log if there are no warnings so there's less junk in the root folder.
 		if (std::filesystem::exists(System::GetWorkingDirectory() + "LogLoadingWarning.txt")) { std::remove("LogLoadingWarning.txt"); }
 	}
-
+#ifdef NETWORK_ENABLED
     if (!g_NetworkServer.IsServerModeEnabled()) {
+#endif
 		if (g_LaunchIntoEditor) {
 			// Force mouse + keyboard with default mapping so we won't need to change manually if player 1 is set to keyboard only or gamepad.
 			g_UInputMan.GetControlScheme(Players::PlayerOne)->SetDevice(InputDevice::DEVICE_MOUSE_KEYB);
@@ -1795,23 +1788,28 @@ int main(int argc, char **argv) {
 			}
 		} else if (!g_SettingsMan.LaunchIntoActivity()) {
 			g_IntroState = g_SettingsMan.SkipIntro() ? MENUAPPEAR : START;
+            g_ConsoleMan.PrintString("SYSTEM: playing intro");
 			PlayIntroTitle();
 		}
+#ifdef NETWORK_ENABLED
 	} else {
 		// NETWORK Create multiplayer lobby activity to start as default if server is running
 		EnterMultiplayerLobby();
 	}
+#endif
 
     // If we fail to start/reset the activity, then revert to the intro/menu
     if (!ResetActivity()) { PlayIntroTitle(); }
-	
+
     RunGameLoop();
 
     ///////////////////////////////////////////////////////////////////
     // Clean up
 
+#ifdef NETWORK_ENABLED
 	g_NetworkClient.Destroy();
 	g_NetworkServer.Destroy();
+#endif
 
     g_MetaMan.Destroy();
     g_MovableMan.Destroy();
@@ -1826,12 +1824,14 @@ int main(int argc, char **argv) {
     g_LuaMan.Destroy();
     g_ConsoleMan.Destroy();
 
+	SDL_Quit();
+
 #ifdef DEBUG_BUILD
     // Dump out the info about how well memory cleanup went
 	Writer memCleanup("MemCleanupInfo.txt");
 	Entity::ClassInfo::DumpPoolMemoryInfo(memCleanup);
 #endif
-	
+
     return 0;
 }
 
