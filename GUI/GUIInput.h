@@ -28,7 +28,6 @@ class GUIInput {
 // Public member variable, method and friend function declarations
 
 public:
-	//TODO: Check if these are neccessary with SDL2
       // Mouse & Key events
       enum {
         None,
