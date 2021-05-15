@@ -2,7 +2,6 @@
 #define _RTESDLINPUT_
 
 #include "GUIInput.h"
-#include <SDL2/SDL.h>
 
 namespace RTE {
 
@@ -10,16 +9,12 @@ namespace RTE {
 	public:
 		SDLInput(int whichPlayer, bool keyJoyMouseCursor= false);
 
-		~SDLInput();
+		~SDLInput() = default;
 
 		void Update() override;
 
 	private:
-		void ConvertKeyEvent(int sdlKey, int guilibKey, float elapsedS);
-
-		bool CreateTimer();
-
-		float GetTime();
+		void ConvertKeyEvent(int sdlKey, int guilibKey, float elapsedS) {};
 	};
 } // namespace RTE
 #endif
