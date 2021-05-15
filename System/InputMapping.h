@@ -3,6 +3,8 @@
 
 #include "Serializable.h"
 
+#include <SDL2/SDL_keycode.h>
+
 namespace RTE {
 
 	/// <summary>
@@ -55,7 +57,7 @@ namespace RTE {
 		/// Gets the keyboard key mapping.
 		/// </summary>
 		/// <returns>The keyboard key this is mapped to.</returns>
-		int GetKey() const { return m_KeyMap; }
+		SDL_Keycode GetKey() const { return m_KeyMap; }
 
 		/// <summary>
 		/// Sets the keyboard button mapping.
@@ -128,7 +130,7 @@ namespace RTE {
 
 		std::string m_PresetDescription; //!< The friendly description that is associated with the scheme preset element, if any is set.
 
-		int m_KeyMap; //!< The keyboard key mapping.
+		unsigned int m_KeyMap; //!< The keyboard key mapping.
 		int m_MouseButtonMap; //!< The mouse button mapping.
 
 		bool m_DirectionMapped; //!< Whether joystick direction mapping is enabled.
