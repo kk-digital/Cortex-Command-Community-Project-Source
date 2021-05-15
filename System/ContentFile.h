@@ -178,7 +178,7 @@ namespace RTE {
 		/// </summary>
 		/// <param name="dataPathToSpecificFrame">Path to a specific frame when loading an animation to avoid overwriting the original preset DataPath when loading each frame.</param>
 		/// <returns>Pointer to the SDL_Texture loaded from disk.</returns>
-		Texture LoadAndReleaseImage(const std::string &dataPathToSpecificFrame,
+		SharedTexture LoadAndReleaseImage(const std::string &dataPathToSpecificFrame,
 		                            bool streamingAccess);
 
 		/// <summary>
