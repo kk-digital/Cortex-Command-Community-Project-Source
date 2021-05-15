@@ -1,5 +1,5 @@
 #include "InputScheme.h"
-#include "allegro.h"
+#include <SDL2/SDL.h>
 
 namespace RTE {
 
@@ -205,87 +205,87 @@ namespace RTE {
 				break;
 
 			case InputPreset::PRESET_P1DEFAULT:
-				m_InputMappings.at(InputElements::INPUT_L_UP).SetKey(KEY_W);
-				m_InputMappings.at(InputElements::INPUT_L_DOWN).SetKey(KEY_S);
-				m_InputMappings.at(InputElements::INPUT_L_LEFT).SetKey(KEY_A);
-				m_InputMappings.at(InputElements::INPUT_L_RIGHT).SetKey(KEY_D);
-				m_InputMappings.at(InputElements::INPUT_R_UP).SetKey(KEY_W);
-				m_InputMappings.at(InputElements::INPUT_R_DOWN).SetKey(KEY_S);
-				m_InputMappings.at(InputElements::INPUT_R_LEFT).SetKey(KEY_A);
-				m_InputMappings.at(InputElements::INPUT_R_RIGHT).SetKey(KEY_D);
+				m_InputMappings.at(InputElements::INPUT_L_UP).SetKey(SDLK_w);
+				m_InputMappings.at(InputElements::INPUT_L_DOWN).SetKey(SDLK_s);
+				m_InputMappings.at(InputElements::INPUT_L_LEFT).SetKey(SDLK_a);
+				m_InputMappings.at(InputElements::INPUT_L_RIGHT).SetKey(SDLK_d);
+				m_InputMappings.at(InputElements::INPUT_R_UP).SetKey(SDLK_w);
+				m_InputMappings.at(InputElements::INPUT_R_DOWN).SetKey(SDLK_s);
+				m_InputMappings.at(InputElements::INPUT_R_LEFT).SetKey(SDLK_a);
+				m_InputMappings.at(InputElements::INPUT_R_RIGHT).SetKey(SDLK_d);
 				m_InputMappings.at(InputElements::INPUT_FIRE).SetMouseButton(0);
 				m_InputMappings.at(InputElements::INPUT_PIEMENU).SetMouseButton(1);
-				m_InputMappings.at(InputElements::INPUT_JUMP).SetKey(KEY_W);
-				m_InputMappings.at(InputElements::INPUT_CROUCH).SetKey(KEY_S);
-				m_InputMappings.at(InputElements::INPUT_NEXT).SetKey(KEY_E);
-				m_InputMappings.at(InputElements::INPUT_PREV).SetKey(KEY_Q);
-				m_InputMappings.at(InputElements::INPUT_WEAPON_RELOAD).SetKey(KEY_R);
-				m_InputMappings.at(InputElements::INPUT_WEAPON_DROP).SetKey(KEY_G);
-				m_InputMappings.at(InputElements::INPUT_WEAPON_PICKUP).SetKey(KEY_F);
-				m_InputMappings.at(InputElements::INPUT_WEAPON_CHANGE_NEXT).SetKey(KEY_C);
+				m_InputMappings.at(InputElements::INPUT_JUMP).SetKey(SDLK_w);
+				m_InputMappings.at(InputElements::INPUT_CROUCH).SetKey(SDLK_s);
+				m_InputMappings.at(InputElements::INPUT_NEXT).SetKey(SDLK_e);
+				m_InputMappings.at(InputElements::INPUT_PREV).SetKey(SDLK_q);
+				m_InputMappings.at(InputElements::INPUT_WEAPON_RELOAD).SetKey(SDLK_r);
+				m_InputMappings.at(InputElements::INPUT_WEAPON_DROP).SetKey(SDLK_g);
+				m_InputMappings.at(InputElements::INPUT_WEAPON_PICKUP).SetKey(SDLK_f);
+				m_InputMappings.at(InputElements::INPUT_WEAPON_CHANGE_NEXT).SetKey(SDLK_c);
 				break;
 
 			case InputPreset::PRESET_P2DEFAULT:
-				m_InputMappings.at(InputElements::INPUT_L_UP).SetKey(KEY_UP);
-				m_InputMappings.at(InputElements::INPUT_L_DOWN).SetKey(KEY_DOWN);
-				m_InputMappings.at(InputElements::INPUT_L_LEFT).SetKey(KEY_LEFT);
-				m_InputMappings.at(InputElements::INPUT_L_RIGHT).SetKey(KEY_RIGHT);
-				m_InputMappings.at(InputElements::INPUT_FIRE).SetKey(KEY_1_PAD);
-				m_InputMappings.at(InputElements::INPUT_AIM).SetKey(KEY_2_PAD);
-				m_InputMappings.at(InputElements::INPUT_AIM_UP).SetKey(KEY_UP);
-				m_InputMappings.at(InputElements::INPUT_AIM_DOWN).SetKey(KEY_DOWN);
-				m_InputMappings.at(InputElements::INPUT_PIEMENU).SetKey(KEY_3_PAD);
-				m_InputMappings.at(InputElements::INPUT_JUMP).SetKey(KEY_ENTER_PAD);
-				m_InputMappings.at(InputElements::INPUT_CROUCH).SetKey(KEY_DEL_PAD);
-				m_InputMappings.at(InputElements::INPUT_NEXT).SetKey(KEY_5_PAD);
-				m_InputMappings.at(InputElements::INPUT_PREV).SetKey(KEY_4_PAD);
-				m_InputMappings.at(InputElements::INPUT_WEAPON_RELOAD).SetKey(KEY_0_PAD);
-				m_InputMappings.at(InputElements::INPUT_WEAPON_DROP).SetKey(KEY_6_PAD);
-				m_InputMappings.at(InputElements::INPUT_WEAPON_PICKUP).SetKey(KEY_9_PAD);
-				m_InputMappings.at(InputElements::INPUT_WEAPON_CHANGE_PREV).SetKey(KEY_7_PAD);
-				m_InputMappings.at(InputElements::INPUT_WEAPON_CHANGE_NEXT).SetKey(KEY_8_PAD);
+				m_InputMappings.at(InputElements::INPUT_L_UP).SetKey(SDLK_UP);
+				m_InputMappings.at(InputElements::INPUT_L_DOWN).SetKey(SDLK_DOWN);
+				m_InputMappings.at(InputElements::INPUT_L_LEFT).SetKey(SDLK_LEFT);
+				m_InputMappings.at(InputElements::INPUT_L_RIGHT).SetKey(SDLK_RIGHT);
+				m_InputMappings.at(InputElements::INPUT_FIRE).SetKey(SDLK_KP_1);
+				m_InputMappings.at(InputElements::INPUT_AIM).SetKey(SDLK_KP_2);
+				m_InputMappings.at(InputElements::INPUT_AIM_UP).SetKey(SDLK_UP);
+				m_InputMappings.at(InputElements::INPUT_AIM_DOWN).SetKey(SDLK_DOWN);
+				m_InputMappings.at(InputElements::INPUT_PIEMENU).SetKey(SDLK_KP_3);
+				m_InputMappings.at(InputElements::INPUT_JUMP).SetKey(SDLK_KP_ENTER);
+				m_InputMappings.at(InputElements::INPUT_CROUCH).SetKey(SDLK_KP_DECIMAL);
+				m_InputMappings.at(InputElements::INPUT_NEXT).SetKey(SDLK_KP_5);
+				m_InputMappings.at(InputElements::INPUT_PREV).SetKey(SDLK_KP_4);
+				m_InputMappings.at(InputElements::INPUT_WEAPON_RELOAD).SetKey(SDLK_KP_0);
+				m_InputMappings.at(InputElements::INPUT_WEAPON_DROP).SetKey(SDLK_KP_6);
+				m_InputMappings.at(InputElements::INPUT_WEAPON_PICKUP).SetKey(SDLK_KP_9);
+				m_InputMappings.at(InputElements::INPUT_WEAPON_CHANGE_PREV).SetKey(SDLK_KP_7);
+				m_InputMappings.at(InputElements::INPUT_WEAPON_CHANGE_NEXT).SetKey(SDLK_KP_8);
 				break;
 
 			case InputPreset::PRESET_P3DEFAULT:
 				//TODO: Replace these with gamepad bindings.
-				m_InputMappings.at(InputElements::INPUT_L_UP).SetKey(KEY_W);
-				m_InputMappings.at(InputElements::INPUT_L_DOWN).SetKey(KEY_S);
-				m_InputMappings.at(InputElements::INPUT_L_LEFT).SetKey(KEY_A);
-				m_InputMappings.at(InputElements::INPUT_L_RIGHT).SetKey(KEY_D);
-				m_InputMappings.at(InputElements::INPUT_R_UP).SetKey(KEY_W);
-				m_InputMappings.at(InputElements::INPUT_R_DOWN).SetKey(KEY_S);
-				m_InputMappings.at(InputElements::INPUT_R_LEFT).SetKey(KEY_A);
-				m_InputMappings.at(InputElements::INPUT_R_RIGHT).SetKey(KEY_D);
-				m_InputMappings.at(InputElements::INPUT_FIRE).SetKey(KEY_H);
-				m_InputMappings.at(InputElements::INPUT_AIM).SetKey(KEY_J);
-				m_InputMappings.at(InputElements::INPUT_AIM_UP).SetKey(KEY_W);
-				m_InputMappings.at(InputElements::INPUT_AIM_DOWN).SetKey(KEY_S);
-				m_InputMappings.at(InputElements::INPUT_PIEMENU).SetKey(KEY_K);
-				m_InputMappings.at(InputElements::INPUT_JUMP).SetKey(KEY_L);
-				m_InputMappings.at(InputElements::INPUT_CROUCH).SetKey(KEY_STOP);
-				m_InputMappings.at(InputElements::INPUT_NEXT).SetKey(KEY_U);
-				m_InputMappings.at(InputElements::INPUT_PREV).SetKey(KEY_Y);
+				m_InputMappings.at(InputElements::INPUT_L_UP).SetKey(SDLK_w);
+				m_InputMappings.at(InputElements::INPUT_L_DOWN).SetKey(SDLK_s);
+				m_InputMappings.at(InputElements::INPUT_L_LEFT).SetKey(SDLK_a);
+				m_InputMappings.at(InputElements::INPUT_L_RIGHT).SetKey(SDLK_d);
+				m_InputMappings.at(InputElements::INPUT_R_UP).SetKey(SDLK_w);
+				m_InputMappings.at(InputElements::INPUT_R_DOWN).SetKey(SDLK_s);
+				m_InputMappings.at(InputElements::INPUT_R_LEFT).SetKey(SDLK_a);
+				m_InputMappings.at(InputElements::INPUT_R_RIGHT).SetKey(SDLK_d);
+				m_InputMappings.at(InputElements::INPUT_FIRE).SetKey(SDLK_h);
+				m_InputMappings.at(InputElements::INPUT_AIM).SetKey(SDLK_j);
+				m_InputMappings.at(InputElements::INPUT_AIM_UP).SetKey(SDLK_w);
+				m_InputMappings.at(InputElements::INPUT_AIM_DOWN).SetKey(SDLK_s);
+				m_InputMappings.at(InputElements::INPUT_PIEMENU).SetKey(SDLK_k);
+				m_InputMappings.at(InputElements::INPUT_JUMP).SetKey(SDLK_l);
+				m_InputMappings.at(InputElements::INPUT_CROUCH).SetKey(SDLK_STOP);
+				m_InputMappings.at(InputElements::INPUT_NEXT).SetKey(SDLK_u);
+				m_InputMappings.at(InputElements::INPUT_PREV).SetKey(SDLK_y);
 				break;
 
 			case InputPreset::PRESET_P4DEFAULT:
 				//TODO: Replace these with gamepad bindings.
-				m_InputMappings.at(InputElements::INPUT_L_UP).SetKey(KEY_UP);
-				m_InputMappings.at(InputElements::INPUT_L_DOWN).SetKey(KEY_DOWN);
-				m_InputMappings.at(InputElements::INPUT_L_LEFT).SetKey(KEY_LEFT);
-				m_InputMappings.at(InputElements::INPUT_L_RIGHT).SetKey(KEY_RIGHT);
-				m_InputMappings.at(InputElements::INPUT_R_UP).SetKey(KEY_UP);
-				m_InputMappings.at(InputElements::INPUT_R_DOWN).SetKey(KEY_DOWN);
-				m_InputMappings.at(InputElements::INPUT_R_LEFT).SetKey(KEY_LEFT);
-				m_InputMappings.at(InputElements::INPUT_R_RIGHT).SetKey(KEY_RIGHT);
-				m_InputMappings.at(InputElements::INPUT_FIRE).SetKey(KEY_1_PAD);
-				m_InputMappings.at(InputElements::INPUT_AIM).SetKey(KEY_2_PAD);
-				m_InputMappings.at(InputElements::INPUT_AIM_UP).SetKey(KEY_UP);
-				m_InputMappings.at(InputElements::INPUT_AIM_DOWN).SetKey(KEY_DOWN);
-				m_InputMappings.at(InputElements::INPUT_PIEMENU).SetKey(KEY_3_PAD);
-				m_InputMappings.at(InputElements::INPUT_JUMP).SetKey(KEY_DEL_PAD);
-				m_InputMappings.at(InputElements::INPUT_CROUCH).SetKey(KEY_STOP);
-				m_InputMappings.at(InputElements::INPUT_NEXT).SetKey(KEY_5_PAD);
-				m_InputMappings.at(InputElements::INPUT_PREV).SetKey(KEY_4_PAD);
+				m_InputMappings.at(InputElements::INPUT_L_UP).SetKey(SDLK_UP);
+				m_InputMappings.at(InputElements::INPUT_L_DOWN).SetKey(SDLK_DOWN);
+				m_InputMappings.at(InputElements::INPUT_L_LEFT).SetKey(SDLK_LEFT);
+				m_InputMappings.at(InputElements::INPUT_L_RIGHT).SetKey(SDLK_RIGHT);
+				m_InputMappings.at(InputElements::INPUT_R_UP).SetKey(SDLK_UP);
+				m_InputMappings.at(InputElements::INPUT_R_DOWN).SetKey(SDLK_DOWN);
+				m_InputMappings.at(InputElements::INPUT_R_LEFT).SetKey(SDLK_LEFT);
+				m_InputMappings.at(InputElements::INPUT_R_RIGHT).SetKey(SDLK_RIGHT);
+				m_InputMappings.at(InputElements::INPUT_FIRE).SetKey(SDLK_KP_1);
+				m_InputMappings.at(InputElements::INPUT_AIM).SetKey(SDLK_KP_2);
+				m_InputMappings.at(InputElements::INPUT_AIM_UP).SetKey(SDLK_UP);
+				m_InputMappings.at(InputElements::INPUT_AIM_DOWN).SetKey(SDLK_DOWN);
+				m_InputMappings.at(InputElements::INPUT_PIEMENU).SetKey(SDLK_KP_3);
+				m_InputMappings.at(InputElements::INPUT_JUMP).SetKey(SDLK_KP_DECIMAL);
+				m_InputMappings.at(InputElements::INPUT_CROUCH).SetKey(SDLK_STOP);
+				m_InputMappings.at(InputElements::INPUT_NEXT).SetKey(SDLK_KP_5);
+				m_InputMappings.at(InputElements::INPUT_PREV).SetKey(SDLK_KP_4);
 				break;
 
 			// Some generic defaults; no real preset is set
