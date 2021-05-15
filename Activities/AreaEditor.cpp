@@ -15,6 +15,7 @@
 #include "PresetMan.h"
 #include "MovableMan.h"
 #include "UInputMan.h"
+#include "FrameMan.h"
 #include "SettingsMan.h"
 #include "SLTerrain.h"
 #include "Controller.h"
@@ -585,7 +586,7 @@ void AreaEditor::DrawGUI(SDL_Renderer *renderer, const Vector &targetPos, int wh
 {
     m_pEditorGUI->Draw(renderer, targetPos);
 
-    EditorActivity::DrawGUI(pTargetBitmap, targetPos, which);
+    EditorActivity::DrawGUI(renderer, targetPos, which);
 }
 
 
@@ -597,7 +598,7 @@ void AreaEditor::DrawGUI(SDL_Renderer *renderer, const Vector &targetPos, int wh
 
 void AreaEditor::Draw(SDL_Renderer* renderer, const Vector &targetPos)
 {
-    EditorActivity::Draw(pTargetBitmap, targetPos);    
+    EditorActivity::Draw(renderer, targetPos);
 }
 
 
@@ -622,7 +623,7 @@ bool AreaEditor::SaveScene(string saveAsName, bool forceOverwrite)
 			g_SceneMan.GetScene()->SavePreview(previewFilePath);
 
 			// Does ini already exist? If yes, then no need to add it to a scenes.ini etc
-			bool sceneFileExisted = exists(sceneFilePath.c_str());
+			bool sceneFileExisted =std::filesystem::exists(sceneFilePath.c_str());
 			// Create the writer
 			Writer sceneWriter(sceneFilePath.c_str(), false);
 			sceneWriter.NewProperty("AddScene");
@@ -649,7 +650,7 @@ bool AreaEditor::SaveScene(string saveAsName, bool forceOverwrite)
             g_SceneMan.GetScene()->SavePreview(previewFilePath);
 
             // Does ini already exist? If yes, then no need to add it to a scenes.ini etc
-            bool sceneFileExisted = exists(sceneFilePath.c_str());
+            bool sceneFileExisted =std::filesystem::exists(sceneFilePath.c_str());
             // Create the writer
             Writer sceneWriter(sceneFilePath.c_str(), false);
             sceneWriter.NewProperty("AddScene");
@@ -661,7 +662,7 @@ bool AreaEditor::SaveScene(string saveAsName, bool forceOverwrite)
             {
                 // First find/create  a .rte/Scenes.ini file to include the new .ini into
                 string scenesFilePath(g_PresetMan.GetDataModule(m_ModuleSpaceID)->GetFileName() + "/Scenes.ini");
-                bool scenesFileExisted = exists(scenesFilePath.c_str());
+                bool scenesFileExisted =std::filesystem::exists(scenesFilePath.c_str());
                 Writer scenesWriter(scenesFilePath.c_str(), true);
                 scenesWriter.NewProperty("\nIncludeFile");
                 scenesWriter << sceneFilePath;
