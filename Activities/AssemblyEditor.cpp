@@ -16,6 +16,7 @@
 #include "MovableMan.h"
 #include "UInputMan.h"
 #include "SettingsMan.h"
+#include "FrameMan.h"
 #include "SLTerrain.h"
 #include "Controller.h"
 #include "Actor.h"
@@ -44,6 +45,8 @@
 #include "GABaseDefense.h"
 #include "BunkerAssembly.h"
 #include "BunkerAssemblyScheme.h"
+
+#include "System.h"
 
 extern bool g_ResetActivity;
 
@@ -551,29 +554,29 @@ BunkerAssembly * AssemblyEditor::BuildAssembly(string saveAsName)
 		//Check if object fits the assembly box
 		bool skip = true;
 
-		Vector pos = (*itr)->GetPos() - pBA->GetPos() - pBA->GetBitmapOffset();
+		Vector pos = (*itr)->GetPos() - pBA->GetPos() - pBA->GetTextureOffset();
 		Vector finalPos = pos;
 
-		if ((pos.m_X >= 0) && (pos.m_X < pBA->GetBitmapWidth()) && 
-			(pos.m_Y >= 0) && (pos.m_Y < pBA->GetBitmapHeight()))
+		if ((pos.m_X >= 0) && (pos.m_X < pBA->GetTextureWidth()) &&
+			(pos.m_Y >= 0) && (pos.m_Y < pBA->GetTextureHeight()))
 			skip = false;
 		
 		// Try to move scene object across seams and see if it fits into assembly box
 		if (g_SceneMan.GetScene()->WrapsX())
 		{
-			pos = (*itr)->GetPos() - pBA->GetPos() - pBA->GetBitmapOffset() + Vector(g_SceneMan.GetScene()->GetWidth(), 0);
+			pos = (*itr)->GetPos() - pBA->GetPos() - pBA->GetTextureOffset() + Vector(g_SceneMan.GetScene()->GetWidth(), 0);
 
-			if ((pos.m_X >= 0) && (pos.m_X < pBA->GetBitmapWidth()) && 
-				(pos.m_Y >= 0) && (pos.m_Y < pBA->GetBitmapHeight()))
+			if ((pos.m_X >= 0) && (pos.m_X < pBA->GetTextureWidth()) &&
+				(pos.m_Y >= 0) && (pos.m_Y < pBA->GetTextureHeight()))
 			{			
 				skip = false;
 				finalPos = pos;
 			}
 
-			pos = (*itr)->GetPos() - pBA->GetPos() - pBA->GetBitmapOffset() - Vector(g_SceneMan.GetScene()->GetWidth(), 0);
+			pos = (*itr)->GetPos() - pBA->GetPos() - pBA->GetTextureOffset() - Vector(g_SceneMan.GetScene()->GetWidth(), 0);
 
-			if ((pos.m_X >= 0) && (pos.m_X < pBA->GetBitmapWidth()) && 
-				(pos.m_Y >= 0) && (pos.m_Y < pBA->GetBitmapHeight()))
+			if ((pos.m_X >= 0) && (pos.m_X < pBA->GetTextureWidth()) &&
+				(pos.m_Y >= 0) && (pos.m_Y < pBA->GetTextureHeight()))
 			{			
 				skip = false;
 				finalPos = pos;
@@ -582,19 +585,19 @@ BunkerAssembly * AssemblyEditor::BuildAssembly(string saveAsName)
 
 		if (g_SceneMan.GetScene()->WrapsY())
 		{
-			pos = (*itr)->GetPos() - pBA->GetPos() - pBA->GetBitmapOffset() + Vector(0, g_SceneMan.GetScene()->GetHeight());
+			pos = (*itr)->GetPos() - pBA->GetPos() - pBA->GetTextureOffset() + Vector(0, g_SceneMan.GetScene()->GetHeight());
 
-			if ((pos.m_X >= 0) && (pos.m_X < pBA->GetBitmapWidth()) && 
-				(pos.m_Y >= 0) && (pos.m_Y < pBA->GetBitmapHeight()))
+			if ((pos.m_X >= 0) && (pos.m_X < pBA->GetTextureWidth()) &&
+				(pos.m_Y >= 0) && (pos.m_Y < pBA->GetTextureHeight()))
 			{			
 				skip = false;
 				finalPos = pos;
 			}
 
-			pos = (*itr)->GetPos() - pBA->GetPos() - pBA->GetBitmapOffset() - Vector(0, g_SceneMan.GetScene()->GetHeight());
+			pos = (*itr)->GetPos() - pBA->GetPos() - pBA->GetTextureOffset() - Vector(0, g_SceneMan.GetScene()->GetHeight());
 
-			if ((pos.m_X >= 0) && (pos.m_X < pBA->GetBitmapWidth()) && 
-				(pos.m_Y >= 0) && (pos.m_Y < pBA->GetBitmapHeight()))
+			if ((pos.m_X >= 0) && (pos.m_X < pBA->GetTextureWidth()) &&
+				(pos.m_Y >= 0) && (pos.m_Y < pBA->GetTextureHeight()))
 			{			
 				skip = false;
 				finalPos = pos;
@@ -632,7 +635,7 @@ bool AssemblyEditor::SaveAssembly(string saveAsName, bool forceOverwrite)
 		if (g_PresetMan.AddEntityPreset(pBA, m_ModuleSpaceID, forceOverwrite, sceneFilePath))
 		{
 			// Does ini already exist? If yes, then no need to add it to a scenes.ini etc
-			bool sceneFileExisted = exists(sceneFilePath.c_str());
+			bool sceneFileExisted =std::filesystem::exists(sceneFilePath.c_str());
 			// Create the writer
 			Writer sceneWriter(sceneFilePath.c_str(), false);
 			sceneWriter.NewProperty("AddBunkerAssembly");
@@ -666,7 +669,7 @@ bool AssemblyEditor::SaveAssembly(string saveAsName, bool forceOverwrite)
 		if (g_PresetMan.AddEntityPreset(pBA, m_ModuleSpaceID, forceOverwrite, sceneFilePath))
 		{
 			// Does ini already exist? If yes, then no need to add it to a scenes.ini etc
-			bool sceneFileExisted = exists(sceneFilePath.c_str());
+			bool sceneFileExisted =std::filesystem::exists(sceneFilePath.c_str());
 			// Create the writer
 			Writer sceneWriter(sceneFilePath.c_str(), false);
 			sceneWriter.NewProperty("AddBunkerAssembly");
@@ -686,7 +689,7 @@ bool AssemblyEditor::SaveAssembly(string saveAsName, bool forceOverwrite)
 				else
 					scenesFilePath = g_PresetMan.GetDataModule(m_ModuleSpaceID)->GetFileName() + "/BunkerAssemblies/BunkerAssemblies.ini";
 
-				bool scenesFileExisted = exists(scenesFilePath.c_str());
+				bool scenesFileExisted =std::filesystem::exists(scenesFilePath.c_str());
 				Writer scenesWriter(scenesFilePath.c_str(), true);
 				scenesWriter.NewProperty("\nIncludeFile");
 				scenesWriter << sceneFilePath;

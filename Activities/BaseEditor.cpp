@@ -17,6 +17,7 @@
 #include "UInputMan.h"
 #include "SceneMan.h"
 #include "MetaMan.h"
+#include "FrameMan.h"
 //#include "AHuman.h"
 //#include "MOPixel.h"
 #include "SLTerrain.h"

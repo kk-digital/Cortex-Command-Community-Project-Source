@@ -48,6 +48,8 @@
 #include "PieMenuGUI.h"
 #include "GABaseDefense.h"
 
+#include "System/System.h"
+
 // TODO: evil
 extern bool g_ResetActivity;
 
@@ -693,9 +695,8 @@ void GibEditor::DrawGUI(SDL_Renderer* renderer, const Vector &targetPos, int whi
         // Draw ghost outline of edited object to place gibs upon
         if (m_pEditedObject)
         {
-            g_FrameMan.SetTransTable(MoreTrans);
             // Draw only the MOSRotating since that's all we are adding gibs for; any attachables have to be edited separately
-            m_pEditedObject->MOSRotating::Draw(renderer, targetPos, g_DrawTrans, true);
+            m_pEditedObject->MOSRotating::Draw(renderer, targetPos, g_DrawTrans, true, MoreTrans);
         }
 
         m_pEditorGUI->Draw(renderer, targetPos);
@@ -738,7 +739,7 @@ bool GibEditor::SaveObject(string saveAsName, bool forceOverwrite)
     string objectFilePath(g_PresetMan.GetDataModule(m_ModuleSpaceID)->GetFileName() + "/NewData/" + saveAsName + ".ini");
 
 	// Check if file exists
-	bool newDataFileExisted = exists(objectFilePath.c_str());
+	bool newDataFileExisted = std::filesystem::exists(objectFilePath.c_str());
 
 	// Try to create NewData directory if file does not exist
 	if (!newDataFileExisted)
@@ -751,7 +752,7 @@ bool GibEditor::SaveObject(string saveAsName, bool forceOverwrite)
 //    if (g_PresetMan.AddEntityPreset(m_pEditedObject, m_ModuleSpaceID, true))
     {
         // Does ini already exist? If yes, then no need to add it to a objects.ini etc
-        bool objectFileExisted = exists(objectFilePath.c_str());
+        bool objectFileExisted = std::filesystem::exists(objectFilePath.c_str());
         // If the ini file already exists, and then ask if overwrite first
         if (objectFileExisted && !forceOverwrite)
         {
@@ -774,7 +775,7 @@ bool GibEditor::SaveObject(string saveAsName, bool forceOverwrite)
                 {
                     // First find/create  a .rte/Scenes.ini file to include the new .ini into
                     string objectsFilePath(g_PresetMan.GetDataModule(m_ModuleSpaceID)->GetFileName() + "/Scenes.ini");
-                    bool objectsFileExisted = exists(objectsFilePath.c_str());
+                    bool objectsFileExisted = std::filesystem::exists(objectsFilePath.c_str());
                     Writer objectsWriter(objectsFilePath.c_str(), true);
                     objectsWriter.NewProperty("\nIncludeFile");
                     objectsWriter << objectFilePath;

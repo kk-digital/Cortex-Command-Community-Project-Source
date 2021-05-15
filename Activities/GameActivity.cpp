@@ -2302,22 +2302,14 @@ void GameActivity::DrawGUI(SDL_Renderer* renderer, const Vector &targetPos, int 
 	// Team Icon up in the top left corner
 	const Icon *pIcon = GetTeamIcon(m_Team[PoS]);
 	if (pIcon) {
-		pIcon->GetTextures()[0]->render(
-			renderer,
-			std::max(
-			    2, static_cast<int>(g_SceneMan.GetScreenOcclusion(which).m_X)),
-			2);
+		pIcon->GetTextures()[0]->render(renderer, std::max(2, static_cast<int>(g_SceneMan.GetScreenOcclusion(which).m_X)), 2);
 	}
 
 	// Gold
 	std::snprintf(str, sizeof(str), "%c Funds: %.0f oz",
 		          TeamFundsChanged(which) ? -57 : -58,
 		          GetTeamFunds(m_Team[PoS]));
-	g_FrameMan.GetLargeFont()->DrawAligned(
-		&pBitmapInt,
-		std::max(16, static_cast<int>(g_SceneMan.GetScreenOcclusion(which).m_X +
-		                              16)),
-		yTextPos, str, GUIFont::Left);
+	g_FrameMan.GetLargeFont()->DrawAligned(&pBitmapInt, std::max(16, static_cast<int>(g_SceneMan.GetScreenOcclusion(which).m_X + 16)), yTextPos, str, GUIFont::Left);
 	/* Not applicable anymore to the 4-team games
 		// Body losses
 		std::snprintf(str, sizeof(str), "%c Losses: %c%i %c%i", -39, -62,
@@ -2340,9 +2332,8 @@ void GameActivity::DrawGUI(SDL_Renderer* renderer, const Vector &targetPos, int 
 				pIcon->GetTextures()[0]->render(
 					renderer,
 					std::min(viewport.w - pIcon->GetTextures()[0]->getW() - 2,
-					         viewport.w - pIcon->GetTextures()[0]->getW() - 2 +
-					             static_cast<int>(
-					                 g_SceneMan.GetScreenOcclusion(which).m_X)),
+						viewport.w - pIcon->GetTextures()[0]->getW() - 2 +
+						static_cast<int>(g_SceneMan.GetScreenOcclusion(which).m_X)),
 					yTextPos);
 				// TODO: make a black Activity intro screen, saying "Player X,
 				// press any key/button to show that you are ready!, and display
@@ -2599,13 +2590,9 @@ void GameActivity::DrawDeliveryCursors(SDL_Renderer *renderer,
 			landZone = m_LandingZone[player] - targetPos;
 			// Cursor
 
-			m_aLZCursor[cursor][frame]->render(
-				renderer, landZone.m_X - halfWidth, landZone.m_Y - 48);
+			m_aLZCursor[cursor][frame]->render(renderer, landZone.m_X - halfWidth, landZone.m_Y - 48);
 
-			m_aLZCursor[cursor][frame]->render(
-				renderer,
-				landZone.m_X + halfWidth - m_aLZCursor[cursor][frame]->getW(),
-				landZone.m_Y - 48);
+			m_aLZCursor[cursor][frame]->render(renderer, landZone.m_X + halfWidth - m_aLZCursor[cursor][frame]->getW(), landZone.m_Y - 48);
 
 			// Text
 			pSmallFont->DrawAligned(
@@ -2629,25 +2616,13 @@ void GameActivity::DrawDeliveryCursors(SDL_Renderer *renderer,
 					                    ? g_SceneMan.GetSceneWidth()
 					                    : -g_SceneMan.GetSceneWidth());
 				// Cursor
-				m_aLZCursor[cursor][frame]->render(
-					renderer, wrappedX - halfWidth, landZone.m_Y - 48);
-				m_aLZCursor[cursor][frame]->render(
-					renderer,
-					wrappedX + halfWidth - m_aLZCursor[cursor][frame]->getW(),
-					landZone.m_Y - 48, SDL_FLIP_HORIZONTAL);
+				m_aLZCursor[cursor][frame]->render(renderer, wrappedX - halfWidth, landZone.m_Y - 48);
+				m_aLZCursor[cursor][frame]->render(renderer, wrappedX + halfWidth - m_aLZCursor[cursor][frame]->getW(), landZone.m_Y - 48, SDL_FLIP_HORIZONTAL);
 
 				// Text
-				pSmallFont->DrawAligned(
-					&pBitmapInt, wrappedX, landZone.m_Y - 42,
-					m_AIReturnCraft[player] ? "Deliver here" : "Travel here",
-					GUIFont::Centre);
-				pSmallFont->DrawAligned(&pBitmapInt, wrappedX,
-					                    landZone.m_Y - 36, "and then",
-					                    GUIFont::Centre);
-				pLargeFont->DrawAligned(
-					&pBitmapInt, wrappedX, landZone.m_Y - 30,
-					m_AIReturnCraft[player] ? "RETURN" : "STAY",
-					GUIFont::Centre);
+				pSmallFont->DrawAligned(&pBitmapInt, wrappedX, landZone.m_Y - 42, m_AIReturnCraft[player] ? "Deliver here" : "Travel here", GUIFont::Centre);
+				pSmallFont->DrawAligned(&pBitmapInt, wrappedX, landZone.m_Y - 36, "and then", GUIFont::Centre);
+				pLargeFont->DrawAligned(&pBitmapInt, wrappedX, landZone.m_Y - 30, m_AIReturnCraft[player] ? "RETURN" : "STAY", GUIFont::Centre);
 			}
 		}
 	}
@@ -2664,49 +2639,36 @@ void GameActivity::DrawDeliveryCursors(SDL_Renderer *renderer,
 			int halfWidth = 24;
 			landZone = itr->landingZone - targetPos;
 			// Cursor
-			m_aLZCursor[cursor][frame]->render(
-				renderer, landZone.m_X - halfWidth, landZone.m_Y - 48);
+			m_aLZCursor[cursor][frame]->render(renderer, landZone.m_X - halfWidth, landZone.m_Y - 48);
 
-			m_aLZCursor[cursor][frame]->render(
-				renderer,
-				landZone.m_X + halfWidth - m_aLZCursor[cursor][frame]->getW(),
-				landZone.m_Y - 48);
+			m_aLZCursor[cursor][frame]->render(renderer, landZone.m_X + halfWidth - m_aLZCursor[cursor][frame]->getW(), landZone.m_Y - 48);
 			// Text
-			pSmallFont->DrawAligned(&pBitmapInt, landZone.m_X,
-				                    landZone.m_Y - 38, "ETA:", GUIFont::Centre);
+			pSmallFont->DrawAligned(&pBitmapInt, landZone.m_X, landZone.m_Y - 38, "ETA:", GUIFont::Centre);
+
 			if (m_ActivityState == ActivityState::PreGame)
 				std::snprintf(str, sizeof(str), "???s");
 			else
-				std::snprintf(
-					str, sizeof(str), "%is",
-					((int)itr->delay - (int)itr->timer.GetElapsedSimTimeMS()) /
-					    1000);
-			pLargeFont->DrawAligned(&pBitmapInt, landZone.m_X,
-				                    landZone.m_Y - 32, str, GUIFont::Centre);
+				std::snprintf(str, sizeof(str), "%is", ((int)itr->delay - (int)itr->timer.GetElapsedSimTimeMS()) / 1000);
+
+
+			pLargeFont->DrawAligned(&pBitmapInt, landZone.m_X, landZone.m_Y - 32, str, GUIFont::Centre);
+
+
 			// Draw wrap around the world if necessary, and only if this is
 			// being drawn directly to a scenewide target bitmap
 			if (targetPos.IsZero() &&
 				(landZone.m_X < halfWidth ||
 				 landZone.m_X > g_SceneMan.GetSceneWidth() - halfWidth)) {
 				// Wrap shit around and draw dupe on the other side
-				int wrappedX =
-					landZone.m_X + (landZone.m_X < halfWidth
-					                    ? g_SceneMan.GetSceneWidth()
-					                    : -g_SceneMan.GetSceneWidth());
+				int wrappedX = landZone.m_X + (landZone.m_X < halfWidth ? g_SceneMan.GetSceneWidth() : -g_SceneMan.GetSceneWidth());
+
 				// Cursor
 				m_aLZCursor[cursor][frame]->render(renderer, wrappedX - halfWidth, landZone.m_Y - 48);
+				m_aLZCursor[cursor][frame]->render(renderer, wrappedX + halfWidth - m_aLZCursor[cursor][frame]->getW(), landZone.m_Y - 48, SDL_FLIP_HORIZONTAL);
 
-				m_aLZCursor[cursor][frame]->render(
-					renderer,
-					wrappedX + halfWidth - m_aLZCursor[cursor][frame]->getW(),
-					landZone.m_Y - 48, SDL_FLIP_HORIZONTAL);
 				// Text
-				pSmallFont->DrawAligned(&pBitmapInt, wrappedX,
-					                    landZone.m_Y - 38,
-					                    "ETA:", GUIFont::Centre);
-				pLargeFont->DrawAligned(&pBitmapInt, wrappedX,
-					                    landZone.m_Y - 32, str,
-					                    GUIFont::Centre);
+				pSmallFont->DrawAligned(&pBitmapInt, wrappedX, landZone.m_Y - 38, "ETA:", GUIFont::Centre);
+				pLargeFont->DrawAligned(&pBitmapInt, wrappedX, landZone.m_Y - 32, str, GUIFont::Centre);
 			}
 		}
 	}
