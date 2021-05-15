@@ -190,19 +190,22 @@ namespace RTE {
 		SetFormattedReaderPosition(GetFormattedReaderPosition());
 
 		// TODO: Use stbi for this instead of SDL_img (SDL_img may cause problems; stbi is generally the goto for this)
-		std::unique_ptr<SDL_Surface, sdl_deleter> tempSurface{
-		    IMG_Load(dataPathToLoad.c_str())};
+		std::unique_ptr<SDL_Surface, sdl_deleter> tempSurfacePreKey{ IMG_Load(dataPathToLoad.c_str()) };
+
+
 
 		RTEAssert(
-		    tempSurface.get(),
+		    tempSurfacePreKey.get(),
 		    "Failed to load image file with following path and name:\n\n" +
 		        m_DataPathAndReaderPosition +
 		        "\nThe file may be corrupt, incorrectly converted or saved with unsupported parameters.\n" +
 		        IMG_GetError());
 
 		// Set the colorkey of tempSurface for transparency
-		Uint32 colorKey{SDL_MapRGB(tempSurface->format, 255, 0, 255)};
-		SDL_SetColorKey(tempSurface.get(), SDL_TRUE, colorKey);
+		Uint32 colorKey{SDL_MapRGB(tempSurfacePreKey->format, 255, 0, 255)};
+		SDL_SetColorKey(tempSurfacePreKey.get(), SDL_TRUE, colorKey);
+
+		std::unique_ptr<SDL_Surface, sdl_deleter> tempSurface{ SDL_ConvertSurfaceFormat(tempSurfacePreKey.get(), Texture::getNativeAlphaFormat(g_FrameMan.GetRenderer()), 0)};
 
 		// Copy the pixels from the surface for accessing pixel colors
 		SharedTexture returnTexture = std::make_shared<Texture>();
