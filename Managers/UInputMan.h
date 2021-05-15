@@ -305,21 +305,19 @@ namespace RTE {
 		/// Gets the state of the Ctrl key.
 		/// </summary>
 		/// <returns>The state of the Ctrl key.</returns>
-		bool FlagCtrlState() const {
-			return false;
-		} //TODO ((key_shifts & KB_CTRL_FLAG) > 0) ? true : false; }
+		bool FlagCtrlState() const;
 
 		/// <summary>
 		/// Gets the state of the Alt key.
 		/// </summary>
 		/// <returns>The state of the Alt key.</returns>
-		bool FlagAltState() const { return false;}//TODO ((key_shifts & KB_ALT_FLAG) > 0) ? true : false; }
+		bool FlagAltState() const;
 
 		/// <summary>
 		/// Gets the state of the Shift key.
 		/// </summary>
 		/// <returns>The state of the Shift key.</returns>
-		bool FlagShiftState() const { return false;}//TODO ((key_shifts & KB_SHIFT_FLAG) > 0) ? true : false; }
+		bool FlagShiftState() const;
 #pragma endregion
 
 #pragma region Keyboard Handling
@@ -340,14 +338,16 @@ namespace RTE {
 		/// Shows the scancode of the keyboard key which is currently down.
 		/// </summary>
 		/// <returns>The scancode of the first keyboard key in the keyboard buffer. 0 means none.</returns>
-		int WhichKeyHeld() const;//TODO { int key = readkey(); return key >> 8; }
+		int WhichKeyHeld() const {};//TODO { int key = readkey(); return key >> 8; }
 
 		/// <summary>
 		/// Gets whether a key was pressed between the last update and the one previous to it.
 		/// </summary>
 		/// <param name="keyToTest">A const char with the Allegro-defined key enumeration to test.</param>
 		/// <returns>Whether the key is pressed or not.</returns>
-		bool KeyPressed(const char keyToTest) const { return GetKeyboardButtonState(keyToTest, InputState::Pressed); }
+		bool KeyPressed(SDL_Keycode keyToTest) const { return GetKeyboardButtonState(keyToTest, InputState::Pressed); }
+
+		bool KeyPressedScancode(SDL_Scancode keyToTest) const;
 
 		/// <summary>
 		/// Gets whether a key was released between the last update and the one previous to it.
@@ -517,14 +517,14 @@ namespace RTE {
 		/// </summary>
 		/// <param name="device">The InputDevice to get index from.</param>
 		/// <returns>The corrected index. A non-joystick device will result in an out of range value returned which will not affect any active joysticks.</returns>
-		int GetJoystickIndex(InputDevice device) const;//TODO { return (device >= InputDevice::DEVICE_GAMEPAD_1 && device < InputDevice::DEVICE_COUNT) ? device - InputDevice::DEVICE_GAMEPAD_1 : InputDevice::DEVICE_COUNT ; }
+		int GetJoystickIndex(InputDevice device) const {return false;};//TODO { return (device >= InputDevice::DEVICE_GAMEPAD_1 && device < InputDevice::DEVICE_COUNT) ? device - InputDevice::DEVICE_GAMEPAD_1 : InputDevice::DEVICE_COUNT ; }
 
 		/// <summary>
 		/// Gets whether the specified joystick is active. The joystick number does not correspond to the player number.
 		/// </summary>
 		/// <param name="joystickNumber">Joystick to check for.</param>
 		/// <returns>Whether the specified joystick is active.</returns>
-		bool JoystickActive(int joystickNumber) const;//TODO { return joystickNumber >= Players::PlayerOne && joystickNumber < Players::MaxPlayerCount && joystickNumber < num_joysticks; }
+		bool JoystickActive(int joystickNumber) const{return false;};//TODO { return joystickNumber >= Players::PlayerOne && joystickNumber < Players::MaxPlayerCount && joystickNumber < num_joysticks; }
 
 		/// <summary>
 		/// Gets whether a joystick button is being held down right now.
@@ -532,7 +532,7 @@ namespace RTE {
 		/// <param name="whichJoy">Which joystick to check for.</param>
 		/// <param name="whichButton">Which joystick button to check for.</param>
 		/// <returns>Whether the joystick button is held or not.</returns>
-		bool JoyButtonHeld(int whichJoy, int whichButton) const;//TODO { return GetJoystickButtonState(whichJoy, whichButton, InputState::Held); }
+		bool JoyButtonHeld(int whichJoy, int whichButton) const {return false;};//TODO { return GetJoystickButtonState(whichJoy, whichButton, InputState::Held); }
 
 		/// <summary>
 		/// Shows the first joystick button which is currently down.
@@ -637,7 +637,7 @@ namespace RTE {
 		/// Returns true if manager is in multiplayer mode.
 		/// </summary>
 		/// <returns>True if in multiplayer mode.</returns>
-		bool IsInMultiplayerMode() const { return m_OverrideInput; }
+		bool IsInMultiplayerMode() const { return false; }
 
 		/// <summary>
 		/// Sets the multiplayer mode flag.
@@ -738,21 +738,22 @@ namespace RTE {
 
 		static GUIInput* s_InputClass; //!< Current input class if available.
 
-		static char *s_PrevKeyStates; //!< Key states as they were the previous update.
-		static char *s_ChangedKeyStates; //!< Key states that have changed.
+		std::unordered_map<int, bool> m_KeyStates;
 
-		static bool s_CurrentMouseButtonStates[MouseButtons::MAX_MOUSE_BUTTONS]; //!< Current mouse button states.
-		static bool s_PrevMouseButtonStates[MouseButtons::MAX_MOUSE_BUTTONS]; //!< Mouse button states as they were the previous update.
-		static bool s_ChangedMouseButtonStates[MouseButtons::MAX_MOUSE_BUTTONS]; //!< Mouse button states that have changed since previous update.
+		std::unordered_map<int, bool> m_MouseButtonState;
 
 		// static JOYSTICK_INFO s_PrevJoystickStates[Players::MaxPlayerCount]; //!< Joystick states as they were the previous update.
-		static int
-		    s_PrevJoystickStates[Players::MaxPlayerCount]; //!< Joystick states
-		                                                   //!< as they were the
-		                                                   //!< previous update.
+		static int s_PrevJoystickStates[Players::MaxPlayerCount]; //!< Joystick states as they were the previous update.
 		// static JOYSTICK_INFO s_ChangedJoystickStates[Players::MaxPlayerCount]; //!< Joystick states that have changed.
-		static int s_ChangedJoystickStates
-		    [Players::MaxPlayerCount]; //!< Joystick states that have changed.
+		static int s_ChangedJoystickStates [Players::MaxPlayerCount]; //!< Joystick states that have changed.
+
+		std::unordered_map<unsigned short, std::map<unsigned short, Vector>> m_ControllerAxisState;
+
+		std::unordered_map<unsigned short, std::map<unsigned short, bool>> m_ControllerButtonState;
+
+		Vector m_MousePos;
+
+		uint16_t m_ModState;
 
 		bool m_OverrideInput; //!< If true then this instance operates in multiplayer mode and the input is overridden by network input.
 
@@ -814,7 +815,7 @@ namespace RTE {
 		/// <param name="keyToTest">A const char with the Allegro-defined key enumeration to test.</param>
 		/// <param name="whichState">Which state to check for. See InputState enumeration.</param>
 		/// <returns>Whether the keyboard key is in the specified state or not.</returns>
-		bool GetKeyboardButtonState(const char keyToTest, InputState whichState) const;
+		bool GetKeyboardButtonState(SDL_Keycode keyToTest, InputState whichState) const;
 
 		/// <summary>
 		/// Gets whether a mouse button is in the specified state.
@@ -883,30 +884,14 @@ namespace RTE {
 #pragma endregion
 
 #pragma region Update Breakdown
-		/// <summary>
-		/// Capture and handle special key shortcuts and combinations. This is called from Update().
-		/// </summary>
+		void PressKey(SDL_Keycode key);
+
+		void ReleaseKey(SDL_Keycode key);
+
 		void HandleSpecialInput();
 
-		/// <summary>
-		/// Handles the mouse input in network multiplayer. This is called from Update().
-		/// </summary>
-		void UpdateNetworkMouseMovement();
-
-		/// <summary>
-		/// Handles the mouse input. This is called from Update().
-		/// </summary>
 		void UpdateMouseInput();
 
-		/// <summary>
-		/// Handles the joysticks input. This is called from Update().
-		/// </summary>
-		void UpdateJoystickInput();
-
-		/// <summary>
-		/// Stores all the input events that happened during this update to be compared to in the next update. This is called from Update().
-		/// </summary>
-		void StoreInputEventsForNextUpdate();
 #pragma endregion
 
 		/// <summary>
