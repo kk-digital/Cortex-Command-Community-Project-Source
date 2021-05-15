@@ -131,7 +131,7 @@ namespace RTE {
 				}
 			}
 			// NOTE: This takes ownership of the texture file
-			returnTexture = std::make_shared<Texture>(std::move(LoadAndReleaseImage(dataPathToLoad, streamingAccess)));
+			returnTexture = LoadAndReleaseImage(dataPathToLoad, streamingAccess);
 
 			// Insert the texture into the map, PASSING OVER OWNERSHIP OF THE
 			// LOADED DATAFILE
@@ -140,6 +140,7 @@ namespace RTE {
 				    {dataPathToLoad, returnTexture});
 			}
 		}
+
 		return returnTexture;
 	}
 
@@ -175,12 +176,13 @@ namespace RTE {
 			std::snprintf(framePath, sizeof(framePath), "%s%03i%s", m_DataPathWithoutExtension.c_str(), frameNum, m_DataPathExtension.c_str());
 			returnTextures.push_back(GetAsTexture(true, framePath));
 		}
+
 		return returnTextures;
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	Texture ContentFile::LoadAndReleaseImage(const std::string &dataPathToSpecificFrame, bool streamingAccess) {
+	SharedTexture ContentFile::LoadAndReleaseImage(const std::string &dataPathToSpecificFrame, bool streamingAccess) {
 
 		const std::string dataPathToLoad = dataPathToSpecificFrame.empty()
 		                                       ? m_DataPath
@@ -203,21 +205,21 @@ namespace RTE {
 		SDL_SetColorKey(tempSurface.get(), SDL_TRUE, colorKey);
 
 		// Copy the pixels from the surface for accessing pixel colors
-		Texture returnTexture;
+		SharedTexture returnTexture = std::make_shared<Texture>();
 		if (!streamingAccess) {
 			// Create a Texture from the loaded Image with STATIC ACCESS (!)
 			// that lives in vram
-			returnTexture.m_Texture.reset(SDL_CreateTextureFromSurface(
+			returnTexture->m_Texture.reset(SDL_CreateTextureFromSurface(
 			    g_FrameMan.GetRenderer(), tempSurface.get()));
 		} else {
 			// Create a Texture with STREAMING ACCESS that lives in vram
-			returnTexture.m_Texture.reset(SDL_CreateTexture(
+			returnTexture->m_Texture.reset(SDL_CreateTexture(
 			    g_FrameMan.GetRenderer(),
-			    returnTexture.getNativeAlphaFormat(g_FrameMan.GetRenderer()),
+			    returnTexture->getNativeAlphaFormat(g_FrameMan.GetRenderer()),
 			    SDL_TEXTUREACCESS_STREAMING, tempSurface->w, tempSurface->h));
 		}
 
-		RTEAssert(returnTexture.m_Texture.get(),
+		RTEAssert(returnTexture->m_Texture.get(),
 		          "Failed to create Texture from " +
 		              m_DataPathAndReaderPosition +
 		              "\n SDL Error: " + SDL_GetError());
@@ -227,42 +229,41 @@ namespace RTE {
 
 		// Get the format, access, width and height of the created Texture, to
 		// fill in the member Variables
-		SDL_QueryTexture(returnTexture.m_Texture.get(), &format, &access, &w,
+		SDL_QueryTexture(returnTexture->m_Texture.get(), &format, &access, &w,
 		                 &h);
 
-		returnTexture.m_Access=access;
-		returnTexture.m_Format=format;
-		returnTexture.w = w;
-		returnTexture.h = h;
+		returnTexture->m_Access=access;
+		returnTexture->m_Format=format;
+		returnTexture->w = w;
+		returnTexture->h = h;
 
 		// Resize the pixels vector so we don't write out of bounds
-		returnTexture.m_PixelsRO.resize(w * h);
+		returnTexture->m_PixelsRO.resize(w * h);
 
 		// Make a copy of the pixeldata to retain it for read access
 		SDL_LockSurface(tempSurface.get());
 		SDL_ConvertPixels(w, h, tempSurface->format->format,
 		                  tempSurface->pixels, tempSurface->pitch, format,
-		                  returnTexture.m_PixelsRO.data(),
+		                  returnTexture->m_PixelsRO.data(),
 		                  w * SDL_BYTESPERPIXEL(format));
 		SDL_UnlockSurface(tempSurface.get());
 
 		// In case a streaming texture was requested copy the pixels over now
 		if (streamingAccess) {
-			returnTexture.lock();
+			returnTexture->lock();
 
 			// Copy the pixels from the read access array to the texture
 			// Do not modify the following line unless you know exactly what
 			// you're doing
-			SDL_ConvertPixels(w, h, returnTexture.m_Format,
-			                  returnTexture.m_PixelsRO.data(),
-			                  w * sizeof(uint32_t), returnTexture.m_Format,
-			                  returnTexture.m_PixelsWO, returnTexture.m_Pitch);
+			SDL_ConvertPixels(w, h, returnTexture->m_Format,
+			                  returnTexture->m_PixelsRO.data(),
+			                  w * sizeof(uint32_t), returnTexture->m_Format,
+			                  returnTexture->m_PixelsWO, returnTexture->m_Pitch);
 
-			returnTexture.unlock();
+			returnTexture->unlock();
 		}
 		// Set the blend mode to blend so that alpha is actually used
-		returnTexture.setBlendMode(SDL_BLENDMODE_BLEND);
-
+		returnTexture->setBlendMode(SDL_BLENDMODE_BLEND);
 		return returnTexture;
 	}
 
