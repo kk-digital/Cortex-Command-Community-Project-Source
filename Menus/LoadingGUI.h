@@ -13,6 +13,8 @@ namespace RTE {
 	class SDLInput;
 	class GUIControlManager;
 	class Writer;
+	class SceneLayer;
+	class Box;
 
 	/// <summary>
 	/// Represents the loading screen GUI when starting the game.
@@ -61,6 +63,8 @@ namespace RTE {
 		std::unique_ptr<SDLScreen> m_GUIScreen; //!< Screen interface of this.
 		std::unique_ptr<Writer> m_LoadingLogWriter; //!< The Writer that generates the loading log.
 		std::unique_ptr<Texture> m_ProgressListboxBitmap; //!< BITMAP that the progress report will be drawn into.
+		static std::unique_ptr<SceneLayer> s_LoadingSplash;
+		static std::unique_ptr<Box> s_SplashBox;
 
 		int m_PosX; //!< Position of the progress report box on X axis.
 		int m_PosY; //!< Position of the progress report box on Y axis.

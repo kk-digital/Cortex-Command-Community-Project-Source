@@ -4,6 +4,7 @@
 #include "SettingsMan.h"
 #include "PresetMan.h"
 #include "FrameMan.h"
+#include "UInputMan.h"
 
 #include "GUI/GUI.h"
 #include "GUI/GUICollectionBox.h"
@@ -16,6 +17,9 @@
 #include "System/SDLHelper.h"
 
 namespace RTE {
+
+	std::unique_ptr<SceneLayer> LoadingGUI::s_LoadingSplash;
+	std::unique_ptr<Box> LoadingGUI::s_SplashBox;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -50,18 +54,21 @@ namespace RTE {
 		}
 		if (!g_SettingsMan.DisableLoadingScreen()) { CreateProgressReportListbox(); }
 
-		SceneLayer loadingSplash;
-		loadingSplash.Create(ContentFile("Base.rte/GUIs/Title/LoadingSplash.png"), false, Vector(), true, false, Vector(1.0F, 0));
+		s_LoadingSplash = std::make_unique<SceneLayer>();
+		s_LoadingSplash->Create(ContentFile("Base.rte/GUIs/Title/LoadingSplash.png"), false, Vector(), true, false, Vector(1.0F, 0));
 
 		// Hardcoded offset to make room for the loading box only if DisableLoadingScreen is false.
 		int loadingSplashOffset = g_SettingsMan.DisableLoadingScreen() ? 14 : 120;
-		loadingSplash.SetOffset(Vector(static_cast<float>(((loadingSplash.GetTexture()->getW() - g_FrameMan.GetResX()) / 2) + loadingSplashOffset), 0));
+		s_LoadingSplash->SetOffset(Vector(static_cast<float>(((s_LoadingSplash->GetTexture()->getW() - g_FrameMan.GetResX()) / 2) + loadingSplashOffset), 0));
 
+		g_FrameMan.RenderClear();
 		// Draw onto wrapped strip centered vertically on the screen
-		Box splashBox(Vector(0, static_cast<float>((g_FrameMan.GetResY() - loadingSplash.GetTexture()->getW()) / 2)), static_cast<float>(g_FrameMan.GetResX()), static_cast<float>(loadingSplash.GetTexture()->getH()));
-		loadingSplash.Draw(g_FrameMan.GetRenderer(), splashBox);
+		s_SplashBox = std::make_unique<Box>(Vector(0, static_cast<float>((g_FrameMan.GetResY() - s_LoadingSplash->GetTexture()->getW()) / 2)), static_cast<float>(g_FrameMan.GetResX()), static_cast<float>(s_LoadingSplash->GetTexture()->getH()));
+		s_LoadingSplash->Draw(g_FrameMan.GetRenderer(), *s_SplashBox);
 
 		g_FrameMan.RenderPresent();
+
+		std::cout << "Loading Screen should now be visible" << std::endl;
 
 		// Overwrite Settings.ini after all the managers are created to fully populate the file. Up until this moment Settings.ini is populated only with minimal required properties to run.
 		// When the overwrite happens there is a short delay which causes the screen to remain black, so this is done here after the flip to mask that black screen.
@@ -122,6 +129,12 @@ namespace RTE {
 
 	void LoadingGUI::LoadingSplashProgressReport(const std::string &reportString, bool newItem) {
 		if (System::IsLoggingToCLI()) { System::PrintLoadingToCLI(reportString, newItem); }
+
+// TODO: y u no work ;(
+		g_UInputMan.Update();
+		// g_FrameMan.RenderClear();
+		s_LoadingSplash->Draw(g_FrameMan.GetRenderer(), *s_SplashBox);
+		g_FrameMan.RenderPresent();
 
 		if (newItem) {
 			// Write out the last line to the log file before starting a new one and scroll the bitmap upwards.
