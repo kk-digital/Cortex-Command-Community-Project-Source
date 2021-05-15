@@ -422,7 +422,7 @@ void GUISkin::BuildStandardRect(GUIBitmap *Dest, const std::string Section, int 
     if (buildBG)
     {
         // Use the filler first
-        SetRect(&Rect, VFiller[0], VFiller[1], VFiller[0]+VFiller[2], VFiller[1]+VFiller[3]);
+        SetRect(&Rect, VFiller[0], VFiller[1], VFiller[2], VFiller[3]);
         // Tile the filler across
         for(j=Y+VTop[3]; j<Y+Height-VBottom[3]; j+=VFiller[3])
         {
@@ -438,40 +438,40 @@ void GUISkin::BuildStandardRect(GUIBitmap *Dest, const std::string Section, int 
         // Tile the four sides first, then place the four corners last
 
         // Tile the Top side
-        SetRect(&Rect, VTop[0], VTop[1], VTop[0]+VTop[2], VTop[1]+VTop[3]);
+        SetRect(&Rect, VTop[0], VTop[1], VTop[2], VTop[3]);
         for(i=X+VTopLeft[2]; i<=X+Width-VTopRight[2]; i+=VTop[2])
             SrcBitmap->DrawTrans(Dest, i, Y, &Rect);
 
         // Tile the Right side
-        SetRect(&Rect, VRight[0], VRight[1], VRight[0]+VRight[2], VRight[1]+VRight[3]);
+        SetRect(&Rect, VRight[0], VRight[1], VRight[2], VRight[3]);
         for(j=Y+VTopRight[3]; j<Y+Height-VBottomRight[3]; j+=VRight[3])
             SrcBitmap->DrawTrans(Dest, X+Width-VRight[2], j, &Rect);
         
         // Tile the Bottom side
-        SetRect(&Rect, VBottom[0], VBottom[1], VBottom[0]+VBottom[2], VBottom[1]+VBottom[3]);
+        SetRect(&Rect, VBottom[0], VBottom[1], VBottom[2], VBottom[3]);
         for(i=X+VBottomLeft[2]; i<X+Width-VBottomRight[2]; i+=VBottom[2])
             SrcBitmap->DrawTrans(Dest, i, Y+Height-VBottom[3], &Rect);
 
         // Tile the Left side
-        SetRect(&Rect, VLeft[0], VLeft[1], VLeft[0]+VLeft[2], VLeft[1]+VLeft[3]);
+        SetRect(&Rect, VLeft[0], VLeft[1], VLeft[2], VLeft[3]);
         for(j=Y+VTopLeft[3]; j<Y+Height-VBottomLeft[3]; j+=VLeft[3])
             SrcBitmap->DrawTrans(Dest, X, j, &Rect);
 
 
         // Top-Left Corner
-        SetRect(&Rect, VTopLeft[0], VTopLeft[1], VTopLeft[0]+VTopLeft[2], VTopLeft[1]+VTopLeft[3]);
+        SetRect(&Rect, VTopLeft[0], VTopLeft[1], VTopLeft[2], VTopLeft[3]);
         SrcBitmap->DrawTrans(Dest, X, Y, &Rect);
         
         // Top-Right Corner
-        SetRect(&Rect, VTopRight[0], VTopRight[1], VTopRight[0]+VTopRight[2], VTopRight[1]+VTopRight[3]);
+        SetRect(&Rect, VTopRight[0], VTopRight[1], VTopRight[2], VTopRight[3]);
         SrcBitmap->DrawTrans(Dest, X+Width-VTopRight[2], Y, &Rect);
         
         // Bottom-Right Corner
-        SetRect(&Rect, VBottomRight[0], VBottomRight[1], VBottomRight[0]+VBottomRight[2], VBottomRight[1]+VBottomRight[3]);
+        SetRect(&Rect, VBottomRight[0], VBottomRight[1], VBottomRight[2], VBottomRight[3]);
         SrcBitmap->DrawTrans(Dest, X+Width-VBottomRight[2], Y+Height-VBottomRight[3], &Rect);
 
         // Bottom-Left Corner
-        SetRect(&Rect, VBottomLeft[0], VBottomLeft[1], VBottomLeft[0]+VBottomLeft[2], VBottomLeft[1]+VBottomLeft[3]);
+        SetRect(&Rect, VBottomLeft[0], VBottomLeft[1], VBottomLeft[2], VBottomLeft[3]);
         SrcBitmap->DrawTrans(Dest, X, Y+Height-VBottomLeft[3], &Rect);
     }
 }

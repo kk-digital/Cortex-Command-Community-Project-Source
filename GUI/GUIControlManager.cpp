@@ -202,6 +202,7 @@ GUIControl *GUIControlManager::AddControl(GUIProperties *Property)
     Property->GetValue("ControlType", &Type);
     string Name;
     Property->GetValue("Name", &Name);
+    std::cout << Type << std::endl;
 
     // Skip if we already have a control of this name
     if (GetControl(Name))

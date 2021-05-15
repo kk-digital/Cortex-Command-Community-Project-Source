@@ -212,10 +212,7 @@ void GUIManager::Update(bool ignoreKeyboardEvents)
 
             // Setup the double click rectangle
             if (m_DoubleClickButtons == GUIPanel::MOUSE_NONE) {
-                SetRect(&m_DoubleClickRect, MouseX-m_DoubleClickSize,
-                                            MouseY-m_DoubleClickSize,
-                                            2*m_DoubleClickSize,
-                                            2*m_DoubleClickSize);
+                SetRect(&m_DoubleClickRect, MouseX-m_DoubleClickSize, MouseY-m_DoubleClickSize, 2*m_DoubleClickSize, 2*m_DoubleClickSize);
             }
 
             // OnMouseDown event

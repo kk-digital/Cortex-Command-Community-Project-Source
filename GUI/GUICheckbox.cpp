@@ -164,19 +164,19 @@ void GUICheckbox::BuildBitmap(void)
 
     // Base checkbox
     m_Skin->GetValue("Checkbox", "Base", Values, 4);
-    SetRect(&m_ImageRects[0], Values[0], Values[1], Values[0]+Values[2], Values[1]+Values[3]);
+    SetRect(&m_ImageRects[0], Values[0], Values[1], Values[2], Values[3]);
 
     // Mouse over checkbox
     m_Skin->GetValue("Checkbox", "MouseOver", Values, 4);
-    SetRect(&m_ImageRects[1], Values[0], Values[1], Values[0]+Values[2], Values[1]+Values[3]);
+    SetRect(&m_ImageRects[1], Values[0], Values[1], Values[2], Values[3]);
 
     // Normal check
     m_Skin->GetValue("Checkbox", "Check", Values, 4);
-    SetRect(&m_ImageRects[2], Values[0], Values[1], Values[0]+Values[2], Values[1]+Values[3]);
+    SetRect(&m_ImageRects[2], Values[0], Values[1], Values[2], Values[3]);
 
     // Greyed check
     m_Skin->GetValue("Checkbox", "GreyCheck", Values, 4);
-    SetRect(&m_ImageRects[3], Values[0], Values[1], Values[0]+Values[2], Values[1]+Values[3]);
+    SetRect(&m_ImageRects[3], Values[0], Values[1], Values[2], Values[3]);
 }
 
 

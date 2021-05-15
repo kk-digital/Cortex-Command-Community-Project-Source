@@ -176,7 +176,7 @@ void GUIProgressBar::BuildBitmap(void)
     int Values[4];
     GUIRect Rect;
     m_Skin->GetValue("ProgressBar_Indicator", "Top", Values, 4);
-    SetRect(&Rect, Values[0], Values[1], Values[0]+Values[2], Values[1]+Values[3]);
+    SetRect(&Rect, Values[0], Values[1], Values[2], Values[3]);
 
     m_IndicatorImage = m_Skin->CreateBitmap(Values[2], m_Height-4);
     if (!m_IndicatorImage)
@@ -184,7 +184,7 @@ void GUIProgressBar::BuildBitmap(void)
 
     // Tile the centre piece
     m_Skin->GetValue("ProgressBar_Indicator", "Centre", Values, 4);
-    SetRect(&Rect, Values[0], Values[1], Values[0]+Values[2], Values[1]+Values[3]);    
+    SetRect(&Rect, Values[0], Values[1], Values[2], Values[3]);
 
     for(int y=0; y<m_IndicatorImage->GetHeight(); y+=Values[3]) {
         for(int x=0; x<m_IndicatorImage->GetWidth(); x+=Values[2]) {
@@ -194,11 +194,11 @@ void GUIProgressBar::BuildBitmap(void)
 
     // Draw the top & bottom pieces
     m_Skin->GetValue("ProgressBar_Indicator", "Top", Values, 4);
-    SetRect(&Rect, Values[0], Values[1], Values[0]+Values[2], Values[1]+Values[3]);    
+    SetRect(&Rect, Values[0], Values[1], Values[2], Values[3]);
     Src->Draw(m_IndicatorImage, 0,0, &Rect);
 
     m_Skin->GetValue("ProgressBar_Indicator", "Bottom", Values, 4);
-    SetRect(&Rect, Values[0], Values[1], Values[0]+Values[2], Values[1]+Values[3]);    
+    SetRect(&Rect, Values[0], Values[1], Values[2], Values[3]);
     Src->Draw(m_IndicatorImage, 0,m_IndicatorImage->GetHeight()-Values[3], &Rect);
 
     m_Skin->GetValue("ProgressBar_Indicator", "Spacing", &m_Spacing);
