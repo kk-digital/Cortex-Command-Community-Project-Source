@@ -194,8 +194,12 @@ namespace RTE {
 
 		void Unlock();
 
+		void SetColorKey(unsigned long key) override { m_ColorKey = key;}
+
 	private:
 		ContentFile m_TextureFile;
+
+		uint32_t m_ColorKey;
 
 		SharedTexture m_Texture;
 

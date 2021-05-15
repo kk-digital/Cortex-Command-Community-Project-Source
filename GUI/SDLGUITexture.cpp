@@ -38,14 +38,20 @@ namespace RTE {
 	bool SDLGUITexture::Create(int width, int height, bool renderer) {
 		m_Width = width;
 		m_Height = height;
-		if(!renderer)
+		if (!renderer) {
 			m_Texture = std::make_shared<Texture>(g_FrameMan.GetRenderer(), width, height, SDL_TEXTUREACCESS_STREAMING);
+			Lock();
+			m_Texture->clearAll();
+		}
 
 		m_Locked = false;
 		return 1;
 	}
 
-	void SDLGUITexture::Destroy() {}
+	void SDLGUITexture::Destroy() {
+		if(m_Locked)
+			Unlock();
+	}
 
 	void SDLGUITexture::Lock(){
 		if(!m_Locked && m_Texture){
@@ -62,6 +68,7 @@ namespace RTE {
 	}
 
 	void SDLGUITexture::Render(int x, int y, GUIRect *pRect, bool trans, GUIRect* clip) {
+		//Texture uploads are fairly slow (when done en masse) so do it at the latest possible point.
 		Unlock();
 		SDL_Rect src;
 		SDL_Rect dest{x,y,m_Width,m_Height};
@@ -87,6 +94,7 @@ namespace RTE {
 	}
 
 	void SDLGUITexture::RenderScaled(int x, int y, int width, int height, bool trans) {
+		//Texture uploads are fairly slow (when done en masse) so do it at the latest possible point.
 		Unlock();
 		SDL_Rect dest{x, y, width, height};
 		if (!trans)
