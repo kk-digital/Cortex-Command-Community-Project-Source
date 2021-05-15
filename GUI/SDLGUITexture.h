@@ -24,16 +24,16 @@ namespace RTE {
 		/// Texture requests pixel access, this allows GetPixel and SetPixel to
 		/// be called safely
 		/// </param>
-		SDLGUITexture(SharedTexture &pTexture);
+		SDLGUITexture(const std::shared_ptr<Texture> &pTexture);
 
 		SDLGUITexture(const SDLGUITexture &reference);
 
-		SDLGUITexture(int width, int height);
+		SDLGUITexture(int width, int height, bool renderer = false);
 
 		/// <summary>
 		/// Destructor method to clean up the SDLBitmap object
 		/// </summary>
-		virtual ~SDLGUITexture();
+		~SDLGUITexture() override;
 
 		/// <summary>
 		/// Create a new texture from a fileName
@@ -51,14 +51,16 @@ namespace RTE {
 		/// Unused, all textures will be created to match the screen colordepth
 		/// </param>
 		/// <returns> True if the texture was successfully created </returns>
-		bool Create(int width, int height, int depth = 32);
+		bool Create(int width, int height, int) {Create(width, height, false);}
+
+		bool Create(int width, int height, bool renderer);
 
 		/// <summary>
 		/// Destroys and resets the SDLTexture object.
 		/// </summary>
 		void Destroy() override;
 
-		void Render(int x, int y, GUIRect *pRect, bool trans = true);
+		void Render(int x, int y, GUIRect *pRect, bool trans = true, GUIRect* clip = nullptr);
 		void RenderScaled(int x, int y, int width, int height, bool trans = true);
 
 		void Blit(GUIBitmap* pDestBitmap, int x, int y, GUIRect* pRect, bool trans = true);
@@ -188,6 +190,10 @@ namespace RTE {
 		/// <returns> True if a texture is set</returns>
 		bool HasBitmap() override { return m_Texture != 0; }
 
+		void Lock();
+
+		void Unlock();
+
 	private:
 		ContentFile m_TextureFile;
 
@@ -199,7 +205,8 @@ namespace RTE {
 		int m_Width;
 		int m_Height;
 
+	public:
+
 	};
 } // namespace RTE
-
 #endif
