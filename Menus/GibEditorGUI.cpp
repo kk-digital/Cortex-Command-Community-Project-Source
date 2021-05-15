@@ -28,6 +28,9 @@
 #include "ObjectPickerGUI.h"
 #include "PieMenuGUI.h"
 
+#include "System/SDLHelper.h"
+#include <SDL2/SDL2_gfxPrimitives.h>
+
 using namespace RTE;
 
 #define MAXZOOMFACTOR 5
@@ -709,7 +712,7 @@ void GibEditorGUI::Update()
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Draws the menu
 
-void GibEditorGUI::Draw(BITMAP *pTargetBitmap, const Vector &targetPos) const
+void GibEditorGUI::Draw(SDL_Renderer *renderer, const Vector &targetPos) const
 {
     // Done, so don't draw the UI
     if (m_EditorGUIMode == DONEEDITING)
@@ -722,48 +725,45 @@ void GibEditorGUI::Draw(BITMAP *pTargetBitmap, const Vector &targetPos) const
         // Draw the currently held object into the order of the list if it is to be placed inside
         if (m_pCurrentGib && m_DrawCurrentGib && i == m_GibListOrder)
         {
-            g_FrameMan.SetTransTable(m_BlinkTimer.AlternateReal(333) || m_EditorGUIMode == PLACINGGIB ? LessTrans : HalfTrans);
-            m_pCurrentGib->Draw(pTargetBitmap, targetPos, g_DrawTrans);
-            Actor *pActor = dynamic_cast<Actor *>(m_pCurrentGib);
+            m_pCurrentGib->Draw(renderer, targetPos, g_DrawTrans, false, m_BlinkTimer.AlternateReal(333) || m_EditorGUIMode == PLACINGGIB ? LessTrans : HalfTrans);
+			Actor *pActor = dynamic_cast<Actor *>(m_pCurrentGib);
             if (pActor)
-                pActor->DrawHUD(pTargetBitmap, targetPos);
+                pActor->DrawHUD(renderer, targetPos);
         }
 
         // Blink trans if we are supposed to blink this one
         if ((*itr) == m_pObjectToBlink)
         {
-            g_FrameMan.SetTransTable(m_BlinkTimer.AlternateReal(333) ? LessTrans : HalfTrans);
-            (*itr)->Draw(pTargetBitmap, targetPos, g_DrawTrans);
-        }
+			(*itr)->Draw(renderer, targetPos, g_DrawTrans, false, m_BlinkTimer.AlternateReal(333) ? LessTrans : HalfTrans);
+		}
         else
-            (*itr)->Draw(pTargetBitmap, targetPos);
+            (*itr)->Draw(renderer, targetPos);
 
         // Draw basic HUD if an actor
         Actor *pActor = dynamic_cast<Actor *>(*itr);
         if (pActor)
-            pActor->DrawHUD(pTargetBitmap, targetPos);
+            pActor->DrawHUD(renderer, targetPos);
     }
 
     // Draw picking object crosshairs and not the selected object
     if (!m_DrawCurrentGib)
     {
         Vector center = m_CursorPos - targetPos;
-        putpixel(pTargetBitmap, center.m_X, center.m_Y, g_YellowGlowColor);
-        hline(pTargetBitmap, center.m_X - 5, center.m_Y, center.m_X - 2, g_YellowGlowColor);
-        hline(pTargetBitmap, center.m_X + 5, center.m_Y, center.m_X + 2, g_YellowGlowColor);
-        vline(pTargetBitmap, center.m_X, center.m_Y - 5, center.m_Y - 2, g_YellowGlowColor);
-        vline(pTargetBitmap, center.m_X, center.m_Y + 5, center.m_Y + 2, g_YellowGlowColor);
+        pixelColor(renderer, center.m_X, center.m_Y, g_YellowGlowColor);
+        hlineColor(renderer, center.m_X - 5, center.m_Y, center.m_X - 2, g_YellowGlowColor);
+        hlineColor(renderer, center.m_X + 5, center.m_Y, center.m_X + 2, g_YellowGlowColor);
+        vlineColor(renderer, center.m_X, center.m_Y - 5, center.m_Y - 2, g_YellowGlowColor);
+        vlineColor(renderer, center.m_X, center.m_Y + 5, center.m_Y + 2, g_YellowGlowColor);
     }
     // If the held object will be placed at the end of the list, draw it last to the scene, transperent blinking
     else if (m_pCurrentGib && (m_GibListOrder < 0 || m_GibListOrder == m_PlacedGibs.size()))
     {
-        g_FrameMan.SetTransTable(m_BlinkTimer.AlternateReal(333) || m_EditorGUIMode == PLACINGGIB ? LessTrans : HalfTrans);
-        m_pCurrentGib->Draw(pTargetBitmap, targetPos, g_DrawTrans);
-        Actor *pActor = dynamic_cast<Actor *>(m_pCurrentGib);
+		m_pCurrentGib->Draw(renderer, targetPos, g_DrawTrans, false, m_BlinkTimer.AlternateReal(333) || m_EditorGUIMode == PLACINGGIB ? LessTrans : HalfTrans);
+		Actor *pActor = dynamic_cast<Actor *>(m_pCurrentGib);
         if (pActor)
-            pActor->DrawHUD(pTargetBitmap, targetPos);
+            pActor->DrawHUD(renderer, targetPos);
     }
-
+#ifdef GIB_EDITOR_ZOOM
     // Draw the zoom window, if active
     if (m_ZoomFactor > 1)
     {
@@ -803,11 +803,12 @@ void GibEditorGUI::Draw(BITMAP *pTargetBitmap, const Vector &targetPos) const
         stretch_blit(m_pZoomSource, pTargetBitmap, 0, 0, m_pZoomSource->w, m_pZoomSource->h, zoomedCenter.m_X - halfWidth, zoomedCenter.m_Y - halfHeight, m_pZoomSource->w * m_ZoomFactor, m_pZoomSource->h * m_ZoomFactor);
         rect(pTargetBitmap, zoomedCenter.m_X - halfWidth, zoomedCenter.m_Y - halfHeight, zoomedCenter.m_X + halfWidth - 1, zoomedCenter.m_Y + halfHeight - 1, g_YellowGlowColor);
     }
+#endif
 
-    m_pPicker->Draw(pTargetBitmap);
+    m_pPicker->Draw(renderer);
 
     // Draw the pie menu
-    m_pPieMenu->Draw(pTargetBitmap, targetPos);
+    m_pPieMenu->Draw(renderer, targetPos);
 }
 
 
