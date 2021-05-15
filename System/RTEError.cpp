@@ -11,6 +11,7 @@ namespace RTE {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	extern bool RTEAbortFunc(const std::string &description, const char *file, int line) {
+		std::cout << file << ":" << line << ": " << description << std::endl;
     // TODO: Implement for SDL
     /*
 		// Save out the screen bitmap, after making a copy of it, faster sometimes
