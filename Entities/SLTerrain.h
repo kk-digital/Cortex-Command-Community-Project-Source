@@ -468,7 +468,7 @@ ClassInfoGetters
 
     void SetMaterialPixel(const int pixelX, const int pixelY, const uint32_t material);
 
-	void FloodFillMaterial(int fillX, int fillY, uint32_t material);
+	void FloodFillMaterial(int fillX, int fillY, uint32_t material) {};
 
 
 //////////////////////////////////////////////////////////////////////////////////////////

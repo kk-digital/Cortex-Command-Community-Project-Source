@@ -280,7 +280,7 @@ int SLTerrain::LoadData()
     // Create blank foreground layer
     m_pFGColor->Destroy();
 
-    Texture pFGTexture(g_FrameMan.GetRenderer(), m_pMainTexture->getW(), m_pMainTexture->getH(), SDL_TEXTUREACCESS_STREAMING);
+    SharedTexture pFGTexture = std::make_shared<Texture>(g_FrameMan.GetRenderer(), m_pMainTexture->getW(), m_pMainTexture->getH(), SDL_TEXTUREACCESS_STREAMING);
     if (!pFGTexture || m_pFGColor->Create(pFGTexture, true, m_Offset, m_WrapX, m_WrapY, m_ScrollRatio))
     {
         RTEAbort("Failed to create terrain's foreground layer's bitmap!");
@@ -289,7 +289,7 @@ int SLTerrain::LoadData()
 
     // Create blank background layer
     m_pBGColor->Destroy();
-    Texture pBGTexture(g_FrameMan.GetRenderer(), m_pMainTexture->getW(), m_pMainTexture->getH(), SDL_TEXTUREACCESS_STREAMING);
+    SharedTexture pBGTexture = std::make_shared<Texture>(g_FrameMan.GetRenderer(), m_pMainTexture->getW(), m_pMainTexture->getH(), SDL_TEXTUREACCESS_STREAMING);
     if (!pBGTexture || m_pBGColor->Create(pBGTexture, true, m_Offset, m_WrapX, m_WrapY, m_ScrollRatio))
     {
         RTEAbort("Failed to create terrain's background layer's bitmap!");
