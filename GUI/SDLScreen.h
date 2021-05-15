@@ -12,7 +12,7 @@ namespace RTE {
 		/// Destructor method used to clean up a SDLScreen object before
 		/// deletion.
 		/// </summary>
-		virtual ~SDLScreen() { Destroy(); }
+		virtual ~SDLScreen() override { Destroy(); }
 
 		/// <summary>
 		/// Destroys and resets this SDLScreen object
@@ -35,11 +35,9 @@ namespace RTE {
 		/// <summary>
 		/// Draws a bitmap onto the back buffer
 		/// </summary>
-		void DrawBitmap(GUIBitmap *pGUIBitmap, int x, int y,
-		                GUIRect *pRect) override;
+		void DrawBitmap(GUIBitmap *pGUIBitmap, int x, int y, GUIRect *pRect) override;
 
-		void DrawBitmapTrans(GUIBitmap*, int, int,
-		                     GUIRect*) override;
+		void DrawBitmapTrans(GUIBitmap* pGUIBitmap, int x, int y, GUIRect* pRect) override;
 		/// <summary>
 		/// Gets the Surface representing the Screen
 		/// </summary>
@@ -60,8 +58,9 @@ namespace RTE {
 		unsigned long ConvertColor(unsigned long color,
 		                           int targetDepth = 0) override;
 
-	  private:
-		SDLGUITexture *m_pBackBitmap;
+	private:
+		std::shared_ptr<SDLGUITexture> m_GUIBitmap;
+
 	};
 } // namespace RTE
 #endif
