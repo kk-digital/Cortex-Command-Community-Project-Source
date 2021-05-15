@@ -228,11 +228,11 @@ namespace RTE {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void ConsoleMan::Update() {
-		if (g_UInputMan.FlagCtrlState() && g_UInputMan.KeyPressed(SDL_SCANCODE_GRAVE)) {
+		if (g_UInputMan.FlagCtrlState() && g_UInputMan.KeyPressedScancode(SDL_SCANCODE_GRAVE)) {
 			SetReadOnly();
 		}
 
-		if (!g_UInputMan.FlagShiftState() && (!g_UInputMan.FlagCtrlState() && g_UInputMan.KeyPressed(SDL_SCANCODE_GRAVE))) {
+		if (!g_UInputMan.FlagShiftState() && (!g_UInputMan.FlagCtrlState() && g_UInputMan.KeyPressedScancode(SDL_SCANCODE_GRAVE))) {
 			if (IsEnabled()) {
 				if (!m_ReadOnly) {
 					m_InputTextBox->SetEnabled(false);
