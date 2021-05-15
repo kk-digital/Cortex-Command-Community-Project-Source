@@ -474,10 +474,11 @@ void GUITextPanel::UpdateText(bool Typing, bool DoIncrement)
     }
 
     // Clamp it
-    m_StartIndex = std::min(m_StartIndex, static_cast<int>(m_Text.size()-1));
+    m_StartIndex = std::min(static_cast<size_t>(m_StartIndex), (m_Text.size()-1));
 
     // Adjust the cursor position
-    m_CursorX = m_Font->CalculateWidth(m_Text.substr(m_StartIndex, m_CursorIndex-m_StartIndex));
+    Sub = m_Text.substr(m_StartIndex, m_CursorIndex-m_StartIndex);
+    m_CursorX =  m_Font->CalculateWidth(Sub);
 
     // Update the selection
     if (m_GotSelection)
