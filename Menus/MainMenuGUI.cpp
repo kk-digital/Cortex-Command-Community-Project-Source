@@ -60,6 +60,7 @@
 #endif
 
 #include "System/System.h"
+#include "System/SDLHelper.h"
 
 extern int g_IntroState;
 
