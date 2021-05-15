@@ -2,7 +2,7 @@ sources += files(
 # 'AllegroBitmap.cpp',
 # 'AllegroInput.cpp',
 # 'AllegroScreen.cpp',
-# 'GUIBanner.cpp',
+'GUIBanner.cpp',
 'GUIButton.cpp',
 'GUICheckbox.cpp',
 'GUICollectionBox.cpp',
@@ -31,7 +31,8 @@ sources += files(
 'GUITextBox.cpp',
 'GUITextPanel.cpp',
 'GUIUtil.cpp',
-# 'SDLScreen.cpp',
+'SDLScreen.cpp',
+'SDLInput.cpp',
 'SDLGUITexture.cpp',
 )
 #
