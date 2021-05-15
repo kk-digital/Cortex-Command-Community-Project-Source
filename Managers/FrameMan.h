@@ -3,6 +3,8 @@
 
 #include "System/Singleton.h"
 #include "System/Box.h"
+#include "Timer.h"
+#include "ContentFile.h"
 
 #include "System/SDLTexture.h"
 
@@ -30,6 +32,8 @@ namespace RTE {
 		/// </summary>
 		FrameMan();
 
+		int CreateWindowAndRenderer();
+
 		/// <summary>
 		/// Makes the FrameMan object ready for use, which is to be used with
 		/// SettingsMan first.
@@ -56,11 +60,9 @@ namespace RTE {
 		/// </summary>
 		void Update();
 
-
-
-/////////////////
-/* Splitscreen */
-/////////////////
+		/////////////////
+		/* Splitscreen */
+		/////////////////
 
 		/// <summary>
 		/// Gets wether the screen is split horizontally across the screen, i.e.
@@ -115,9 +117,7 @@ namespace RTE {
 		/// <returns>
 		/// The number of currently active screens.
 		/// </returns>
-		unsigned short GetScreenCount() const {
-			return m_HSplit || m_VSplit ? (m_HSplit && m_VSplit ? 4 : 2) : 1;
-		}
+		unsigned short GetScreenCount() const { return m_HSplit || m_VSplit ? (m_HSplit && m_VSplit ? 4 : 2) : 1; }
 
 		/// <summary>
 		/// Gets the width of the individual player screens.
@@ -125,9 +125,7 @@ namespace RTE {
 		/// <returns>
 		/// The width of the player screens.
 		/// </returns>
-		unsigned short GetPlayerScreenWidth() const {
-			return GetPlayerScreenWidth(-1);
-		}
+		int GetPlayerScreenWidth() const { return GetPlayerFrameBufferWidth(-1); }
 
 		/// <summary>
 		/// Gets the height of the individual player screens.
@@ -135,9 +133,7 @@ namespace RTE {
 		/// <returns>
 		/// The height of the player screens.
 		/// </returns>
-		unsigned short GetPlayerScreenHeight() const {
-			return GetPlayerScreenHeight(-1);
-		}
+		int GetPlayerScreenHeight() const { return GetPlayerFrameBufferHeight(-1); }
 
 		/// <summary>
 		/// Gets the width of the specified player screen.
@@ -148,7 +144,7 @@ namespace RTE {
 		/// <returns>
 		/// The width of the specified player screen.
 		/// </returns>
-		unsigned short GetPlayerScreenWidth(short whichPlayer) const;
+		int GetPlayerFrameBufferWidth(short whichPlayer) const;
 
 		/// <summary>
 		/// Gets the width of the specified player screen.
@@ -159,12 +155,11 @@ namespace RTE {
 		/// <returns>
 		/// The height of the specified player screen
 		/// </returns>
-		unsigned short GetPlayerScreenHeight(short whichPlayer) const;
+		int GetPlayerFrameBufferHeight(short whichPlayer) const;
 
-
-/////////////////////////
-/* Renderer Management */
-/////////////////////////
+		/***********************
+		 * Renderer Management *
+		 ***********************/
 
 		/// <summary>
 		/// Get the current SDL_Renderer
@@ -175,19 +170,20 @@ namespace RTE {
 		SDL_Renderer *GetRenderer() { return m_Renderer; }
 
 		/// <summary>
-		/// Set a new render target from an SDL_Texture, storing the current target. Can be nullptr
+		/// Set a new render target from an SDL_Texture,
+		/// storing the current target. Can be nullptr
 		/// </summary>
 		/// <param name="target">
 		/// The new target.
 		/// </param>
-		void PushRenderTarget(SDL_Texture* target);
+		void PushRenderTarget(SDL_Texture *target);
+
 		/// <summary>
 		/// Set a new render target from a RTE::Texture, storing the current target.
 		/// </summary>
 		/// <param name="target">
 		/// The new target
 		/// </param>
-
 		void PushRenderTarget(std::shared_ptr<Texture> target);
 
 		/// <summary>
@@ -195,19 +191,21 @@ namespace RTE {
 		/// </summary>
 		void PopRenderTarget();
 
-		/// <summary>
-		/// Draws the current frame to the screen.
-		/// </summary>
-		void Draw();
+		void RenderClear();
 
 		/// <summary>
 		/// Show the current Frame on the screen.
 		/// </summary>
 		void RenderPresent();
 
-///////////////////////
-/* Window Management */
-///////////////////////
+		/// <summary>
+		/// Draws the current frame to the screen.
+		/// </summary>
+		void Draw();
+
+		/*********************
+		 * Window Management *
+		 *********************/
 
 		/// <summary>
 		/// Get the current game window as SDL_Window
@@ -223,7 +221,7 @@ namespace RTE {
 		/// <returns>
 		/// An Uint32 representing a pixelformat from SDL_PixelFormatEnum
 		/// </returns>
-		uint32_t GetPixelFormat();
+		uint32_t GetPixelFormat() const;
 
 		/// <summary>
 		/// Gets the horizontal resolution of the screen.
@@ -288,9 +286,7 @@ namespace RTE {
 		/// <returns>
 		/// Wether the new resolution set differs from the current one.
 		/// </returns>
-		bool IsNewResSet() const {
-			return m_NewResX != m_ResX || m_NewResY != m_ResY;
-		}
+		bool IsNewResSet() const { return m_NewResX != m_ResX || m_NewResY != m_ResY; }
 
 		/// <summary>
 		/// Returns true if this resolution is supported
@@ -304,8 +300,7 @@ namespace RTE {
 		/// <returns>
 		/// True if the resolution is supported.
 		/// </returns>
-		bool IsValidResolution(unsigned short width,
-		                       unsigned short height) const;
+		bool IsValidResolution(int width, int height) const;
 
 		/// <summary>
 		/// Tells how many time the screen resolution is being multiplied
@@ -313,7 +308,7 @@ namespace RTE {
 		/// <returns>
 		/// What multiple the screen resolution is run in (1 normal)
 		/// </returns>
-		unsigned short ResolutionMultiplier() const { return m_ResMultiplier; }
+		int ResolutionMultiplier() const { return m_ResMultiplier; }
 
 		/// <summary>
 		/// Gets wether resolution validation in multi-monitor mode is disabled
@@ -324,7 +319,7 @@ namespace RTE {
 		bool IsMultiScreenResolutionValidationDisabled() const { return true; }
 
 		/// <summary>
-		/// Setss and switches to a new windowed mode resolution multiplier.
+		/// Sets and switches to a new windowed mode resolution multiplier.
 		/// </summary>
 		/// <param name="multiplier">
 		/// The multiplier to switch to.
@@ -375,7 +370,7 @@ namespace RTE {
 		/// Wether the current Activity should be ended before performing the
 		/// switch.
 		/// </param>
-		void SetFullscreen(bool fullscreen, bool endActivity = false);
+		void SetFullscreen(bool fullscreen);
 
 		/// <summary>
 		/// Gets wether the game resolution was changed.
@@ -416,10 +411,7 @@ namespace RTE {
 		/// <returns>
 		/// Error code, anything other than 0 i an error.
 		/// </returns>
-		int SwitchResolution(unsigned short newResX, unsigned short newResY,
-		                     unsigned short newMultiplier = 1,
-		                     bool endActivity = false);
-
+		int SwitchResolution(int newResX, int newResY, int newMultiplier = 1, bool endActivity = false);
 
 		//////////////////////////
 		/* Screen Text handling */
@@ -455,8 +447,7 @@ namespace RTE {
 		/// <returns>
 		/// Width of the text string
 		/// </returns>
-		unsigned short CalculateTextWidth(const std::string &text,
-		                                  bool isSmall);
+		int CalculateTextWidth(const std::string &text, bool isSmall);
 
 		/// <summary>
 		/// Calculates the height of a text string using the given font size.
@@ -473,9 +464,7 @@ namespace RTE {
 		/// <returns>
 		/// Height of the text string.
 		/// </returns>
-		unsigned short CalculateTextHeight(const std::string &text,
-		                                   unsigned short maxWidth,
-		                                   bool isSmall);
+		int CalculateTextHeight(const std::string &text, int maxWidth, bool isSmall);
 
 		/// <summary>
 		/// Gets the message to display on tp of each player's screen.
@@ -486,7 +475,7 @@ namespace RTE {
 		/// <returns>
 		/// Current message shown to player.
 		/// </returns>
-		std::string GetScreenText(short whichScreen = 0) const {
+		std::string GetScreenText(int whichScreen = 0) const {
 			return (whichScreen >= 0 && whichScreen < c_MaxScreenCount) ? ""
 			                                                            : "";
 		} // TODO: add fonts and screen text handling (also move this to cpp)
@@ -502,9 +491,7 @@ namespace RTE {
 		/// message can be displayed before this expires. ClearScreenText
 		/// overrides it though.
 		/// </param>
-		void SetScreenText(std::string message, short whichScreen = 0,
-		                   unsigned short blinkInterval = 0,
-		                   short displayDuration = -1, bool centered = false);
+		void SetScreenText(std::string message, int whichScreen = 0, int blinkInterval = 0, long displayDuration = -1, bool centered = false);
 
 		/// <summary>
 		/// Clears the message displayed on top of each player's screen.
@@ -512,8 +499,11 @@ namespace RTE {
 		/// <param name="whichScreen">
 		/// Which screen message to clear.
 		/// </param>
-		void ClearScreenText(short whichScreen = 0);
+		void ClearScreenText(int whichScreen = 0);
 
+		void DrawScreenText(int playerScreen, SDLGUITexture playerGUIBitmap); //TODO
+
+		/* TODO: categorize these */
 		/// <summary>
 		/// Flashes any of the players' screen with the pecified color for this
 		/// frame
@@ -528,22 +518,20 @@ namespace RTE {
 		/// How long a period to fill the frame with color. If 0, a single-frame
 		/// flash will happen.
 		/// </param>
-		void FlashScreen(short screen, int color, float periodMS = 0);
+		void FlashScreen(int screen, uint32_t color, float periodMS = 0);
 
-		/* TODO: categorize these */
+		int DrawLine(const Vector &start, const Vector &end, uint32_t color, int altColor = 0, int skip = 0, int skipStart = 0, bool shortestWrap = false) const {}
+		int DrawDotLine(SDL_Renderer *renderer, const Vector &start, const Vector &end, SharedTexture dot, int skip = 0, int skipStart = 0, bool shortestWrap = false) const {}
 
+		int SaveScreenToPNG(std::string nameBase){};
 
-		int DrawLine(const Vector &start, const Vector &end, int color,
-		             int altColor = 0, int skip = 0, int skipStart = 0,
-		             bool shortestWrap = false) const;
+		int SaveWorldToPNG(std::string nameBase){};
 
-		int SaveScreenToPNG(std::string nameBase);
-
-		int SaveWorldToPNG(std::string nameBase);
-
-		int SaveTextureToPNG(std::shared_ptr<Texture> tex, std::string nameBase);
+		int SaveTextureToPNG(std::shared_ptr<Texture> tex, std::string nameBase){};
 
 		bool IsInMultiplayerMode() const { return false; }
+
+		uint32_t GetColorFromIndex(uint32_t color) const;
 
 		// Private members
 	private:
@@ -552,30 +540,35 @@ namespace RTE {
 		//!< The renderer instance needed for drawing
 		SDL_Renderer *m_Renderer;
 
+		std::shared_ptr<SDLScreen> m_GUIScreen;
+		std::shared_ptr<GUIFont> m_SmallFont;
+		std::shared_ptr<GUIFont> m_LargeFont;
+
 		//!< Maximum usable Screen area; In Windowed mode this excludes
 		//!< Window decorations, task bar, etc.
 		std::unique_ptr<SDL_Rect> m_ScreenRes;
 
 		//!< Color Depth (bits per pixel)
 		static constexpr unsigned short m_BPP = 32;
-		//!< Number of physical displays
-		unsigned short m_NumScreens;
 
-		unsigned short m_ResX; //!< Game window width.
-		unsigned short m_ResY; //!< Game window height.
-		unsigned short m_ResMultiplier; //!< Resolution multiplier
+		//!< Number of physical displays
+		int m_NumScreens;
+
+		int m_ResX; //!< Game window width.
+		int m_ResY; //!< Game window height.
+		int m_ResMultiplier; //!< Resolution multiplier
 
 		//!< New game window height that will take
 		//!< effect next time this FrameMan is started.
-		unsigned short m_NewResX;
+		int m_NewResX;
 
 		//!< New game window width that will take effect
 		//!< next time this FrameMan is started.
-		unsigned short m_NewResY;
+		int m_NewResY;
 
 		//!< New multiplier that will take effect
 		//!< the next time FrameMan is started
-		unsigned short m_NewResMultiplier;
+		int m_NewResMultiplier;
 
 		//!< Wether the resolution was changed through the
 		//!< settings fullscreen/upscaled fullscreen buttons.
@@ -590,7 +583,10 @@ namespace RTE {
 		std::unique_ptr<Texture> m_PlayerScreen;
 
 		//!< A stack of the current render targets
-		std::stack<SDL_Texture*> m_TargetStack;
+		std::stack<SDL_Texture *> m_TargetStack;
+
+		ContentFile m_PaletteFile;
+		SharedTexture m_Palette;
 
 		//!< Wether the screen is split horizontally across the
 		//!< screen, i.e. as two scplitscreens above another.
@@ -606,11 +602,22 @@ namespace RTE {
 		//!< in settings
 		bool m_VSplitOverride;
 
+		std::array<std::string, c_MaxScreenCount> m_ScreenText;
+		std::array<std::string, c_MaxScreenCount> m_TextCentered;
+		std::array<long, c_MaxScreenCount> m_TextDuration;
+		std::array<Timer, c_MaxScreenCount> m_TextDurationTimer;
+		std::array<int, c_MaxScreenCount> m_TextBlinking;
+		Timer m_TextBlinkTimer;
+
+		std::array<uint32_t, c_MaxScreenCount> m_FlashScreenColor;
+		std::array<bool, c_MaxScreenCount> m_FlashedLastFrame;
+		std::array<Timer, c_MaxScreenCount> m_FlashTimer;
+
 		// Private functions
 	private:
 		/// <summary>
 		/// Check that a resolution will fit the screen(s) and fall back to a
-		/// safe resolution if the set resolution was to high.
+		/// safe resolution if the set resolution was too high.
 		/// </summary>
 		/// <param name="resX">
 		/// Game window horizontal resolution
@@ -621,8 +628,7 @@ namespace RTE {
 		/// <param name="reMultiplier">
 		/// Resolution multiplier
 		/// </param>
-		void ValidateResolution(unsigned short &resX, unsigned short &resY,
-		                        unsigned short &resMultiplier);
+		// void ValidateResolution(int &resX, int &resY, int &resMultiplier);
 
 		GUIFont *GetFont(bool isSmall);
 
@@ -631,6 +637,15 @@ namespace RTE {
 		/// resetting the memebers of this abstraction level only
 		/// </summary>
 		void Clear();
+
+		void DrawScreenFlash(int playerScreen, SDL_Renderer *renderer);
+
+		/// <summary>
+		/// Updates the drawing position of each player screen on the backbuffer when split screen is active. This is called during Draw().
+		/// </summary>
+		/// <param name="playerScreen">The player screen to update offset for.</param>
+		/// <param name="screenOffset">Vector representing the screen offset.</param>
+		void UpdateScreenOffsetForSplitScreen(int playerScreen, Vector &screenOffset) const;
 
 		// Disallow the use of some implicit methods.
 		FrameMan(const FrameMan &reference) = delete;
