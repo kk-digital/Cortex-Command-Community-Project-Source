@@ -111,7 +111,7 @@ namespace RTE {
 		/// <param name="y">y coordinate of top left corne</param>
 		/// <param name="width">width of rectangle</param>
 		/// <param name="height">height of rectangle</param>
-		/// <parma name="color">color of the rectangle
+		/// <param name="color">color of the rectangle
 		void DrawRectangle(int x, int y, int width, int height, unsigned long color, bool filled) override;
 
 		/// <summary>

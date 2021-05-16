@@ -5,6 +5,8 @@
 
 #include "System/SDLHelper.h"
 
+#include <SDL2/SDL2_gfxPrimitives.h>
+
 namespace RTE {
 	SDLGUITexture::SDLGUITexture() {}
 	SDLGUITexture::SDLGUITexture(const SharedTexture &pTexture) {
@@ -68,6 +70,8 @@ namespace RTE {
 	}
 
 	void SDLGUITexture::Render(int x, int y, GUIRect *pRect, bool trans, GUIRect* clip) {
+
+		RTEAssert(m_Texture.get(), "Tried drawing the screen onto itself.");
 		//Texture uploads are fairly slow (when done en masse) so do it at the latest possible point.
 		Unlock();
 		SDL_Rect src;
@@ -105,6 +109,7 @@ namespace RTE {
 	}
 
 	void SDLGUITexture::Blit(GUIBitmap *pDestBitmap, int x, int y, GUIRect *pRect, bool trans) {
+		RTEAssert(m_Texture.get(), "Tried drawing the screen to another bitmap.");
 		SDLGUITexture *temp = dynamic_cast<SDLGUITexture *>(pDestBitmap);
 		RTEAssert(temp, "GUIBitmap passed to SDLGUITexture Draw");
 
@@ -167,6 +172,15 @@ namespace RTE {
 
 	void SDLGUITexture::DrawRectangle(int x, int y, int width, int height, unsigned long color, bool filled) {
 		Lock();
+
+		if(!m_Texture){
+			if(filled){
+				boxColor(g_FrameMan.GetRenderer(), x, y, x + width, y + height, color);
+			} else {
+				rectangleColor(g_FrameMan.GetRenderer(), x, y, x + width, y + height, color);
+			}
+			return;
+		}
 
 		SDL_Rect rect{x, y, width, height};
 		if (filled) {
