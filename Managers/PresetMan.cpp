@@ -890,7 +890,7 @@ void PresetMan::ReloadAllScripts()
 //                  resolve the conflicts by mapping their materials to ID's different than
 //                  those specified in the data files.
 
-bool PresetMan::AddMaterialMapping(int fromID, int toID, int whichModule)
+bool PresetMan::AddMaterialMapping(uint32_t fromID, uint32_t toID, int whichModule)
 {
     RTEAssert(whichModule >= m_OfficialModuleCount && whichModule < m_pDataModules.size(), "Tried to make a material mapping in an offical or out-of-bounds DataModule!");
 

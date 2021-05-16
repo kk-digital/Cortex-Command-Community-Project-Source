@@ -413,7 +413,7 @@ public:
 // Return value:    Whether this created a new mapping which didn't override a previous
 //                  material mapping.
 
-    bool AddMaterialMapping(int fromID, int toID, int whichModule);
+    bool AddMaterialMapping(uint32_t fromID, uint32_t toID, int whichModule);
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
