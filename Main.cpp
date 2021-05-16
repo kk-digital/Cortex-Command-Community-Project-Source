@@ -597,7 +597,7 @@ bool PlayIntroTitle() {
 				const int &starDrawPosX = stars[star].m_PosX;
 				int starDrawPosY = stars[star].m_PosY - static_cast<int>(scrollOffset.m_Y * stars[star].m_ScrollRatio);
 				stars[star].m_Bitmap->setBlendMode(screen);
-				stars[star].m_Bitmap->setAlphaMod(intensity);
+				stars[star].m_Bitmap->setColorMod(intensity, intensity, intensity);
 				stars[star].m_Bitmap->render(g_FrameMan.GetRenderer(), starDrawPosX, starDrawPosY);
             }
 
@@ -759,8 +759,9 @@ bool PlayIntroTitle() {
                 duration = 0.25;
                 sectionSwitch = false;
             }
-
+			// FIXME: Should just draw the Logos with alphamod!!
             fadePos = 255 - (255 * sectionProgress);
+			SDL_SetRenderDrawBlendMode(g_FrameMan.GetRenderer(), SDL_BLENDMODE_BLEND);
 			SDL_SetRenderDrawColor(g_FrameMan.GetRenderer(), 0, 0, 0, fadePos);
 			SDL_Rect fill{0,0,g_FrameMan.GetResX(), g_FrameMan.GetResY()};
 			SDL_RenderFillRect(g_FrameMan.GetRenderer(), &fill);
