@@ -58,6 +58,8 @@ namespace RTE {
 		/// <returns>The index of this Material in the material palette. 0 - 255.</returns>
 		unsigned char GetIndex() const { return m_Index; }
 
+		uint32_t GetMID() const;
+
 		/// <summary>
 		/// Sets the index of this Material in the material palette to the next specified value.
 		/// </summary>

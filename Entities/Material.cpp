@@ -1,6 +1,8 @@
 #include "Material.h"
 #include "Constants.h"
 
+#include "FrameMan.h"
+
 namespace RTE {
 
 	ConcreteClassInfo(Material, Entity, 0)
@@ -58,7 +60,7 @@ namespace RTE {
 	int Material::ReadProperty(const std::string_view &propName, Reader &reader) {
 		if (propName == "Index") {
 			// TODO: Check for index collisions here
-			reader >> m_Index;	
+			reader >> m_Index;
 		} else if (propName == "Priority") {
 			reader >> m_Priority;
 		} else if (propName == "Integrity" || propName == "StructuralIntegrity") {
@@ -136,5 +138,10 @@ namespace RTE {
 			writer << m_TextureFile;
 		}
 		return 0;
+	}
+
+	// FIXME: Replace MatIDS by colors
+	uint32_t Material::GetMID() const{
+		return g_FrameMan.GetMIDFromIndex(m_Index);
 	}
 }
