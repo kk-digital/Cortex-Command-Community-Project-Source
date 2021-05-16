@@ -38,7 +38,9 @@ namespace RTE {
 		m_Renderer = nullptr;
 
 		m_NumScreens = SDL_GetNumVideoDisplays();
-		SDL_GetDisplayBounds(0, m_ScreenRes.get());
+		m_ScreenRes = std::make_unique<SDL_Rect>(SDL_Rect{0,0,0,0});
+		SDL_GetDisplayUsableBounds(0, m_ScreenRes.get());
+
 
 		m_ResX = 960;
 		m_ResY = 540;
@@ -95,6 +97,7 @@ namespace RTE {
 		SDL_RenderSetScale(m_Renderer, m_ResMultiplier, m_ResMultiplier);
 
 		SDL_SetRenderDrawColor(m_Renderer, 0, 0, 0, 255);
+		SDL_SetRenderDrawBlendMode(m_Renderer, SDL_BLENDMODE_BLEND);
 		SDL_RenderClear(m_Renderer);
 
 		m_Palette = m_PaletteFile.GetAsTexture();
@@ -510,6 +513,9 @@ namespace RTE {
 	}
 
 	uint32_t FrameMan::GetColorFromIndex(uint32_t color) const {
+		// Special case for key color
+		if(color == 0)
+			return 0;
 		return m_Palette->getPixel(color);
 	}
 
