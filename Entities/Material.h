@@ -56,15 +56,15 @@ namespace RTE {
 		/// Gets the index of this Material in the material palette.
 		/// </summary>
 		/// <returns>The index of this Material in the material palette. 0 - 255.</returns>
-		unsigned char GetIndex() const { return m_Index; }
-
-		uint32_t GetMID() const;
+		uint32_t GetIndex() const { return m_Index; }
 
 		/// <summary>
 		/// Sets the index of this Material in the material palette to the next specified value.
 		/// </summary>
 		/// <param name="newIndex">The new index of this Material in the material palette. 0 - 255.</param>
-		void SetIndex(unsigned char newIndex) { m_Index = newIndex; }
+		void SetIndex(uint32_t newIndex) { m_Index = newIndex; }
+
+		void SetIndex(uint32_t a, uint32_t b, uint32_t c) {m_Index = ((a<<24)&0xff)|((b<<16)&0xff)|((c<<8)&0xff)|0xFF;}
 
 		/// <summary>
 		/// Gets the drawing priority of this Material. The higher the number, the higher chances that a pixel of this material will be drawn on top of others.
@@ -152,7 +152,7 @@ namespace RTE {
 
 		static Entity::ClassInfo m_sClass; //!< ClassInfo for this class.
 
-		unsigned char m_Index; //!< Index of this in the material palette. 0 - 255.
+		unsigned long m_Index; //!< Index of this in the material palette. 0 - 255.
 		int m_Priority; //!< The priority that a pixel of this material has to be displayed. The higher the number, the higher chances that a pixel of this material will be drawn on top of others.
 
 		float m_Integrity; //!< The impulse force that a particle needs to knock loose a terrain pixel of this material. In kg * m/s.

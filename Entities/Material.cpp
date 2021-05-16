@@ -61,6 +61,7 @@ namespace RTE {
 		if (propName == "Index") {
 			// TODO: Check for index collisions here
 			reader >> m_Index;
+			m_Index = g_FrameMan.GetMIDFromIndex(m_Index); // TODO: Convert all indices to colors (lets hope the terrains all use the same palette heh)
 		} else if (propName == "Priority") {
 			reader >> m_Priority;
 		} else if (propName == "Integrity" || propName == "StructuralIntegrity") {
@@ -138,10 +139,5 @@ namespace RTE {
 			writer << m_TextureFile;
 		}
 		return 0;
-	}
-
-	// FIXME: Replace MatIDS by colors
-	uint32_t Material::GetMID() const{
-		return g_FrameMan.GetMIDFromIndex(m_Index);
 	}
 }
