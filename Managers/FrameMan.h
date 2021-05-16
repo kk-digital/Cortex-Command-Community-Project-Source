@@ -533,8 +533,16 @@ namespace RTE {
 
 		uint32_t GetColorFromIndex(uint32_t color) const;
 
+		uint32_t GetMIDFromIndex(unsigned char index) const;
+
 		// Private members
 	private:
+
+		// FIXME: Add html/hex color handling to Reader and get rid of these
+		ContentFile m_MatPaletteFile;
+		SharedTexture m_MatPalette;
+		// FIXME: Seriously, these must not stay
+
 		//!< The game window
 		SDL_Window *m_Window;
 		//!< The renderer instance needed for drawing

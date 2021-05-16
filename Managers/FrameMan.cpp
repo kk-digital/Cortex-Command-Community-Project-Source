@@ -41,6 +41,7 @@ namespace RTE {
 		m_ScreenRes = std::make_unique<SDL_Rect>(SDL_Rect{0,0,0,0});
 		SDL_GetDisplayUsableBounds(0, m_ScreenRes.get());
 
+		m_PaletteFile.Create("Base.rte/palettemat.bmp");
 
 		m_ResX = 960;
 		m_ResY = 540;
@@ -101,6 +102,8 @@ namespace RTE {
 		SDL_RenderClear(m_Renderer);
 
 		m_Palette = m_PaletteFile.GetAsTexture();
+
+		m_MatPalette = m_MatPaletteFile.GetAsTexture();
 
 		return 0;
 	}
@@ -517,6 +520,11 @@ namespace RTE {
 		if(color == 0)
 			return 0;
 		return m_Palette->getPixel(color);
+	}
+
+	// FIXME: VERY TEMPORARY
+	uint32_t FrameMan::GetMIDFromIndex(unsigned char index) const {
+		return m_MatPalette->getPixel(index);
 	}
 
 } // namespace RTE
