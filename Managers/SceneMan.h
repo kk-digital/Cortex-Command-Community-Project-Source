@@ -328,7 +328,7 @@ public:
 // Return value:    A pointer to the first Material in the palette. Index into it up to
 //                  255 to access the other Material:s in it.
 
-    Material ** GetMaterialPalette() { return m_apMatPalette; }
+	const std::unordered_map<uint32_t, Material *>& GetMaterialPalette() { return m_apMatPalette; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -1712,9 +1712,9 @@ public:
     int m_LayerDrawMode;
 
     // Material palette stuff
-    std::map<std::string, unsigned char> m_MatNameMap;
+    std::map<std::string, uint32_t> m_MatNameMap;
     // This gets filled with holes, not contigous from 0 onward, but whatever the ini specifies. The Material objects are owned here
-    Material *m_apMatPalette[c_PaletteEntriesNumber];
+	std::unordered_map<uint32_t, Material *> m_apMatPalette;
     // The total number of added materials so far
     int m_MaterialCount;
 

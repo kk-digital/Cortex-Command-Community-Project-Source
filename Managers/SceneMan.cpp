@@ -90,8 +90,7 @@ void SceneMan::Clear()
 	m_LayerDrawMode = g_LayerNormal;
 
 	m_MatNameMap.clear();
-	for (int i = 0; i < c_PaletteEntriesNumber; ++i)
-		m_apMatPalette[i] = 0;
+	m_apMatPalette.clear();
 	m_MaterialCount = 0;
 
 	m_MaterialCopiesVector.clear();
@@ -334,38 +333,21 @@ int SceneMan::ReadProperty(const std::string_view &propName, Reader &reader)
 		Material *pNewMat = new Material;
 		((Serializable *)(pNewMat))->Create(reader);
 
-		// If the initially requested material slot is available, then put it there
-		// But if it's not available, then check if any subsequent one is, looping around the palette if necessary
-		for (int tryId = pNewMat->GetIndex(); tryId < c_PaletteEntriesNumber; ++tryId)
-		{
-			// We found an empty slot in the Material palette!
-			if (m_apMatPalette[tryId] == 0)
-			{
-				// If the final ID isn't the same as the one originally requested by the data file, then make the mapping so
-				// subsequent ID references to this within the same data module can be translated to the actual ID of this material
-				if (tryId != pNewMat->GetIndex())
-					g_PresetMan.AddMaterialMapping(pNewMat->GetIndex(), tryId, reader.GetReadModuleID());
-
-				// Assign the final ID to the material and register it in the palette
-				pNewMat->SetIndex(tryId);
-				m_apMatPalette[tryId] = pNewMat;
-				m_MatNameMap.insert(pair<string, unsigned char>(string(pNewMat->GetPresetName()), pNewMat->GetIndex()));
-				// Now add the instance, when ID has been registered!
-				g_PresetMan.AddEntityPreset(pNewMat, reader.GetReadModuleID(), reader.GetPresetOverwriting(), objectFilePath);
-				++m_MaterialCount;
-				break;
-			}
-			// We reached the end of the Material palette without finding any empty slots.. loop around to the start
-			else if (tryId >= c_PaletteEntriesNumber - 1)
-				tryId = 0;
-			// If we've looped around without finding anything, break and throw error
-			else if (tryId == pNewMat->GetIndex() - 1)
-			{
-// TODO: find the closest matching mateiral and map to it?
-				RTEAbort("Tried to load material \"" + pNewMat->GetPresetName() + "\" but the material palette (256 max) is full! Try consolidating or removing some redundant materials, or removing some entire data modules.");
-				break;
-			}
+		uint32_t index = pNewMat->GetIndex();
+		while(m_apMatPalette.find(pNewMat->GetIndex()) != m_apMatPalette.end()){
+			pNewMat->SetIndex(RandomNum(0, 255), RandomNum(0,255), RandomNum(0,255));
 		}
+
+		if(pNewMat->GetIndex()!=index){
+			g_PresetMan.AddMaterialMapping(index, pNewMat->GetIndex(), reader.GetReadModuleID());
+		}
+
+		m_apMatPalette[pNewMat->GetIndex()] = pNewMat;
+
+		m_MatNameMap[pNewMat->GetPresetName()] = pNewMat->GetIndex();
+
+		g_PresetMan.AddEntityPreset(pNewMat, reader.GetReadModuleID(), reader.GetPresetOverwriting(), objectFilePath);
+		++m_MaterialCount;
 	}
 	else
 		return Serializable::ReadProperty(propName, reader);
@@ -385,8 +367,8 @@ int SceneMan::Save(Writer &writer) const {
 
 	Serializable::Save(writer);
 
-	for (int i = 0; i < m_MaterialCount; ++i) {
-		writer.NewPropertyWithValue("AddMaterial", *(m_apMatPalette[i]));
+	for (auto mat: m_apMatPalette) {
+		writer.NewPropertyWithValue("AddMaterial", *(mat.second));
 	}
 
 	return 0;
@@ -622,7 +604,7 @@ MOID SceneMan::GetMOIDPixel(int pixelX, int pixelY)
 
 Material const * SceneMan::GetMaterial(const std::string &matName)
 {
-	map<std::string, unsigned char>::iterator itr = m_MatNameMap.find(matName);
+	map<std::string, uint32_t>::iterator itr = m_MatNameMap.find(matName);
 	if (itr == m_MatNameMap.end())
 	{
 		g_ConsoleMan.PrintString("ERROR: Material of name: " + matName + " not found!");
