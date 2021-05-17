@@ -152,9 +152,9 @@ void GUIButton::BuildBitmap(void)
     m_Skin->GetValue("Button_Up", "FontColor", &m_FontColor);
     m_Skin->GetValue("Button_Up", "FontShadow", &m_FontShadow);
     m_Skin->GetValue("Button_Up", "FontKerning", &m_FontKerning);
-    
+
     m_FontColor = m_Skin->ConvertColor(m_FontColor, m_DrawBitmap->GetColorDepth());
-    
+
     m_Font = m_Skin->GetFont(Filename);
     if (m_Font)
         m_Font->CacheColor(m_FontColor);
@@ -191,7 +191,7 @@ void GUIButton::Draw(GUIScreen *Screen)
     else if (m_Over || m_GotFocus)
         y = m_Height;
 
-    SetRect(&Rect, 0, y, m_Width, y+m_Height);
+    SetRect(&Rect, 0, y, m_Width, m_Height);
 
     m_DrawBitmap->DrawTrans(Screen->GetBitmap(), m_X, m_Y, &Rect);
 
