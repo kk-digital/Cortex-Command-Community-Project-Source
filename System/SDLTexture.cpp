@@ -150,6 +150,9 @@ namespace RTE {
 		SDL_BlendMode activeBlendMode;
 		SDL_GetTextureBlendMode(m_Texture.get(), &activeBlendMode);
 
+		if(!fillTarget)
+			fillTarget = std::make_unique<Texture>(renderer, w, h);
+
 		// If neccessary extend the dimensions of the target to at least match
 		// the size of this texture
 		if (fillTarget->w < source.w && fillTarget->h < source.h)
@@ -229,6 +232,9 @@ namespace RTE {
 
 		SDL_BlendMode activeBlendMode;
 		SDL_GetTextureBlendMode(m_Texture.get(), &activeBlendMode);
+
+		if(!fillTarget)
+			fillTarget = std::make_unique<Texture>(renderer, w, h);
 
 		// If neccessary extend the dimensions of the target to at least match
 		// the size of this texture
@@ -317,6 +323,8 @@ namespace RTE {
 			uint8_t r, g, b, a;
 			SDL_GetRGBA(m_PixelsRO[y * w + x], pf, &r, &g, &b, &a);
 			SDL_FreeFormat(pf);
+			if(a == 0 ||(r==255 && g==0 && b == 255))
+				return 0;
 			return (static_cast<uint32_t>(r) << 24) |
 			       (static_cast<uint32_t>(g) << 16) |
 			       (static_cast<uint32_t>(b) << 8) | (a);
@@ -335,6 +343,9 @@ namespace RTE {
 			uint8_t r,g,b,a;
 			SDL_GetRGBA(m_PixelsRO[index], pf, &r, &g, &b, &a);
 			SDL_FreeFormat(pf);
+			if(a == 0)
+				return 0;
+
 			return (static_cast<uint32_t>(r) << 24) |
 			       (static_cast<uint32_t>(g) << 16) |
 			       (static_cast<uint32_t>(b) << 8) | (a);
@@ -363,7 +374,7 @@ namespace RTE {
 		uint32_t fillColor{color};
 		if (fillColor) {
 			SDL_PixelFormat* pf{SDL_AllocFormat(m_Format)};
-			fillColor = SDL_MapRGBA(pf, (color << 24) & 0xff, (color << 16) & 0xff, (color << 8) & 0xff, (color)&0xff);
+			fillColor = SDL_MapRGBA(pf, (color >> 24) & 0xff, (color >> 16) & 0xff, (color >> 8) & 0xff, (color)&0xff);
 			SDL_FreeFormat(pf);
 		}
 
@@ -393,9 +404,14 @@ namespace RTE {
 			SDL_PixelFormat* pf{SDL_AllocFormat(m_Format)};
 			uint32_t formattedColor = SDL_MapRGBA(pf, (color >> 24)&0xFF, (color >> 16)&0xFF, (color >> 8)&0xFF, (color)&0xFF);
 			SDL_FreeFormat(pf);
-			SDL_FillRect(temp.get(), &rect, formattedColor);
-			SDL_Rect innerRect{rect.x + 1,rect.y + 1, rect.w - 2, rect.h - 2};
-			SDL_FillRect(temp.get(), &innerRect, formattedColor);
+			SDL_Rect topEdge{rect.x, rect.y, rect.w, 1};
+			SDL_Rect rightEdge{rect.x+rect.w - 1, rect.y, 1, rect.h};
+			SDL_Rect leftEdge{rect.x, rect.y, 1, rect.h};
+			SDL_Rect bottomEdge{rect.x, rect.y + rect.h - 1, rect.w, 1};
+			SDL_FillRect(temp.get(), &topEdge, formattedColor);
+			SDL_FillRect(temp.get(), &leftEdge, formattedColor);
+			SDL_FillRect(temp.get(), &bottomEdge, formattedColor);
+			SDL_FillRect(temp.get(), &rightEdge, formattedColor);
 		}
 	}
 
