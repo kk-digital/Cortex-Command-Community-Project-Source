@@ -7,6 +7,7 @@
 #include "Managers/FrameMan.h"
 
 #include "System/SDLTexture.h"
+#include "System/RTESurface.h"
 #include "System/SDLHelper.h"
 #include <SDL2/SDL2_gfxPrimitives.h>
 
@@ -1540,9 +1541,9 @@ namespace RTE {
 			}
 			if (!atom->GetNormal().IsZero()) {
 				normal = atom->GetNormal().GetXFlipped(m_OwnerMOSR->m_HFlipped) * 5;
-				lineColor(renderer, atomPos.GetFloorIntX() - targetPos.GetFloorIntX(), atomPos.GetFloorIntY() - targetPos.GetFloorIntY(), atomPos.GetFloorIntX() - targetPos.GetFloorIntX(), atomPos.GetFloorIntY() - targetPos.GetFloorIntY(), 244);
+				lineColor(renderer, atomPos.GetFloorIntX() - targetPos.GetFloorIntX(), atomPos.GetFloorIntY() - targetPos.GetFloorIntY(), atomPos.GetFloorIntX() - targetPos.GetFloorIntX(), atomPos.GetFloorIntY() - targetPos.GetFloorIntY(), 244); // TODO: magic numbers
 			}
-			pixelColor(renderer, atomPos.GetFloorIntX() - targetPos.GetFloorIntX(), atomPos.GetFloorIntY() - targetPos.GetFloorIntY(), color);
+			pixelRGBA(renderer, atomPos.GetFloorIntX() - targetPos.GetFloorIntX(), atomPos.GetFloorIntY() - targetPos.GetFloorIntY(), color>>24, color>>16, color>>8, color);
 		}
 	}
 
@@ -1561,10 +1562,7 @@ namespace RTE {
 			int y;
 			bool inside;
 
-			Texture checkBitmap(g_FrameMan.GetRenderer(), spriteWidth, spriteHeight, SDL_TEXTUREACCESS_STREAMING);
-
-			refSprite->lock();
-			checkBitmap.lock();
+			UniqueSurface checkBitmap= std::make_unique<Surface>(spriteWidth, spriteHeight);
 
 			// If Atoms are to be placed right at (below) the bitmap of the sprite.
 			if (m_Depth <= 0) {
@@ -1575,7 +1573,7 @@ namespace RTE {
 						// Detect if we are crossing a silhouette boundary.
 						if (refSprite->getPixel(x, y) != 0) {
 							// Mark that an Atom has been put in this location, to avoid duplicate Atoms
-							checkBitmap.setPixel(x, y, 0xF9F9E4FF);
+							checkBitmap->setPixel(x, y, 0xF9F9E4FF);
 							AddAtomToGroup(ownerMOSRotating, spriteOffset, x, y, true);
 							break;
 						}
@@ -1583,9 +1581,9 @@ namespace RTE {
 					// Scan RIGHT to LEFT, placing one Atom on each first encountered silhouette edge
 					for (x = spriteWidth - 1; x >= 0; --x) {
 						// Detect if we are crossing a silhouette boundary.
-						if (refSprite->getPixel(x, y) != g_AlphaZero && checkBitmap.getPixel(x, y) == g_AlphaZero) {
+						if (refSprite->getPixel(x, y) != g_AlphaZero && checkBitmap->getPixel(x, y) == g_AlphaZero) {
 							// Mark that an Atom has been put in this location, to avoid duplicate Atoms
-							checkBitmap.setPixel(x, y, 0xF9F9E4FF);
+							checkBitmap->setPixel(x, y, 0xF9F9E4FF);
 							AddAtomToGroup(ownerMOSRotating, spriteOffset, x, y, true);
 							break;
 						}
@@ -1597,8 +1595,8 @@ namespace RTE {
 					// Scan TOP to BOTTOM, placing one Atom on each first encountered silhouette edge
 					for (y = 0; y < spriteHeight; ++y) {
 						// Detect if we are crossing a silhouette boundary, but make sure Atom wasn't already placed during the horizontal scans.
-						if (refSprite->getPixel(x, y) != g_AlphaZero && checkBitmap.getPixel(x, y) == g_AlphaZero) {
-							checkBitmap.setPixel(x, y, 0xF9F9E4FF);
+						if (refSprite->getPixel(x, y) != g_AlphaZero && checkBitmap->getPixel(x, y) == g_AlphaZero) {
+							checkBitmap->setPixel(x, y, 0xF9F9E4FF);
 							AddAtomToGroup(ownerMOSRotating, spriteOffset, x, y, true);
 							break;
 						}
@@ -1606,7 +1604,7 @@ namespace RTE {
 					// Scan BOTTOM to TOP, placing one Atom on each first encountered silhouette edge
 					for (y = spriteHeight - 1; y >= 0; --y) {
 						// Detect if we are crossing a silhouette boundary, but make sure Atom wasn't already placed during the horizontal scans.
-						if (refSprite->getPixel(x, y) != g_AlphaZero && checkBitmap.getPixel(x, y) == g_AlphaZero) {
+						if (refSprite->getPixel(x, y) != g_AlphaZero && checkBitmap->getPixel(x, y) == g_AlphaZero) {
 							AddAtomToGroup(ownerMOSRotating, spriteOffset, x, y, true);
 							break;
 						}
@@ -1637,9 +1635,9 @@ namespace RTE {
 										clear = false;
 									}
 								}
-								if (clear && checkBitmap.getPixel(x, y) == g_AlphaZero) {
+								if (clear && checkBitmap->getPixel(x, y) == g_AlphaZero) {
 									// Mark that an Atom has been put in this location, to avoid duplicate Atoms.
-									checkBitmap.setPixel(x, y, 0xF9F9E4FF);
+									checkBitmap->setPixel(x, y, 0xF9F9E4FF);
 									AddAtomToGroup(ownerMOSRotating, spriteOffset, x, y, true);
 								}
 							}
@@ -1667,9 +1665,9 @@ namespace RTE {
 										clear = false;
 									}
 								}
-								if (clear && checkBitmap.getPixel(x, y) == g_AlphaZero) {
+								if (clear && checkBitmap->getPixel(x, y) == g_AlphaZero) {
 									// Mark that an Atom has been put in this location, to avoid duplicate Atoms
-									checkBitmap.setPixel(x, y, 0xF9F9E4FF);
+									checkBitmap->setPixel(x, y, 0xF9F9E4FF);
 									AddAtomToGroup(ownerMOSRotating, spriteOffset, x, y, true);
 								}
 							}
@@ -1698,9 +1696,9 @@ namespace RTE {
 									}
 								}
 								// Depth is cleared in all directions, so go ahead and place Atom.
-								if (clear && checkBitmap.getPixel(x, y) == g_AlphaZero) {
+								if (clear && checkBitmap->getPixel(x, y) == g_AlphaZero) {
 									// Mark that an Atom has been put in this location, to avoid duplicate Atoms.
-									checkBitmap.setPixel(x, y, 0xF9F9E4FF);
+									checkBitmap->setPixel(x, y, 0xF9F9E4FF);
 									AddAtomToGroup(ownerMOSRotating, spriteOffset, x, y, true);
 								}
 							}
@@ -1729,9 +1727,9 @@ namespace RTE {
 									}
 								}
 								// Depth is cleared in all directions, so go ahead and place Atom.
-								if (clear && checkBitmap.getPixel(x, y) == g_AlphaZero) {
+								if (clear && checkBitmap->getPixel(x, y) == g_AlphaZero) {
 									// Mark that an Atom has been put in this location, to avoid duplicate Atoms.
-									checkBitmap.setPixel(x, y, 0xF9F9E4FF);
+									checkBitmap->setPixel(x, y, 0xF9F9E4FF);
 									AddAtomToGroup(ownerMOSRotating, spriteOffset, x, y, true);
 								}
 							}
@@ -1739,8 +1737,6 @@ namespace RTE {
 					}
 				}
 			}
-			refSprite->unlock();
-			checkBitmap.unlock();
 		}
 
 		// If no Atoms were made, just place a default one in the middle
