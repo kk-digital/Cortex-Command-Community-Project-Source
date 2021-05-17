@@ -130,6 +130,8 @@ int BuyMenuGUI::Create(Controller *pController)
     if (!m_pGUIScreen)
         m_pGUIScreen = new AllegroScreen(g_FrameMan.GetNetworkBackBufferGUI8Current(pController->GetPlayer()));
 #endif
+	if(!m_pGUIScreen)
+		m_pGUIScreen = new SDLScreen();
     if (!m_pGUIInput)
         m_pGUIInput = new SDLInput(pController->GetPlayer());
     if (!m_pGUIController)
