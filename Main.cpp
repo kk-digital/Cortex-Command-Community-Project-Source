@@ -1548,7 +1548,7 @@ bool RunGameLoop() {
 	if (g_ResetActivity) { ResetActivity(); }
 
 	while (!g_Quit) {
-		// Need to clear this out; sometimes background layers don't cover the whole back
+		// Must clear frame before drawing, for performance reasons
 		g_FrameMan.RenderClear();
 
 		// Update the real time measurement and increment
@@ -1635,7 +1635,7 @@ bool RunGameLoop() {
 		}
 #endif
 		g_FrameMan.Draw();
-		g_FrameMan.RenderClear();
+		g_FrameMan.RenderPresent();
 	}
 	return true;
 }
