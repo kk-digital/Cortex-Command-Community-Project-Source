@@ -8,7 +8,13 @@
 #include <SDL2/SDL2_gfxPrimitives.h>
 
 namespace RTE {
-	SDLGUITexture::SDLGUITexture() {}
+	SDLGUITexture::SDLGUITexture() {
+		m_Width = g_FrameMan.GetPlayerScreenWidth();
+		m_Height = g_FrameMan.GetPlayerScreenHeight();
+		m_Texture = nullptr;
+		m_ClipRect = nullptr;
+		m_ColorKey = 0;
+	}
 	SDLGUITexture::SDLGUITexture(const SharedTexture &pTexture) {
 		m_Texture = pTexture;
 		m_Width = m_Texture->getW();
@@ -21,7 +27,11 @@ namespace RTE {
 		m_Texture = reference.m_Texture;
 		m_Width = reference.m_Width;
 		m_Height = reference.m_Height;
-		m_ClipRect = std::make_unique<SDL_Rect>(*reference.m_ClipRect);
+		if (reference.m_ClipRect) {
+			m_ClipRect = std::make_unique<SDL_Rect>(*reference.m_ClipRect);
+		} else{
+			m_ClipRect = nullptr;
+		}
 	}
 
 	SDLGUITexture::SDLGUITexture(int width, int height, bool renderer) { Create(width, height, renderer); }
