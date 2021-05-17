@@ -60,7 +60,7 @@ namespace RTE {
 		/// </summary>
 		void Destroy() override;
 
-		void Render(int x, int y, GUIRect *pRect, bool trans = true, GUIRect* clip = nullptr);
+		void Render(int x, int y, GUIRect *pRect, bool trans = true, SDL_Rect* clip = nullptr);
 		void RenderScaled(int x, int y, int width, int height, bool trans = true);
 
 		void Blit(GUIBitmap* pDestBitmap, int x, int y, GUIRect* pRect, bool trans = true);
