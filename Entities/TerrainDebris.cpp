@@ -110,7 +110,6 @@ namespace RTE {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void TerrainDebris::ApplyDebris(SLTerrain *terrain) {
-		// TODO: move all this to SLTerrain
 		RTEAssert(!m_Textures.empty() && m_BitmapCount > 0, "No bitmaps loaded for terrain debris!");
 
 		SharedTexture terrTexture = terrain->GetFGColorTexture();
@@ -172,9 +171,6 @@ namespace RTE {
 			}
 		}
 
-		terrTexture->lock();
-		matTexture->lock();
-
 		std::unique_ptr<SDL_Surface, sdl_deleter> terrMatSurface{matTexture->getPixelsAsSurface()};
 		std::unique_ptr<SDL_Surface, sdl_deleter> terrFGSurface{terrTexture->getPixelsAsSurface()};
 
@@ -197,7 +193,5 @@ namespace RTE {
 			SDL_BlitSurface(pieceMatter, nullptr, terrMatSurface.get(), &pos);
 			SDL_FreeSurface(pieceMatter);
 		}
-		terrTexture->unlock();
-		matTexture->unlock();
 	}
 }
