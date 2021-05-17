@@ -306,22 +306,22 @@ int SLTerrain::LoadData()
 	///////////////////////////////////////////////
     // Load and texturize the FG color bitmap, based on the materials defined in the recently loaded (main) material layer!
 
-    int xPos, yPos, matIndex;
-	uint32_t pixelColor;
+    int xPos, yPos;
+	uint32_t pixelColor, matIndex;
 
-    // Temporary references for all the materials' textures and colors, since we'll access them a lot
-	std::array<std::shared_ptr<Texture>,256> apTexTextures;
-	std::array<int,256> aColors;
+	// Temporary references for all the materials' textures and colors, since we'll access them a lot
+	std::unordered_map<uint32_t, std::shared_ptr<Texture>> apTexTextures;
+	std::unordered_map<uint32_t, uint32_t> aColors;
     // Null em out so we can tell which ones we've already got once so far
-	apTexTextures.fill(0);
-	aColors.fill(0);
+	apTexTextures.clear();
+	aColors.clear();
 
     // Get the background texture
 	std::shared_ptr<Texture> m_pBGTexture = m_BGTextureFile.GetAsTexture();
     // Get the material palette for quicker access
-    Material **apMaterials = g_SceneMan.GetMaterialPalette();
+	const std::unordered_map<uint32_t, Material *> apMaterials = g_SceneMan.GetMaterialPalette();
     // Get the Material palette ID mappings local to the DataModule this SLTerrain is loaded from
-    const std::array<uint32_t, c_PaletteEntriesNumber> materialMappings = g_PresetMan.GetDataModule(m_TextureFile.GetDataModuleID())->GetAllMaterialMappings();
+    const std::unordered_map<uint32_t, uint32_t> materialMappings = g_PresetMan.GetDataModule(m_TextureFile.GetDataModuleID())->GetAllMaterialMappings();
     Material *pMaterial = nullptr;
 
     // Lock all involved bitmaps
@@ -339,32 +339,31 @@ int SLTerrain::LoadData()
             // Read which material the current pixel represents
             matIndex = m_pMainTexture->getPixel(xPos, yPos);
             // Map any materials defined in this data module but initially collided with other material ID's and thus were displaced to other ID's
-            if (materialMappings[matIndex] != 0)
+            if (materialMappings.find(matIndex) != materialMappings.end())
             {
                 // Assign the mapping and put it onto the material bitmap too
-                matIndex = materialMappings[matIndex];
+                matIndex = materialMappings.at(matIndex);
                 m_pMainTexture->setPixel(xPos, yPos, matIndex);
             }
 
             // Validate the material, or default to default material
-            if (matIndex >= 0 && matIndex < c_PaletteEntriesNumber && apMaterials[matIndex])
-                pMaterial = apMaterials[matIndex];
+            if (apMaterials.find(matIndex) != apMaterials.end())
+                pMaterial = apMaterials.at(matIndex);
             else
-                pMaterial = apMaterials[g_MaterialDefault];
+                pMaterial = apMaterials.at(g_MaterialDefault);
 
             // If haven't read a pixel of this material before, then get its texture so we can quickly access it
-            if (!apTexTextures[matIndex])
+            if (apTexTextures.find(matIndex) == apTexTextures.end())
             {
                 // Get, and acquire the texture bitmap if material has any
-                if (apTexTextures[matIndex] = pMaterial->GetTexture())
-                    apTexTextures[matIndex]->lock();
+				apTexTextures[matIndex] = pMaterial->GetTexture();
             }
 
             // If actually no texture for the material, then use the material's solid color instead
             if (!apTexTextures[matIndex])
             {
                 // If the color hasn't been retrieved yet, then do so
-                if (!aColors[matIndex])
+                if (aColors.find(matIndex) == aColors.end())
                     aColors[matIndex] = pMaterial->GetColor().GetRGBA();
                 // Use the color
                 pixelColor = aColors[matIndex];
@@ -380,14 +379,13 @@ int SLTerrain::LoadData()
             m_pFGColor->SetPixel(xPos, yPos, pixelColor);
 
             // Draw background texture on the background where this is stuff on the foreground
-            if (m_pBGTexture && pixelColor != g_MaskColor)
-            {
-                pixelColor = m_pBGTexture->getPixel(xPos % m_pBGTexture->getW(), yPos % m_pBGTexture->getH());
+			if (m_pBGTexture && (pixelColor & 0xFF) != 0) {
+				pixelColor = m_pBGTexture->getPixel(xPos % m_pBGTexture->getW(), yPos % m_pBGTexture->getH());
                 m_pBGColor->SetPixel(xPos, yPos, pixelColor);
-            }
-            // Put a keycolor pixel in the bg otherwise
-            else
-                m_pBGColor->SetPixel(xPos, yPos, g_AlphaZero);
+			}
+			// Put a keycolor pixel in the bg otherwise
+			else
+				m_pBGColor->SetPixel(xPos, yPos, g_AlphaZero);
         }
     }
 
@@ -395,16 +393,16 @@ int SLTerrain::LoadData()
     // Material frostings application!
 
     bool targetFound = false, applyingFrosting = false;
-    int targetId, frostingId, thickness, thicknessGoal;
+    uint32_t targetId, frostingId, thickness, thicknessGoal;
 	std::shared_ptr<Texture> pFrostingTex;
     for (list<TerrainFrosting>::iterator tfItr = m_TerrainFrostings.begin(); tfItr != m_TerrainFrostings.end(); ++tfItr)
     {
         targetId = (*tfItr).GetTargetMaterial().GetIndex();
         frostingId = (*tfItr).GetFrostingMaterial().GetIndex();
+		if(materialMappings.find(frostingId) != materialMappings.end())
+			frostingId = materialMappings.at(frostingId);
         // Try to get the color texture of the frosting material. If fail, we'll use the color isntead
         pFrostingTex = (*tfItr).GetFrostingMaterial().GetTexture();
-        if (pFrostingTex)
-            pFrostingTex->lock();
 
         // Loop through all columns
         for (xPos = 0; xPos < m_pMainTexture->getW(); ++xPos)
@@ -443,7 +441,7 @@ int SLTerrain::LoadData()
                     // Put the frosting pixel color on the FG color layer
                     m_pFGColor->SetPixel(xPos, yPos, pixelColor);
                     // Put the material ID pixel on the material layer
-                    m_pMainTexture->setPixel(xPos, yPos, materialMappings[frostingId]);
+                    m_pMainTexture->setPixel(xPos, yPos, frostingId);
 
                     // Keep track of the applied thickness
                     thickness++;
@@ -452,22 +450,8 @@ int SLTerrain::LoadData()
                     applyingFrosting = false;
             }
         }
-
-        if (pFrostingTex)
-            pFrostingTex->unlock();
     }
 
-    // Release all involved bitmaps
-    m_pMainTexture->unlock();
-	m_pFGColor->UnlockTexture();
-	m_pBGColor->UnlockTexture();
-    m_pBGTexture->unlock();
-
-    for (matIndex = 0; matIndex < 256; ++matIndex)
-    {
-        if (apTexTextures[matIndex])
-            apTexTextures[matIndex]->unlock();
-    }
 
     ///////////////////////////////////////////////
     // TerrainDebris application
@@ -486,7 +470,13 @@ int SLTerrain::LoadData()
     }
     CleanAir();
 
-    InitScrollRatios();
+	// Release all involved bitmaps
+	m_pMainTexture->unlock();
+	m_pFGColor->UnlockTexture();
+	m_pBGColor->UnlockTexture();
+	m_pBGTexture->unlock();
+
+	InitScrollRatios();
 
     return 0;
 }
@@ -988,10 +978,10 @@ deque<MOPixel *> SLTerrain::EraseSilhouette(std::shared_ptr<Texture> pSprite,
             matPixel = m_pMainTexture->getPixel(terrX, terrY);
             colorPixel = m_pFGColor->GetPixel(terrX, terrY);
 
-            if (testPixel != g_MaskColor)
+            if ((testPixel & 0xFF) != 0)
             {
                 // Only add PixelMO if we're not due to skip any
-                if (makeMOPs && matPixel != g_MaterialAir && colorPixel != g_MaskColor && ++skipCount > skipMOP && MOPDeque.size() < maxMOPs)
+                if (makeMOPs && matPixel != g_MaterialAir && (colorPixel & 0xff) != 0 && ++skipCount > skipMOP && MOPDeque.size() < maxMOPs)
                 {
                     skipCount = 0;
                     sceneMat = g_SceneMan.GetMaterialFromID(matPixel);
@@ -1012,7 +1002,7 @@ deque<MOPixel *> SLTerrain::EraseSilhouette(std::shared_ptr<Texture> pSprite,
                 // Clear the terrain pixels
                 if (matPixel != g_MaterialAir)
                     m_pMainTexture->setPixel(terrX, terrY, g_MaterialAir);
-				if (colorPixel != g_AlphaZero)
+				if ((colorPixel & 0xff) != 0)
 				{
 					m_pFGColor->SetPixel(terrX, terrY, g_AlphaZero);
 					g_SceneMan.RegisterTerrainChange(terrX, terrY, 1, 1, g_AlphaZero, false);
@@ -1267,113 +1257,67 @@ void SLTerrain::ApplyTerrainObject(TerrainObject *pTObject)
 
     Vector loc = pTObject->GetPos() + pTObject->GetTextureOffset();
 
-	SDL_Rect lockBox{static_cast<int>(loc.m_X), static_cast<int>(loc.m_Y),
-		             pTObject->GetTextureWidth(), pTObject->GetTextureHeight()};
+	std::unique_ptr<SDL_Surface, sdl_deleter> TOFGSurface = pTObject->GetFGColorTexture()->getPixelsAsSurface();
+	std::unique_ptr<SDL_Surface, sdl_deleter> TOMatSurface = pTObject->GetMaterialTexture()->getPixelsAsSurface();
+
+	std::unique_ptr<SDL_Surface, sdl_deleter> TOBGSurface{nullptr};
+	if (pTObject->HasBGColor())
+		TOBGSurface = pTObject->GetBGColorTexture()->getPixelsAsSurface();
+
+	std::unique_ptr<SDL_Surface, sdl_deleter> MatSurface = m_pMainTexture->getPixelsAsSurface();
+	std::unique_ptr<SDL_Surface, sdl_deleter> FGSurface = m_pFGColor->GetTexture()->getPixelsAsSurface();
+
+	std::unique_ptr<SDL_Surface, sdl_deleter> BGSurface{nullptr};
+	if(pTObject->HasBGColor())
+		BGSurface = m_pBGColor->GetTexture()->getPixelsAsSurface();
+
+	SDL_Rect wrapBox{static_cast<int>(loc.m_X), static_cast<int>(loc.m_Y), pTObject->GetTextureWidth(), pTObject->GetTextureHeight()};
 
 	// Do duplicate drawing if the terrain object straddles a wrapping border
     if (loc.m_X < 0)
     {
 		SDL_Point offset{m_pMainTexture->getW(),0};
-		m_pMainTexture->lock(lockBox+offset);
-		SDL_ConvertPixels(
-			lockBox.w, lockBox.h, pTObject->GetMaterialTexture()->getFormat(),
-			pTObject->GetMaterialTexture()->getPixels(),
-			lockBox.w * sizeof(uint32_t), m_pMainTexture->getFormat(),
-			m_pMainTexture->getPixels(),
-			m_pMainTexture->getW()* sizeof(uint32_t));
-		m_pMainTexture->unlock();
+		SDL_Rect drawBox = wrapBox + offset;
+
+		SDL_BlitSurface(TOMatSurface.get(), nullptr, MatSurface.get(), &drawBox);
 
 		offset.x = m_pFGColor->GetTexture()->getW();
-		m_pFGColor->GetTexture()->lock(lockBox+offset);
-		SDL_ConvertPixels(
-			lockBox.w, lockBox.h, pTObject->GetFGColorTexture()->getFormat(),
-			pTObject->GetFGColorTexture()->getPixels(),
-			lockBox.w * sizeof(uint32_t), m_pFGColor->GetTexture()->getFormat(),
-			m_pFGColor->GetTexture()->getPixels(),
-			m_pFGColor->GetTexture()->getW() * sizeof(uint32_t));
-		m_pFGColor->GetTexture()->unlock();
+		drawBox = wrapBox + offset;
+
+		SDL_BlitSurface(TOFGSurface.get(), nullptr, FGSurface.get(), &drawBox);
 
 		if (pTObject->HasBGColor()){
 			offset.x = m_pBGColor->GetTexture()->getW();
-			m_pBGColor->GetTexture()->lock(lockBox+offset);
-
-			SDL_ConvertPixels(lockBox.w, lockBox.h,
-				              pTObject->GetFGColorTexture()->getFormat(),
-				              pTObject->GetFGColorTexture()->getPixels(),
-				              lockBox.w * sizeof(uint32_t),
-				              m_pBGColor->GetTexture()->getFormat(),
-				              m_pBGColor->GetTexture()->getPixels(),
-				              m_pBGColor->GetTexture()->getW() *
-				                  sizeof(uint32_t));
-			m_pBGColor->GetTexture()->unlock();
+			drawBox = wrapBox + offset;
+			SDL_BlitSurface(TOBGSurface.get(), nullptr, BGSurface.get(), &drawBox);
 		}
     }
     else if (loc.m_X >= m_pMainTexture->getW() - pTObject->GetFGColorTexture()->getW())
     {
 		SDL_Point offset{-m_pMainTexture->getW(),0};
-		m_pMainTexture->lock(lockBox + offset);
-		SDL_ConvertPixels(
-			lockBox.w, lockBox.h, pTObject->GetMaterialTexture()->getFormat(),
-			pTObject->GetMaterialTexture()->getPixels(),
-			lockBox.w * sizeof(uint32_t), m_pMainTexture->getFormat(),
-			m_pMainTexture->getPixels(),
-			m_pMainTexture->getW() * sizeof(uint32_t));
-		m_pMainTexture->unlock();
+		SDL_Rect drawBox = wrapBox + offset;
+		SDL_BlitSurface(TOMatSurface.get(), nullptr, MatSurface.get(), &drawBox);
 
 		offset.x = -m_pFGColor->GetTexture()->getW();
-		m_pFGColor->GetTexture()->lock(lockBox + offset);
-		SDL_ConvertPixels(
-			lockBox.w, lockBox.h, pTObject->GetMaterialTexture()->getFormat(),
-			pTObject->GetMaterialTexture()->getPixels(),
-			lockBox.w * sizeof(uint32_t), m_pFGColor->GetTexture()->getFormat(),
-			m_pFGColor->GetTexture()->getPixels(),
-			m_pFGColor->GetTexture()->getW() * sizeof(uint32_t));
-		m_pFGColor->GetTexture()->unlock();
+		drawBox = wrapBox + offset;
+
+		SDL_BlitSurface(TOFGSurface.get(), nullptr, FGSurface.get(), &drawBox);
+
         if (pTObject->HasBGColor()){
 			offset.x = -m_pBGColor->GetTexture()->getW();
-			m_pBGColor->GetTexture()->lock(lockBox + offset);
-			SDL_ConvertPixels(lockBox.w, lockBox.h,
-				              pTObject->GetMaterialTexture()->getFormat(),
-				              pTObject->GetMaterialTexture()->getPixels(),
-				              lockBox.w * sizeof(uint32_t),
-				              m_pBGColor->GetTexture()->getFormat(),
-				              m_pBGColor->GetTexture()->getPixels(),
-				              m_pBGColor->GetTexture()->getW() *
-				                  sizeof(uint32_t));
-			m_pBGColor->GetTexture()->unlock();
+			drawBox = wrapBox + offset;
+
+			SDL_BlitSurface(TOBGSurface.get(), nullptr, BGSurface.get(), &drawBox);
 		}
     }
 
     // Regular drawing
-	m_pMainTexture->lock(lockBox);
-	SDL_ConvertPixels(lockBox.w, lockBox.h,
-		              pTObject->GetMaterialTexture()->getFormat(),
-		              pTObject->GetMaterialTexture()->getPixels(),
-		              lockBox.w * sizeof(uint32_t), m_pMainTexture->getFormat(),
-		              m_pMainTexture->getPixels(),
-		              m_pMainTexture->getW() * sizeof(uint32_t));
-	m_pMainTexture->unlock();
-
-	m_pFGColor->GetTexture()->lock(lockBox);
-	SDL_ConvertPixels(
-		lockBox.w, lockBox.h, pTObject->GetMaterialTexture()->getFormat(),
-		pTObject->GetMaterialTexture()->getPixels(),
-		lockBox.w * sizeof(uint32_t), m_pFGColor->GetTexture()->getFormat(),
-		m_pFGColor->GetTexture()->getPixels(),
-		m_pFGColor->GetTexture()->getW() * sizeof(uint32_t));
-	m_pFGColor->GetTexture()->unlock();
+	SDL_BlitSurface(TOMatSurface.get(), nullptr, MatSurface.get(), &wrapBox);
+	SDL_BlitSurface(TOFGSurface.get(), nullptr, FGSurface.get(), &wrapBox);
 
 	if (pTObject->HasBGColor())
 	{
-
-		m_pBGColor->GetTexture()->lock(lockBox);
-		SDL_ConvertPixels(
-			lockBox.w, lockBox.h, pTObject->GetMaterialTexture()->getFormat(),
-			pTObject->GetMaterialTexture()->getPixels(),
-			lockBox.w * sizeof(uint32_t), m_pBGColor->GetTexture()->getFormat(),
-			m_pBGColor->GetTexture()->getPixels(),
-			m_pBGColor->GetTexture()->getW() * sizeof(uint32_t));
-		m_pBGColor->GetTexture()->unlock();
+		SDL_BlitSurface(TOBGSurface.get(), nullptr, BGSurface.get(), &wrapBox);
 
 		g_SceneMan.RegisterTerrainChange(loc.m_X, loc.m_Y, pTObject->GetTextureWidth(), pTObject->GetTextureHeight(), g_MaskColor, true);
 	}
@@ -1432,7 +1376,7 @@ void SLTerrain::CleanAirBox(Box box, bool wrapsX, bool wrapsY)
 
     int width = m_pMainTexture->getW();
     int height = m_pMainTexture->getH();
-    unsigned char matPixel;
+    uint32_t matPixel;
 
 	for (int y = box.m_Corner.m_Y; y < box.m_Corner.m_Y + box.m_Height; ++y) {
 		for (int x = box.m_Corner.m_X; x < box.m_Corner.m_X + box.m_Width; ++x) {
@@ -1461,12 +1405,12 @@ void SLTerrain::CleanAirBox(Box box, bool wrapsX, bool wrapsY)
 			if (wrapX >= 0 && wrapY >=0 && wrapX < width && wrapY < height)
 			{
 				matPixel = m_pMainTexture->getPixel(wrapX, wrapY);
-				if (matPixel == g_MaterialCavity) {
+				if (matPixel == g_FrameMan.GetMIDFromIndex(g_MaterialCavity)) {
 					m_pMainTexture->setPixel(wrapX, wrapY, g_MaterialAir);
 					matPixel = g_MaterialAir;
 				}
 				if (matPixel == g_MaterialAir)
-					m_pFGColor->GetTexture()->setPixel(wrapX, wrapY, g_MaskColor);
+					m_pFGColor->GetTexture()->setPixel(wrapX, wrapY, 0);
 			}
 
         }
@@ -1490,17 +1434,17 @@ void SLTerrain::CleanAir()
 
     int width = m_pMainTexture->getW();
     int height = m_pMainTexture->getH();
-    unsigned char matPixel;
+    uint32_t matPixel;
 
     for (int y = 0; y < height; ++y) {
         for (int x = 0; x < width; ++x) {
             matPixel = m_pMainTexture->getPixel(x, y);
-            if (matPixel == g_MaterialCavity) {
+            if (matPixel == g_FrameMan.GetMIDFromIndex(g_MaterialCavity)) {
                 m_pMainTexture->setPixel(x, y, g_MaterialAir);
                 matPixel = g_MaterialAir;
             }
             if (matPixel == g_MaterialAir)
-                m_pFGColor->GetTexture()->setPixel(x, y, g_MaskColor);
+                m_pFGColor->GetTexture()->setPixel(x, y, 0);
         }
     }
 
