@@ -63,7 +63,7 @@ namespace RTE {
 
 		g_FrameMan.RenderClear();
 		// Draw onto wrapped strip centered vertically on the screen
-		s_SplashBox = std::make_unique<Box>(Vector(0, static_cast<float>((g_FrameMan.GetResY() - s_LoadingSplash->GetTexture()->getW()) / 2)), static_cast<float>(g_FrameMan.GetResX()), static_cast<float>(s_LoadingSplash->GetTexture()->getH()));
+		s_SplashBox = std::make_unique<Box>(Vector(0, static_cast<float>((g_FrameMan.GetResY() - s_LoadingSplash->GetTexture()->getH()) / 2)), static_cast<float>(g_FrameMan.GetResX()), static_cast<float>(s_LoadingSplash->GetTexture()->getH()));
 		s_LoadingSplash->Draw(g_FrameMan.GetRenderer(), *s_SplashBox);
 
 		g_FrameMan.RenderPresent();
@@ -132,7 +132,7 @@ namespace RTE {
 
 // TODO: y u no work ;(
 		g_UInputMan.Update();
-		// g_FrameMan.RenderClear();
+		g_FrameMan.RenderClear();
 		s_LoadingSplash->Draw(g_FrameMan.GetRenderer(), *s_SplashBox);
 		g_FrameMan.RenderPresent();
 
