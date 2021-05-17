@@ -5,7 +5,7 @@
 #include "Timer.h"
 
 #include "GUI.h"
-#include "AllegroBitmap.h"
+#include "SDLGUITexture.h"
 
 namespace RTE {
 
@@ -117,7 +117,7 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void PerformanceMan::Draw(AllegroBitmap &bitmapToDrawTo) {
+	void PerformanceMan::Draw(SDLGUITexture &bitmapToDrawTo) {
 		if (m_ShowPerfStats) {
 			// Time and store the milliseconds per frame reading of the drawing frame to the buffer, and trim the buffer as needed
 			m_MSPFs.push_back(static_cast<int>(m_FrameTimer->GetElapsedRealTimeMS()));
@@ -180,7 +180,7 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void PerformanceMan::DrawPeformanceGraphs(AllegroBitmap &bitmapToDrawTo) {
+	void PerformanceMan::DrawPeformanceGraphs(SDLGUITexture &bitmapToDrawTo) {
 		CalculateSamplePercentages();
 
 		char str[128];
@@ -202,8 +202,8 @@ namespace RTE {
 			int graphStart = blockStart + c_GraphsOffsetX;
 
 			// Draw graph backgrounds
-			bitmapToDrawTo.DrawRectangle(c_StatsOffsetX, graphStart, c_MaxSamples, c_GraphHeight, 240, true);
-			bitmapToDrawTo.DrawLine(c_StatsOffsetX, graphStart + c_GraphHeight / 2, c_StatsOffsetX - 1 + c_MaxSamples, graphStart + c_GraphHeight / 2, 96);
+			bitmapToDrawTo.DrawRectangle(c_StatsOffsetX, graphStart, c_MaxSamples, c_GraphHeight, c_GUIColorGray, true);
+			bitmapToDrawTo.DrawLine(c_StatsOffsetX, graphStart + c_GraphHeight / 2, c_StatsOffsetX - 1 + c_MaxSamples, graphStart + c_GraphHeight / 2, c_GUIColorYellow);
 
 			// Draw sample dots
 			int peak = 0;
@@ -213,7 +213,7 @@ namespace RTE {
 				int value = std::clamp(static_cast<int>(static_cast<float>(m_PerfData.at(pc).at(sample)) / (1000000.0F / 30.0F) * 100.0F), 0, 100);
 				int dotHeight = static_cast<int>(static_cast<float>(c_GraphHeight) / 100.0F * static_cast<float>(value));
 
-				bitmapToDrawTo.SetPixel(c_StatsOffsetX - 1 + c_MaxSamples - i, graphStart + c_GraphHeight - dotHeight, 13);
+				bitmapToDrawTo.SetPixel(c_StatsOffsetX - 1 + c_MaxSamples - i, graphStart + c_GraphHeight - dotHeight, c_GUIColorRed);
 				peak = std::clamp(peak, 0, static_cast<int>(m_PerfData.at(pc).at(sample)));
 
 				if (sample == 0) { sample = c_MaxSamples; }

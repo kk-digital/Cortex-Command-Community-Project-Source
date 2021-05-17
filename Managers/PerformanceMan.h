@@ -7,7 +7,7 @@
 
 namespace RTE {
 
-	class AllegroBitmap;
+	class SDLGUITexture;
 	class Timer;
 
 	/// <summary>
@@ -63,7 +63,7 @@ namespace RTE {
 		/// </summary>
 		/// <param name="whichScreen">Which player screen to draw on.</param>
 		/// <param name="whichScreenGUIBitmap">The GUI bitmap to draw to.</param>
-		void Draw(AllegroBitmap &bitmapToDrawTo);
+		void Draw(SDLGUITexture &bitmapToDrawTo);
 
 		/// <summary>
 		/// Draws the current ping value to the screen.
@@ -188,7 +188,7 @@ namespace RTE {
 		/// <summary>
 		/// Draws the performance graphs to the screen. This will be called by Draw() if advanced performance stats are enabled.
 		/// </summary>
-		void DrawPeformanceGraphs(AllegroBitmap &bitmapToDrawTo);
+		void DrawPeformanceGraphs(SDLGUITexture &bitmapToDrawTo);
 
 		/// <summary>
 		/// Clears all the member variables of this PerformanceMan, effectively resetting the members of this abstraction level only.
