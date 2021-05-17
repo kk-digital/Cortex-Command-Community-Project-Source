@@ -41,7 +41,7 @@ namespace RTE {
 		m_ScreenRes = std::make_unique<SDL_Rect>(SDL_Rect{0,0,0,0});
 		SDL_GetDisplayUsableBounds(0, m_ScreenRes.get());
 
-		m_PaletteFile.Create("Base.rte/palettemat.bmp");
+		m_MatPaletteFile.Reset();
 
 		m_ResX = 960;
 		m_ResY = 540;
@@ -102,8 +102,11 @@ namespace RTE {
 		SDL_RenderClear(m_Renderer);
 
 		m_Palette = m_PaletteFile.GetAsTexture();
+		RTEAssert(m_Palette.get(), "Failed loading palette");
 
+		m_MatPaletteFile.Create("Base.rte/palettemat.bmp");
 		m_MatPalette = m_MatPaletteFile.GetAsTexture();
+		RTEAssert(m_MatPalette.get(), "Failed to load material palette");
 
 		return 0;
 	}
@@ -177,12 +180,13 @@ namespace RTE {
 	}
 
 	void FrameMan::RenderClear() {
-		RTEAssert(m_TargetStack.top() == nullptr, "Targets have not been reset!");
+		RTEAssert(m_TargetStack.size() == 1, "A render target has not been reset! " + std::to_string(m_TargetStack.size()) + " Elements remaining!");
 		SDL_RenderClear(m_Renderer);
 	}
 
 	void FrameMan::RenderPresent() {
-		RTEAssert(m_TargetStack.top() == nullptr, "A render target has not been reset!");
+		RTEAssert(m_TargetStack.size() == 1, "A render target has not been reset! " + std::to_string(m_TargetStack.size()) + " Elements remaining!");
+		SDL_SetRenderDrawColor(m_Renderer, 0, 0, 0, 0xFF);
 		SDL_RenderPresent(m_Renderer);
 	}
 
@@ -306,7 +310,8 @@ namespace RTE {
 
 			DrawScreenFlash(playerScreen, m_Renderer);
 
-			PopRenderTarget();
+			if(screenCount>1)
+				PopRenderTarget();
 			if (!IsInMultiplayerMode()) {
 				if (m_PlayerScreen)
 					m_PlayerScreen->render(m_Renderer, screenOffset.GetFloorIntX(), screenOffset.GetFloorIntY());
@@ -507,7 +512,49 @@ namespace RTE {
 		}
 		return m_LargeFont.get();
 	}
-	void FrameMan::DrawScreenText(int playerScreen, SDLGUITexture playerGUIBitmap) {}
+	void FrameMan::DrawScreenText(int playerScreen, SDLGUITexture playerGUIBitmap) {
+		int textPosY = 0;
+		// Only draw screen text to actual human players
+		if (playerScreen < g_ActivityMan.GetActivity()->GetHumanCount()) {
+			textPosY += 12;
+
+			if (!m_ScreenText[playerScreen].empty()) {
+				int bufferOrScreenWidth = IsInMultiplayerMode() ? GetPlayerFrameBufferWidth(playerScreen) : GetPlayerScreenWidth();
+				int bufferOrScreenHeight = IsInMultiplayerMode() ? GetPlayerFrameBufferHeight(playerScreen) : GetPlayerScreenHeight();
+
+				if (m_TextCentered[playerScreen]) { textPosY = (bufferOrScreenHeight / 2) - 52; }
+
+				int screenOcclusionOffsetX = g_SceneMan.GetScreenOcclusion(playerScreen).GetRoundIntX();
+				// If there's really no room to offset the text into, then don't
+				if (GetPlayerScreenWidth() <= GetResX() / 2) { screenOcclusionOffsetX = 0; }
+
+				// Draw text and handle blinking by turning on and off extra surrounding characters. Text is always drawn to keep it readable.
+				if (m_TextBlinking[playerScreen] && m_TextBlinkTimer.AlternateReal(m_TextBlinking[playerScreen])) {
+					GetLargeFont()->DrawAligned(&playerGUIBitmap, (bufferOrScreenWidth + screenOcclusionOffsetX) / 2, textPosY, ">>> " + m_ScreenText[playerScreen] + " <<<", GUIFont::Centre);
+				} else {
+					GetLargeFont()->DrawAligned(&playerGUIBitmap, (bufferOrScreenWidth + screenOcclusionOffsetX) / 2, textPosY, m_ScreenText[playerScreen], GUIFont::Centre);
+				}
+				textPosY += 12;
+			}
+
+			// Draw info text when in MOID or material layer draw mode
+			switch (g_SceneMan.GetLayerDrawMode()) {
+				case g_LayerTerrainMatter:
+					GetSmallFont()->DrawAligned(&playerGUIBitmap, GetPlayerScreenWidth() / 2, GetPlayerScreenHeight() - 12, "Viewing terrain material layer\nHit Ctrl+M to cycle modes", GUIFont::Centre, GUIFont::Bottom);
+					break;
+				case g_LayerMOID:
+					GetSmallFont()->DrawAligned(&playerGUIBitmap, GetPlayerScreenWidth() / 2, GetPlayerScreenHeight() - 12, "Viewing MovableObject ID layer\nHit Ctrl+M to cycle modes", GUIFont::Centre, GUIFont::Bottom);
+					break;
+				default:
+					break;
+			}
+			g_PerformanceMan.Draw(playerGUIBitmap);
+
+		} else {
+			// If superfluous screen (as in a three-player match), make the fourth the Observer one
+			GetLargeFont()->DrawAligned(&playerGUIBitmap, GetPlayerScreenWidth() / 2, textPosY, "- Observer View -", GUIFont::Centre);
+		}
+	}
 
 	void FrameMan::FlashScreen(int screen, uint32_t color, float periodMS) {
 		m_FlashScreenColor[screen] = color;
@@ -524,6 +571,8 @@ namespace RTE {
 
 	// FIXME: VERY TEMPORARY
 	uint32_t FrameMan::GetMIDFromIndex(unsigned char index) const {
+		if(index == 0)
+			return 0;
 		return m_MatPalette->getPixel(index);
 	}
 
