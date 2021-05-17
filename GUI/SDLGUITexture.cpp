@@ -79,7 +79,7 @@ namespace RTE {
 		}
 	}
 
-	void SDLGUITexture::Render(int x, int y, GUIRect *pRect, bool trans, GUIRect* clip) {
+	void SDLGUITexture::Render(int x, int y, GUIRect *pRect, bool trans, SDL_Rect* clip) {
 
 		RTEAssert(m_Texture.get(), "Tried drawing the screen onto itself.");
 		//Texture uploads are fairly slow (when done en masse) so do it at the latest possible point.
@@ -91,8 +91,7 @@ namespace RTE {
 			dest.w = pRect->w;
 			dest.h = pRect->h;
 			if(clip) {
-				SDL_Rect clipRect {clip->x, clip->y, clip->w, clip->h};
-				if(!SDL_IntersectRect(&dest, &clipRect, &dest))
+				if(!SDL_IntersectRect(&dest, clip, &dest))
 					return;
 			}
 		}else{
@@ -124,12 +123,7 @@ namespace RTE {
 		RTEAssert(temp, "GUIBitmap passed to SDLGUITexture Draw");
 
 		if (!(temp->GetTexture().get() != 0)) {
-			GUIRect clipRect{0,0,0,0};
-			temp->GetClipRect(&clipRect);
-			if(clipRect.w == 0)
-				Render(x, y, pRect, trans);
-			else
-				Render(x,y, pRect, trans, &clipRect);
+			Render(x,y, pRect, trans, temp->m_ClipRect.get());
 			return;
 		}
 		Lock();
