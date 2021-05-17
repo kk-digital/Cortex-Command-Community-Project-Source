@@ -283,12 +283,16 @@ namespace RTE {
 		                        static_cast<SDL_RendererFlip>(flip));
 	}
 
-	int Texture::lock() {
+	int Texture::lock(){
+		if(m_PixelsWO)
+			return 0;
 		m_Updated = false;
 		return SDL_LockTexture(m_Texture.get(), nullptr, &m_PixelsWO, &m_Pitch);
 	}
 
 	int Texture::lock(const SDL_Rect &region) {
+		if(m_PixelsWO)
+			return 0;
 		if (m_Access == SDL_TEXTUREACCESS_STREAMING) {
 			m_LockedRect = std::make_unique<SDL_Rect>(SDL_Rect{region.x, region.y, 0, 0});
 
@@ -309,12 +313,14 @@ namespace RTE {
 	}
 
 	void Texture::unlock() {
-		if (m_LockedRect||m_Updated)
-			SDL_UpdateTexture(m_Texture.get(), m_LockedRect.get(),
-			                  getPixels(), w * sizeof(uint32_t));
-		SDL_UnlockTexture(m_Texture.get());
-		m_PixelsWO = nullptr;
-		m_Pitch = 0;
+		if (m_PixelsWO) {
+			if (m_LockedRect || m_Updated)
+				SDL_UpdateTexture(m_Texture.get(), m_LockedRect.get(),
+				                  getPixels(), w * sizeof(uint32_t));
+			SDL_UnlockTexture(m_Texture.get());
+			m_PixelsWO = nullptr;
+			m_Pitch = 0;
+		}
 	}
 
 	uint32_t Texture::getPixel(int x, int y) const {

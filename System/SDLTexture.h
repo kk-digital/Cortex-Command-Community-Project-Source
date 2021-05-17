@@ -29,6 +29,7 @@ namespace RTE {
 	/// This is a wrapper class for SDL_Texture and is meant to be header safe
 	/// and used with SDLHelper.h
 	/// </summary>
+
 	class Texture {
 		friend class ContentFile;
 
