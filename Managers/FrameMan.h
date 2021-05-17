@@ -475,10 +475,7 @@ namespace RTE {
 		/// <returns>
 		/// Current message shown to player.
 		/// </returns>
-		std::string GetScreenText(int whichScreen = 0) const {
-			return (whichScreen >= 0 && whichScreen < c_MaxScreenCount) ? ""
-			                                                            : "";
-		} // TODO: add fonts and screen text handling (also move this to cpp)
+		std::string GetScreenText(int whichScreen = 0) const {return (whichScreen >= 0 && whichScreen < c_MaxScreenCount) ? m_ScreenText[whichScreen] : "";}
 
 		/// <summary>
 		/// Sets the message to be displayed on top of each player's screen
@@ -520,14 +517,14 @@ namespace RTE {
 		/// </param>
 		void FlashScreen(int screen, uint32_t color, float periodMS = 0);
 
-		int DrawLine(const Vector &start, const Vector &end, uint32_t color, int altColor = 0, int skip = 0, int skipStart = 0, bool shortestWrap = false) const {}
-		int DrawDotLine(SDL_Renderer *renderer, const Vector &start, const Vector &end, SharedTexture dot, int skip = 0, int skipStart = 0, bool shortestWrap = false) const {}
+		int DrawLine(const Vector &start, const Vector &end, uint32_t color, int altColor = 0, int skip = 0, int skipStart = 0, bool shortestWrap = false) const { return 0; }
+		int DrawDotLine(SDL_Renderer *renderer, const Vector &start, const Vector &end, SharedTexture dot, int skip = 0, int skipStart = 0, bool shortestWrap = false) const {return 0;}
 
-		int SaveScreenToPNG(std::string nameBase){};
+		int SaveScreenToPNG(std::string nameBase){return 0;};
 
-		int SaveWorldToPNG(std::string nameBase){};
+		int SaveWorldToPNG(std::string nameBase){return 0;};
 
-		int SaveTextureToPNG(std::shared_ptr<Texture> tex, std::string nameBase){};
+		int SaveTextureToPNG(std::shared_ptr<Texture> tex, std::string nameBase){return 0;};
 
 		bool IsInMultiplayerMode() const { return false; }
 
@@ -611,7 +608,7 @@ namespace RTE {
 		bool m_VSplitOverride;
 
 		std::array<std::string, c_MaxScreenCount> m_ScreenText;
-		std::array<std::string, c_MaxScreenCount> m_TextCentered;
+		std::array<bool, c_MaxScreenCount> m_TextCentered;
 		std::array<long, c_MaxScreenCount> m_TextDuration;
 		std::array<Timer, c_MaxScreenCount> m_TextDurationTimer;
 		std::array<int, c_MaxScreenCount> m_TextBlinking;
