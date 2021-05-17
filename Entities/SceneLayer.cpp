@@ -555,6 +555,9 @@ struct SLDrawBox
 
 void SceneLayer::Draw(SDL_Renderer * renderer, Box& targetBox, const Vector &scrollOverride) const
 {
+
+	m_pMainTexture->unlock();
+
     RTEAssert(m_pMainTexture.get(), "Data of this SceneLayer has not been loaded before trying to draw!");
 
 	SDL_Rect source;

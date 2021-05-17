@@ -343,7 +343,7 @@ ClassInfoGetters
 // Arguments:       None.
 // Return value:    None.
 
-	virtual void UnlockTexture() {m_pMainTexture->unlock();}
+	virtual void UnlockTexture() {}// {m_pMainTexture->unlock();}
 
 	//////////////////////////////////////////////////////////////////////////////////////////
 	// Method:          GetPixel

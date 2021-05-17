@@ -471,10 +471,6 @@ int SLTerrain::LoadData()
     CleanAir();
 
 	// Release all involved bitmaps
-	m_pMainTexture->unlock();
-	m_pFGColor->UnlockTexture();
-	m_pBGColor->UnlockTexture();
-	m_pBGTexture->unlock();
 
 	InitScrollRatios();
 
@@ -1094,9 +1090,6 @@ void SLTerrain::ApplyMovableObject(MovableObject *pMObject)
 			                 GetFGColorTexture()->getPixels(),
 			                 GetFGColorTexture()->getW() * sizeof(uint32_t));
 
-		GetFGColorTexture()->unlock();
-
-
 		// Register terrain change
 		g_SceneMan.RegisterTerrainChange(bitmapScroll.m_X, bitmapScroll.m_Y, spriteDiameter, spriteDiameter, g_MaskColor, false);
 
@@ -1112,7 +1105,6 @@ void SLTerrain::ApplyMovableObject(MovableObject *pMObject)
 				GetFGColorTexture()->lock(SDL_Rect{static_cast<int>(bitmapScroll.m_X)-g_SceneMan.GetSceneWidth(), static_cast<int>(bitmapScroll.m_Y), spriteDiameter, spriteDiameter});
 			}
 			SDL_RenderReadPixels(renderer, nullptr, GetFGColorTexture()->getFormat(), GetFGColorTexture()->getPixels(), GetFGColorTexture()->getW()*sizeof(uint32_t));
-			GetFGColorTexture()->unlock();
         }
         if (g_SceneMan.SceneWrapsY())
         {
@@ -1126,7 +1118,6 @@ void SLTerrain::ApplyMovableObject(MovableObject *pMObject)
 				                 GetFGColorTexture()->getFormat(),
 				                 GetFGColorTexture()->getPixels(),
 				                 GetFGColorTexture()->getW() * sizeof(uint32_t));
-			GetFGColorTexture()->unlock();
 		}
 
 		SDL_PixelFormat *globalFormat{SDL_AllocFormat(SDL_PIXELFORMAT_RGBA32)};
@@ -1148,7 +1139,6 @@ void SLTerrain::ApplyMovableObject(MovableObject *pMObject)
 			                 GetMaterialTexture()->getPixels(),
 			                 GetMaterialTexture()->getW() * sizeof(uint32_t));
 
-		GetMaterialTexture()->unlock();
         // Add a box to the updated areas list to show there's been change to the materials layer
         m_UpdatedMateralAreas.push_back(Box(bitmapScroll, spriteDiameter, spriteDiameter));
 // TODO: centralize seam drawing!
@@ -1173,7 +1163,6 @@ void SLTerrain::ApplyMovableObject(MovableObject *pMObject)
 				                 GetFGColorTexture()->getFormat(),
 				                 GetFGColorTexture()->getPixels(),
 				                 GetFGColorTexture()->getW() * sizeof(uint32_t));
-			GetFGColorTexture()->unlock();
 		}
 		if (g_SceneMan.SceneWrapsY())
         {
@@ -1195,7 +1184,6 @@ void SLTerrain::ApplyMovableObject(MovableObject *pMObject)
 				                 GetFGColorTexture()->getFormat(),
 				                 GetFGColorTexture()->getPixels(),
 				                 GetFGColorTexture()->getW() * sizeof(uint32_t));
-			GetFGColorTexture()->unlock();
 		}
 
 		g_FrameMan.PopRenderTarget();
@@ -1210,7 +1198,6 @@ void SLTerrain::ApplyMovableObject(MovableObject *pMObject)
 			GetFGColorTexture()->setPixel(pPixel->GetPos().GetFloorIntX(),
 				                          pPixel->GetPos().GetFloorIntY(),
 				                          c.GetR(), c.GetG(), c.GetB(), 255);
-			GetFGColorTexture()->unlock();
 			// Register terrain change
 			g_SceneMan.RegisterTerrainChange(pPixel->GetPos().m_X,
 				                             pPixel->GetPos().m_Y, 1, 1,
@@ -1219,8 +1206,6 @@ void SLTerrain::ApplyMovableObject(MovableObject *pMObject)
 			uint32_t mat = pPixel->GetAtom()->GetMaterial()->GetSettleMaterial();
 			GetMaterialTexture()->lock();
 			GetMaterialTexture()->setPixel(pPixel->GetPos().GetFloorIntX(),pPixel->GetPos().GetFloorIntY(), mat);
-			GetMaterialTexture()->unlock();
-
 		}
 	}
 }
@@ -1415,9 +1400,6 @@ void SLTerrain::CleanAirBox(Box box, bool wrapsX, bool wrapsY)
 
         }
     }
-
-	m_pMainTexture->unlock();
-    m_pFGColor->GetTexture()->unlock();
 }
 
 
@@ -1447,9 +1429,6 @@ void SLTerrain::CleanAir()
                 m_pFGColor->GetTexture()->setPixel(x, y, 0);
         }
     }
-
-	m_pMainTexture->unlock();
-	m_pFGColor->GetTexture()->unlock();
 }
 
 
@@ -1463,11 +1442,9 @@ void SLTerrain::ClearAllMaterial()
 {
 	m_pMainTexture->lock();
 	m_pMainTexture->clearAll();
-	m_pMainTexture->unlock();
 
 	m_pFGColor->GetTexture()->lock();
 	m_pFGColor->GetTexture()->clearAll(g_MaterialAir);
-	m_pFGColor->GetTexture()->unlock();
 }
 
 

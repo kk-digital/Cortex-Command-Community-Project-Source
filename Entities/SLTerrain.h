@@ -357,7 +357,7 @@ ClassInfoGetters
 // Arguments:       None.
 // Return value:    None.
 
-	void UnlockTexture() override { SceneLayer::UnlockTexture(); m_pMainTexture->unlock(); }
+	void UnlockTexture() override {} //{ SceneLayer::UnlockTexture(); m_pMainTexture->unlock(); }
 
 	// TODO: these are evil because theyre used to blit. Replace by opaque blitting functions
 
