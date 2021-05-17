@@ -974,7 +974,10 @@ namespace RTE {
 
 		// Unlock all bitmaps involved.
 		//if (m_TrailLength) { trailBitmap->UnLock(); }
-		if (!scenePreLocked) { g_SceneMan.UnlockScene(); }
+		if (!scenePreLocked) {
+			g_SceneMan.UnlockScene();
+			g_FrameMan.PopRenderTarget();
+		}
 
 		// Extract Atom offset.
 		position -= m_Offset;

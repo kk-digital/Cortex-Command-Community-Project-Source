@@ -1115,6 +1115,7 @@ int Scene::SavePreview(const std::string &bitmapPath) {
 	Texture preview(renderer, PREVIEW_WIDTH, PREVIEW_HEIGHT);
 	g_FrameMan.PushRenderTarget(preview.getAsRenderTarget());
 	previewBuffer.render(renderer, 0,0);
+	g_FrameMan.PopRenderTarget();
 
 	if (g_FrameMan.SaveTextureToPNG(m_pPreviewBitmap, bitmapPath.c_str()) == 0) {
 		m_PreviewBitmapFile.SetDataPath(bitmapPath);
