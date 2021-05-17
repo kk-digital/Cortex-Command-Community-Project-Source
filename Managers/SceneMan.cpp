@@ -89,9 +89,8 @@ void SceneMan::Clear()
 
 	m_LayerDrawMode = g_LayerNormal;
 
-	m_MatNameMap.clear();
-	m_apMatPalette.clear();
 	m_MaterialCount = 0;
+	m_apMatPalette.clear();
 
 	m_MaterialCopiesVector.clear();
 
@@ -382,8 +381,10 @@ int SceneMan::Save(Writer &writer) const {
 
 void SceneMan::Destroy()
 {
-	for (int i = 0; i < c_PaletteEntriesNumber; ++i)
-		delete m_apMatPalette[i];
+	for (auto mat: m_apMatPalette) {
+		delete mat.second;
+		mat.second = nullptr;
+	}
 
 	delete m_pCurrentScene;
 	delete m_pUnseenRevealSound;
@@ -612,6 +613,19 @@ Material const * SceneMan::GetMaterial(const std::string &matName)
 	}
 	else
 		return m_apMatPalette[(*itr).second];
+}
+
+Material const *SceneMan::GetMaterialFromID(uint32_t screen) const {
+	// RTEAssert(!m_apMatPalette.empty(), "No Materials loaded!");
+	if(m_MaterialCount == 0)
+		return nullptr;
+
+	if(m_apMatPalette.find(screen) != m_apMatPalette.end())
+		return m_apMatPalette.at(screen);
+	else {
+		uint32_t air = g_FrameMan.GetMIDFromIndex(g_MaterialAir);
+		return m_apMatPalette.at(air);
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -1978,6 +1992,7 @@ bool SceneMan::CastNotMaterialRay(const Vector &start, const Vector &ray, unsign
         }
     }
 
+	g_FrameMan.PopRenderTarget();
 	return foundPixel;
 }
 
@@ -2540,6 +2555,7 @@ MOID SceneMan::CastMORay(const Vector &start, const Vector &ray, MOID ignoreMOID
             if (m_pDebugLayer && m_DrawRayCastVisualizations) { m_pDebugLayer->SetPixel(intPos[X], intPos[Y], 13); } // TODO: Magic numbers
         }
     }
+	g_FrameMan.PopRenderTarget();
 
     // Didn't hit anything but air
     return g_NoMOID;
@@ -2867,7 +2883,7 @@ void SceneMan::StructuralCalc(unsigned long calcTime) {
 		std::shared_ptr<Texture> pColTexture = pTerrain->GetFGColorTexture();
 		std::shared_ptr<Texture> pMatTexture = pTerrain->GetMaterialTexture();
 		std::shared_ptr<Texture> pStructTexture = pTerrain->GetStructuralTexture();
-    Material **pMatPalette = GetMaterialPalette();
+    // Material **pMatPalette = GetMaterialPalette(); // TODO: Unused???
     int posX, posY, height = pColTexture->getH(), width = pColTexture->getW();
 
     // Lock all bitmaps involved, outside the loop.

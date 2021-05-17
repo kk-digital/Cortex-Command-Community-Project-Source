@@ -350,8 +350,7 @@ public:
 // Arguments:       The unsigned char index specifying screen material to get (0-255).
 // Return value:    A reference to the requested material. OWNERSHIP IS NOT TRANSFERRED!
 
-    Material const * GetMaterialFromID(unsigned char screen) { return screen >= 0 && screen < c_PaletteEntriesNumber && m_apMatPalette[screen] ?  m_apMatPalette[screen] : m_apMatPalette[g_MaterialAir]; }
-
+    Material const * GetMaterialFromID(uint32_t screen) const;
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          SceneWrapsX
