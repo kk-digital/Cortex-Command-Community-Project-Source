@@ -1044,8 +1044,6 @@ namespace RTE {
 					hitTerrAtoms.clear();
 				}
 
-				// MOID layer is no longer needed from here
-				g_FrameMan.PopRenderTarget();
 
 				// TERRAIN COLLISION RESPONSE /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -1069,6 +1067,7 @@ namespace RTE {
 						}
 					}
 				} while (!hitTerrAtoms.empty() && somethingPenetrated);
+
 
 				// TERRAIN BOUNCE /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -1187,6 +1186,8 @@ namespace RTE {
 			}
 			++legCount;
 		} while ((hit[X] || hit[Y]) && timeLeft > 0.0F && /*!trajectory.GetFloored().IsZero() &&*/ !halted && hitCount < 3);
+
+		g_FrameMan.PopRenderTarget();
 
 		if (!scenePreLocked) { g_SceneMan.UnlockScene(); }
 
