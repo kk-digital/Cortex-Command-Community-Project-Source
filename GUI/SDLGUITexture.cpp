@@ -177,7 +177,17 @@ namespace RTE {
 	}
 
 	void SDLGUITexture::DrawLine(int x1, int y1, int x2, int y2, unsigned long color) {
-		// TODO: bresenham
+		if(!m_Texture){
+			lineRGBA(g_FrameMan.GetRenderer(), x1, y1, x2, y2, color>>24, color>>16, color>>8, color);
+		}
+
+		Lock();
+
+		if(x1 == x2)
+			DrawRectangle(x1,y1, 1, y2, color, true);
+
+		if(y1 == y2)
+			DrawRectangle(x1, y1, x2, 1, color, true);
 	}
 
 	void SDLGUITexture::DrawRectangle(int x, int y, int width, int height, unsigned long color, bool filled) {
