@@ -163,9 +163,7 @@ namespace RTE {
 			return false;
 		}
 
-
-
-		for(auto key:m_KeyStates){
+		for (auto key: m_KeyStates) {
 			if (key.second) {
 				m_ControlScheme[whichPlayer].GetInputMappings()[whichInput].Reset();
 				SetKeyMapping(whichPlayer, whichInput, key.first);
@@ -267,8 +265,8 @@ namespace RTE {
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	bool UInputMan::AnyKeyPress() const {
-		for (auto key:m_KeyStates){
-			if(key.second)
+		for (auto key: m_KeyStates) {
+			if (key.second)
 				return true;
 		}
 		return false;
@@ -496,8 +494,11 @@ namespace RTE {
 
 		auto key = m_KeyStates.find(whichKey);
 
-		if (key != m_KeyStates.end())
-			return key->second;
+		if ((key != m_KeyStates.end()) && (key->second == whichState))
+			return true;
+
+		if (whichState == InputState::Released)
+			return true;
 
 		return false;
 	}
@@ -509,9 +510,14 @@ namespace RTE {
 			return false;
 		}
 
-		auto butt = m_MouseButtonState.find(whichButton);
-		if (butt != m_MouseButtonState.end())
-			return butt->second;
+		auto button = m_MouseButtonState.find(whichButton);
+
+		if (button != m_MouseButtonState.end() && button->second == whichState)
+			return true;
+
+		if (whichState == InputState::Released)
+			return true;
+
 		return false;
 	}
 
@@ -531,6 +537,7 @@ namespace RTE {
 
 	int UInputMan::Update() {
 		m_LastDeviceWhichControlledGUICursor = InputDevice::DEVICE_KEYB_ONLY;
+		UpdateKeyStates();
 
 		SDL_Event e;
 		while (SDL_PollEvent(&e)) {
@@ -545,20 +552,41 @@ namespace RTE {
 			} else if (e.type == SDL_MOUSEMOTION)
 				m_MousePos = Vector(e.motion.xrel, e.motion.yrel);
 			else if (e.type == SDL_MOUSEBUTTONDOWN)
-				m_MouseButtonState[e.button.button] = true;
+				PressMouseButton(e.button.button);
 			else if (e.type == SDL_MOUSEBUTTONUP)
-				m_MouseButtonState[e.button.button] = false;
+				ReleaseMouseButton(e.button.button);
 		}
 		HandleSpecialInput();
 		return 0;
 	}
 
-	void UInputMan::PressKey(SDL_Keycode key){
-		m_KeyStates[key] = true;
+
+	void UInputMan::PressKey(SDL_Keycode key) {
+		if(m_KeyStates.find(key) != m_KeyStates.end() && m_KeyStates[key] == InputState::Held)
+			return;
+		m_KeyStates[key] = InputState::Pressed;
 	}
 
-	void UInputMan::ReleaseKey(SDL_Keycode key){
-		m_KeyStates[key] = true;
+	void UInputMan::ReleaseKey(SDL_Keycode key) {
+		m_KeyStates[key] = InputState::Released;
+	}
+
+	void UInputMan::UpdateKeyStates() {
+		for(auto key = m_KeyStates.begin(); key != m_KeyStates.end(); key++){
+			if(key->second == InputState::Pressed)
+				key->second = InputState::Held;
+		}
+	}
+
+	void UInputMan::PressMouseButton(int button) {
+		if (m_MouseButtonState.find(button) == m_MouseButtonState.end() || m_MouseButtonState[button] == InputState::Released)
+			m_MouseButtonState[button] = InputState::Pressed;
+		else
+			m_MouseButtonState[button] = InputState::Held;
+	}
+
+	void UInputMan::ReleaseMouseButton(int button) {
+		m_MouseButtonState[button] = InputState::Released;
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

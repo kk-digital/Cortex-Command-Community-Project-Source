@@ -29,6 +29,7 @@ namespace RTE {
 			Held = 0,
 			Pressed,
 			Released,
+			Repeat,
 			InputStateCount
 		};
 
@@ -738,9 +739,9 @@ namespace RTE {
 
 		static GUIInput* s_InputClass; //!< Current input class if available.
 
-		std::unordered_map<int, bool> m_KeyStates;
+		std::unordered_map<int, InputState> m_KeyStates;
 
-		std::unordered_map<int, bool> m_MouseButtonState;
+		std::unordered_map<int, InputState> m_MouseButtonState;
 
 		// static JOYSTICK_INFO s_PrevJoystickStates[Players::MaxPlayerCount]; //!< Joystick states as they were the previous update.
 		static int s_PrevJoystickStates[Players::MaxPlayerCount]; //!< Joystick states as they were the previous update.
@@ -888,9 +889,14 @@ namespace RTE {
 
 		void ReleaseKey(SDL_Keycode key);
 
+		void PressMouseButton(int button);
+		void ReleaseMouseButton(int button);
+
 		void HandleSpecialInput();
 
 		void UpdateMouseInput();
+
+		void UpdateKeyStates();
 
 #pragma endregion
 
