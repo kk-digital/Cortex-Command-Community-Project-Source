@@ -28,7 +28,7 @@ namespace RTE {
 			if (keyboardStatus[key]) {
 				if (m_ScanCodeState[key] == Pushed || m_ScanCodeState[key] == Repeat) {
 					m_ScanCodeState[key] = Repeat;
-					uint8_t keyname = SDL_GetKeyFromScancode(static_cast<SDL_Scancode>(key));
+					uint8_t keyname = SDL_GetKeyFromScancode(static_cast<SDL_Scancode>(key)); // TODO: srsly do not do it this way, just wrap UInputMan for GUI thatll do
 					m_KeyboardBuffer[keyname] = Repeat;
 				} else {
 					m_ScanCodeState[key] = Pushed;
@@ -82,6 +82,43 @@ namespace RTE {
 			m_MouseButtonsStates[2] = Up;
 		}
 
+    if (m_KeyJoyMouseCursor)
+    {
+        // // Direction change
+        // Vector joyKeyDirectional = g_UInputMan.GetMenuDirectional() * 5;
+
+        // // See how much to accelerate the joystick input based on how long the stick has been pushed around
+        // if (joyKeyDirectional.GetMagnitude() < 0.95)
+        //     m_pCursorAccelTimer->Reset();
+
+        // float acceleration = 0.25 + MIN(m_pCursorAccelTimer->GetElapsedRealTimeS(), 0.5) * 20;
+
+        // // Manipulate the mouse position with the joysticks or keys
+        // mouse_x += joyKeyDirectional.m_X * mouseDenominator * elapsedS * 15.0f * acceleration;
+        // mouse_y += joyKeyDirectional.m_Y * mouseDenominator * elapsedS * 15.0f * acceleration;
+        // // Prevent mouse from flying out of the screen
+        // mouse_x = MAX(0, mouse_x);
+        // mouse_y = MAX(0, mouse_y);
+        // // Pull in a bit so cursor doesn't completely disappear
+        // mouse_x = MIN((g_FrameMan.GetResX() * mouseDenominator) - 3, mouse_x);
+        // mouse_y = MIN((g_FrameMan.GetResY() * mouseDenominator) - 3, mouse_y);
+
+		// Button states/presses, Primary - ACTUALLY make either button work, we don't have use for secondary in menus
+		if (g_UInputMan.MenuButtonHeld(UInputMan::MENU_EITHER)) {
+			m_MouseButtonsStates[0] = Down;
+			m_MouseButtonsEvents[0] = Repeat;
+		}
+		if (g_UInputMan.MenuButtonPressed(UInputMan::MENU_EITHER)) {
+			m_MouseButtonsStates[0] = Down;
+			m_MouseButtonsEvents[0] = Pushed;
+		} else if (g_UInputMan.MenuButtonReleased(UInputMan::MENU_EITHER)) {
+			m_MouseButtonsStates[0] = Up;
+			m_MouseButtonsEvents[0] = Released;
+		} else if (m_MouseButtonsEvents[0] == Released) {
+			m_MouseButtonsStates[0] = Up;
+			m_MouseButtonsEvents[0] = None;
+		}
+	}
 	}
 
 	void ConvertKeyEvent(int sdlKey, int guilibKey, float elapsedS){
