@@ -523,7 +523,7 @@ void ScenarioGUI::Update()
                         newCandidateItr = sItr;
                 }
             }
-            
+
             // Set new hovered scene to be the one now closest to the cursor, if there is any and if it is different the a currently hovered one
             if (newCandidateItr != m_pScenes->end() && (*newCandidateItr) != m_pHoveredScene)
             {
@@ -635,7 +635,7 @@ void ScenarioGUI::Draw(SDL_Renderer *renderer) const
         Vector screenLocation;
         for (list<Scene *>::const_iterator sItr = m_pScenes->begin(); sItr != m_pScenes->end(); ++sItr)
         {
-			int color;
+			uint32_t color;
 
 			// Mark user-created scenes to let players easily distinguish them from built-in
 			if ((*sItr)->GetModuleID() == g_PresetMan.GetModuleID("Scenes.rte"))
@@ -645,13 +645,16 @@ void ScenarioGUI::Draw(SDL_Renderer *renderer) const
 
             screenLocation = m_PlanetCenter + (*sItr)->GetLocation() + (*sItr)->GetLocationOffset();
 			blendAmount = 85 + RandomNum(-25, 25);
-			uint32_t blendColor{color & (0xFFFFFF00 | blendAmount)};
-            filledCircleColor(renderer, screenLocation.m_X, screenLocation.m_Y, 4, blendColor);
-            filledCircleColor(renderer, screenLocation.m_X, screenLocation.m_Y, 2, blendColor);
+			uint32_t blendColor = color * (blendAmount/255.0);
+			blendColor |=0xFF;
+            filledCircleRGBA(renderer, screenLocation.m_X, screenLocation.m_Y, 4, (blendColor>>24), (blendColor>>16), (blendColor>>8), blendAmount);
+			filledCircleRGBA(renderer, screenLocation.m_X, screenLocation.m_Y, 2, blendColor>>24, blendColor>>16, blendColor>>8, blendAmount);
 			blendAmount = 200 + RandomNum(-55, 55);
-			blendColor |= 0xFF;
-			blendColor &= blendAmount;
-            filledCircleColor(renderer, screenLocation.m_X, screenLocation.m_Y, 1, color);
+			blendColor = (color/255.0) * blendAmount;
+			color = {blendColor|0xFF};
+			// blendColor |= 0xFF;
+			// blendColor &= blendAmount;
+            filledCircleRGBA(renderer, screenLocation.m_X, screenLocation.m_Y, 1, blendColor>>24, blendColor>>16, blendColor>>8, blendAmount);
         }
 
         // Draw the lines etc pointing at the selected Scene from the Scene Info box
@@ -698,7 +701,8 @@ void ScenarioGUI::Draw(SDL_Renderer *renderer) const
 // TODO: understand why the blending isnt working as desired XXX: Maybe fixed?
                 // Screen blend the dots and lines, with some flicekring in its intensity
                 int blendAmount = 230;
-				uint32_t blendColor = c_GUIColorDarkBlue & (0xFFFFFF | blendAmount);
+				uint32_t blendColor = (c_GUIColorDarkBlue * blendAmount/255.0);
+				blendColor |= 0xFF;
 				SDL_SetRenderDrawBlendMode(renderer, screen);
                 boxColor(renderer, m_pPlayerSetupBox->GetXPos() + 110, m_pPlayerSetupBox->GetYPos() + lineY, m_pPlayerSetupBox->GetXPos() + m_pPlayerSetupBox->GetWidth() - 12, m_pPlayerSetupBox->GetYPos() + lineY + 25, blendColor);
             }
@@ -1661,7 +1665,7 @@ bool ScenarioGUI::StartGame()
 				else
 					pGameActivity->SetTeamTech(team, g_PresetMan.GetDataModuleName(pTechItem->m_ExtraIndex));
 		}
-		
+
 		// Set up AI skill levels
 		if (m_apTeamAISkillSlider[team]->IsEnabled())
 			pGameActivity->SetTeamAISkill(team, m_apTeamAISkillSlider[team]->GetValue());
@@ -1875,11 +1879,11 @@ void ScenarioGUI::UpdateSiteNameLabel(bool visible, string text, const Vector &l
 // Description:     Draws a fancy thick flickering line to point out scene points on the
 //                  planet.
 
-void ScenarioGUI::DrawGlowLine(SDL_Renderer *renderer, const Vector &start, const Vector &end, int color) const
+void ScenarioGUI::DrawGlowLine(SDL_Renderer *renderer, const Vector &start, const Vector &end, uint32_t color) const
 {
 	int blendAmount = 210 + RandomNum(-15, 15);
 
-	uint32_t blendColor = color & (0xFFFFFF00 | blendAmount);
+	uint32_t blendColor = (color/255.0) * blendAmount;
 
     lineColor(renderer, start.m_X, start.m_Y, end.m_X, end.m_Y, blendColor);
 /* Looks like ass
@@ -1915,7 +1919,7 @@ void ScenarioGUI::DrawGlowLine(SDL_Renderer *renderer, const Vector &start, cons
 bool ScenarioGUI::DrawScreenLineToSitePoint(SDL_Renderer *renderer,
                                             const Vector &screenPoint,
                                             const Vector &planetPoint,
-                                            int color,
+                                            uint32_t color,
                                             int onlyFirstSegments,
                                             int onlyLastSegments,
                                             int channelHeight,
@@ -2011,7 +2015,7 @@ bool ScenarioGUI::DrawScreenLineToSitePoint(SDL_Renderer *renderer,
     if (!(drawnFirstSegments++ >= onlyFirstSegments || lastSegmentsToDraw-- > onlyLastSegments))
     {
 		int blendAmount = 225 + RandomNum(-20, 20);
-		uint32_t blendColor = color & (0xFFFFFF00 | blendAmount);
+		uint32_t blendColor = color; //* (blendAmount/255.0);
 
         // If specified, draw a squareSite instead (with chamfered corners)
         if (squareSite)

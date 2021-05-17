@@ -228,7 +228,7 @@ public:
 	bool DrawScreenLineToSitePoint(SDL_Renderer* renderer,
 		const Vector &screenPoint,
 		const Vector &planetPoint,
-		int color,
+		uint32_t color,
 		int onlyFirstSegments = -1,
 		int onlyLastSegments = -1,
 		int channelHeight = 80,
@@ -368,7 +368,7 @@ protected:
 //                  The color to draw the line in. Use makecol(r, g, b) to create the color
 // Return value:    None.
 
-	void DrawGlowLine(SDL_Renderer* renderer, const Vector &start, const Vector &end, int color) const;
+	void DrawGlowLine(SDL_Renderer* renderer, const Vector &start, const Vector &end, uint32_t color) const;
 
 
 
