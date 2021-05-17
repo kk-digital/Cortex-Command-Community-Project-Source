@@ -22,7 +22,7 @@ namespace RTE {
 		m_PresetList.clear();
 		m_EntityList.clear();
 		m_TypeMap.clear();
-		m_MaterialMappings.fill(0);
+		m_MaterialMappings.clear();
 		m_ScanFolderContents = false;
 		m_IgnoreMissingItems = false;
 		m_CrabToHumanSpawnRatio = 0;
