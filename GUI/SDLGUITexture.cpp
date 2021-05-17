@@ -195,9 +195,9 @@ namespace RTE {
 
 		if(!m_Texture){
 			if(filled){
-				boxColor(g_FrameMan.GetRenderer(), x, y, x + width, y + height, color);
+				boxRGBA(g_FrameMan.GetRenderer(), x, y, x + width, y + height, color>>24, color>>16, color>>8, color);
 			} else {
-				rectangleColor(g_FrameMan.GetRenderer(), x, y, x + width, y + height, color);
+				rectangleRGBA(g_FrameMan.GetRenderer(), x, y, x + width, y + height, color>>24, color>>16, color>>8, color);
 			}
 			return;
 		}
@@ -215,7 +215,10 @@ namespace RTE {
 	}
 
 	void SDLGUITexture::SetPixel(int x, int y, unsigned long color) {
-		m_Texture->setPixel(x, y, color);
+		if(m_Texture)
+			m_Texture->setPixel(x, y, color);
+		else
+			pixelRGBA(g_FrameMan.GetRenderer(), x, y, color>>24, color>>16, color>>8, color);
 	}
 
 	void SDLGUITexture::GetClipRect(GUIRect *rect) {
