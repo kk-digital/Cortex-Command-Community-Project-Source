@@ -1063,6 +1063,7 @@ void PieMenuGUI::Update()
 
 		g_FrameMan.PushRenderTarget(m_pBGBitmap);
 		// Clear it out
+		SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
 		SDL_RenderClear(renderer);
 		SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
 
@@ -1070,7 +1071,7 @@ void PieMenuGUI::Update()
         int centerY = m_pBGBitmap->getH() / 2;
         // Do outer circle
 //        circlefill(m_pBGBitmap, centerX, centerY, m_InnerRadius + m_Thickness, g_BlackColor);
-		filledCircleColor(renderer, centerX, centerY, m_InnerRadius + m_Thickness, 0xf9e9e6FF); // TODO: Magic numbers
+		filledCircleRGBA(renderer, centerX, centerY, m_InnerRadius + m_Thickness, 0xf9, 0xe9, 0xe6, 0xFF); // TODO: Magic numbers
 
 		// Draw the separator lines, cutting up the circle into slices, only if fully enabled
         if (m_PieEnabled == ENABLED)
@@ -1084,10 +1085,10 @@ void PieMenuGUI::Update()
 				//            floodfill(m_pBGBitmap, centerX +
 				//            separator.GetFloorIntX(), centerY +
 				//            separator.GetFloorIntY(), 122);
-				filledPieColor(renderer, centerX, centerY, m_InnerRadius + m_Thickness,
-				    RadiansToDegrees(m_pHoveredSlice->m_AreaStart) + 90.0f,
-				    RadiansToDegrees(m_pHoveredSlice->m_AreaStart + m_pHoveredSlice->m_AreaArc) + 90.0f,
-				    m_pHoveredSlice->m_Enabled ? g_BlackColor : g_RedColor);
+
+				uint32_t drawColor = m_pHoveredSlice->m_Enabled ? g_BlackColor : g_RedColor;
+
+				filledPieRGBA(renderer, centerX, centerY, m_InnerRadius + m_Thickness, RadiansToDegrees(m_pHoveredSlice->m_AreaStart) + 90.0f, RadiansToDegrees(m_pHoveredSlice->m_AreaStart + m_pHoveredSlice->m_AreaArc) + 90.0f, drawColor>>24, drawColor>>16, drawColor>>8, drawColor);
 			}
 
 			for (vector<Slice *>::iterator sItr = m_AllSlices.begin(); sItr != m_AllSlices.end(); ++sItr)
@@ -1095,16 +1096,16 @@ void PieMenuGUI::Update()
                 separator.SetXY(m_InnerRadius + m_Thickness + 2, 0);
                 separator.RadRotate((*sItr)->m_AreaStart);
                 // Draw four so that the result will be at least 2px thick, no matter what angle
-                lineColor(renderer, centerX, centerY, centerX + separator.GetCeilingIntX(), centerY + separator.GetCeilingIntY(), 0);
-                lineColor(renderer, centerX + 1, centerY, centerX + 1 + separator.GetCeilingIntX(), centerY + separator.GetCeilingIntY(), 0);
-                lineColor(renderer, centerX, centerY + 1, centerX + separator.GetCeilingIntX(), centerY + 1 + separator.GetCeilingIntY(), 0);
-                lineColor(renderer, centerX + 1, centerY + 1, centerX + 1 + separator.GetCeilingIntX(), centerY + 1 + separator.GetCeilingIntY(), 0);
+                lineRGBA(renderer, centerX, centerY, centerX + separator.GetCeilingIntX(), centerY + separator.GetCeilingIntY(), 0, 0, 0, 0);
+                lineRGBA(renderer, centerX + 1, centerY, centerX + 1 + separator.GetCeilingIntX(), centerY + separator.GetCeilingIntY(), 0,0,0,0);
+                lineRGBA(renderer, centerX, centerY + 1, centerX + separator.GetCeilingIntX(), centerY + 1 + separator.GetCeilingIntY(), 0,0,0,0);
+                lineRGBA(renderer, centerX + 1, centerY + 1, centerX + 1 + separator.GetCeilingIntX(), centerY + 1 + separator.GetCeilingIntY(), 0,0,0,0);
             }
 
         }
 
 		// Remove inner circle
-		filledCircleColor(renderer, centerX, centerY, m_InnerRadius, g_MaskColor);
+		filledCircleRGBA(renderer, centerX, centerY, m_InnerRadius, 0,0,0,0);
 
 		SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 		g_FrameMan.PopRenderTarget();
