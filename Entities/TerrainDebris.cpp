@@ -115,6 +115,8 @@ namespace RTE {
 		SharedTexture terrTexture = terrain->GetFGColorTexture();
 		SharedTexture matTexture = terrain->GetMaterialTexture();
 
+		terrTexture->lock();
+		matTexture->lock();
 
 		// How many pieces of debris we're spreading out.
 		unsigned int terrainWidth = terrTexture->getW();
@@ -125,7 +127,7 @@ namespace RTE {
 		Vector location;
 		Box pieceBox;
 
-		unsigned char checkPixel;
+		uint32_t checkPixel;
 
 		for (unsigned int piece = 0; piece < pieceCount; ++piece) {
 			bool place = false;
@@ -139,7 +141,7 @@ namespace RTE {
 			int y = 0;
 			int depth = RandomNum(m_MinDepth, m_MaxDepth);
 
-			while (y < terrTexture->getW()) {
+			while (y < terrTexture->getH()) {
 				// Find the air-terrain boundary
 				for (; y < terrTexture->getH(); ++y) {
 					checkPixel = matTexture->getPixel(x, y);
@@ -180,15 +182,13 @@ namespace RTE {
 			// Draw the color sprite onto the terrain color layer.
 			SDL_BlitSurface(piece.get(), nullptr, terrFGSurface.get(), &pos);
 			// Draw the material representation onto the terrain's material layer
-			SDL_Surface *pieceMatter{SDL_DuplicateSurface(piece.get())};
 
-			if(SDL_MUSTLOCK(pieceMatter))
-				SDL_LockSurface(pieceMatter);
+			uint32_t matIndex = SDL_MapRGB(terrMatSurface->format, m_Material.GetIndex()>>24, m_Material.GetIndex()>>16, m_Material.GetIndex()>>8);
 
-			std::replace_if((uint32_t*)pieceMatter->pixels, (uint32_t*)pieceMatter->pixels + (pieceMatter->w * pieceMatter->h), [](auto x){ return x != 0; }, m_Material.GetIndex());
+			std::vector<uint32_t> pieceMatterPixels = m_Textures[pieceListEntry.first]->getPixelsRO();
+			std::replace_if(pieceMatterPixels.begin(), pieceMatterPixels.end(), [](auto x){return (x&0xff)!=0;}, matIndex);
 
-			if(SDL_MUSTLOCK(pieceMatter))
-				SDL_UnlockSurface(pieceMatter);
+			SDL_Surface *pieceMatter{SDL_CreateRGBSurfaceWithFormatFrom(pieceMatterPixels.data(), piece->w, piece->h, 32, piece->pitch, terrMatSurface->format->format)};
 
 			SDL_BlitSurface(pieceMatter, nullptr, terrMatSurface.get(), &pos);
 			SDL_FreeSurface(pieceMatter);
