@@ -658,6 +658,14 @@ namespace RTE {
 		uint32_t *getPixels();
 
 		/// <summary>
+		/// Get a read only vector of this texture's pixels.
+		/// </summary>
+		/// <returns>
+		/// A const reference to the internal vector of pixels.
+		/// </returns>
+		const std::vector<uint32_t>& getPixelsRO() {return m_PixelsRO;}
+
+		/// <summary>
 		/// Get the writable pixels of this textures as a software surface.
 		/// </summary>
 		/// <returns>

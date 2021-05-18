@@ -23,6 +23,8 @@ namespace RTE {
 		m_Format = texture.m_Format;
 		m_Access = texture.m_Access;
 		m_PixelsRO = std::move(texture.m_PixelsRO);
+		m_PixelsWO = nullptr;
+		m_Pitch = 0;
 		texture.Reset();
 	}
 
@@ -227,8 +229,8 @@ namespace RTE {
 		// in the color of the target
 		SDL_BlendMode blender{SDL_ComposeCustomBlendMode(
 		    SDL_BLENDFACTOR_ZERO, SDL_BLENDFACTOR_SRC_ALPHA,
-		    SDL_BLENDOPERATION_ADD, SDL_BLENDFACTOR_SRC_ALPHA,
-		    SDL_BLENDFACTOR_ZERO, SDL_BLENDOPERATION_ADD)};
+		    SDL_BLENDOPERATION_ADD, SDL_BLENDFACTOR_ZERO,
+		    SDL_BLENDFACTOR_ONE, SDL_BLENDOPERATION_ADD)};
 
 		SDL_BlendMode activeBlendMode;
 		SDL_GetTextureBlendMode(m_Texture.get(), &activeBlendMode);
@@ -314,9 +316,12 @@ namespace RTE {
 
 	void Texture::unlock() {
 		if (m_PixelsWO) {
-			if (m_LockedRect || m_Updated)
-				SDL_UpdateTexture(m_Texture.get(), m_LockedRect.get(),
-				                  getPixels(), w * sizeof(uint32_t));
+			if (m_LockedRect || m_Updated){
+				SDL_Surface *surfaceWO{SDL_CreateRGBSurfaceWithFormatFrom(m_PixelsWO, w, h, 32, m_Pitch, m_Format)};
+				auto surfaceRO{getPixelsAsSurface()};
+				SDL_BlitSurface(surfaceRO.get(), nullptr, surfaceWO, nullptr);
+				SDL_FreeSurface(surfaceWO);
+			}
 			SDL_UnlockTexture(m_Texture.get());
 			m_PixelsWO = nullptr;
 			m_Pitch = 0;
@@ -482,6 +487,7 @@ namespace RTE {
 	}
 
 	std::unique_ptr<SDL_Surface, sdl_deleter> Texture::getPixelsAsSurface(){
+		m_Updated = true;
 		return std::unique_ptr<SDL_Surface, sdl_deleter>(SDL_CreateRGBSurfaceWithFormatFrom(getPixels(), w, h, 32, w * sizeof(uint32_t), m_Format));
 	}
 
