@@ -328,7 +328,6 @@ int SLTerrain::LoadData()
     m_pMainTexture->lock();
 	m_pFGColor->LockTexture();
 	m_pBGColor->LockTexture();
-	m_pBGTexture->lock();
 
     // Go through each pixel on the main bitmap, which contains all the material pixels loaded from the bitmap
     // Place texture pixels on the FG layer corresponding to the materials on the main material bitmap
@@ -798,7 +797,7 @@ bool SLTerrain::IsAirPixel(const int pixelX, const int pixelY) const
 	uint32_t checkPixel = m_pMainTexture->getPixel(posX, posY);
 	//    RTEAssert(m_pMainTexture->m_LockCount > 0, "Trying to access unlocked
 	//    terrain bitmap");
-	return checkPixel == g_MaterialAir || checkPixel == g_MaterialCavity;
+	return checkPixel == g_MaterialAir || checkPixel == g_FrameMan.GetMIDFromIndex(g_MaterialCavity);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
