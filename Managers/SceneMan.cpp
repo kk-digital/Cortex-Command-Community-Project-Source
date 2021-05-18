@@ -1519,13 +1519,13 @@ bool SceneMan::RevealUnseen(const int posX, const int posY, const int team)
 		pUnseenLayer->LockTexture();
 
 		// Make sure we're actually revealing an unseen pixel that is ON the bitmap!
-		int pixel = pUnseenLayer->GetPixel(scaledX, scaledY);
-		if (pixel != g_MaskColor && pixel != -1)
+		uint32_t pixel = pUnseenLayer->GetPixel(scaledX, scaledY);
+		if ((pixel&0xff) != 0 && pixel != 0xFFFFFF00)
 		{
 			// Add the pixel to the list of now seen pixels so it can be visually flashed
 			m_pCurrentScene->GetSeenPixels(team).push_back(Vector(scaledX, scaledY));
 			// Clear to key color that pixel on the map so it won't be detected as unseen again
-			pUnseenLayer->SetPixel(scaledX, scaledY, g_MaskColor);
+			pUnseenLayer->SetPixel(scaledX, scaledY, 0);
 			// Play the reveal sound, if there's not too many already revealed this frame
 			if (g_SettingsMan.BlipOnRevealUnseen() && m_pUnseenRevealSound && m_pCurrentScene->GetSeenPixels(team).size() < 5)
 				m_pUnseenRevealSound->Play(Vector(posX, posY));
@@ -1654,7 +1654,7 @@ bool SceneMan::CastUnseenRay(int team, const Vector &start, const Vector &ray, V
 	int hitCount = 0, error, dom, sub, domSteps, skipped = skip;
 	int intPos[2], delta[2], delta2[2], increment[2];
 	bool affectedAny = false;
-	unsigned char materialID;
+	uint32_t materialID;
 	Material const * foundMaterial;
 	int totalStrength = 0;
 	// Save the projected end of the ray pos
