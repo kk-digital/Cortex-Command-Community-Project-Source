@@ -36,7 +36,7 @@ namespace RTE {
 
 	SDLGUITexture::SDLGUITexture(int width, int height, bool renderer) { Create(width, height, renderer); }
 
-	SDLGUITexture::~SDLGUITexture() { Destroy(); }
+	SDLGUITexture::~SDLGUITexture() = default; //{ Destroy(); }
 
 	bool SDLGUITexture::Create(const std::string filename) {
 		m_TextureFile.SetDataPath(filename);
