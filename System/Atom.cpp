@@ -644,7 +644,7 @@ namespace RTE {
 		// Lock all bitmaps involved outside the loop.
 		if (!scenePreLocked) {
 			g_SceneMan.LockScene();
-			g_FrameMan.PushRenderTarget(g_SceneMan.GetMOColorTexture());
+			g_FrameMan.PushRenderTarget(g_SceneMan.GetMOIDTexture());
 		}
 
 		// Loop for all the different straight segments (between bounces etc) that have to be traveled during the timeLeft.
