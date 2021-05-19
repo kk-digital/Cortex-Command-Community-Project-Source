@@ -906,11 +906,7 @@ deque<MOPixel *> SLTerrain::EraseSilhouette(std::shared_ptr<Texture> pSprite,
 	// TODO: this might be doable without using rendering instead
 	// Create temporary SDL_Surfaces from Sprite and Surface (this is very fast
 	// because the pixels are not copied)
-	std::unique_ptr<SDL_Surface, sdl_deleter> tempSpriteSurface{
-		SDL_CreateRGBSurfaceWithFormatFrom(
-		    pSprite->getPixels(), pSprite->getW(), pSprite->getH(), 32,
-		    pSprite->getW() * sizeof(uint32_t), pSprite->getFormat())
-	};
+	std::unique_ptr<SDL_Surface, sdl_deleter> tempSpriteSurface{pSprite->getPixelsAsSurface()};
 
 	std::unique_ptr<SDL_Surface, sdl_deleter> rotozoomedSprite{
 		rotozoomSurface(tempSpriteSurface.get(), rotation.GetDegAngle(), scale, false)

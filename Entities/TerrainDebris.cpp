@@ -185,8 +185,11 @@ namespace RTE {
 
 			uint32_t matIndex = SDL_MapRGB(terrMatSurface->format, m_Material.GetIndex()>>24, m_Material.GetIndex()>>16, m_Material.GetIndex()>>8);
 
-			std::vector<uint32_t> pieceMatterPixels = m_Textures[pieceListEntry.first]->getPixelsRO();
-			std::replace_if(pieceMatterPixels.begin(), pieceMatterPixels.end(), [](auto x){return (x&0xff)!=0;}, matIndex);
+			std::vector<uint32_t> pieceMatterPixels;
+			std::copy(m_Textures[pieceListEntry.first]->getPixelsRO().begin(), m_Textures[pieceListEntry.first]->getPixelsRO().end(), std::back_inserter(pieceMatterPixels));
+			uint32_t Amask = piece->format->Amask;
+			std::replace_if(pieceMatterPixels.begin(), pieceMatterPixels.end(), [Amask](auto x) { return (x & Amask) == 0; }, g_MaterialAir);
+			std::replace_if(pieceMatterPixels.begin(), pieceMatterPixels.end(), [Amask](auto x) { return (x & Amask) != 0; }, matIndex);
 
 			SDL_Surface *pieceMatter{SDL_CreateRGBSurfaceWithFormatFrom(pieceMatterPixels.data(), piece->w, piece->h, 32, piece->pitch, terrMatSurface->format->format)};
 
