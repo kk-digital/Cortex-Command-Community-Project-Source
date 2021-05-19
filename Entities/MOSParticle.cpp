@@ -139,7 +139,7 @@ namespace RTE {
 			m_Rotation += m_AngularVel * deltaTime;
 
 			if (m_Frame >= m_FrameCount) { m_Frame = m_FrameCount - 1; }
-		}			
+		}
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -153,21 +153,21 @@ namespace RTE {
 		switch (mode) {
 			case g_DrawMaterial:
 				m_aSprite[m_Frame]->renderFillColor(
-				    renderer, spritePos.GetFloorIntX(),
-				    spritePos.GetFloorIntY(),
-				    m_SettleMaterialDisabled
-				        ? GetMaterial()->GetIndex()
-				        : GetMaterial()->GetSettleMaterial());
+					renderer, spritePos.GetFloorIntX(),
+					spritePos.GetFloorIntY(),
+					m_SettleMaterialDisabled
+						? GetMaterial()->GetIndex()
+						: GetMaterial()->GetSettleMaterial());
 				break;
 			case g_DrawAir:
 				m_aSprite[m_Frame]->renderFillColor(
-				    renderer, spritePos.GetFloorIntX(),
-				    spritePos.GetFloorIntY(), g_MaterialAir);
+					renderer, spritePos.GetFloorIntX(),
+					spritePos.GetFloorIntY(), g_MaterialAir);
 				break;
 			case g_DrawMask:
 				m_aSprite[m_Frame]->renderFillColor(
-				    renderer, spritePos.GetFloorIntX(),
-				    spritePos.GetFloorIntY(), g_MaskColor);
+					renderer, spritePos.GetFloorIntX(),
+					spritePos.GetFloorIntY(), g_MaskColor);
 				break;
 			case g_DrawWhite:
 				m_aSprite[m_Frame]->renderFillColor(renderer, spritePos.GetFloorIntX(), spritePos.GetFloorIntY(), g_WhiteColor);
@@ -175,11 +175,11 @@ namespace RTE {
 			case g_DrawMOID:
 				spriteX = spritePos.GetFloorIntX();
 				spriteY = spritePos.GetFloorIntY();
-				m_aSprite[m_Frame]->renderFillColor(renderer, spriteX, spriteY, m_MOID);
+				m_aSprite[m_Frame]->renderFillColor(renderer, spriteX, spriteY, (m_MOID << 8) | 0xff);
 				g_SceneMan.RegisterMOIDDrawing(spriteX, spriteY, spriteX + m_aSprite[m_Frame]->getW(), spriteY + m_aSprite[m_Frame]->getH());
 				break;
 			case g_DrawNoMOID:
-				m_aSprite[m_Frame]->renderFillColor(renderer, spritePos.GetFloorIntX(), spritePos.GetFloorIntY(), g_NoMOID);
+				m_aSprite[m_Frame]->renderFillColor(renderer, spritePos.GetFloorIntX(), spritePos.GetFloorIntY(), (g_NoMOID << 8) | 0xff);
 				break;
 			case g_DrawTrans:
 				m_aSprite[m_Frame]->setAlphaMod(alphaMod);
@@ -193,8 +193,10 @@ namespace RTE {
 				m_aSprite[m_Frame]->render(renderer, spritePos.GetFloorIntX(), spritePos.GetFloorIntY());
 				break;
 		}
-		
-		if (m_pScreenEffect && mode == g_DrawColor && !onlyPhysical) { SetPostScreenEffectToDraw(); }
+
+		if (m_pScreenEffect && mode == g_DrawColor && !onlyPhysical) {
+			SetPostScreenEffectToDraw();
+		}
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
