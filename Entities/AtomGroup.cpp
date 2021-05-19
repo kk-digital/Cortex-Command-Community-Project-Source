@@ -1098,13 +1098,13 @@ namespace RTE {
 
 						Vector newVel = forceVel;
 
-						unsigned char hitMaterialID = g_SceneMan.GetTerrMatter(hitPos[X], hitPos[Y]);
+						MID hitMaterialID = g_SceneMan.GetTerrMatter(hitPos[X], hitPos[Y]);
 						hitMaterial = g_SceneMan.GetMaterialFromID(hitMaterialID);
 
 						// Check for and react upon a collision in the dominant direction of travel.
 						if (delta[dom] && ((dom == X && g_SceneMan.GetTerrMatter(hitPos[X], intPos[Y])) || (dom == Y && g_SceneMan.GetTerrMatter(intPos[X], hitPos[Y])))) {
 							hit[dom] = true;
-							unsigned char domMaterialID = (dom == X) ? g_SceneMan.GetTerrMatter(hitPos[X], intPos[Y]) : g_SceneMan.GetTerrMatter(intPos[X], hitPos[Y]);
+							MID domMaterialID = (dom == X) ? g_SceneMan.GetTerrMatter(hitPos[X], intPos[Y]) : g_SceneMan.GetTerrMatter(intPos[X], hitPos[Y]);
 							domMaterial = g_SceneMan.GetMaterialFromID(domMaterialID);
 
 							// Bounce according to the collision.
@@ -1114,7 +1114,7 @@ namespace RTE {
 						// Check for and react upon a collision in the submissive direction of travel.
 						if (subStepped && delta[sub] && ((sub == X && g_SceneMan.GetTerrMatter(hitPos[X], intPos[Y])) || (sub == Y && g_SceneMan.GetTerrMatter(intPos[X], hitPos[Y])))) {
 							hit[sub] = true;
-							unsigned char subMaterialID = (sub == X) ? g_SceneMan.GetTerrMatter(hitPos[X], intPos[Y]) : g_SceneMan.GetTerrMatter(intPos[X], hitPos[Y]);
+							MID subMaterialID = (sub == X) ? g_SceneMan.GetTerrMatter(hitPos[X], intPos[Y]) : g_SceneMan.GetTerrMatter(intPos[X], hitPos[Y]);
 							subMaterial = g_SceneMan.GetMaterialFromID(subMaterialID);
 
 							// Bounce according to the collision.
@@ -1426,6 +1426,7 @@ namespace RTE {
 				}
 			}
 		}
+		g_FrameMan.PopRenderTarget();
 		if (!intersectedMO) {
 			return false;
 		}
@@ -1437,6 +1438,7 @@ namespace RTE {
 		}
 
 		std::list<Atom *> intersectingAtoms;
+		g_FrameMan.PushRenderTarget(g_SceneMan.GetMOIDTexture());
 
 		// Restart and go through all Atoms to find all intersecting the specific intersected MO
 		for (Atom *atom : m_Atoms) {
@@ -1458,6 +1460,7 @@ namespace RTE {
 
 		// TODO: Maybe use previous position to create an exit direction instead of quitting.
 		if (exitDirection.IsZero()) {
+			g_FrameMan.PopRenderTarget();
 			return false;
 		}
 
