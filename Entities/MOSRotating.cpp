@@ -1576,16 +1576,20 @@ void MOSRotating::Draw(SDL_Renderer *renderer,
 
 	uint32_t keyColor = g_MaskColor;
 
-	int flip = SDL_FLIP_NONE;
-	if (m_HFlipped)
-		flip = SDL_FLIP_HORIZONTAL;
 
 	// Switch to non 8-bit drawing mode if we're drawing onto MO layer
 	if (mode == g_DrawMOID || mode == g_DrawNoMOID) {
 		keyColor = g_MOIDMaskColor;
 	}
 
-	Vector spritePos(m_Pos.GetFloored() - targetPos);
+	Vector spritePivot{-m_SpriteOffset};
+	int flip = SDL_FLIP_NONE;
+	if (m_HFlipped) {
+		flip = SDL_FLIP_HORIZONTAL;
+		spritePivot.m_X = m_aSprite[m_Frame]->getW() + m_SpriteOffset.m_X;
+	}
+
+	Vector spritePos(m_Pos.GetFloored() - targetPos - spritePivot);
 
 	if (m_Recoiled)
 		spritePos += m_RecoilOffset;
@@ -1605,11 +1609,11 @@ void MOSRotating::Draw(SDL_Renderer *renderer,
 		// drawn onto a scenewide bitmap
 		if (targetPos.IsZero() && m_WrapDoubleDraw) {
 			if (spritePos.m_X < m_SpriteDiameter) {
-				aDrawPos[passes] = spritePos;
+				aDrawPos[passes] = aDrawPos[0];
 				aDrawPos[passes].m_X += viewport.w;
 				passes++;
 			} else if (spritePos.m_X > viewport.w - m_SpriteDiameter) {
-				aDrawPos[passes] = spritePos;
+				aDrawPos[passes] = aDrawPos[0];
 				aDrawPos[passes].m_X -= viewport.w;
 				passes++;
 			}
@@ -1654,34 +1658,25 @@ void MOSRotating::Draw(SDL_Renderer *renderer,
 		// they're drawing 0 to a field of 0's Draw the requested material
 		// sihouette on the material bitmap
 		if (mode == g_DrawMaterial)
-			m_aSprite[m_Frame]->renderFillColor(
-				renderer, aDrawPos[i].m_X, aDrawPos[i].m_Y,
-				m_SettleMaterialDisabled ? GetMaterial()->GetIndex()
-				                         : GetMaterial()->GetSettleMaterial());
+			m_aSprite[m_Frame]->renderFillColor(renderer, aDrawPos[i].m_X, aDrawPos[i].m_Y, m_SettleMaterialDisabled ? GetMaterial()->GetIndex() : GetMaterial()->GetSettleMaterial());
 		else if (mode == g_DrawAir)
-			m_aSprite[m_Frame]->renderFillColor(
-				renderer, aDrawPos[i].m_X, aDrawPos[i].m_Y, g_MaterialAir,
-				m_Rotation.GetDegAngle(), flip, m_Scale);
+			m_aSprite[m_Frame]->renderFillColor(renderer, aDrawPos[i].m_X, aDrawPos[i].m_Y, g_MaterialAir, -m_Rotation.GetDegAngle(), spritePivot, flip, m_Scale);
 		else if (mode == g_DrawMask)
-			m_aSprite[m_Frame]->renderFillColor(
-				renderer, aDrawPos[i].m_X, aDrawPos[i].m_Y, keyColor,
-				m_Rotation.GetDegAngle(), flip, m_Scale);
+			m_aSprite[m_Frame]->renderFillColor(renderer, aDrawPos[i].m_X, aDrawPos[i].m_Y, keyColor, -m_Rotation.GetDegAngle(), spritePivot, flip, m_Scale);
 		else if (mode == g_DrawWhite)
-			m_aSprite[m_Frame]->renderFillColor(
-				renderer, aDrawPos[i].m_X, aDrawPos[i].m_Y, g_WhiteColor,
-				m_Rotation.GetDegAngle(), flip, m_Scale);
+			m_aSprite[m_Frame]->renderFillColor(renderer, aDrawPos[i].m_X, aDrawPos[i].m_Y, g_WhiteColor, -m_Rotation.GetDegAngle(), spritePivot, flip, m_Scale);
 		else if (mode == g_DrawMOID) {
 			m_aSprite[m_Frame]->renderFillColor(renderer, aDrawPos[i].m_X, aDrawPos[i].m_Y, (m_MOID<<8)|0xff, -m_Rotation.GetDegAngle(), spritePivot, flip, m_Scale);
 			g_SceneMan.RegisterMOIDDrawing(aDrawPos[i].GetFloored(),
 				                           m_SpriteRadius + 2);
-		} else if (mode == g_DrawNoMOID)
-			m_aSprite[m_Frame]->renderFillColor(
-				renderer, aDrawPos[i].m_X, aDrawPos[i].m_Y, g_NoMOID,
-				m_Rotation.GetDegAngle(), flip, m_Scale);
-		else {
-			m_aSprite[m_Frame]->render(renderer, aDrawPos[i].m_X,
-				                       aDrawPos[i].m_Y,
-				                       m_Rotation.GetDegAngle(), flip);
+		} else if (mode == g_DrawNoMOID) {
+			m_aSprite[m_Frame]->renderFillColor(renderer, aDrawPos[i].m_X, aDrawPos[i].m_Y, (g_NoMOID<<8)|0xff, -m_Rotation.GetDegAngle(), spritePivot, flip, m_Scale);
+		} else if (mode == g_DrawTrans){
+			m_aSprite[m_Frame]->setAlphaMod(alphaMod);
+			m_aSprite[m_Frame]->render(renderer, aDrawPos[i].m_X, aDrawPos[i].m_Y, -m_Rotation.GetDegAngle(), spritePivot, flip);
+			m_aSprite[m_Frame]->setAlphaMod(255);
+		} else {
+			m_aSprite[m_Frame]->render(renderer, aDrawPos[i].m_X, aDrawPos[i].m_Y, -m_Rotation.GetDegAngle(), spritePivot, flip);
 		}
 	}
 
