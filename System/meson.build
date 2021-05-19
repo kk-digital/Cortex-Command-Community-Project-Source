@@ -14,6 +14,7 @@ sources += files(
 'PathFinder.cpp',
 'RTEError.cpp',
 'RTETools.cpp',
+'RTESurface.cpp',
 'Reader.cpp',
 'SDLHelper.cpp',
 'SDLTexture.cpp',
