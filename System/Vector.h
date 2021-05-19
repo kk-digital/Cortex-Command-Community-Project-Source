@@ -30,6 +30,14 @@ namespace RTE {
 		Vector() = default;
 
 		/// <summary>
+		/// Constructor method used to instantiate a Vector from an existing Vector.
+		/// </summary>
+		/// <param name="ref">
+		/// The Vector to copy.
+		/// </param>
+		Vector(const Vector &ref) = default;
+
+		/// <summary>
 		/// Constructor method used to instantiate a Vector object from X and Y values.
 		/// </summary>
 		/// <param name="inputX">Float defining the initial X value of this Vector.</param>
@@ -363,7 +371,7 @@ namespace RTE {
 		/// Unary negation overload for single Vectors.
 		/// </summary>
 		/// <returns>The resulting Vector.</returns>
-		Vector operator-() { return Vector(-m_X, -m_Y); }
+		Vector operator-() const { return Vector(-m_X, -m_Y); }
 
 		/// <summary>
 		/// An equality operator for testing if any two Vectors are equal.
