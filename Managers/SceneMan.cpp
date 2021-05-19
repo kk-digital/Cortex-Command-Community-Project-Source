@@ -218,6 +218,7 @@ int SceneMan::LoadScene(Scene *pNewScene, bool placeObjects, bool placeUnits) {
 	m_pMOIDLayer->Create(GetSceneWidth(), GetSceneHeight(), Vector(),
 		                 m_pCurrentScene->WrapsX(), m_pCurrentScene->WrapsY(),
 		                 Vector(1.0, 1.0));
+	ClearMOIDLayer();
 
   if(m_DrawRayCastVisualizations || m_DrawPixelCheckVisualizations){
 	// Create the Debug SceneLayer
@@ -896,9 +897,7 @@ void SceneMan::ClearMOIDRect(int left, int top, int right, int bottom)
 {
 	// Draw the first unwrapped rect
 	g_FrameMan.PushRenderTarget(m_pMOIDLayer->GetTexture());
-	SDL_SetRenderDrawColor(g_FrameMan.GetRenderer(), (g_NoMOID << 24) & 0xff,
-		                     (g_NoMOID << 16) & 0xff, (g_NoMOID << 4) & 0xff,
-		                     g_NoMOID & 0xff);
+	SDL_SetRenderDrawColor(g_FrameMan.GetRenderer(), (g_NoMOID >> 16) & 0xff, (g_NoMOID >> 8) & 0xff, (g_NoMOID) & 0xff, 0xff);
 	SDL_Rect fill{left, top, right - left, bottom - top};
 	SDL_RenderFillRect(g_FrameMan.GetRenderer(), &fill);
 
@@ -3623,9 +3622,7 @@ void SceneMan::ClearMOColorLayer()
 void SceneMan::ClearMOIDLayer()
 {
 	g_FrameMan.PushRenderTarget(m_pMOIDLayer->GetTexture());
-	SDL_SetRenderDrawColor(g_FrameMan.GetRenderer(), (g_NoMOID << 24) & 0xff,
-		                   (g_NoMOID << 16) & 0xff, (g_NoMOID << 8) & 0xff,
-		                   (g_NoMOID)&0xff);
+	SDL_SetRenderDrawColor(g_FrameMan.GetRenderer(), (g_NoMOID >> 16) & 0xff, (g_NoMOID >> 8) & 0xff, (g_NoMOID) & 0xff, 0xff);
 	SDL_RenderClear(g_FrameMan.GetRenderer());
 	SDL_SetRenderDrawColor(g_FrameMan.GetRenderer(), 0, 0, 0, 0);
 	g_FrameMan.PopRenderTarget();

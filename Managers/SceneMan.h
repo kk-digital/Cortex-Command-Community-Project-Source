@@ -465,16 +465,6 @@ public:
 	/// </returns>
 	std::shared_ptr<Texture> GetDebugTexture() const;
 
-	//////////////////////////////////////////////////////////////////////////////////////////
-	// Method:          GetMOIDBitmap
-	//////////////////////////////////////////////////////////////////////////////////////////
-	// Description:     Gets the bitmap of the SceneLayer that all
-	// MovableObject:s draw thir
-	//                  current (for the frame only!) MOID's onto.
-	// Arguments:       None.
-	// Return value:    A BITMAP pointer to the MO bitmap. Ownership is NOT
-	// transferred!
-
 	/// <summary>
 	/// Gets the Texture that all MOs draw their current MOID onto.
 	/// This is a render Texture!
