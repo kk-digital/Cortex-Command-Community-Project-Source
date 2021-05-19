@@ -71,7 +71,7 @@ namespace RTE {
 	uint32_t RenderLayer::GetPixel(const int x, const int y){
 		uint32_t color;
 		SDL_Rect pos {x,y,1,1};
-		SDL_RenderReadPixels(g_FrameMan.GetRenderer(), &pos, SDL_PIXELFORMAT_RGBA32, &color, sizeof(uint32_t));
+		SDL_RenderReadPixels(g_FrameMan.GetRenderer(), &pos, SDL_PIXELFORMAT_RGBA8888, &color, sizeof(uint32_t));
 		return color;
 	}
 
