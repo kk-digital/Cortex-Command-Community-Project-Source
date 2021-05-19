@@ -40,7 +40,7 @@ namespace RTE {
 		g_WhiteColor = 0xFFFFFFFF,
 		g_RedColor = 0xEA1507FF,
 		g_YellowGlowColor = 0xF9F338FF,
-		g_NoMOID = 0x2F2020FF
+		g_NoMOID = 0xff
 	};
 
 	enum DotGlowColor { NoDot = 0, YellowDot, RedDot, BlueDot };
