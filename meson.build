@@ -7,7 +7,6 @@ if host_machine.system() in ['linux', 'osx']
   deps = [
     dependency('sdl2'),
     dependency('SDL2_image'),
-    dependency('SDL2_gfx'),
     dependency('flac'),
     dependency('luajit'),
     dependency('minizip'),
