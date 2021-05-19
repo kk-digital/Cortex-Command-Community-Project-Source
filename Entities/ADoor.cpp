@@ -243,6 +243,7 @@ namespace RTE {
 		SharedTexture tempMatRender = std::make_shared<Texture>(g_FrameMan.GetRenderer(), m_Door->GetDiameter(), m_Door->GetDiameter());
 		g_FrameMan.PushRenderTarget(tempMatRender);
 		m_Door->Draw(g_FrameMan.GetRenderer(), Vector(0,0), g_DrawMaterial, true);
+		g_FrameMan.PopRenderTarget();
 
 		std::vector<uint32_t> pixels(m_Door->GetDiameter() * m_Door->GetDiameter());
 		SDL_RenderReadPixels(g_FrameMan.GetRenderer(), nullptr, tempMatRender->getFormat(), pixels.data(), m_Door->GetDiameter() * sizeof(uint32_t)); // There must be a way to avoid this
@@ -310,6 +311,7 @@ namespace RTE {
 				g_FrameMan.PushRenderTarget(tempMatRender);
 				m_Door->Draw(g_FrameMan.GetRenderer(), Vector(0,0), g_DrawMaterial, true);
 
+				g_FrameMan.PopRenderTarget();
 				std::vector<uint32_t> pixels(m_Door->GetDiameter() * m_Door->GetDiameter());
 				SDL_RenderReadPixels(g_FrameMan.GetRenderer(), nullptr, tempMatRender->getFormat(), pixels.data(), m_Door->GetDiameter() * sizeof(uint32_t)); // There must be a way to avoid this
 
