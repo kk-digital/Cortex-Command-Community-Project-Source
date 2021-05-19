@@ -131,12 +131,6 @@ namespace RTE {
 		/// <param name="otherAngle">A float with the angle to get the difference to from this, in degrees.</param>
 		/// <returns>A float with the difference angle between this and the passed-in angle.</returns>
 		float GetDegAngleTo(float otherAngle) const;
-
-		/// <summary>
-		/// Returns the angle this rotational Matrix is currently representing.
-		/// </summary>
-		/// <returns>A float with the represented angle as full rotations being 256.</returns>
-		float GetAllegroAngle() const { return (m_Rotation / c_PI) * -128.0F; }
 #pragma endregion
 
 #pragma region Operator Overloads
