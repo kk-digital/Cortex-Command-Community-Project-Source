@@ -31,7 +31,7 @@
 #include "GUI/SDLGUITexture.h"
 
 #include "System/SDLHelper.h"
-#include <SDL2/SDL2_gfxPrimitives.h>
+#include "SDL2_gfxPrimitives.h"
 
 namespace RTE {
 

@@ -9,7 +9,7 @@
 #include "System/SDLTexture.h"
 #include "System/RTESurface.h"
 #include "System/SDLHelper.h"
-#include <SDL2/SDL2_gfxPrimitives.h>
+#include "SDL2_gfxPrimitives.h"
 
 namespace RTE {
 
@@ -1562,7 +1562,7 @@ namespace RTE {
 			int y;
 			bool inside;
 
-			UniqueSurface checkBitmap= std::make_unique<Surface>(spriteWidth, spriteHeight);
+			UniqueSurface checkBitmap = std::make_unique<Surface>(spriteWidth, spriteHeight);
 
 			// If Atoms are to be placed right at (below) the bitmap of the sprite.
 			if (m_Depth <= 0) {

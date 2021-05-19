@@ -54,7 +54,7 @@
 #include "Loadout.h"
 
 #include "System/SDLHelper.h"
-#include <SDL2/SDL2_gfxPrimitives.h>
+#include "SDL2_gfxPrimitives.h"
 
 extern int g_IntroState;
 extern volatile bool g_Quit;

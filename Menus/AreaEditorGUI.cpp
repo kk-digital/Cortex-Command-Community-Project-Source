@@ -29,7 +29,7 @@
 #include "PieMenuGUI.h"
 #include "Scene.h"
 
-#include <SDL2/SDL2_gfxPrimitives.h>
+#include "SDL2_gfxPrimitives.h"
 
 using namespace RTE;
 
