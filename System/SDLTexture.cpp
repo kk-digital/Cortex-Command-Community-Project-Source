@@ -9,7 +9,6 @@ void sdl_format_deleter::operator()(SDL_PixelFormat *p) { SDL_FreeFormat(p); }
 void sdl_texture_deleter::operator()(SDL_Texture *p) { SDL_DestroyTexture(p); }
 
 namespace RTE {
-	std::unique_ptr<Texture> Texture::fillTarget;
 
 	Texture::Texture() {
 		Reset();
@@ -57,7 +56,7 @@ namespace RTE {
 		m_Pitch = 0;
 		m_PixelsRO.clear();
 		m_PixelsRO.resize(width * height);
-		m_Texture.reset(SDL_CreateTexture(renderer, m_Format, access, width, height));
+		m_Texture = std::unique_ptr<SDL_Texture, sdl_texture_deleter>(SDL_CreateTexture(renderer, m_Format, access, width, height));
 		RTEAssert(m_Texture.get(), "Texture was not created");
 		SDL_SetTextureBlendMode(m_Texture.get(), SDL_BLENDMODE_BLEND);
 	}
@@ -82,13 +81,11 @@ namespace RTE {
 		return SDL_RenderCopy(pRenderer, m_Texture.get(), nullptr, &dest);
 	}
 
-	int Texture::render(SDL_Renderer *pRenderer, const SDL_Rect &source,
-	                    const SDL_Rect &dest) {
+	int Texture::render(SDL_Renderer *pRenderer, const SDL_Rect &source, const SDL_Rect &dest) {
 		return SDL_RenderCopy(pRenderer, m_Texture.get(), &source, &dest);
 	}
 
-	int Texture::render(SDL_Renderer *pRenderer, const SDL_Rect &dest,
-	                    double angle) {
+	int Texture::render(SDL_Renderer *pRenderer, const SDL_Rect &dest, double angle) {
 		return SDL_RenderCopyEx(pRenderer, m_Texture.get(), nullptr, &dest,
 		                        angle, nullptr, SDL_FLIP_NONE);
 	}
@@ -97,8 +94,7 @@ namespace RTE {
 		return render(pRenderer, SDL_Rect{x, y, w, h}, angle);
 	}
 
-	int Texture::render(SDL_Renderer *pRenderer, const SDL_Rect &dest,
-	                    int flip) {
+	int Texture::render(SDL_Renderer *pRenderer, const SDL_Rect &dest, int flip) {
 		return SDL_RenderCopyEx(pRenderer, m_Texture.get(), nullptr, &dest, 0,
 		                        nullptr, static_cast<SDL_RendererFlip>(flip));
 	}
@@ -107,8 +103,7 @@ namespace RTE {
 		return render(pRenderer, SDL_Rect{x, y, w, h}, flip);
 	}
 
-	int Texture::render(SDL_Renderer *pRenderer, int x, int y, double angle,
-	                    int flip) {
+	int Texture::render(SDL_Renderer *pRenderer, int x, int y, double angle, int flip) {
 		return render(pRenderer, SDL_Rect{x, y, w, h}, angle, flip);
 	}
 
@@ -123,7 +118,7 @@ namespace RTE {
 	                    int x, int y,
 	                    double angle,
 	                    int flip,
-						double scale) {
+	                    double scale) {
 		return render(pRenderer, SDL_Rect{x, y, w, h} * scale, angle, flip);
 	}
 
@@ -135,98 +130,36 @@ namespace RTE {
 		return render(pRenderer, SDL_Rect{x, y, w, h} * scale, angle, center, flip);
 	}
 
-	int Texture::render(SDL_Renderer *pRenderer,
-						const SDL_Rect &dest,
-	                    double angle, int flip) {
-		return SDL_RenderCopyEx(pRenderer, m_Texture.get(), nullptr, &dest,
-		                        angle, nullptr,
-		                        static_cast<SDL_RendererFlip>(flip));
+	int Texture::render(SDL_Renderer *pRenderer, const SDL_Rect &dest, double angle, int flip) {
+		return SDL_RenderCopyEx(pRenderer, m_Texture.get(), nullptr, &dest, angle, nullptr, static_cast<SDL_RendererFlip>(flip));
 	}
 
-	int Texture::render(SDL_Renderer *pRenderer, const SDL_Rect &dest,
-	                    double angle, const SDL_Point &center, int flip) {
+	int Texture::render(SDL_Renderer *pRenderer, const SDL_Rect &dest, double angle, const SDL_Point &center, int flip) {
 		return SDL_RenderCopyEx(pRenderer, m_Texture.get(), nullptr, &dest,
 		                        angle, &center,
 		                        static_cast<SDL_RendererFlip>(flip));
 	}
 
-	int Texture::renderFillColor(SDL_Renderer *renderer, int x, int y,
-	                             uint32_t color) {
+	int Texture::renderFillColor(SDL_Renderer *renderer, int x, int y, uint32_t color) {
 		return renderFillColor(renderer, SDL_Rect{0, 0, w, h},
 		                       SDL_Rect{x, y, w, h}, color);
 	}
 
-	int Texture::renderFillColor(SDL_Renderer *renderer, const SDL_Rect &source,
-	                             const SDL_Rect &dest, uint32_t color) {
-		// Create a blend mode that draws all pixels of the Texture in the
-		// targets color
-		SDL_BlendMode blender{SDL_ComposeCustomBlendMode(
-		    SDL_BLENDFACTOR_ZERO, SDL_BLENDFACTOR_SRC_ALPHA,
-		    SDL_BLENDOPERATION_ADD, SDL_BLENDFACTOR_SRC_ALPHA,
-		    SDL_BLENDFACTOR_ZERO, SDL_BLENDOPERATION_ADD)};
-		SDL_BlendMode activeBlendMode;
-		SDL_GetTextureBlendMode(m_Texture.get(), &activeBlendMode);
-
-		if (!fillTarget)
-			fillTarget = std::make_unique<Texture>(renderer, w, h);
-
-		// If neccessary extend the dimensions of the target to at least match
-		// the size of this texture
-		if (fillTarget->w < source.w && fillTarget->h < source.h)
-			fillTarget = std::make_unique<Texture>(renderer, source.w, source.h);
-		else if (fillTarget->w < source.w)
-			fillTarget = std::make_unique<Texture>(renderer, source.w, fillTarget->h);
-		else if (fillTarget->h < source.h)
-			fillTarget = std::make_unique<Texture>(renderer, fillTarget->w, source.h);
-
-		SDL_Rect dimensions{0, 0, source.w, source.h};
-
-		// Store the active render target
-		SDL_Texture *target{SDL_GetRenderTarget(renderer)};
-
-		uint8_t r, g, b, a;
-		SDL_GetRenderDrawColor(renderer, &r, &g, &b, &a);
-
-		// Set the render target to the fillTexture thatll be used to
-		// generate the background color
-		SDL_SetRenderTarget(renderer, fillTarget->m_Texture.get());
-		SDL_SetRenderDrawColor(renderer, (color >> 24) & 0xFF,
-		                       (color >> 16) & 0xFF, (color >> 8) & 0xFF,
-		                       (color)&0xFF);
-
-		// Clear the target to the desired color
-		SDL_RenderClear(renderer);
-
-		// Set the texture blend mode so itll do the thing
-		SDL_SetTextureBlendMode(m_Texture.get(), blender);
-
-		// Copy the texture onto the intermediate target
-		SDL_RenderCopy(renderer, m_Texture.get(), &source, &dimensions);
-
-		// Reset the render target
-		SDL_SetRenderTarget(renderer, target);
-
-		// Reset the render draw color
-		SDL_SetRenderDrawColor(renderer, r, g, b, a);
-
-		SDL_SetTextureBlendMode(m_Texture.get(), activeBlendMode);
+	int Texture::renderFillColor(SDL_Renderer *renderer, const SDL_Rect &source, const SDL_Rect &dest, uint32_t color) {
+		InitializeSilhouette(renderer);
+		silhouetteTexture->setColorMod((color>>24)&0xFF, (color>>16)&0xFF, (color>>8)&0xFF);
+		silhouetteTexture->setAlphaMod(color&0xFF);
 
 		// Render the texture area from the intermediate target to the screen
-		return SDL_RenderCopy(renderer, fillTarget->m_Texture.get(),
-		                      &dimensions, &dest);
+		return silhouetteTexture->render(renderer, source, dest);
 	}
 
-	int Texture::renderFillColor(SDL_Renderer *renderer, int x, int y,
-	                             uint32_t color, double angle) {
-		return renderFillColor(renderer, SDL_Rect{0, 0, w, h},
-		                       SDL_Rect{x, y, w, h}, color, angle, SDL_Point{w / 2, h / 2},
-		                       SDL_FLIP_NONE);
+	int Texture::renderFillColor(SDL_Renderer *renderer, int x, int y, uint32_t color, double angle) {
+		return renderFillColor(renderer, SDL_Rect{x, y, w, h}, color, angle, SDL_Point{w / 2, h / 2}, SDL_FLIP_NONE);
 	}
 
-	int Texture::renderFillColor(SDL_Renderer *renderer, int x, int y,
-	                             uint32_t color, double angle, int flip) {
-		return renderFillColor(renderer, SDL_Rect{0, 0, w, h},
-		                       SDL_Rect{x, y, w, h}, color, angle, SDL_Point{w / 2, h / 2}, flip);
+	int Texture::renderFillColor(SDL_Renderer *renderer, int x, int y, uint32_t color, double angle, int flip) {
+		return renderFillColor(renderer, SDL_Rect{x, y, w, h}, color, angle, SDL_Point{w / 2, h / 2}, flip);
 	}
 
 	int Texture::renderFillColor(SDL_Renderer *renderer, int x, int y, uint32_t color, double angle, int flip, double scale) {
@@ -234,7 +167,7 @@ namespace RTE {
 		scaleDest.w *= scale;
 		scaleDest.h *= scale;
 
-		return renderFillColor(renderer, SDL_Rect{0, 0, w, h}, scaleDest, color, angle, SDL_Point{w / 2, h / 2}, flip);
+		return renderFillColor(renderer, scaleDest, color, angle, SDL_Point{w / 2, h / 2}, flip);
 	}
 
 	int Texture::renderFillColor(SDL_Renderer *renderer, int x, int y, uint32_t color, double angle, const SDL_Point &center, int flip, double scale) {
@@ -242,69 +175,19 @@ namespace RTE {
 		scaleDest.w *= scale;
 		scaleDest.h *= scale;
 
-		return renderFillColor(renderer, SDL_Rect{0, 0, w, h}, scaleDest, color, angle, center, flip);
+		return renderFillColor(renderer, scaleDest, color, angle, center, flip);
 	}
 
-	int Texture::renderFillColor(SDL_Renderer *renderer, const SDL_Rect &source,
+	int Texture::renderFillColor(SDL_Renderer *renderer,
 	                             const SDL_Rect &dest, uint32_t color,
 	                             double angle, const SDL_Point &center, int flip) {
-		// Create a custom blend mode that will draw all pixels of the texture
-		// in the color of the target
-		SDL_BlendMode blender{SDL_ComposeCustomBlendMode(
-		    SDL_BLENDFACTOR_ZERO, SDL_BLENDFACTOR_SRC_ALPHA,
-		    SDL_BLENDOPERATION_ADD, SDL_BLENDFACTOR_ZERO,
-		    SDL_BLENDFACTOR_ONE, SDL_BLENDOPERATION_ADD)};
+		InitializeSilhouette(renderer);
 
-		SDL_BlendMode activeBlendMode;
-		SDL_GetTextureBlendMode(m_Texture.get(), &activeBlendMode);
-
-		// If neccessary extend the dimensions of the target to at least match
-		// the size of this texture
-		if (!fillTarget)
-			fillTarget = std::make_unique<Texture>(renderer, w, h);
-		else if (fillTarget->w < source.w && fillTarget->h < source.h)
-			fillTarget = std::make_unique<Texture>(renderer, w, h);
-		else if (fillTarget->w < source.w)
-			fillTarget = std::make_unique<Texture>(renderer, w, fillTarget->h);
-		else if (fillTarget->h < source.h)
-			fillTarget = std::make_unique<Texture>(renderer, fillTarget->w, h);
-
-		SDL_Rect dimensions{0, 0, source.w, source.h};
-
-		// Store the active render target
-		SDL_Texture *target{SDL_GetRenderTarget(renderer)};
-
-		uint8_t r, g, b, a;
-		SDL_GetRenderDrawColor(renderer, &r, &g, &b, &a);
-
-		// Set the render target to the fillTexture thatll be used to
-		// generate the background color
-		SDL_SetRenderTarget(renderer, fillTarget->m_Texture.get());
-		SDL_SetRenderDrawColor(renderer, (color >> 24) & 0xFF,
-		                       (color >> 16) & 0xFF, (color >> 8) & 0xFF,
-		                       (color)&0xFF);
-
-		// Clear the target to the desired color
-		SDL_RenderClear(renderer);
-
-		// Set the texture blend mode so itll do the thing
-		SDL_SetTextureBlendMode(m_Texture.get(), blender);
-
-		// Copy the texture onto the intermediate target
-		SDL_RenderCopy(renderer, m_Texture.get(), &source, &dimensions);
-
-		// Reset the render target
-		SDL_SetRenderTarget(renderer, target);
-
-		// Reset the render draw color
-		SDL_SetRenderDrawColor(renderer, r, g, b, a);
-
-		SDL_SetTextureBlendMode(m_Texture.get(), activeBlendMode);
+		silhouetteTexture->setColorMod((color>>24) & 0xFF, (color>>16) & 0xFF, (color>>8) & 0xFF);
+		silhouetteTexture->setAlphaMod(color&0xFF);
 
 		// Render the texture area from the intermediate target to the screen
-		return SDL_RenderCopyEx(renderer, fillTarget->m_Texture.get(),
-		                        &dimensions, &dest, angle, &center,
-		                        static_cast<SDL_RendererFlip>(flip));
+		return silhouetteTexture->render(renderer, dest, angle, center, flip);
 	}
 
 	int Texture::lock() {
@@ -521,6 +404,22 @@ namespace RTE {
 				return info.texture_formats[i];
 		}
 		return SDL_PIXELFORMAT_UNKNOWN;
+	}
+
+	void Texture::InitializeSilhouette(SDL_Renderer* renderer){
+		if (!silhouetteTexture) {
+			silhouetteTexture = std::make_unique<Texture>(renderer, w, h, SDL_TEXTUREACCESS_STATIC);
+			RTEAssert(silhouetteTexture.get(), "Unable to create internal silhouette");
+			silhouetteTexture->m_PixelsRO = m_PixelsRO;
+			SDL_PixelFormat *pf{SDL_AllocFormat(m_Format)};
+			std::replace_if(
+			    silhouetteTexture->m_PixelsRO.begin(), silhouetteTexture->m_PixelsRO.end(), [pf](auto x) { return (x & pf->Amask) != 0; }, 0xFFFFFFFF);
+			std::replace_if(
+			    silhouetteTexture->m_PixelsRO.begin(), silhouetteTexture->m_PixelsRO.end(), [pf](auto x) { return (x & pf->Amask) == 0; }, 0);
+			SDL_FreeFormat(pf);
+
+			SDL_UpdateTexture(silhouetteTexture->m_Texture.get(), nullptr, silhouetteTexture->m_PixelsRO.data(), w * sizeof(uint32_t));
+		}
 	}
 
 	Texture &Texture::operator=(Texture &&texture) {

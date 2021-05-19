@@ -626,9 +626,7 @@ namespace RTE {
 		/// 0 or a negative number which represents an error that can be read by
 		/// SDL_GetError.
 		/// </returns>
-		int renderFillColor(SDL_Renderer *renderer, const SDL_Rect &source,
-		                    const SDL_Rect &dest, uint32_t color, double angle,
-		                    const SDL_Point &center, int flip);
+		int renderFillColor(SDL_Renderer *renderer, const SDL_Rect &dest, uint32_t color, double angle, const SDL_Point &center, int flip);
 
 		/// <summary>
 		/// Lock the Texture for write access. This is only available for
@@ -897,7 +895,7 @@ namespace RTE {
 
 		// static Texture used for rendering silhouettes, will be created as
 		// needed, and must be able to contain the largest texture loaded
-		static std::unique_ptr<Texture> fillTarget;
+		std::unique_ptr<Texture> silhouetteTexture;
 
 	private:
 		/// <summary>
@@ -906,6 +904,8 @@ namespace RTE {
 		void Reset();
 
 		static uint32_t getNativeAlphaFormat(SDL_Renderer *renderer);
+
+		void InitializeSilhouette(SDL_Renderer* renderer);
 
 		Texture(const Texture &copy) = delete;
 		Texture &operator=(const Texture &copy) = delete;
