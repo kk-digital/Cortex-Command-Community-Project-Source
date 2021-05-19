@@ -112,12 +112,31 @@ namespace RTE {
 		return render(pRenderer, SDL_Rect{x, y, w, h}, angle, flip);
 	}
 
-	int Texture::render(SDL_Renderer *pRenderer, int x, int y, double angle,
-	                    int flip, double scale) {
+	int Texture::render(SDL_Renderer *pRenderer,
+	                    int x, int y,
+	                    double angle, const SDL_Point &center,
+	                    int flip) {
+		return render(pRenderer, SDL_Rect{x, y, w, h}, angle, center, flip);
+	}
+
+	int Texture::render(SDL_Renderer *pRenderer,
+	                    int x, int y,
+	                    double angle,
+	                    int flip,
+						double scale) {
 		return render(pRenderer, SDL_Rect{x, y, w, h} * scale, angle, flip);
 	}
 
-	int Texture::render(SDL_Renderer *pRenderer, const SDL_Rect &dest,
+	int Texture::render(SDL_Renderer *pRenderer,
+	                    int x, int y,
+	                    double angle, const SDL_Point &center,
+	                    int flip,
+	                    double scale) {
+		return render(pRenderer, SDL_Rect{x, y, w, h} * scale, angle, center, flip);
+	}
+
+	int Texture::render(SDL_Renderer *pRenderer,
+						const SDL_Rect &dest,
 	                    double angle, int flip) {
 		return SDL_RenderCopyEx(pRenderer, m_Texture.get(), nullptr, &dest,
 		                        angle, nullptr,
@@ -200,14 +219,14 @@ namespace RTE {
 	int Texture::renderFillColor(SDL_Renderer *renderer, int x, int y,
 	                             uint32_t color, double angle) {
 		return renderFillColor(renderer, SDL_Rect{0, 0, w, h},
-		                       SDL_Rect{x, y, w, h}, color, angle,
+		                       SDL_Rect{x, y, w, h}, color, angle, SDL_Point{w / 2, h / 2},
 		                       SDL_FLIP_NONE);
 	}
 
 	int Texture::renderFillColor(SDL_Renderer *renderer, int x, int y,
 	                             uint32_t color, double angle, int flip) {
 		return renderFillColor(renderer, SDL_Rect{0, 0, w, h},
-		                       SDL_Rect{x, y, w, h}, color, angle, flip);
+		                       SDL_Rect{x, y, w, h}, color, angle, SDL_Point{w / 2, h / 2}, flip);
 	}
 
 	int Texture::renderFillColor(SDL_Renderer *renderer, int x, int y, uint32_t color, double angle, int flip, double scale) {
@@ -215,12 +234,20 @@ namespace RTE {
 		scaleDest.w *= scale;
 		scaleDest.h *= scale;
 
-		return renderFillColor(renderer, SDL_Rect{0, 0, w, h}, scaleDest, color, angle, flip);
+		return renderFillColor(renderer, SDL_Rect{0, 0, w, h}, scaleDest, color, angle, SDL_Point{w / 2, h / 2}, flip);
+	}
+
+	int Texture::renderFillColor(SDL_Renderer *renderer, int x, int y, uint32_t color, double angle, const SDL_Point &center, int flip, double scale) {
+		SDL_Rect scaleDest{x, y, w, h};
+		scaleDest.w *= scale;
+		scaleDest.h *= scale;
+
+		return renderFillColor(renderer, SDL_Rect{0, 0, w, h}, scaleDest, color, angle, center, flip);
 	}
 
 	int Texture::renderFillColor(SDL_Renderer *renderer, const SDL_Rect &source,
 	                             const SDL_Rect &dest, uint32_t color,
-	                             double angle, int flip) {
+	                             double angle, const SDL_Point &center, int flip) {
 		// Create a custom blend mode that will draw all pixels of the texture
 		// in the color of the target
 		SDL_BlendMode blender{SDL_ComposeCustomBlendMode(
@@ -231,17 +258,16 @@ namespace RTE {
 		SDL_BlendMode activeBlendMode;
 		SDL_GetTextureBlendMode(m_Texture.get(), &activeBlendMode);
 
-		if (!fillTarget)
-			fillTarget = std::make_unique<Texture>(renderer, w, h);
-
 		// If neccessary extend the dimensions of the target to at least match
 		// the size of this texture
-		if (fillTarget->w < source.w && fillTarget->h < source.h)
-			fillTarget = std::make_unique<Texture>(renderer, source.w, source.h);
+		if (!fillTarget)
+			fillTarget = std::make_unique<Texture>(renderer, w, h);
+		else if (fillTarget->w < source.w && fillTarget->h < source.h)
+			fillTarget = std::make_unique<Texture>(renderer, w, h);
 		else if (fillTarget->w < source.w)
-			fillTarget = std::make_unique<Texture>(renderer, source.w, fillTarget->h);
+			fillTarget = std::make_unique<Texture>(renderer, w, fillTarget->h);
 		else if (fillTarget->h < source.h)
-			fillTarget = std::make_unique<Texture>(renderer, fillTarget->w, source.h);
+			fillTarget = std::make_unique<Texture>(renderer, fillTarget->w, h);
 
 		SDL_Rect dimensions{0, 0, source.w, source.h};
 
@@ -277,7 +303,7 @@ namespace RTE {
 
 		// Render the texture area from the intermediate target to the screen
 		return SDL_RenderCopyEx(renderer, fillTarget->m_Texture.get(),
-		                        &dimensions, &dest, angle, nullptr,
+		                        &dimensions, &dest, angle, &center,
 		                        static_cast<SDL_RendererFlip>(flip));
 	}
 

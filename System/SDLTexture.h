@@ -1,18 +1,16 @@
 #ifndef _SDLSYSTEMTEXTURE_
 #define _SDLSYSTEMTEXTURE_
 
-
 // Forward declarations
 extern "C" {
 
-	struct SDL_Surface;
-	struct SDL_Texture;
-	struct SDL_PixelFormat;
+struct SDL_Surface;
+struct SDL_Texture;
+struct SDL_PixelFormat;
 
-	struct SDL_Renderer;
-	struct SDL_Point;
-	typedef struct SDL_Rect SDL_Rect;
-
+struct SDL_Renderer;
+struct SDL_Point;
+typedef struct SDL_Rect SDL_Rect;
 }
 //! Deleter structs for unique_ptr
 struct sdl_texture_deleter {
@@ -26,8 +24,8 @@ struct sdl_deleter;
 
 namespace RTE {
 	/// <summary>
-	/// This is a wrapper class for SDL_Texture and is meant to be header safe
-	/// and used with SDLHelper.h
+	/// This is a wrapper class for SDL_Texture and the SDL_RenderCopy(Ex) functions
+	/// and is meant to be used with SDLHelper.h.
 	/// </summary>
 
 	class Texture {
@@ -35,7 +33,7 @@ namespace RTE {
 
 	public:
 		/// <summary>
-		/// Create an empty Texture. Only for use by friend classes
+		/// Create an empty Texture.
 		/// </summary>
 		Texture();
 
@@ -44,32 +42,32 @@ namespace RTE {
 		/// </summary>
 		/// <param name="texture">
 		/// The texture to be assigned. Since this is a move assignment, texture
-		/// must be an r-value
+		/// must be an r-value.
 		/// </param>
 		Texture(Texture &&texture);
 
 		/// <summary>
-		/// Create an empty Texture with dimensions width x height
+		/// Create an empty Texture with dimensions width x height.
 		/// </summary>
 		/// <param name="width">
-		/// Width of the new Texture
+		/// Width of the new Texture.
 		/// </param>
 		/// <param name="height">
-		/// Height of the new Texture
+		/// Height of the new Texture.
 		/// </param>
 		/// <param name="access">
-		/// TextureAccess of the Texture defaults to render target
+		/// TextureAccess of the Texture defaults to render target.
 		/// </param>
 		Texture(SDL_Renderer *renderer, int width, int height, int access = 2);
 
 		/// <summary>
-		/// Copy constructor with rendering context
+		/// Copy constructor with rendering context.
 		/// </summary>
 		/// <param name="renderer">
-		/// The Rendering context for which the texture is created
+		/// The Rendering context for which the texture is created.
 		/// </param>
 		/// <param name="texture">
-		/// The Texture to be copied, this is a deep copy operation
+		/// The Texture to be copied, this is a deep copy operation.
 		/// </param>
 		Texture(SDL_Renderer *renderer, const Texture &texture);
 
@@ -89,7 +87,7 @@ namespace RTE {
 		/// </param>
 		/// <returns>
 		/// 0 or a negative number which represents an error that can be read by
-		/// SDL_GetError
+		/// SDL_GetError.
 		/// </returns>
 		int render(SDL_Renderer *pRenderer, int x, int y);
 		/// <summary>
@@ -104,7 +102,7 @@ namespace RTE {
 		/// </param>
 		/// <returns>
 		/// 0 or a negative number which represents an error that can be read by
-		/// SDL_GetError
+		/// SDL_GetError.
 		/// </returns>
 		int render(SDL_Renderer *pRenderer, const SDL_Rect &dest);
 
@@ -115,7 +113,7 @@ namespace RTE {
 		/// Render context to be rendered to.
 		/// </param>
 		/// <param name="source">
-		/// SDL_Rect designating the area of the Texture to be drawn
+		/// SDL_Rect designating the area of the Texture to be drawn.
 		/// </param>
 		/// <param name="dest">
 		/// SDL_Rect designating the area the texture will be drawn to. The
@@ -123,7 +121,7 @@ namespace RTE {
 		/// </param>
 		/// <returns>
 		/// 0 or a negative number which represents an error that can be read by
-		/// SDL_GetError
+		/// SDL_GetError.
 		/// </returns>
 		int render(SDL_Renderer *pRenderer, const SDL_Rect &source,
 		           const SDL_Rect &dest);
@@ -143,7 +141,7 @@ namespace RTE {
 		/// </param>
 		/// <returns>
 		/// 0 or a negative number which represents an error that can be read by
-		/// SDL_GetError
+		/// SDL_GetError.
 		/// </returns>
 		int render(SDL_Renderer *pRenderer, const SDL_Rect &dest, double angle);
 
@@ -164,7 +162,7 @@ namespace RTE {
 		/// </param>
 		/// <returns>
 		/// 0 or a negative number which represents an error that can be read by
-		/// SDL_GetError
+		/// SDL_GetError.
 		/// </returns>
 		int render(SDL_Renderer *pRenderer, int x, int y, double angle);
 
@@ -180,8 +178,7 @@ namespace RTE {
 		/// texture will be stretched to fill the SDL_Rect.
 		/// </param>
 		/// <param name="flip">
-		/// One or more of <a
-		/// href="https://wiki.libsdl.org/SDL_RendererFlip">SDL_RenderFlip</a>,
+		/// One or more of <a href="https://wiki.libsdl.org/SDL_RendererFlip">SDL_RenderFlip</a>,
 		/// multiple values may be bitwise or'd together.
 		/// </param>
 		/// <returns>
@@ -204,13 +201,12 @@ namespace RTE {
 		/// y position to draw the texture to.
 		/// </param>
 		/// <param name="flip">
-		/// One or more of <a
-		/// href="https://wiki.libsdl.org/SDL_RendererFlip">SDL_RenderFlip</a>,
+		/// One or more of <a href="https://wiki.libsdl.org/SDL_RendererFlip">SDL_RenderFlip</a>,
 		/// multiple values may be bitwise or'd together.
 		/// </param>
 		/// <returns>
 		/// 0 or a negative number which represents an error that can be read by
-		/// SDL_GetError
+		/// SDL_GetError.
 		/// </returns>
 		int render(SDL_Renderer *pRenderer, int x, int y, int flip);
 
@@ -237,10 +233,40 @@ namespace RTE {
 		/// </param>
 		/// <returns>
 		/// 0 or a negative number which represents an error that can be read by
-		/// SDL_GetError
+		/// SDL_GetError.
 		/// </returns>
 		int render(SDL_Renderer *pRenderer, int x, int y, double angle,
 		           int flip);
+
+		/// <summary>
+		/// Render the texture to the screen rotated by angle around the center
+		/// and flipped horizontally or vertically according to flip.
+		/// </summary>
+		/// <param name="pRenderer">
+		/// Render context to be rendered to.
+		/// </param>
+		/// <param name="x">
+		/// x position to draw the texture to.
+		/// </param>
+		/// <param name="y">
+		/// y position to draw the texture to.
+		/// </param>
+		/// <param name="angle">
+		/// The angle the texture should be drawn at.
+		/// </param>
+		/// <param name="center">
+		/// The rotation pivot around which the destination rectangle will be rotated.
+		/// </param>
+		/// <param name="flip">
+		/// One or more of <a href="https://wiki.libsdl.org/SDL_RendererFlip">
+		/// SDL_RenderFlip</a>,
+		/// multiple values may be bitwise or'd together.
+		/// </param>
+		/// <returns>
+		/// 0 or a negative number which represents an error that can be read by
+		/// SDL_GetError.
+		/// </returns>
+		int render(SDL_Renderer *pRenderer, int x, int y, double angle, const SDL_Point &center, int flip);
 
 		/// <summary>
 		/// Render the texture to the screen rotated by angle around the center,
@@ -272,6 +298,42 @@ namespace RTE {
 		/// </returns>
 		int render(SDL_Renderer *pRenderer, int x, int y, double angle,
 		           int flip, double scale);
+
+		/// <summary>
+		/// Render the texture to the screen rotated by angle around the center,
+		/// flipped horizontally or vertically according to flip and scaled.
+		/// </summary>
+		/// <param name="pRenderer">
+		/// Render context to be rendered to.
+		/// </param>
+		/// <param name="x">
+		/// x position to draw the texture to.
+		/// </param>
+		/// <param name="y">
+		/// y position to draw the texture to.
+		/// </param>
+		/// <param name="angle">
+		/// The angle the texture should be drawn at.
+		/// </param>
+		/// <param name="center">
+		/// The pivot around which the destination rectangle is rotated.
+		/// </param>
+		/// <param name="flip">
+		/// One or more of <a href="https://wiki.libsdl.org/SDL_RendererFlip">
+		/// SDL_RenderFlip</a>,
+		/// multiple values may be bitwise or'd together.
+		/// </param>
+		/// <param name="scale">
+		/// Scalefactor
+		/// </param>
+		/// <returns>
+		/// 0 or a negative number which represents an error that can be read by
+		/// SDL_GetError
+		/// </returns>
+		int render(SDL_Renderer *pRenderer,
+				   int x, int y,
+				   double angle, const SDL_Point &center,
+				   int flip, double scale);
 
 		/// <summary>
 		/// Render the texture to the screen rotated by angle around the center
@@ -462,6 +524,45 @@ namespace RTE {
 		int renderFillColor(SDL_Renderer *renderer, int x, int y,
 		                    uint32_t color, double angle, int flip,
 		                    double scale);
+
+		/// <summary>
+		/// Render the silhouette of the texture to the screen rotated by angle,
+		/// flipped horizontally or vertically according to flip and scaled.
+		/// </summary>
+		/// <param name="pRenderer">
+		/// Render context to be rendered to.
+		/// </param>
+		/// <param name="x">
+		/// x position to draw the texture to.
+		/// </param>
+		/// <param name="y">
+		/// y position to draw the texture to.
+		/// </param>
+		/// <param name="color">
+		/// The color that the silhouette should be rendered
+		/// </param>
+		/// <param name="angle">
+		/// The angle the texture should be rotated by
+		/// </param>
+		/// <param name="center">
+		/// The pivot around which the destination rectangle is rotated
+		/// </param>
+		/// <param name="flip">
+		/// One or more of <a
+		/// href="https://wiki.libsdl.org/SDL_RendererFlip">SDL_RenderFlip</a>,
+		/// multiple values may be bitwise or'd together.
+		/// </param>
+		/// <param name="scale">
+		/// Scale to draw the Texture at.
+		/// </param>
+		/// <returns>
+		/// 0 or a negative number which represents an error that can be read by
+		/// SDL_GetError
+		/// </returns>
+		int renderFillColor(SDL_Renderer *renderer, int x, int y,
+		                    uint32_t color, double angle, const SDL_Point &center, int flip,
+		                    double scale);
+
 		/// <summary>
 		/// Render the silhouette of the texture to the screen rotated by angle
 		/// and flipped horizontally or vertically according to flip.
@@ -495,12 +596,47 @@ namespace RTE {
 		                    int flip);
 
 		/// <summary>
+		/// Render the silhouette of the texture to the screen rotated by angle
+		/// and flipped horizontally or vertically according to flip.
+		/// </summary>
+		/// <param name="pRenderer">
+		/// Render context to be rendered to.
+		/// </param>
+		/// <param name="source">
+		/// The area of the Texture to draw.
+		/// </param>
+		/// <param name="dest">
+		/// The area to draw to, the texture will be stretched as needed.
+		/// </param>
+		/// <param name="color">
+		/// The color that the silhouette should be rendered.
+		/// </param>
+		/// <param name="angle">
+		/// The angle the texture should be rotated by.
+		/// </param>
+		/// <param name="center">
+		/// The rotation center that the destination rectangle will be rotated around.
+		/// </param>
+		/// <param name="flip">
+		/// One or more of <a
+		/// href="https://wiki.libsdl.org/SDL_RendererFlip">SDL_RenderFlip</a>,
+		/// multiple values may be bitwise or'd together.
+		/// </param>
+		/// <returns>
+		/// 0 or a negative number which represents an error that can be read by
+		/// SDL_GetError.
+		/// </returns>
+		int renderFillColor(SDL_Renderer *renderer, const SDL_Rect &source,
+		                    const SDL_Rect &dest, uint32_t color, double angle,
+		                    const SDL_Point &center, int flip);
+
+		/// <summary>
 		/// Lock the Texture for write access. This is only available for
 		/// streaming access Textures.
 		/// </summary>
 		/// <returns>
 		/// 0 or a negative number which represents an error that can be read by
-		/// SDL_GetError
+		/// SDL_GetError.
 		/// </returns>
 		int lock();
 
@@ -544,11 +680,10 @@ namespace RTE {
 		/// </summary>
 		int getH() const { return h; }
 
-
 		/// <summary>
 		/// Get the textureaccess of the underlying texture
 		/// </summary>
-		int getAccess() const {return m_Access;}
+		int getAccess() const { return m_Access; }
 
 		/// <summary>
 		/// Get the pixel format of the Texture
@@ -620,7 +755,6 @@ namespace RTE {
 		/// </param>
 		void clearAll(uint32_t color = 0);
 
-
 		/// <summary>
 		/// For a globally locked streamable texture fills the area designated by rect with color
 		/// </summary>
@@ -663,7 +797,7 @@ namespace RTE {
 		/// <returns>
 		/// A const reference to the internal vector of pixels.
 		/// </returns>
-		const std::vector<uint32_t>& getPixelsRO() {return m_PixelsRO;}
+		const std::vector<uint32_t> &getPixelsRO() { return m_PixelsRO; }
 
 		/// <summary>
 		/// Get the writable pixels of this textures as a software surface.
@@ -770,7 +904,6 @@ namespace RTE {
 		/// Clear the texture and reset member variables
 		/// </summary>
 		void Reset();
-
 
 		static uint32_t getNativeAlphaFormat(SDL_Renderer *renderer);
 
