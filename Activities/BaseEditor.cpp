@@ -32,9 +32,9 @@
 
 #include "GUI/GUI.h"
 #include "GUI/GUIFont.h"
-#include "GUI/AllegroScreen.h"
-#include "GUI/AllegroBitmap.h"
-#include "GUI/AllegroInput.h"
+#include "GUI/SDLScreen.h"
+#include "GUI/SDLGUITexture.h"
+#include "GUI/SDLInput.h"
 #include "GUI/GUIControlManager.h"
 #include "GUI/GUICollectionBox.h"
 #include "GUI/GUITab.h"

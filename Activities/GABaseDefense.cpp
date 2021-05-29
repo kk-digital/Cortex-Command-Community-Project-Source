@@ -26,7 +26,7 @@
 
 #include "GUI/GUI.h"
 #include "GUI/GUIFont.h"
-#include "GUI/AllegroBitmap.h"
+#include "GUI/SDLGUITexture.h"
 #include "BuyMenuGUI.h"
 #include "SceneEditorGUI.h"
 

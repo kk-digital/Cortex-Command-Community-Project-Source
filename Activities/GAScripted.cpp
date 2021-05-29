@@ -18,7 +18,7 @@
 #include "UInputMan.h"
 #include "ConsoleMan.h"
 #include "AudioMan.h"
-#include "SettingsMan.h" 
+#include "SettingsMan.h"
 #include "AHuman.h"
 #include "ACrab.h"
 #include "SLTerrain.h"
@@ -28,7 +28,7 @@
 
 #include "GUI/GUI.h"
 #include "GUI/GUIFont.h"
-#include "GUI/AllegroBitmap.h"
+#include "GUI/SDLGUITexture.h"
 
 #include "BuyMenuGUI.h"
 #include "SceneEditorGUI.h"
