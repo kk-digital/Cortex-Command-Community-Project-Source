@@ -88,7 +88,7 @@ int pixel(SDL_Renderer *renderer, Sint16 x, Sint16 y)
 int pixelColor(SDL_Renderer * renderer, Sint16 x, Sint16 y, Uint32 color)
 {
 
-	return pixelRGBA(renderer, x, y, (color>>24) & 0xFF, (color>>16) & 0xFF, (color>>8) & 0xFF, (color) & 0xFF);
+	return pixelRGBA(renderer, x, y, (color>>16) & 0xFF, (color>>8) & 0xFF, (color) & 0xFF, (color>>24) & 0xFF);
 }
 
 /*!
@@ -175,7 +175,7 @@ int hline(SDL_Renderer * renderer, Sint16 x1, Sint16 x2, Sint16 y)
 int hlineColor(SDL_Renderer * renderer, Sint16 x1, Sint16 x2, Sint16 y, Uint32 color)
 {
 
-	return hlineRGBA(renderer, x1, x2, y, (color>>24) & 0xFF, (color>>16) & 0xFF, (color>>8) & 0xFF, (color) & 0xFF);
+	return hlineRGBA(renderer, x1, x2, y, (color>>16) & 0xFF, (color>>8) & 0xFF, (color) & 0xFF, (color>>24) & 0xFF);
 }
 
 /*!
@@ -232,7 +232,7 @@ int vline(SDL_Renderer * renderer, Sint16 x, Sint16 y1, Sint16 y2)
 int vlineColor(SDL_Renderer * renderer, Sint16 x, Sint16 y1, Sint16 y2, Uint32 color)
 {
 
-	return vlineRGBA(renderer, x, y1, y2, (color>>24) & 0xFF, (color>>16) & 0xFF, (color>>8) & 0xFF, (color) & 0xFF);
+	return vlineRGBA(renderer, x, y1, y2, (color>>16) & 0xFF, (color>>8) & 0xFF, (color) & 0xFF, (color>>24) & 0xFF);
 }
 
 /*!
@@ -275,7 +275,7 @@ int vlineRGBA(SDL_Renderer * renderer, Sint16 x, Sint16 y1, Sint16 y2, Uint8 r, 
 int rectangleColor(SDL_Renderer * renderer, Sint16 x1, Sint16 y1, Sint16 x2, Sint16 y2, Uint32 color)
 {
 
-	return rectangleRGBA(renderer, x1, y1, x2, y2, (color>>24) & 0xFF, (color>>16) & 0xFF, (color>>8) & 0xFF, (color) & 0xFF);
+	return rectangleRGBA(renderer, x1, y1, x2, y2, (color>>16) & 0xFF, (color>>8) & 0xFF, (color) & 0xFF, (color>>24) & 0xFF);
 }
 
 /*!
@@ -368,7 +368,7 @@ int rectangleRGBA(SDL_Renderer * renderer, Sint16 x1, Sint16 y1, Sint16 x2, Sint
 int roundedRectangleColor(SDL_Renderer * renderer, Sint16 x1, Sint16 y1, Sint16 x2, Sint16 y2, Sint16 rad, Uint32 color)
 {
 
-	return roundedRectangleRGBA(renderer, x1, y1, x2, y2, rad, (color>>24) & 0xFF, (color>>16) & 0xFF, (color>>8) & 0xFF, (color) & 0xFF);
+	return roundedRectangleRGBA(renderer, x1, y1, x2, y2, rad, (color>>16) & 0xFF, (color>>8) & 0xFF, (color) & 0xFF, (color>>24) & 0xFF);
 }
 
 /*!
@@ -513,7 +513,7 @@ int roundedRectangleRGBA(SDL_Renderer * renderer, Sint16 x1, Sint16 y1, Sint16 x
 int roundedBoxColor(SDL_Renderer * renderer, Sint16 x1, Sint16 y1, Sint16 x2, Sint16 y2, Sint16 rad, Uint32 color)
 {
 
-	return roundedBoxRGBA(renderer, x1, y1, x2, y2, rad, (color>>24) & 0xFF, (color>>16) & 0xFF, (color>>8) & 0xFF, (color) & 0xFF);
+	return roundedBoxRGBA(renderer, x1, y1, x2, y2, rad, (color>>16) & 0xFF, (color>>8) & 0xFF, (color) & 0xFF, (color>>24) & 0xFF);
 }
 
 /*!
@@ -710,7 +710,7 @@ int roundedBoxRGBA(SDL_Renderer * renderer, Sint16 x1, Sint16 y1, Sint16 x2,
 int boxColor(SDL_Renderer * renderer, Sint16 x1, Sint16 y1, Sint16 x2, Sint16 y2, Uint32 color)
 {
 
-	return boxRGBA(renderer, x1, y1, x2, y2, (color>>24) & 0xFF, (color>>16) & 0xFF, (color>>8) & 0xFF, (color) & 0xFF);
+	return boxRGBA(renderer, x1, y1, x2, y2, (color>>16) & 0xFF, (color>>8) & 0xFF, (color) & 0xFF, (color>>24) & 0xFF);
 }
 
 /*!
@@ -821,7 +821,7 @@ int line(SDL_Renderer * renderer, Sint16 x1, Sint16 y1, Sint16 x2, Sint16 y2)
 int lineColor(SDL_Renderer * renderer, Sint16 x1, Sint16 y1, Sint16 x2, Sint16 y2, Uint32 color)
 {
 
-	return lineRGBA(renderer, x1, y1, x2, y2, (color>>24) & 0xFF, (color>>16) & 0xFF, (color>>8) & 0xFF, (color) & 0xFF);
+	return lineRGBA(renderer, x1, y1, x2, y2, (color>>16) & 0xFF, (color>>8) & 0xFF, (color) & 0xFF, (color>>24) & 0xFF);
 }
 
 /*!
@@ -1096,7 +1096,7 @@ int _aalineRGBA(SDL_Renderer * renderer, Sint16 x1, Sint16 y1, Sint16 x2, Sint16
 int aalineColor(SDL_Renderer * renderer, Sint16 x1, Sint16 y1, Sint16 x2, Sint16 y2, Uint32 color)
 {
 
-	return _aalineRGBA(renderer, x1, y1, x2, y2, (color>>24) & 0xFF, (color>>16) & 0xFF, (color>>8) & 0xFF, (color) & 0xFF, 1);
+	return _aalineRGBA(renderer, x1, y1, x2, y2, (color>>16) & 0xFF, (color>>8) & 0xFF, (color) & 0xFF, (color>>24) & 0xFF, 1);
 }
 
 /*!
@@ -1135,7 +1135,7 @@ int aalineRGBA(SDL_Renderer * renderer, Sint16 x1, Sint16 y1, Sint16 x2, Sint16 
 int circleColor(SDL_Renderer * renderer, Sint16 x, Sint16 y, Sint16 rad, Uint32 color)
 {
 
-	return ellipseRGBA(renderer, x, y, rad, rad, (color>>24) & 0xFF, (color>>16) & 0xFF, (color>>8) & 0xFF, (color) & 0xFF);
+	return ellipseRGBA(renderer, x, y, rad, rad, (color>>16) & 0xFF, (color>>8) & 0xFF, (color) & 0xFF, (color>>24) & 0xFF);
 }
 
 /*!
@@ -1175,7 +1175,7 @@ int circleRGBA(SDL_Renderer * renderer, Sint16 x, Sint16 y, Sint16 rad, Uint8 r,
 int arcColor(SDL_Renderer * renderer, Sint16 x, Sint16 y, Sint16 rad, Sint16 start, Sint16 end, Uint32 color)
 {
 
-	return arcRGBA(renderer, x, y, rad, start, end, (color>>24) & 0xFF, (color>>16) & 0xFF, (color>>8) & 0xFF, (color) & 0xFF);
+	return arcRGBA(renderer, x, y, rad, start, end, (color>>16) & 0xFF, (color>>8) & 0xFF, (color) & 0xFF, (color>>24) & 0xFF);
 }
 
 /*!
@@ -1433,7 +1433,7 @@ int arcRGBA(SDL_Renderer * renderer, Sint16 x, Sint16 y, Sint16 rad, Sint16 star
 int aacircleColor(SDL_Renderer * renderer, Sint16 x, Sint16 y, Sint16 rad, Uint32 color)
 {
 
-	return aaellipseRGBA(renderer, x, y, rad, rad, (color>>24) & 0xFF, (color>>16) & 0xFF, (color>>8) & 0xFF, (color) & 0xFF);
+	return aaellipseRGBA(renderer, x, y, rad, rad, (color>>16) & 0xFF, (color>>8) & 0xFF, (color) & 0xFF, (color>>24) & 0xFF);
 }
 
 /*!
@@ -1692,7 +1692,7 @@ int _ellipseRGBA(SDL_Renderer * renderer, Sint16 x, Sint16 y, Sint16 rx, Sint16 
 int ellipseColor(SDL_Renderer * renderer, Sint16 x, Sint16 y, Sint16 rx, Sint16 ry, Uint32 color)
 {
 
-	return _ellipseRGBA(renderer, x, y, rx, ry, (color>>24) & 0xFF, (color>>16) & 0xFF, (color>>8) & 0xFF, (color) & 0xFF, 0);
+	return _ellipseRGBA(renderer, x, y, rx, ry, (color>>16) & 0xFF, (color>>8) & 0xFF, (color) & 0xFF, (color>>24) & 0xFF, 0);
 }
 
 /*!
@@ -1731,7 +1731,7 @@ int ellipseRGBA(SDL_Renderer * renderer, Sint16 x, Sint16 y, Sint16 rx, Sint16 r
 int filledCircleColor(SDL_Renderer * renderer, Sint16 x, Sint16 y, Sint16 rad, Uint32 color)
 {
 
-	return filledEllipseRGBA(renderer, x, y, rad, rad, (color>>24) & 0xFF, (color>>16) & 0xFF, (color>>8) & 0xFF, (color) & 0xFF);
+	return filledEllipseRGBA(renderer, x, y, rad, rad, (color>>16) & 0xFF, (color>>8) & 0xFF, (color) & 0xFF, (color>>24) & 0xFF);
 }
 
 /*!
@@ -1811,7 +1811,7 @@ __declspec(naked) long int
 int aaellipseColor(SDL_Renderer * renderer, Sint16 x, Sint16 y, Sint16 rx, Sint16 ry, Uint32 color)
 {
 
-	return aaellipseRGBA(renderer, x, y, rx, ry, (color>>24) & 0xFF, (color>>16) & 0xFF, (color>>8) & 0xFF, (color) & 0xFF);
+	return aaellipseRGBA(renderer, x, y, rx, ry, (color>>16) & 0xFF, (color>>8) & 0xFF, (color) & 0xFF, (color>>24) & 0xFF);
 }
 
 /*!
@@ -2027,7 +2027,7 @@ int aaellipseRGBA(SDL_Renderer * renderer, Sint16 x, Sint16 y, Sint16 rx, Sint16
 int filledEllipseColor(SDL_Renderer * renderer, Sint16 x, Sint16 y, Sint16 rx, Sint16 ry, Uint32 color)
 {
 
-	return _ellipseRGBA(renderer, x, y, rx, ry, (color>>24) & 0xFF, (color>>16) & 0xFF, (color>>8) & 0xFF, (color) & 0xFF, 1);
+	return _ellipseRGBA(renderer, x, y, rx, ry, (color>>16) & 0xFF, (color>>8) & 0xFF, (color) & 0xFF, (color>>24) & 0xFF, 1);
 }
 
 /*!
@@ -2191,7 +2191,7 @@ int pieColor(SDL_Renderer * renderer, Sint16 x, Sint16 y, Sint16 rad,
 	Sint16 start, Sint16 end, Uint32 color)
 {
 
-	return _pieRGBA(renderer, x, y, rad, start, end, (color>>24) & 0xFF, (color>>16) & 0xFF, (color>>8) & 0xFF, (color) & 0xFF, 0);
+	return _pieRGBA(renderer, x, y, rad, start, end, (color>>16) & 0xFF, (color>>8) & 0xFF, (color) & 0xFF, (color>>24) & 0xFF, 0);
 }
 
 /*!
@@ -2232,7 +2232,7 @@ int pieRGBA(SDL_Renderer * renderer, Sint16 x, Sint16 y, Sint16 rad,
 int filledPieColor(SDL_Renderer * renderer, Sint16 x, Sint16 y, Sint16 rad, Sint16 start, Sint16 end, Uint32 color)
 {
 
-	return _pieRGBA(renderer, x, y, rad, start, end, (color>>24) & 0xFF, (color>>16) & 0xFF, (color>>8) & 0xFF, (color) & 0xFF, 1);
+	return _pieRGBA(renderer, x, y, rad, start, end, (color>>16) & 0xFF, (color>>8) & 0xFF, (color) & 0xFF, (color>>24) & 0xFF, 1);
 }
 
 /*!
@@ -2473,7 +2473,7 @@ int filledTrigonRGBA(SDL_Renderer * renderer, Sint16 x1, Sint16 y1, Sint16 x2, S
 int polygonColor(SDL_Renderer * renderer, const Sint16 * vx, const Sint16 * vy, int n, Uint32 color)
 {
 
-	return polygonRGBA(renderer, vx, vy, n, (color>>24) & 0xFF, (color>>16) & 0xFF, (color>>8) & 0xFF, (color) & 0xFF);
+	return polygonRGBA(renderer, vx, vy, n, (color>>16) & 0xFF, (color>>8) & 0xFF, (color) & 0xFF, (color>>24) & 0xFF);
 }
 
 /*!
@@ -2616,7 +2616,7 @@ int polygonRGBA(SDL_Renderer * renderer, const Sint16 * vx, const Sint16 * vy, i
 int aapolygonColor(SDL_Renderer * renderer, const Sint16 * vx, const Sint16 * vy, int n, Uint32 color)
 {
 
-	return aapolygonRGBA(renderer, vx, vy, n, (color>>24) & 0xFF, (color>>16) & 0xFF, (color>>8) & 0xFF, (color) & 0xFF);
+	return aapolygonRGBA(renderer, vx, vy, n, (color>>16) & 0xFF, (color>>8) & 0xFF, (color) & 0xFF, (color>>24) & 0xFF);
 }
 
 /*!
@@ -2899,7 +2899,7 @@ int filledPolygonRGBAMT(SDL_Renderer * renderer, const Sint16 * vx, const Sint16
 int filledPolygonColor(SDL_Renderer * renderer, const Sint16 * vx, const Sint16 * vy, int n, Uint32 color)
 {
 
-	return filledPolygonRGBAMT(renderer, vx, vy, n, (color>>24) & 0xFF, (color>>16) & 0xFF, (color>>8) & 0xFF, (color) & 0xFF, NULL, NULL);
+	return filledPolygonRGBAMT(renderer, vx, vy, n, (color>>16) & 0xFF, (color>>8) & 0xFF, (color) & 0xFF, (color>>24) & 0xFF, NULL, NULL);
 }
 
 /*!
@@ -3515,7 +3515,7 @@ of the character width of the current global font.
 int stringColor(SDL_Renderer * renderer, Sint16 x, Sint16 y, const char *s, Uint32 color)
 {
 
-	return stringRGBA(renderer, x, y, s, (color>>24) & 0xFF, (color>>16) & 0xFF, (color>>8) & 0xFF, (color) & 0xFF);
+	return stringRGBA(renderer, x, y, s, (color>>16) & 0xFF, (color>>8) & 0xFF, (color) & 0xFF, (color>>24) & 0xFF);
 }
 
 /*!
@@ -3635,7 +3635,7 @@ double _evaluateBezier (double *data, int ndata, double t)
 int bezierColor(SDL_Renderer * renderer, const Sint16 * vx, const Sint16 * vy, int n, int s, Uint32 color)
 {
 
-	return bezierRGBA(renderer, vx, vy, n, s, (color>>24) & 0xFF, (color>>16) & 0xFF, (color>>8) & 0xFF, (color) & 0xFF);
+	return bezierRGBA(renderer, vx, vy, n, s, (color>>16) & 0xFF, (color>>8) & 0xFF, (color) & 0xFF, (color>>24) & 0xFF);
 }
 
 /*!
@@ -3734,7 +3734,7 @@ int bezierRGBA(SDL_Renderer * renderer, const Sint16 * vx, const Sint16 * vy, in
 */
 int thickLineColor(SDL_Renderer *renderer, Sint16 x1, Sint16 y1, Sint16 x2, Sint16 y2, Uint8 width, Uint32 color)
 {
-	return thickLineRGBA(renderer, x1, y1, x2, y2, width, (color>>24) & 0xFF, (color>>16) & 0xFF, (color>>8) & 0xFF, (color) & 0xFF);
+	return thickLineRGBA(renderer, x1, y1, x2, y2, width, (color>>16) & 0xFF, (color>>8) & 0xFF, (color) & 0xFF, (color>>24) & 0xFF);
 }
 
 /*!
