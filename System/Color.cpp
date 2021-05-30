@@ -58,10 +58,10 @@ namespace RTE {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void Color::SetRGBAFromColor(uint32_t color) {
-		m_R = (color>>24)&0xFF;
-		m_G = (color>>16)&0xFF;
-		m_B = (color>>8)&0xFF;
-		m_A = (color)&0xFF;
+		m_R = (color >> 16) & 0xFF;
+		m_G = (color >> 8) & 0xFF;
+		m_B = (color) & 0xFF;
+		m_A = (color >> 24) & 0xFF;
 #if 0
 		m_Index = std::clamp(index, 0, 255);
 

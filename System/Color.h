@@ -69,7 +69,7 @@ namespace RTE {
 		/// Gets the entry in the current color palette that most closely matches this Color's RGB values.
 		/// </summary>
 		/// <returns>The color entry index number.</returns>
-		uint32_t GetRGBA() const { return (static_cast<uint32_t>(m_R)<<24)|(static_cast<uint32_t>(m_G)<<16)|(static_cast<uint32_t>(m_B)<<8)|(static_cast<uint32_t>(m_A)); }
+		uint32_t GetRGBA() const { return (static_cast<uint32_t>(m_A) << 24) | (static_cast<uint32_t>(m_R) << 16) | (static_cast<uint32_t>(m_G) << 8) | (static_cast<uint32_t>(m_B)); }
 
 		/// <summary>
 		/// Sets all three RGB values of this Color, using an index from the current color palette.
@@ -149,7 +149,7 @@ namespace RTE {
 		/// <summary>
 		/// Clears all the member variables of this Color, effectively resetting the members of this abstraction level only.
 		/// </summary>
-		void Clear() { m_R = m_G = m_B = 0; }
+		void Clear() { m_R = m_G = m_B = 0; m_A = 255; }
 	};
 }
 #endif

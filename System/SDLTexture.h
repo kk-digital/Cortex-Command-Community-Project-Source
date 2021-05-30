@@ -719,6 +719,20 @@ namespace RTE {
 		uint32_t getPixel(SDL_Point pos) const;
 
 		/// <summary>
+		/// Get the color of the pixel at (x,y) without bounds checking.
+		/// </summary>
+		/// <param name="x">
+		/// x position of the pixel to get.
+		/// </param>
+		/// <param name="y">
+		/// y position of the pixel to get.
+		/// </param>
+		/// <reutrns>
+		/// A uint32_t in the pixel format of the texture.
+		/// </returns>
+		uint32_t getPixelLower(int x, int y) const;
+
+		/// <summary>
 		/// Get the color directly from the pixel array.
 		/// </summary>
 		/// <param name="index">
@@ -730,20 +744,66 @@ namespace RTE {
 		uint32_t getPixel(size_t index) const;
 
 		/// <summary>
-		/// Set a pixel at (x,y) to color
+		/// Set a pixel at (x,y) to color.
 		/// </summary>
 		/// <param name="x">
-		/// x coordinate of pixel to set
+		/// x coordinate of pixel to set.
 		/// </param>
 		/// <param name="y">
-		/// y coordinate of pixel to set
+		/// y coordinate of pixel to set.
 		/// </param>
 		/// <param name="color">
-		/// Color to set the pixel to in RGBA32
+		/// Color to set the pixel to in 0xAARRGGBB;
 		/// </param>
 		void setPixel(int x, int y, uint32_t color);
 
-		void setPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
+		/// <summary>
+		/// Set a pixel at (x,y) to the color given by r,g,b and a.
+		/// </summary>
+		/// <param name="x">
+		/// The x coordinate to set.
+		/// </param>
+		/// <param name="y">
+		/// The y coordinate to set.
+		/// </param>
+		/// <param name="r">
+		/// The red color component [0,255].
+		/// </param>
+		/// <param name="g">
+		/// The green color component [0,255].
+		/// </param>
+		/// <param name="b">
+		/// The blue color component [0,255].
+		/// </param>
+		/// <param name="a">
+		/// The alpha value [0,255].
+		/// </param>
+		void setPixel(int x, int y, uint32_t r, uint32_t g, uint32_t b, uint32_t a);
+
+		/// <summary>
+		/// Set a pixel at (x,y) to color, without bounds checking.
+		/// </summary>
+		/// <param name="x">
+		/// The x coordinate to set.
+		/// </param>
+		/// <param name="y">
+		/// The y coordinate to set.
+		/// </param>
+		/// <param name="color">
+		/// The color to set in 0xAARRGGBB.
+		/// </param>
+		void setPixelLower(int x, int y, uint32_t color);
+
+		/// <summary>
+		/// Replaces all pixels of oldColor by newColor.
+		/// </summary>
+		/// <param name="oldColor">
+		/// The color which should be replaced, formatted as 0xRRGGBBAA.
+		/// </param>
+		/// <param name="newColor">
+		/// The color that will replace oldColor, formatted as 0xRRGGBBAA.
+		/// </param>
+		void remapColor(uint32_t oldColor, uint32_t newColor);
 
 		/// <summary>
 		/// Clear all pixels of the Texture to color

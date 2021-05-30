@@ -212,13 +212,15 @@ namespace RTE {
 		if (!streamingAccess) {
 			// Create a Texture from the loaded Image with STATIC ACCESS (!)
 			// that lives in vram
-			returnTexture->m_Texture.reset(SDL_CreateTextureFromSurface(
-			    g_FrameMan.GetRenderer(), tempSurface.get()));
+			returnTexture->m_Texture = std::unique_ptr<SDL_Texture, sdl_texture_deleter>(SDL_CreateTexture(
+			    g_FrameMan.GetRenderer(),
+			    Texture::getNativeAlphaFormat(g_FrameMan.GetRenderer()),
+			    SDL_TEXTUREACCESS_STATIC, tempSurface->w, tempSurface->h));
 		} else {
 			// Create a Texture with STREAMING ACCESS that lives in vram
-			returnTexture->m_Texture.reset(SDL_CreateTexture(
+			returnTexture->m_Texture = std::unique_ptr<SDL_Texture, sdl_texture_deleter>(SDL_CreateTexture(
 			    g_FrameMan.GetRenderer(),
-			    returnTexture->getNativeAlphaFormat(g_FrameMan.GetRenderer()),
+			    Texture::getNativeAlphaFormat(g_FrameMan.GetRenderer()),
 			    SDL_TEXTUREACCESS_STREAMING, tempSurface->w, tempSurface->h));
 		}
 
@@ -248,8 +250,11 @@ namespace RTE {
 		SDL_ConvertPixels(w, h, tempSurface->format->format,
 		                  tempSurface->pixels, tempSurface->pitch, format,
 		                  returnTexture->m_PixelsRO.data(),
-		                  w * SDL_BYTESPERPIXEL(format));
+		                  w * sizeof(uint32_t));
 		SDL_UnlockSurface(tempSurface.get());
+
+		// Remove any color component from transparent pixels
+		std::replace_if(returnTexture->m_PixelsRO.begin(), returnTexture->m_PixelsRO.end(), [](auto x){return !(x&0xFF000000);}, 0);
 
 		// In case a streaming texture was requested copy the pixels over now
 		if (streamingAccess) {
@@ -264,6 +269,8 @@ namespace RTE {
 			                  returnTexture->m_PixelsWO, returnTexture->m_Pitch);
 
 			returnTexture->unlock();
+		} else {
+			SDL_UpdateTexture(returnTexture->m_Texture.get(), nullptr, returnTexture->m_PixelsRO.data(), returnTexture->w * sizeof(uint32_t));
 		}
 		// Set the blend mode to blend so that alpha is actually used
 		returnTexture->setBlendMode(SDL_BLENDMODE_BLEND);
