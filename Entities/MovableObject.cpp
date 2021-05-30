@@ -785,7 +785,7 @@ bool MovableObject::OnMOHit(HitData &hd)
     return hd.Terminate[hd.RootBody[HITOR] == this ? HITOR : HITEE] = OnMOHit(hd.RootBody[hd.RootBody[HITOR] == this ? HITEE : HITOR]);
 }
 
-void MovableObject::SetHitWhatTerrMaterial(unsigned char matID) {
+void MovableObject::SetHitWhatTerrMaterial(MID matID) {
     m_TerrainMatHit = matID;
     m_LastCollisionSimFrameNumber = g_MovableMan.GetSimUpdateFrameNumber();
     RunScriptedFunctionInAppropriateScripts("OnCollideWithTerrain", false, false, {}, {std::to_string(m_TerrainMatHit)});

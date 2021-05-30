@@ -228,10 +228,10 @@ namespace RTE {
 				drawColor = g_MaskColor;
 				break;
 			case g_DrawMOID:
-				drawColor = (m_MOID<<8)|0xff;
+				drawColor = (m_MOID)|0xff000000;
 				break;
 			case g_DrawNoMOID:
-				drawColor = (g_NoMOID<<8)|0xff;
+				drawColor = (g_NoMOID)|0xff000000;
 				break;
 			default:
 				drawColor = m_Color.GetRGBA();
@@ -240,7 +240,7 @@ namespace RTE {
 		if( mode == g_DrawMOID || mode == g_DrawNoMOID)
 			SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
 
-		SDL_SetRenderDrawColor(renderer, (drawColor>>24)&0xFF, (drawColor>>16)&0xFF,(drawColor>>8)&0xFF, (((drawColor)&0xFF) / 255.0) * alphaMod);
+		SDL_SetRenderDrawColor(renderer, (drawColor>>16)&0xFF, (drawColor>>8)&0xFF,(drawColor)&0xFF, (((drawColor>>24)&0xFF) / 255.0) * alphaMod);
 
 		SDL_RenderDrawPoint(renderer,
 		                    m_Pos.GetFloorIntX() - targetPos.GetFloorIntX(),

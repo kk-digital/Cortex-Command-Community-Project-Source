@@ -175,11 +175,11 @@ namespace RTE {
 			case g_DrawMOID:
 				spriteX = spritePos.GetFloorIntX();
 				spriteY = spritePos.GetFloorIntY();
-				m_aSprite[m_Frame]->renderFillColor(renderer, spriteX, spriteY, (m_MOID << 8) | 0xff);
+				m_aSprite[m_Frame]->renderFillColor(renderer, spriteX, spriteY, (m_MOID) | 0xff000000);
 				g_SceneMan.RegisterMOIDDrawing(spriteX, spriteY, spriteX + m_aSprite[m_Frame]->getW(), spriteY + m_aSprite[m_Frame]->getH());
 				break;
 			case g_DrawNoMOID:
-				m_aSprite[m_Frame]->renderFillColor(renderer, spritePos.GetFloorIntX(), spritePos.GetFloorIntY(), (g_NoMOID << 8) | 0xff);
+				m_aSprite[m_Frame]->renderFillColor(renderer, spritePos.GetFloorIntX(), spritePos.GetFloorIntY(), (g_NoMOID) | 0xff000000);
 				break;
 			case g_DrawTrans:
 				m_aSprite[m_Frame]->setAlphaMod(alphaMod);

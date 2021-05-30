@@ -1666,11 +1666,10 @@ void MOSRotating::Draw(SDL_Renderer *renderer,
 		else if (mode == g_DrawWhite)
 			m_aSprite[m_Frame]->renderFillColor(renderer, aDrawPos[i].m_X, aDrawPos[i].m_Y, g_WhiteColor, -m_Rotation.GetDegAngle(), spritePivot, flip, m_Scale);
 		else if (mode == g_DrawMOID) {
-			m_aSprite[m_Frame]->renderFillColor(renderer, aDrawPos[i].m_X, aDrawPos[i].m_Y, (m_MOID<<8)|0xff, -m_Rotation.GetDegAngle(), spritePivot, flip, m_Scale);
-			g_SceneMan.RegisterMOIDDrawing(aDrawPos[i].GetFloored(),
-				                           m_SpriteRadius + 2);
+			m_aSprite[m_Frame]->renderFillColor(renderer, aDrawPos[i].m_X, aDrawPos[i].m_Y, (m_MOID)|0xff000000, -m_Rotation.GetDegAngle(), spritePivot, flip, m_Scale);
+			g_SceneMan.RegisterMOIDDrawing(aDrawPos[i].GetFloored(), m_SpriteRadius + 2);
 		} else if (mode == g_DrawNoMOID) {
-			m_aSprite[m_Frame]->renderFillColor(renderer, aDrawPos[i].m_X, aDrawPos[i].m_Y, (g_NoMOID<<8)|0xff, -m_Rotation.GetDegAngle(), spritePivot, flip, m_Scale);
+			m_aSprite[m_Frame]->renderFillColor(renderer, aDrawPos[i].m_X, aDrawPos[i].m_Y, (g_NoMOID)|0xff000000, -m_Rotation.GetDegAngle(), spritePivot, flip, m_Scale);
 		} else if (mode == g_DrawTrans){
 			m_aSprite[m_Frame]->setAlphaMod(alphaMod);
 			m_aSprite[m_Frame]->render(renderer, aDrawPos[i].m_X, aDrawPos[i].m_Y, -m_Rotation.GetDegAngle(), spritePivot, flip);
