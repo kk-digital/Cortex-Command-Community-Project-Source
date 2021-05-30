@@ -94,6 +94,7 @@ namespace RTE {
 
 	int UInputMan::Initialize() {
 		// TODO: Initialize Controllers
+		// SDL_SetRelativeMouseMode(SDL_TRUE);
 		return 0;
 	}
 
@@ -150,7 +151,7 @@ namespace RTE {
 				default:
 					return "";
 			}
-		} else if (device == InputDevice::DEVICE_KEYB_ONLY || (device == InputDevice::DEVICE_MOUSE_KEYB && !(whichElement == InputElements::INPUT_AIM_UP || whichElement == InputElements::INPUT_AIM_DOWN)) && element->GetKey() != 0) {
+		} else if (device == InputDevice::DEVICE_KEYB_ONLY || ((device == InputDevice::DEVICE_MOUSE_KEYB && !(whichElement == InputElements::INPUT_AIM_UP || whichElement == InputElements::INPUT_AIM_DOWN)) && element->GetKey() != 0)) {
 			return std::string(SDL_GetKeyName(element->GetKey()));
 		}
 		return "";
@@ -164,7 +165,7 @@ namespace RTE {
 		}
 
 		for (auto key: m_KeyStates) {
-			if (key.second) {
+			if (KeyPressed(key.first)) {
 				m_ControlScheme[whichPlayer].GetInputMappings()[whichInput].Reset();
 				SetKeyMapping(whichPlayer, whichInput, key.first);
 				return true;
@@ -441,7 +442,7 @@ namespace RTE {
 		InputDevice device = m_ControlScheme[whichPlayer].GetDevice();
 		const InputMapping *element = &(m_ControlScheme[whichPlayer].GetInputMappings()[whichElement]);
 
-		if (!elementState && device == InputDevice::DEVICE_KEYB_ONLY || (device == InputDevice::DEVICE_MOUSE_KEYB && !(whichElement == InputElements::INPUT_AIM_UP || whichElement == InputElements::INPUT_AIM_DOWN))) {
+		if (!elementState && (device == InputDevice::DEVICE_KEYB_ONLY || (device == InputDevice::DEVICE_MOUSE_KEYB && !(whichElement == InputElements::INPUT_AIM_UP || whichElement == InputElements::INPUT_AIM_DOWN)))) {
 			elementState = GetKeyboardButtonState(static_cast<char>(element->GetKey()), whichState);
 		}
 		if (!elementState && device == InputDevice::DEVICE_MOUSE_KEYB && m_TrapMousePos) {
@@ -497,9 +498,6 @@ namespace RTE {
 		if ((key != m_KeyStates.end()) && (key->second == whichState))
 			return true;
 
-		if (whichState == InputState::Released)
-			return true;
-
 		return false;
 	}
 
@@ -512,11 +510,9 @@ namespace RTE {
 
 		auto button = m_MouseButtonState.find(whichButton);
 
-		if (button != m_MouseButtonState.end() && button->second == whichState)
+		if ((button != m_MouseButtonState.end()) && button->second == whichState) {
 			return true;
-
-		if (whichState == InputState::Released)
-			return true;
+		}
 
 		return false;
 	}
@@ -549,12 +545,14 @@ namespace RTE {
 			} else if (e.type == SDL_KEYUP) {
 				ReleaseKey(e.key.keysym.sym);
 				m_ModState = e.key.keysym.mod;
-			} else if (e.type == SDL_MOUSEMOTION)
+			} else if (e.type == SDL_MOUSEMOTION){
 				m_MousePos = Vector(e.motion.xrel, e.motion.yrel);
-			else if (e.type == SDL_MOUSEBUTTONDOWN)
+			} else if (e.type == SDL_MOUSEBUTTONDOWN) {
 				PressMouseButton(e.button.button);
-			else if (e.type == SDL_MOUSEBUTTONUP)
+				std::cout << "Mouse button" << e.button.button << " pressed " << e.button.clicks << "times" << std::endl;
+			} else if (e.type == SDL_MOUSEBUTTONUP) {
 				ReleaseMouseButton(e.button.button);
+			}
 		}
 		HandleSpecialInput();
 		return 0;
@@ -575,14 +573,22 @@ namespace RTE {
 		for(auto key = m_KeyStates.begin(); key != m_KeyStates.end(); key++){
 			if(key->second == InputState::Pressed)
 				key->second = InputState::Held;
+			else if(key->second  == InputState::Released)
+				key->second = InputState::None;
+		}
+
+		for(auto button = m_MouseButtonState.begin(); button != m_MouseButtonState.end(); button++){
+			if(button->second == InputState::Pressed)
+				button->second = InputState::Held;
+			else if (button->second == InputState::Released)
+				button->second = InputState::None;
 		}
 	}
 
 	void UInputMan::PressMouseButton(int button) {
-		if (m_MouseButtonState.find(button) == m_MouseButtonState.end() || m_MouseButtonState[button] == InputState::Released)
-			m_MouseButtonState[button] = InputState::Pressed;
-		else
-			m_MouseButtonState[button] = InputState::Held;
+		if (m_MouseButtonState.find(button) != m_MouseButtonState.end() && m_MouseButtonState[button] == InputState::Held)
+			return;
+		m_MouseButtonState[button] = InputState::Pressed;
 	}
 
 	void UInputMan::ReleaseMouseButton(int button) {
@@ -606,7 +612,7 @@ namespace RTE {
 			}
 			// Ctrl+R or Back button for controllers to reset activity.
 			if (!g_ResetActivity) {
-				g_ResetActivity = FlagCtrlState() && KeyPressed(SDLK_r) || AnyBackPress();
+				g_ResetActivity = (FlagCtrlState() && KeyPressed(SDLK_r)) || AnyBackPress();
 			}
 			if (g_ResetActivity) {
 				return;
@@ -633,8 +639,9 @@ namespace RTE {
 		} else if (!FlagCtrlState() && FlagAltState()) {
 			// Alt+Enter to switch resolution multiplier
 			if (KeyPressed(SDLK_RETURN)) {
-				g_FrameMan.SwitchResolutionMultiplier((g_FrameMan.ResolutionMultiplier() >= 2) ? 1 : 2);
-				// Alt+W to save ScenePreviewDump (miniature WorldDump)
+				g_FrameMan.SwitchResolutionMultiplier(g_FrameMan.IsFullscreen() ? 1 : 2);
+				g_FrameMan.SetFullscreen(!g_FrameMan.IsFullscreen());
+			// Alt+W to save ScenePreviewDump (miniature WorldDump)
 			} else if (KeyPressed(SDLK_w)) {
 				// g_FrameMan.SaveWorldPreviewToPNG("ScenePreviewDump");
 			}

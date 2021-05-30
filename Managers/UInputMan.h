@@ -23,13 +23,13 @@ namespace RTE {
 	public:
 
 		/// <summary>
-		/// Enumeration for the different states an input element or button can be in.
+		/// Enumeration for the different event states an input element or button can be in for the current frame.
 		/// </summary>
 		enum InputState {
 			Held = 0,
 			Pressed,
 			Released,
-			Repeat,
+			None,
 			InputStateCount
 		};
 
@@ -339,7 +339,7 @@ namespace RTE {
 		/// Shows the scancode of the keyboard key which is currently down.
 		/// </summary>
 		/// <returns>The scancode of the first keyboard key in the keyboard buffer. 0 means none.</returns>
-		int WhichKeyHeld() const {};//TODO { int key = readkey(); return key >> 8; }
+		int WhichKeyHeld() const {return 0;};//TODO { int key = readkey(); return key >> 8; }
 
 		/// <summary>
 		/// Gets whether a key was pressed between the last update and the one previous to it.
@@ -349,6 +349,8 @@ namespace RTE {
 		bool KeyPressed(SDL_Keycode keyToTest) const { return GetKeyboardButtonState(keyToTest, InputState::Pressed); }
 
 		bool KeyPressedScancode(SDL_Scancode keyToTest) const;
+
+ 		const std::unordered_map<SDL_Keycode, InputState>& GetKeyboardState() const { return m_KeyStates;}
 
 		/// <summary>
 		/// Gets whether a key was released between the last update and the one previous to it.
@@ -739,7 +741,7 @@ namespace RTE {
 
 		static GUIInput* s_InputClass; //!< Current input class if available.
 
-		std::unordered_map<int, InputState> m_KeyStates;
+		std::unordered_map<SDL_Keycode, InputState> m_KeyStates;
 
 		std::unordered_map<int, InputState> m_MouseButtonState;
 
