@@ -595,7 +595,7 @@ MOID SceneMan::GetMOIDPixel(int pixelX, int pixelY)
 	SDL_RenderReadPixels(g_FrameMan.GetRenderer(), &pos, SDL_PIXELFORMAT_RGBA8888, &pixel, sizeof(uint32_t));
 
 	// Shift the pixel right by 8 bits because all MOs draw shifted to avoid alpha blending
-	return pixel>>8;
+	return pixel^0xFF000000;
 }
 
 

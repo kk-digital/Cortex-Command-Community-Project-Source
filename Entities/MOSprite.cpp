@@ -578,10 +578,10 @@ void MOSprite::Draw(SDL_Renderer *renderer, const Vector &targetPos, DrawMode mo
 		else if (mode == g_DrawMOID) {
 			int spriteX = aDrawPos[i].GetFloorIntX();
 			int spriteY = aDrawPos[i].GetFloorIntY();
-			m_aSprite[m_Frame]->renderFillColor(renderer, spriteX, spriteY, (m_MOID<<8)|0xff, flip);
+			m_aSprite[m_Frame]->renderFillColor(renderer, spriteX, spriteY, m_MOID|0xff000000, flip);
 			g_SceneMan.RegisterMOIDDrawing(spriteX, spriteY, spriteX + m_aSprite[m_Frame]->getW(), spriteY + m_aSprite[m_Frame]->getH());
 		} else if (mode == g_DrawNoMOID) {
-			m_aSprite[m_Frame]->renderFillColor(renderer, aDrawPos[i].m_X, aDrawPos[i].m_Y, (g_NoMOID<<8)|0xff, flip);
+			m_aSprite[m_Frame]->renderFillColor(renderer, aDrawPos[i].m_X, aDrawPos[i].m_Y, g_NoMOID|0xff000000, flip);
 		} else if (mode == g_DrawTrans) {
 			m_aSprite[m_Frame]->setAlphaMod(alphaMod);
 			m_aSprite[m_Frame]->render(renderer, aDrawPos[i].m_X, aDrawPos[i].m_Y, flip);
