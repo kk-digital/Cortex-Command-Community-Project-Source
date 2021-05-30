@@ -228,10 +228,10 @@ namespace RTE {
 				drawColor = g_MaskColor;
 				break;
 			case g_DrawMOID:
-				drawColor = (m_MOID)|0xff000000;
+				drawColor = (m_MOID);
 				break;
 			case g_DrawNoMOID:
-				drawColor = (g_NoMOID)|0xff000000;
+				drawColor = (g_NoMOID);
 				break;
 			default:
 				drawColor = m_Color.GetRGBA();
