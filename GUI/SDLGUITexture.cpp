@@ -172,7 +172,7 @@ namespace RTE {
 
 	void SDLGUITexture::DrawLine(int x1, int y1, int x2, int y2, unsigned long color) {
 		if(!m_Texture){
-			lineRGBA(g_FrameMan.GetRenderer(), x1, y1, x2, y2, color>>24, color>>16, color>>8, color);
+			lineColor(g_FrameMan.GetRenderer(), x1, y1, x2, y2, color);
 		}
 
 		Lock();
@@ -189,9 +189,9 @@ namespace RTE {
 
 		if(!m_Texture){
 			if(filled){
-				boxRGBA(g_FrameMan.GetRenderer(), x, y, x + width, y + height, color>>24, color>>16, color>>8, color);
+				boxColor(g_FrameMan.GetRenderer(), x, y, x + width, y + height, color);
 			} else {
-				rectangleRGBA(g_FrameMan.GetRenderer(), x, y, x + width, y + height, color>>24, color>>16, color>>8, color);
+				rectangleColor(g_FrameMan.GetRenderer(), x, y, x + width, y + height, color);
 			}
 			return;
 		}
