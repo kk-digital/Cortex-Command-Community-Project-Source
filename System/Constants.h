@@ -29,17 +29,17 @@ namespace RTE {
 	static constexpr unsigned short c_MOIDLayerBitDepth = 16; //!< Bit depth of MOID layer bitmap.
 	static constexpr unsigned short c_GoldMaterialID = 2; //!< Index of gold material in the material palette.
 
-	//! ColorKeys in RGBA32 (0xRRGGBBAA)
-	enum ColorKeys : unsigned long{
-		g_MaskColor = 0xFF00FFFF, //!< Mask color for all 8bpp bitmaps (palette index 0 (255,0,255)). This color is fully transparent.
+	//! ColorKeys in ARGB8888 (0xAARRGGBB)
+	enum ColorKeys : unsigned long {
+		g_MaskColor = 0xFFFF00FF, //!< Mask color for all 8bpp bitmaps (palette index 0 (255,0,255)). This color is fully transparent.
 		//g_MOIDMaskColor = 0, //!< Mask color for 8bpp MOID layer bitmaps (palette index 0 (255,0,255)). This color is fully transparent.
-		g_MOIDMaskColor = 0xFF00FFFF, //!< Mask color for 16bpp MOID layer bitmaps (255,0,255). This color is fully transparent.
+		g_MOIDMaskColor = 0xFFFF00FF, //!< Mask color for 16bpp MOID layer bitmaps (255,0,255). This color is fully transparent.
 		g_AlphaZero = 0x0,
-		//g_MOIDMaskColor = 0xFF00FF, //!< Mask color for 32bpp MOID layer bitmaps (255,0,255). This color is fully transparent.
-		g_BlackColor = 0x000000FF,
+		//g_MOIDMaskColor = 0xFFFF00FF, //!< Mask color for 32bpp MOID layer bitmaps (255,0,255). This color is fully transparent.
+		g_BlackColor = 0xFF000000,
 		g_WhiteColor = 0xFFFFFFFF,
-		g_RedColor = 0xEA1507FF,
-		g_YellowGlowColor = 0xF9F338FF,
+		g_RedColor = 0xFFEA1507,
+		g_YellowGlowColor = 0xFFF9F338,
 		g_NoMOID = 0xff
 	};
 
@@ -48,17 +48,17 @@ namespace RTE {
 
 	// GUI colors
 	#define c_GUIColorWhite 0xFFFFFFFF
-	#define c_GUIColorYellow 0xFFFF80FF
-	#define c_GUIColorRed 0xFF6464FF
-	#define c_GUIColorGreen 0x80FF80FF
-	#define c_GUIColorLightBlue 0x6D75AAFF
-	#define c_GUIColorBlue 0x3B4153FF
-	#define c_GUIColorDarkBlue 0x0C1427FF
-	#define c_GUIColorGray 0xE8E8F8FF
+	#define c_GUIColorYellow 0xFFFFFF80
+	#define c_GUIColorRed 0xFFFF6464
+	#define c_GUIColorGreen 0xFF80FF80
+	#define c_GUIColorLightBlue 0xFF6D75AA
+	#define c_GUIColorBlue 0xFF3B4153
+	#define c_GUIColorDarkBlue 0xFF0C1427
+	#define c_GUIColorGray 0xFFE8E8F8
 
-	#define c_PlayerSlotColorDefault 0xA16D14FF
-	#define c_PlayerSlotColorHovered 0xCB8238FF
-	#define c_PlayerSlotColorDisabled 0x68430FFF
+	#define c_PlayerSlotColorDefault 0xFFA16D14
+	#define c_PlayerSlotColorHovered 0xFFCB8238
+	#define c_PlayerSlotColorDisabled 0xFF68430F
 #pragma endregion
 
 #pragma region Math Constants
@@ -158,9 +158,9 @@ namespace RTE {
 	/// </summary>
 	enum MouseButtons {
 		MOUSE_NONE = -1,
-		MOUSE_LEFT = 0,
-		MOUSE_RIGHT,
+		MOUSE_LEFT = 1,
 		MOUSE_MIDDLE,
+		MOUSE_RIGHT,
 		MAX_MOUSE_BUTTONS
 	};
 
