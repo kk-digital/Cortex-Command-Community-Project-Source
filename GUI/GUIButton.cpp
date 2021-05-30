@@ -171,9 +171,9 @@ void GUIButton::BuildBitmap(void)
     m_Font->SetColor(m_FontColor);
     m_Font->SetKerning(m_FontKerning);
 
-    m_Font->DrawAligned(m_DrawBitmap, m_Width/2, y, m_Text, GUIFont::Centre, GUIFont::Top, m_Width, m_FontShadow);
-    m_Font->DrawAligned(m_DrawBitmap, m_Width/2, m_Height+y, m_Text, GUIFont::Centre, GUIFont::Top, m_Width, m_FontShadow);
-    m_Font->DrawAligned(m_DrawBitmap, m_Width/2+1, m_Height*2+y+1, m_Text, GUIFont::Centre, GUIFont::Top, m_Width, m_FontShadow);
+    // m_Font->DrawAligned(m_DrawBitmap, m_Width/2, y, m_Text, GUIFont::Centre, GUIFont::Top, m_Width, m_FontShadow);
+    // m_Font->DrawAligned(m_DrawBitmap, m_Width/2, m_Height+y, m_Text, GUIFont::Centre, GUIFont::Top, m_Width, m_FontShadow);
+    // m_Font->DrawAligned(m_DrawBitmap, m_Width/2+1, m_Height*2+y+1, m_Text, GUIFont::Centre, GUIFont::Top, m_Width, m_FontShadow);
 }
 
 
@@ -194,8 +194,10 @@ void GUIButton::Draw(GUIScreen *Screen)
     SetRect(&Rect, 0, y, m_Width, m_Height);
 
     m_DrawBitmap->DrawTrans(Screen->GetBitmap(), m_X, m_Y, &Rect);
+	int textY = (m_Height / 2) - (m_Font->GetFontHeight() / 2) - 1;
+	m_Font->DrawAligned(Screen->GetBitmap(), m_X + m_Width/2, m_Y + textY, m_Text, GUIFont::Centre, GUIFont::Top, m_Width, m_FontShadow);
 
-    GUIPanel::Draw(Screen);
+	GUIPanel::Draw(Screen);
 }
 
 
@@ -371,7 +373,7 @@ void GUIButton::SetText(const string Text)
 {
     m_Text = Text;
 
-    BuildBitmap();
+    // BuildBitmap();
 }
 
 
