@@ -368,7 +368,7 @@ ClassInfoGetters
 // Arguments:       None.
 // Return value:    A pointer to the foreground color bitmap.
 
-	std::shared_ptr<Texture> GetFGColorTexture() { return m_pFGColor->GetTexture(); }
+	std::shared_ptr<Texture> & GetFGColorTexture() { return m_pFGColor->GetTexture(); }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -378,7 +378,7 @@ ClassInfoGetters
 // Arguments:       None.
 // Return value:    A pointer to the foreground color bitmap.
 
-	std::shared_ptr<Texture> GetBGColorTexture() { return m_pBGColor->GetTexture(); }
+	std::shared_ptr<Texture> & GetBGColorTexture() { return m_pBGColor->GetTexture(); }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -388,7 +388,7 @@ ClassInfoGetters
 // Arguments:       None.
 // Return value:    A pointer to the material bitmap.
 
-	std::shared_ptr<Texture> GetMaterialTexture() { return m_pMainTexture; }
+	std::shared_ptr<Texture> & GetMaterialTexture() { return m_pMainTexture; }
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          GetFGColorPixel
@@ -477,7 +477,7 @@ ClassInfoGetters
 // Description:     Gets the structural bitmap of this Terrain.
 // Arguments:       None.
 // Return value:    A pointer to the material bitmap.
-	std::shared_ptr<Texture> GetStructuralTexture() { return m_pStructural; }
+	std::shared_ptr<Texture> & GetStructuralTexture() { return m_pStructural; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////

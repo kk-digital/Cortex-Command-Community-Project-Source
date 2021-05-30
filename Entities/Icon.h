@@ -74,7 +74,7 @@ namespace RTE {
 		/// Gets the array of 32-bit bitmaps of this Icon, as many as GetFrameCount says.
 		/// </summary>
 		/// <returns>The BITMAPs in 32bpp of this Icon.</returns>
-		std::vector<std::shared_ptr<Texture>> GetTextures() const { return m_Textures; }
+		const std::vector<std::shared_ptr<Texture>> & GetTextures() const { return m_Textures; }
 #pragma endregion
 
 #pragma region Operator Overloads
