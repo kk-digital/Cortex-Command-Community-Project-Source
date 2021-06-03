@@ -64,7 +64,7 @@ namespace RTE {
 		/// <param name="newIndex">The new index of this Material in the material palette. 0 - 255.</param>
 		void SetIndex(uint32_t newIndex) { m_Index = newIndex; }
 
-		void SetIndex(uint32_t a, uint32_t b, uint32_t c) {m_Index = ((a<<24)&0xff)|((b<<16)&0xff)|((c<<8)&0xff)|0xFF;}
+		void SetIndex(uint32_t a, uint32_t b, uint32_t c) {m_Index = ((a<<16)&0xff)|((b<<8)&0xff)|((c)&0xff)|0xFF000000;}
 
 		/// <summary>
 		/// Gets the drawing priority of this Material. The higher the number, the higher chances that a pixel of this material will be drawn on top of others.
