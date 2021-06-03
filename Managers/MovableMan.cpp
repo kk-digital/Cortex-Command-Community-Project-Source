@@ -1664,6 +1664,7 @@ void MovableMan::Update()
     ////////////////////////////////////////////////////////////////////////////
     // First Pass
 
+	g_FrameMan.PushRenderTarget(g_SceneMan.GetMOIDTexture());
     {
         // Travel Actors
 		g_PerformanceMan.StartPerformanceMeasurement(PerformanceMan::ActorsTravel);
@@ -1783,6 +1784,7 @@ void MovableMan::Update()
     // Clear the MOID layer before starting to delete stuff which may be in the MOIDIndex
 
     g_SceneMan.ClearAllMOIDDrawings();
+	g_FrameMan.PopRenderTarget();
 //    g_SceneMan.MOIDClearCheck();
 
     ///////////////////////////////////////////////////
