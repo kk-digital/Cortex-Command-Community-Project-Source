@@ -487,7 +487,7 @@ namespace RTE {
 
 		HitData m_LastHit; //!< Data containing information on the last collision experienced by this Atom.
 		MOID m_MOIDHit; //!< The MO, if any, this Atom hit on the last step.
-		unsigned char m_TerrainMatHit; //!< The terrain material, if any, this Atom hit on the last step.
+		MID m_TerrainMatHit; //!< The terrain material, if any, this Atom hit on the last step.
 
 		int m_NumPenetrations; //!< Counts consecutive penetrations in a row. Resets to 0 as soon as penetration streak ends.
 

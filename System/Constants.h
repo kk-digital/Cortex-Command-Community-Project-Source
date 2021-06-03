@@ -5,8 +5,9 @@ namespace RTE {
 
 #pragma region Type Definitions
 	// TODO: Look into not using distinctive types for IDs.
-	typedef unsigned long MOID; //!< Distinctive type definition for MovableObject IDs.
-	typedef unsigned long MID; //!< Distinctive type definition for Material IDs.
+	typedef uint_fast32_t MOID; //!< Distinctive type definition for MovableObject IDs.
+	// TODO Use MIDs everywhere for materials
+	typedef uint_fast32_t MID; //!< Distinctive type definition for Material IDs.
 #pragma endregion
 
 #pragma region Game Version

@@ -1758,7 +1758,7 @@ enum MOType
 // Arguments:       None.
 // Return value:    The ID of the material, if any, that this MO hit during the last Travel.
 
-	unsigned char HitWhatTerrMaterial() const { if (m_LastCollisionSimFrameNumber == g_MovableMan.GetSimUpdateFrameNumber()) return m_TerrainMatHit; else return g_MaterialAir; }
+	MID HitWhatTerrMaterial() const { if (m_LastCollisionSimFrameNumber == g_MovableMan.GetSimUpdateFrameNumber()) return m_TerrainMatHit; else return g_MaterialAir; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -1768,7 +1768,7 @@ enum MOType
 // Arguments:       The ID of the material, if any, that this MO hit during the last Travel.
 // Return value:    None.
 
-	void SetHitWhatTerrMaterial(unsigned char matID);
+	void SetHitWhatTerrMaterial(MID matID);
 
 	bool ProvidesPieMenuContext() const { return m_ProvidesPieMenuContext; }
 
