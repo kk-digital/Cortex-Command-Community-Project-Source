@@ -263,7 +263,7 @@ void PieMenuGUI::Clear()
     m_InnerRadius = 0;
     m_EnabledRadius = 58;
     m_Thickness = 16;
-    m_pBGBitmap = 0;
+    m_pBGBitmap = {nullptr};
     m_RedrawBG = true;
     m_CursorAng = 0;
     m_EnoughInput = false;
@@ -922,7 +922,7 @@ void PieMenuGUI::Update()
 
     //////////////////////////////////////////
     // Digital input logic
-    
+
     // If not enabled, then don't read input, and don't change the hovered slice
     if (IsEnabled() && !m_EnoughInput)
     {

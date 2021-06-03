@@ -1079,6 +1079,7 @@ void MainMenuGUI::Update()
 						HideAllScreens();
 						m_MainMenuButtons[BACKTOMAIN]->SetVisible(false);
 						g_FrameMan.SwitchResolution(960,540);
+						g_FrameMan.SetFullscreen(false);
 					}
 				} else if (!g_FrameMan.IsFullscreen() && g_FrameMan.IsUpscaledFullscreen()) {
 					g_FrameMan.SwitchResolutionMultiplier(1);
