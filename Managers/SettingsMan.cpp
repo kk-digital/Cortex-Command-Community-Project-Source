@@ -440,7 +440,7 @@ namespace RTE {
 		writer.NewPropertyWithValue("ResolutionY", 540);
 		writer.NewPropertyWithValue("ResolutionMultiplier", true);
 		writer.NewPropertyWithValue("Fullscreen", false);
-		writer.NewPropertyWithValue("DisableMultiScreenResolutionValidation", false);
+		// writer.NewPropertyWithValue("DisableMultiScreenResolutionValidation", false);
 		writer.NewPropertyWithValue("SoundVolume", 40);
 		writer.NewPropertyWithValue("MusicVolume", 60);
 

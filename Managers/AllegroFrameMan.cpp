@@ -1,4 +1,4 @@
-#include "FrameMan.h"
+#include "AllegroFrameMan.h"
 #include "PostProcessMan.h"
 #include "PrimitiveMan.h"
 #include "PerformanceMan.h"

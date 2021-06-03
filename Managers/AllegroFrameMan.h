@@ -4,6 +4,7 @@
 #include "ContentFile.h"
 #include "Timer.h"
 #include "Box.h"
+#include <allegro.h>
 
 #define g_FrameMan FrameMan::Instance()
 
