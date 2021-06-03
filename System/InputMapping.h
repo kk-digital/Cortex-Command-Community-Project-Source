@@ -63,7 +63,7 @@ namespace RTE {
 		/// Sets the keyboard button mapping.
 		/// </summary>
 		/// <param name="newKey">The scan code of the new key to map to.</param>
-		void SetKey(int newKey) { m_KeyMap = newKey; }
+		void SetKey(SDL_Keycode newKey) { m_KeyMap = newKey; }
 #pragma endregion
 
 #pragma region Mouse Getters and Setters
@@ -130,7 +130,7 @@ namespace RTE {
 
 		std::string m_PresetDescription; //!< The friendly description that is associated with the scheme preset element, if any is set.
 
-		unsigned int m_KeyMap; //!< The keyboard key mapping.
+		SDL_Keycode m_KeyMap; //!< The keyboard key mapping.
 		int m_MouseButtonMap; //!< The mouse button mapping.
 
 		bool m_DirectionMapped; //!< Whether joystick direction mapping is enabled.
