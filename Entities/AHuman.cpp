@@ -4559,17 +4559,18 @@ void AHuman::DrawHUD(SDL_Renderer* renderer, const Vector &targetPos, int whichS
             float jetTimeRatio = m_JetTimeLeft / m_JetTimeTotal;
 // TODO: Don't hardcode this shit
 			uint32_t gaugeColor =
-				jetTimeRatio > 0.6F ? 0x74B33AFF : (jetTimeRatio > 0.3F ? 0xF6CD33FF : 0xEA1507);
-			SDL_Rect guageRect{
-				drawPos.GetFloorIntX(), drawPos.GetFloorIntY() + m_HUDStack + 6,
-				static_cast<int>(drawPos.GetFloorIntX() + (16 * jetTimeRatio)),
-				drawPos.GetFloorIntY() + m_HUDStack + 7};
+				jetTimeRatio > 0.6F ? 0xFF74B33A : (jetTimeRatio > 0.3F ? 0xFFF6CD33 : 0xFFEA1507);
 
-			SDL_SetRenderDrawColor(renderer, (gaugeColor & 0xFF000000) >> 3,
-				                   (gaugeColor & 0x00FF0000) >> 2,
-				                   (gaugeColor & 0x0000FF00) >> 1,
-				                   (gaugeColor & 0x000000FF));
-			SDL_RenderFillRect(renderer, &guageRect);
+			SDL_FRect gaugeRect{
+				drawPos.m_X, drawPos.m_Y + m_HUDStack + 6,
+				(16 * jetTimeRatio),
+				1.0};
+
+			SDL_SetRenderDrawColor(renderer, (gaugeColor >> 16) & 0xff,
+				                   (gaugeColor >> 8) & 0xff,
+				                   (gaugeColor) & 0xff,
+				                   (gaugeColor >> 24) & 0xff);
+			SDL_RenderFillRectF(renderer, &gaugeRect);
 
 			//                    rect(pTargetBitmap, drawPos.m_X, drawPos.m_Y +
 			//                    m_HUDStack - 2, drawPos.m_X + 24, drawPos.m_Y
