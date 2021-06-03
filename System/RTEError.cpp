@@ -6,7 +6,7 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	extern void ShowMessageBox(const std::string &message) { SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "RTE Aborted! (x_x)", message.c_str(), NULL); }
+	extern void ShowMessageBox(const std::string &message) { SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, u8"RTE Aborted! (x_x)", std::string(u8"" + message).c_str(), NULL); }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
