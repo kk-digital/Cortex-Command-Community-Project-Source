@@ -17,7 +17,6 @@ namespace RTE {
 		m_CurrentPing = 0;
 		m_FrameTimer = nullptr;
 		m_MSPFs.clear();
-		m_MSPFAverage = 0;
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -27,11 +26,11 @@ namespace RTE {
 		m_Sample = 0;
 
 		for (int counter = 0; counter < PerformanceCounters::PerfCounterCount; ++counter) {
-			m_PerfData.at(counter).fill(0);
+			m_PerfData.at(counter).fill(std::chrono::steady_clock::duration(0));
 			m_PerfPercentages.at(counter).fill(0);
 		}
-		m_PerfMeasureStart.fill(0);
-		m_PerfMeasureStop.fill(0);
+		m_PerfMeasureStart.fill(std::chrono::steady_clock::now());
+		m_PerfMeasureStop.fill(std::chrono::steady_clock::now());
 
 		// Set up performance counter's names
 		m_PerfCounterNames.at(PerformanceCounters::SimTotal) = "Total";
@@ -49,14 +48,14 @@ namespace RTE {
 
 	void PerformanceMan::Update() {
 		// Time and store the milliseconds per frame reading of the sim update to the buffer, and trim the buffer as needed
-		m_MSPFs.push_back(static_cast<int>(m_FrameTimer->GetElapsedRealTimeMS()));
+		m_MSPFs.push_back(std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - m_FrameTime));//(static_cast<int>(m_FrameTimer->GetElapsedRealTimeMS()));
 		while (m_MSPFs.size() > c_MSPFAverageSampleSize) {
 			m_MSPFs.pop_front();
 		}
 
 		// Calculate the average milliseconds per frame over the last sampleSize frames
-		m_MSPFAverage = 0;
-		for (const int &mspf : m_MSPFs) {
+		m_MSPFAverage = std::chrono::microseconds::zero();
+		for (const auto &mspf : m_MSPFs) {
 			m_MSPFAverage += mspf;
 		}
 		m_MSPFAverage /= m_MSPFs.size();
@@ -71,13 +70,13 @@ namespace RTE {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void PerformanceMan::StartPerformanceMeasurement(PerformanceCounters counter) {
-		m_PerfMeasureStart.at(counter) = g_TimerMan.GetAbsoluteTime();
+		m_PerfMeasureStart.at(counter) = std::chrono::steady_clock::now();
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void PerformanceMan::StopPerformanceMeasurement(PerformanceCounters counter) {
-		m_PerfMeasureStop.at(counter) = g_TimerMan.GetAbsoluteTime();
+		m_PerfMeasureStop.at(counter) = std::chrono::steady_clock::now();
 		AddPerformanceSample(counter, m_PerfMeasureStop.at(counter) - m_PerfMeasureStart.at(counter));
 	}
 
@@ -88,7 +87,7 @@ namespace RTE {
 		if (m_Sample >= c_MaxSamples) { m_Sample = 0; }
 
 		for (int counter = 0; counter < PerformanceCounters::PerfCounterCount; ++counter) {
-			m_PerfData.at(counter).at(m_Sample) = 0;
+			m_PerfData.at(counter).at(m_Sample) = std::chrono::steady_clock::duration::zero();
 			m_PerfPercentages.at(counter).at(m_Sample) = 0;
 		}
 	}
@@ -97,7 +96,7 @@ namespace RTE {
 
 	void PerformanceMan::CalculateSamplePercentages() {
 		for (int counter = 0; counter < PerformanceCounters::PerfCounterCount; ++counter) {
-			int samplePercentage = static_cast<int>(static_cast<float>(m_PerfData.at(counter).at(m_Sample)) / static_cast<float>(m_PerfData.at(counter).at(PerformanceCounters::SimTotal)) * 100);
+			int samplePercentage = static_cast<int>(static_cast<float>(std::chrono::duration_cast<std::chrono::microseconds>(m_PerfData.at(counter).at(m_Sample)).count()) / static_cast<float>(std::chrono::duration_cast<std::chrono::microseconds>(m_PerfData.at(counter).at(PerformanceCounters::SimTotal)).count()) * 100);
 			m_PerfPercentages.at(counter).at(m_Sample) = samplePercentage;
 		}
 	}
@@ -108,7 +107,7 @@ namespace RTE {
 		uint64_t totalPerformanceMeasurement = 0;
 		int sample = m_Sample;
 		for (int i = 0; i < c_Average; ++i) {
-			totalPerformanceMeasurement += m_PerfData.at(counter).at(sample);
+			totalPerformanceMeasurement += m_PerfData.at(counter).at(sample).count();
 			if (sample == 0) { sample = c_MaxSamples; }
 			sample--;
 		}
@@ -120,13 +119,16 @@ namespace RTE {
 	void PerformanceMan::Draw(SDLGUITexture &bitmapToDrawTo) {
 		if (m_ShowPerfStats) {
 			// Time and store the milliseconds per frame reading of the drawing frame to the buffer, and trim the buffer as needed
-			m_MSPFs.push_back(static_cast<int>(m_FrameTimer->GetElapsedRealTimeMS()));
+
+			// m_MSPFs.push_back(static_cast<int>(m_FrameTimer->GetElapsedRealTimeMS()));
+			m_MSPFs.push_back(std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - m_FrameTime));
+			m_FrameTime = std::chrono::steady_clock::now();
 			m_FrameTimer->Reset();
 			while (m_MSPFs.size() > c_MSPFAverageSampleSize) {
 				m_MSPFs.pop_front();
 			}
 			// Calculate the average milliseconds per frame over the last sampleSize frames
-			for(const int &mspf : m_MSPFs){
+			for(const auto &mspf : m_MSPFs){
 				m_MSPFAverage += mspf;
 			}
 			m_MSPFAverage /= m_MSPFs.size();
@@ -134,12 +136,12 @@ namespace RTE {
 			char str[128];
 
 			// Calculate the fps from the average
-			float fps = 1.0F / (static_cast<float>(m_MSPFAverage) / 1000.0F);
+			double fps = 1.0 / (static_cast<double>(m_MSPFAverage.count()) / 1000000.0);
 			std::snprintf(str, sizeof(str), "FPS: %.0f", fps);
 			g_FrameMan.GetLargeFont()->DrawAligned(&bitmapToDrawTo, c_StatsOffsetX, c_StatsHeight, str, GUIFont::Left);
 
 			// Display the average
-			std::snprintf(str, sizeof(str), "MSPF: %zi", m_MSPFAverage);
+			std::snprintf(str, sizeof(str), "uSPF: %zi", m_MSPFAverage.count());
 			g_FrameMan.GetLargeFont()->DrawAligned(&bitmapToDrawTo, c_StatsOffsetX, c_StatsHeight + 10, str, GUIFont::Left);
 
 			std::snprintf(str, sizeof(str), "Time Scale: x%.2f ([1]-, [2]+)", g_TimerMan.IsOneSimUpdatePerFrame() ? g_TimerMan.GetSimSpeed() : g_TimerMan.GetTimeScale());
@@ -210,11 +212,11 @@ namespace RTE {
 			int sample = m_Sample;
 			for (int i = 0; i < c_MaxSamples; ++i) {
 				// Show microseconds in graphs, assume that 33333 microseconds (one frame of 30 fps) is the highest value on the graph
-				int value = std::clamp(static_cast<int>(static_cast<float>(m_PerfData.at(pc).at(sample)) / (1000000.0F / 30.0F) * 100.0F), 0, 100);
+				int value = std::clamp(static_cast<int>(static_cast<float>(m_PerfData.at(pc).at(sample).count()) / (1000000.0F / 30.0F) * 100.0F), 0, 100);
 				int dotHeight = static_cast<int>(static_cast<float>(c_GraphHeight) / 100.0F * static_cast<float>(value));
 
 				bitmapToDrawTo.SetPixel(c_StatsOffsetX - 1 + c_MaxSamples - i, graphStart + c_GraphHeight - dotHeight, c_GUIColorRed);
-				peak = std::clamp(peak, 0, static_cast<int>(m_PerfData.at(pc).at(sample)));
+				peak = std::clamp(peak, 0, static_cast<int>(m_PerfData.at(pc).at(sample).count()));
 
 				if (sample == 0) { sample = c_MaxSamples; }
 				sample--;

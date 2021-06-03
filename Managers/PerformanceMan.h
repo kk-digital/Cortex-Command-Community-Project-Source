@@ -100,7 +100,7 @@ namespace RTE {
 		/// Gets the average of the MSPF reading buffer, calculated each frame.
 		/// </summary>
 		/// <returns>The average value of the MSPF reading buffer.</returns>
-		int GetMSPFAverage() const { return m_MSPFAverage; }
+		int GetMSPFAverage() const { return m_MSPFAverage.count()/1000; }
 #pragma endregion
 
 #pragma region Performance Counter Handling
@@ -150,16 +150,17 @@ namespace RTE {
 		bool m_AdvancedPerfStats; //!< Whether to show performance graphs on screen or not.
 
 		std::unique_ptr<Timer> m_FrameTimer; //!< Timer for measuring milliseconds per frame for performance stats readings.
+		std::chrono::steady_clock::time_point m_FrameTime;
 		int m_Sample; //!< Sample counter.
 
-		std::deque<int> m_MSPFs; //!< History log of readings, for averaging the results.
-		int m_MSPFAverage; //!< The average of the MSPF reading buffer above, calculated each frame.
+		std::deque<std::chrono::microseconds> m_MSPFs; //!< History log of readings, for averaging the results.
+		std::chrono::microseconds m_MSPFAverage; //!< The average of the MSPF reading buffer above, calculated each frame.
 		int m_CurrentPing; //!< Current ping value to display on screen.
 
 		std::array<std::array<int, c_MaxSamples>, PerformanceCounters::PerfCounterCount>  m_PerfPercentages; //!< Array to store percentages from SimTotal.
-		std::array<std::array<uint64_t, c_MaxSamples>, PerformanceCounters::PerfCounterCount> m_PerfData; //!< Array to store performance measurements in microseconds.
-		std::array<uint64_t, PerformanceCounters::PerfCounterCount> m_PerfMeasureStart; //!< Current measurement start time in microseconds.
-		std::array<uint64_t, PerformanceCounters::PerfCounterCount> m_PerfMeasureStop; //!< Current measurement stop time in microseconds.
+		std::array<std::array<std::chrono::steady_clock::duration, c_MaxSamples>, PerformanceCounters::PerfCounterCount> m_PerfData; //!< Array to store performance measurements in microseconds.
+		std::array<std::chrono::steady_clock::time_point, PerformanceCounters::PerfCounterCount> m_PerfMeasureStart; //!< Current measurement start time in microseconds.
+		std::array<std::chrono::steady_clock::time_point, PerformanceCounters::PerfCounterCount> m_PerfMeasureStop; //!< Current measurement stop time in microseconds.
 		std::array<std::string, PerformanceCounters::PerfCounterCount> m_PerfCounterNames; //!< Performance counter names displayed on screen.
 
 	private:
@@ -170,7 +171,7 @@ namespace RTE {
 		/// </summary>
 		/// <param name="counter">Counter to update.</param>
 		/// <param name="value">Value to add to this counter.</param>
-		void AddPerformanceSample(PerformanceCounters counter, uint64_t value) { m_PerfData.at(counter).at(m_Sample) += value; }
+		void AddPerformanceSample(PerformanceCounters counter, std::chrono::steady_clock::duration value) { m_PerfData.at(counter).at(m_Sample) += value; }
 
 		/// <summary>
 		/// Calculates current sample's percentages from SIM_TOTAL for all performance counters and stores them to m_PerfPercenrages.
