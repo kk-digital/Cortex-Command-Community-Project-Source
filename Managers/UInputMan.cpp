@@ -443,7 +443,7 @@ namespace RTE {
 		const InputMapping *element = &(m_ControlScheme[whichPlayer].GetInputMappings()[whichElement]);
 
 		if (!elementState && (device == InputDevice::DEVICE_KEYB_ONLY || (device == InputDevice::DEVICE_MOUSE_KEYB && !(whichElement == InputElements::INPUT_AIM_UP || whichElement == InputElements::INPUT_AIM_DOWN)))) {
-			elementState = GetKeyboardButtonState(static_cast<char>(element->GetKey()), whichState);
+			elementState = GetKeyboardButtonState(element->GetKey(), whichState);
 		}
 		if (!elementState && device == InputDevice::DEVICE_MOUSE_KEYB && m_TrapMousePos) {
 			elementState = GetMouseButtonState(whichPlayer, element->GetMouseButton(), whichState);

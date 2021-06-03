@@ -211,7 +211,7 @@ namespace RTE {
 		/// Gets the entire Material mapping array local to this DataModule.
 		/// </summary>
 		/// <returns>A pointer to the entire local mapping array, 256 unsigned chars. Ownership is NOT transferred!</returns>
-		const std::unordered_map<uint32_t, uint32_t>& GetAllMaterialMappings() const { return m_MaterialMappings; }
+		const robin_hood::unordered_map<MID, MID>& GetAllMaterialMappings() const { return m_MaterialMappings; }
 
 		/// <summary>
 		/// Adds a Material mapping local to a DataModule.
@@ -269,7 +269,7 @@ namespace RTE {
 
 		std::list<const Entity *> m_EntityList; //!< A list of loaded entities solely for the purpose of enumeration presets from Lua.
 		std::list<std::string> m_GroupRegister; //!< List of all Entity groups ever registered in this, all uniques.
-		std::unordered_map<uint32_t, uint32_t> m_MaterialMappings; //!< Material mappings local to this DataModule.
+		robin_hood::unordered_map<MID, MID> m_MaterialMappings; //!< Material mappings local to this DataModule.
 
 		/// <summary>
 		/// Ordered list of all owned Entity instances, ordered by the sequence of their reading - really now with overwriting?.

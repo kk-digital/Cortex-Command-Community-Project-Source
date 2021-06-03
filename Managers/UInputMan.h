@@ -143,7 +143,7 @@ namespace RTE {
 		/// <param name="whichPlayer">Which player to look up.</param>
 		/// <param name="whichInput">Which input element to look up.</param>
 		/// <returns>Which keyboard key is mapped to the specified player and element.</returns>
-		int GetKeyMapping(int whichPlayer, int whichInput) { return m_ControlScheme[whichPlayer].GetInputMappings()[whichInput].GetKey(); }
+		SDL_Keycode GetKeyMapping(int whichPlayer, int whichInput) { return m_ControlScheme[whichPlayer].GetInputMappings()[whichInput].GetKey(); }
 
 		/// <summary>
 		/// Sets a keyboard key mapped to a specific input element.
@@ -151,7 +151,7 @@ namespace RTE {
 		/// <param name="whichPlayer">Which player to do this for.</param>
 		/// <param name="whichInput">Which input element to map to.</param>
 		/// <param name="whichKey">The scancode of which keyboard key to map to above input element.</param>
-		void SetKeyMapping(int whichPlayer, int whichInput, int whichKey) { m_ControlScheme[whichPlayer].GetInputMappings()[whichInput].SetKey(whichKey); }
+		void SetKeyMapping(int whichPlayer, int whichInput, SDL_Keycode whichKey) { m_ControlScheme[whichPlayer].GetInputMappings()[whichInput].SetKey(whichKey); }
 
 		/// <summary>
 		/// Gets which joystick button is mapped to a specific input element.
@@ -333,7 +333,7 @@ namespace RTE {
 		/// </summary>
 		/// <param name="keyToTest">A const char with the Allegro-defined key enumeration to test.</param>
 		/// <returns>Whether the key is held or not.</returns>
-		bool KeyHeld(const char keyToTest) const { return GetKeyboardButtonState(keyToTest, InputState::Held); }
+		bool KeyHeld(const SDL_Keycode keyToTest) const { return GetKeyboardButtonState(keyToTest, InputState::Held); }
 
 		/// <summary>
 		/// Shows the scancode of the keyboard key which is currently down.
@@ -350,7 +350,7 @@ namespace RTE {
 
 		bool KeyPressedScancode(SDL_Scancode keyToTest) const;
 
- 		const std::unordered_map<SDL_Keycode, InputState>& GetKeyboardState() const { return m_KeyStates;}
+ 		const robin_hood::unordered_map<SDL_Keycode, InputState>& GetKeyboardState() const { return m_KeyStates;}
 
 		/// <summary>
 		/// Gets whether a key was released between the last update and the one previous to it.
@@ -741,18 +741,18 @@ namespace RTE {
 
 		static GUIInput* s_InputClass; //!< Current input class if available.
 
-		std::unordered_map<SDL_Keycode, InputState> m_KeyStates;
+		robin_hood::unordered_map<SDL_Keycode, InputState> m_KeyStates;
 
-		std::unordered_map<int, InputState> m_MouseButtonState;
+		robin_hood::unordered_map<int, InputState> m_MouseButtonState;
 
 		// static JOYSTICK_INFO s_PrevJoystickStates[Players::MaxPlayerCount]; //!< Joystick states as they were the previous update.
 		static int s_PrevJoystickStates[Players::MaxPlayerCount]; //!< Joystick states as they were the previous update.
 		// static JOYSTICK_INFO s_ChangedJoystickStates[Players::MaxPlayerCount]; //!< Joystick states that have changed.
 		static int s_ChangedJoystickStates [Players::MaxPlayerCount]; //!< Joystick states that have changed.
 
-		std::unordered_map<unsigned short, std::map<unsigned short, Vector>> m_ControllerAxisState;
+		robin_hood::unordered_map<unsigned short, std::map<unsigned short, Vector>> m_ControllerAxisState;
 
-		std::unordered_map<unsigned short, std::map<unsigned short, bool>> m_ControllerButtonState;
+		robin_hood::unordered_map<unsigned short, std::map<unsigned short, bool>> m_ControllerButtonState;
 
 		Vector m_MousePos;
 

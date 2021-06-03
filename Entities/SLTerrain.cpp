@@ -313,9 +313,9 @@ int SLTerrain::LoadData()
     // Get the background texture
 	std::shared_ptr<Texture> m_pBGTexture = m_BGTextureFile.GetAsTexture();
     // Get the material palette for quicker access
-	const std::unordered_map<uint32_t, Material *> apMaterials = g_SceneMan.GetMaterialPalette();
+	const robin_hood::unordered_map<MID, Material *> apMaterials = g_SceneMan.GetMaterialPalette();
     // Get the Material palette ID mappings local to the DataModule this SLTerrain is loaded from
-    const std::unordered_map<uint32_t, uint32_t> materialMappings = g_PresetMan.GetDataModule(m_TextureFile.GetDataModuleID())->GetAllMaterialMappings();
+    const robin_hood::unordered_map<MID, MID> materialMappings = g_PresetMan.GetDataModule(m_TextureFile.GetDataModuleID())->GetAllMaterialMappings();
     Material *pMaterial = nullptr;
 
 	MID lastMatIndex{std::numeric_limits<MID>::max()};
@@ -336,28 +336,9 @@ int SLTerrain::LoadData()
 	}
 
 	// Create list of materials
-	std::vector<uint32_t> uniqueMIDs;
+	SharedTexture materialTexture;
 
-	std::vector<SharedTexture> materialTextures;
-	std::vector<Material *> uniqueMaterials;
-
-	std::vector<uint32_t> materialColors;
-
-	// for(size_t i{0}; i < uniqueMIDs.size(); ++i){
-	// 	if (apMaterials.find(uniqueMIDs[i]) != apMaterials.end()) {
-	// 		uniqueMaterials[i] = apMaterials.at(uniqueMIDs[i]);
-	// 		materialTextures[i] = apMaterials.at(uniqueMIDs[i])->GetTexture();
-	// 		if(!materialTextures[i]){
-	// 			materialColors[i] = apMaterials.at(uniqueMIDs[i])->GetColor().GetRGBA();
-	// 		}
-	// 	} else {
-	// 		uniqueMaterials[i] = apMaterials.at(g_FrameMan.GetMIDFromIndex(g_MaterialDefault));
-	// 		materialTextures[i] = apMaterials.at(g_FrameMan.GetMIDFromIndex(g_MaterialDefault))->GetTexture();
-	// 	}
-	// }
-
-	auto findMIDIterator{uniqueMIDs.end()};
-	int material{-1};
+	uint32_t materialColor;
 
     // Go through each pixel on the main bitmap, which contains all the material pixels loaded from the bitmap
     // Place texture pixels on the FG layer corresponding to the materials on the main material bitmap
@@ -369,38 +350,27 @@ int SLTerrain::LoadData()
             matIndex = m_pMainTexture->getPixelLower(xPos, yPos);
 			if(matIndex != lastMatIndex) {
 				matHasTexture = false;
-				findMIDIterator = std::find(uniqueMIDs.begin(), uniqueMIDs.end(), matIndex);
-				material = findMIDIterator - uniqueMIDs.begin();
-				if(findMIDIterator == uniqueMIDs.end()){
-					try {
-						pMaterial = apMaterials.at(matIndex);
-					}
-					catch(std::out_of_range){
-						pMaterial = apMaterials.at(g_FrameMan.GetMIDFromIndex(g_MaterialDefault));
-					}
-					uniqueMIDs.push_back(matIndex);
-					uniqueMaterials.push_back(pMaterial);
-					materialTextures.push_back(pMaterial->GetTexture());
-					if(!materialTextures.back()){
-						materialColors.push_back(pMaterial->GetColor().GetRGBA());
-					}
+				if(apMaterials.find(matIndex) == apMaterials.end()){
+					pMaterial = apMaterials.at(g_FrameMan.GetMIDFromIndex(g_MaterialDefault));
 				} else {
-					pMaterial = uniqueMaterials[material];
+					pMaterial = apMaterials.at(matIndex);
 				}
+				materialTexture = pMaterial->GetTexture();
+				materialColor = pMaterial->GetColor().GetRGBA();
 			}
 
 
             // If actually no texture for the material, then use the material's solid color instead
-            if (!materialTextures[material])
+            if (!materialTexture)
             {
                 // Use the color
-                pixelColor = materialColors[material];
+                pixelColor = materialColor;
             }
             // Use the texture's color
             else
             {
 //                acquire_bitmap(apTexTextures[matIndex]);
-                pixelColor = materialTextures[material]->getPixel(xPos % materialTextures[material]->getW(), yPos % materialTextures[material]->getH());
+                pixelColor = materialTexture->getPixel(xPos % materialTexture->getW(), yPos % materialTexture->getH());
             }
 
             // Draw the correct color pixel on the foreground
@@ -799,7 +769,7 @@ uint32_t SLTerrain::GetMaterialPixel(const int pixelX, const int pixelY) const
         return g_MaterialAir;
 
 //    RTEAssert(m_pMainTexture->m_LockCount > 0, "Trying to access unlocked terrain bitmap");
-    return m_pMainTexture->getPixel(posX, posY);
+    return m_pMainTexture->getPixelLower(posX, posY);
 }
 
 

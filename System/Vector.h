@@ -158,7 +158,7 @@ namespace RTE {
 		/// Gets the magnitude of this Vector.
 		/// </summary>
 		/// <returns>A float describing the magnitude.</returns>
-		float GetMagnitude() const { return std::sqrt(std::pow(m_X, 2.0F) + std::pow(m_Y, 2.0F)); }
+		float GetMagnitude() const { return std::sqrt((m_X * m_X) + (m_Y * m_Y)); }
 
 		/// <summary>
 		/// Sets the magnitude of this Vector. A negative magnitude will invert the Vector's direction.

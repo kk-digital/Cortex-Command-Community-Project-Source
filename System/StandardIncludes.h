@@ -79,6 +79,8 @@
 #include <filesystem>
 #include <utility>
 
+#include "robin_hood.h" //TODO: this should ideally replace unordered_map/set
+
 // TODO: Get rid of these once alias qualifiers are added.
 using std::string;
 using std::list;
