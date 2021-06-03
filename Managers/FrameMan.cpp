@@ -85,7 +85,11 @@ namespace RTE {
 
 	int FrameMan::Initialize() {
 
-		SDL_SetWindowSize(m_Window, m_ResX, m_ResY);
+		SDL_SetWindowSize(m_Window, m_ResX * m_ResMultiplier, m_ResY * m_ResMultiplier);
+
+		SDL_GetWindowSize(m_Window, &m_ResX, &m_ResY);
+		m_ResX /= m_ResMultiplier;
+		m_ResY /= m_ResMultiplier;
 
 		SetFullscreen(m_Fullscreen);
 
@@ -94,8 +98,7 @@ namespace RTE {
 
 		SDL_RenderSetLogicalSize(m_Renderer, m_ResX, m_ResY);
 
-		// Upscale the resolution to the set multiplier.
-		SDL_RenderSetScale(m_Renderer, m_ResMultiplier, m_ResMultiplier);
+		// SDL_RenderSetScale(m_Renderer, m_ResMultiplier, m_ResMultiplier);
 
 		SDL_SetRenderDrawColor(m_Renderer, 0, 0, 0, 255);
 		SDL_SetRenderDrawBlendMode(m_Renderer, SDL_BLENDMODE_BLEND);
@@ -186,7 +189,7 @@ namespace RTE {
 
 	void FrameMan::RenderPresent() {
 		RTEAssert(m_TargetStack.size() == 1, "A render target has not been reset! " + std::to_string(m_TargetStack.size()) + " Elements remaining!");
-		SDL_SetRenderDrawColor(m_Renderer, 0, 0, 0, 0xFF);
+		SDL_SetRenderDrawColor(m_Renderer, 0x0, 0x0, 0x0, 0xFF);
 		SDL_RenderPresent(m_Renderer);
 	}
 
@@ -429,18 +432,20 @@ namespace RTE {
 		SDL_RenderClear(m_Renderer);
 
 		if (!m_Fullscreen) {
-			SDL_SetWindowSize(m_Window, newResX, newResY);
+			SDL_SetWindowSize(m_Window, newResX * newMultiplier, newResY * newMultiplier);
 			SDL_GetWindowSize(m_Window, &m_ResX, &m_ResY);
+			m_ResX /= newMultiplier;
+			m_ResY /= newMultiplier;
 
 			SDL_RenderSetLogicalSize(m_Renderer, m_ResX, m_ResY);
-			SDL_RenderSetScale(m_Renderer, newMultiplier, newMultiplier);
+			// SDL_RenderSetScale(m_Renderer, newMultiplier, newMultiplier);
 
 			m_NewResX = m_ResX;
 			m_NewResY = m_ResY;
 		} else {
-			SDL_RenderSetLogicalSize(m_Renderer, m_ResX, m_ResY);
+			SDL_RenderSetLogicalSize(m_Renderer, newResX, newResY);
 
-			SDL_RenderSetScale(m_Renderer, newMultiplier, newMultiplier);
+			// SDL_RenderSetScale(m_Renderer, newMultiplier, newMultiplier);
 
 			m_NewResX = m_ResX = newResX;
 			m_NewResY = m_ResY = newResY;
@@ -571,8 +576,6 @@ namespace RTE {
 
 	// FIXME: VERY TEMPORARY
 	uint32_t FrameMan::GetMIDFromIndex(unsigned char index) const {
-		if(index == 0)
-			return 0;
 		return m_MatPalette->getPixel(index);
 	}
 
