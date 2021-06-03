@@ -15,10 +15,17 @@ namespace RTE {
 		m_ClipRect = nullptr;
 		m_ColorKey = 0;
 	}
-	SDLGUITexture::SDLGUITexture(const SharedTexture &pTexture) {
-		m_Texture = pTexture;
-		m_Width = m_Texture->getW();
-		m_Height = m_Texture->getH();
+	SDLGUITexture::SDLGUITexture(SharedTexture pTexture) {
+		if (pTexture) {
+			m_Texture = pTexture;
+			m_Width = m_Texture->getW();
+			m_Height = m_Texture->getH();
+		}else{
+			m_Texture = nullptr;
+			m_Width = 0;
+			m_Height = 0;
+		}
+
 		m_ClipRect = nullptr;
 	}
 
