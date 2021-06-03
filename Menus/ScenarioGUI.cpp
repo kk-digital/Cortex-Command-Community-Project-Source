@@ -567,8 +567,9 @@ void ScenarioGUI::Update()
 // No need to do this all the time, just when controls change
 //        UpdateActivityBox();
 		//if (!m_pSchemeSelect->IsDropped())
-		UpdateScenesBox();
-    }
+		// UpdateScenesBox();
+		m_aScenarioButton[STARTHERE]->SetText(m_BlinkTimer.AlternateReal(333) ? "Start Here" : "> Start Here <");
+	}
 
     //////////////////////////////////////
     // PLAYER TEAM ASSIGNMENT SCREEN
@@ -1182,7 +1183,7 @@ void ScenarioGUI::UpdateScenesBox()
         m_pSceneInfoLabel->SetText(m_pSelectedScene->GetDescription());
         // Adjust the height of the text box and container so it fits the text to display
         int newHeight = m_pSceneInfoLabel->ResizeHeightToFit();
-        m_pSceneInfoBox->Resize(m_pSceneInfoBox->GetWidth(), newHeight + 140);
+        m_pSceneInfoBox->Resize(m_pSceneInfoBox->GetWidth(), newHeight + 140); //TODO: don't call this every frame
         // Blink the start game button
         m_aScenarioButton[STARTHERE]->SetText(m_BlinkTimer.AlternateReal(333) ? "Start Here" : "> Start Here <");
     }
@@ -1883,7 +1884,7 @@ void ScenarioGUI::DrawGlowLine(SDL_Renderer *renderer, const Vector &start, cons
 {
 	int blendAmount = 210 + RandomNum(-15, 15);
 
-	uint32_t blendColor = (color/255.0) * blendAmount;
+	uint32_t blendColor = static_cast<uint32_t>((color/255.0) * blendAmount )|0xff000000;
 
     lineColor(renderer, start.m_X, start.m_Y, end.m_X, end.m_Y, blendColor);
 /* Looks like ass
