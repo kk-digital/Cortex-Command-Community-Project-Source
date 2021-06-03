@@ -477,7 +477,6 @@ SLTerrain * SceneMan::GetTerrain()
 	return 0;
 }
 
-
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          GetMOColorBitmap
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -547,13 +546,15 @@ bool SceneMan::MOIDClearCheck()
 // Description:     Gets a specific pixel from the total material representation of
 //                  this Scene. LockScene() must be called before using this method.
 
-unsigned char SceneMan::GetTerrMatter(int pixelX, int pixelY)
+MID SceneMan::GetTerrMatter(int pixelX, int pixelY)
 {
 	RTEAssert(m_pCurrentScene, "Trying to get terrain matter before there is a scene or terrain!");
 
+	return m_pCurrentScene->GetTerrain()->GetMaterialPixel(pixelX, pixelY);
+
 	WrapPosition(pixelX, pixelY);
 
-    if (m_pDebugLayer && m_DrawPixelCheckVisualizations) { m_pDebugLayer->SetPixel(pixelX, pixelY, 5); }
+	if (m_pDebugLayer && m_DrawPixelCheckVisualizations) { m_pDebugLayer->SetPixel(pixelX, pixelY, 5); }
 
 	// If it's still below or to the sides out of bounds after
 	// what is supposed to be wrapped, shit is out of bounds.
@@ -565,7 +566,6 @@ unsigned char SceneMan::GetTerrMatter(int pixelX, int pixelY)
 	if (pixelY < 0)
 		return g_MaterialAir;
 
-	return m_pCurrentScene->GetTerrain()->GetMaterialPixel(pixelX, pixelY);
 }
 
 
@@ -592,10 +592,9 @@ MOID SceneMan::GetMOIDPixel(int pixelX, int pixelY)
 	SDL_Rect pos{pixelX, pixelY, 1, 1};
 
 
-	SDL_RenderReadPixels(g_FrameMan.GetRenderer(), &pos, SDL_PIXELFORMAT_RGBA8888, &pixel, sizeof(uint32_t));
-
+	SDL_RenderReadPixels(g_FrameMan.GetRenderer(), &pos, SDL_PIXELFORMAT_ARGB8888, &pixel, sizeof(uint32_t));
 	// Shift the pixel right by 8 bits because all MOs draw shifted to avoid alpha blending
-	return pixel^0xFF000000;
+	return pixel&0x00FFFFFF;
 }
 
 
@@ -606,7 +605,7 @@ MOID SceneMan::GetMOIDPixel(int pixelX, int pixelY)
 
 Material const * SceneMan::GetMaterial(const std::string &matName)
 {
-	map<std::string, uint32_t>::iterator itr = m_MatNameMap.find(matName);
+	map<std::string, MID>::iterator itr = m_MatNameMap.find(matName);
 	if (itr == m_MatNameMap.end())
 	{
 		g_ConsoleMan.PrintString("ERROR: Material of name: " + matName + " not found!");
@@ -621,11 +620,10 @@ Material const *SceneMan::GetMaterialFromID(uint32_t screen) const {
 	if(m_MaterialCount == 0)
 		return nullptr;
 
-	if(m_apMatPalette.find(screen) != m_apMatPalette.end())
+	if(m_apMatPalette.find(screen) == m_apMatPalette.end()){
+		return m_apMatPalette.at(g_MaterialAir);
+	} else {
 		return m_apMatPalette.at(screen);
-	else {
-		uint32_t air = g_FrameMan.GetMIDFromIndex(g_MaterialAir);
-		return m_apMatPalette.at(air);
 	}
 }
 
@@ -880,10 +878,17 @@ void SceneMan::RegisterMOIDDrawing(const Vector &center, float radius)
 
 void SceneMan::ClearAllMOIDDrawings()
 {
+	g_FrameMan.PushRenderTarget(m_pMOIDLayer->GetTexture());
+	SDL_SetRenderDrawColor(g_FrameMan.GetRenderer(), 0, 0, 0xFF, 0xFF);
+	SDL_RenderClear(g_FrameMan.GetRenderer());
+	SDL_SetRenderDrawColor(g_FrameMan.GetRenderer(), 0, 0, 0, 0);
+	g_FrameMan.PopRenderTarget();
+	/*
 	for (list<IntRect>::iterator itr = m_MOIDDrawings.begin(); itr != m_MOIDDrawings.end(); ++itr)
 		ClearMOIDRect(itr->m_Left, itr->m_Top, itr->m_Right, itr->m_Bottom);
 
 	m_MOIDDrawings.clear();
+	*/
 }
 
 
@@ -2745,7 +2750,7 @@ float SceneMan::CastObstacleRay(const Vector &start, const Vector &ray, Vector &
             // Scene wrapping, if necessary
             g_SceneMan.WrapPosition(intPos[X], intPos[Y]);
 
-            unsigned char checkMat = GetTerrMatter(intPos[X], intPos[Y]);
+            MID checkMat = GetTerrMatter(intPos[X], intPos[Y]);
             MOID checkMOID = GetMOIDPixel(intPos[X], intPos[Y]);
 
             // Translate any found MOID into the root MOID of that hit MO

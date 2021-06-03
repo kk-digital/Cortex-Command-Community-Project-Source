@@ -98,6 +98,18 @@ struct IntRect
 
 };
 
+	struct AABB{
+		int m_X;
+		int m_Y;
+		int m_Width;
+		int m_Height;
+		int m_cX;
+		int m_cY;
+		double m_Angle;
+
+		AABB(int x, int y, int width, int height, int cx = 0, int cy =0, double angle = 0) :
+		    m_X{x}, m_Y{y}, m_Width{width}, m_Height{height}, m_cX{cx}, m_cY(cy), m_Angle{angle} {};
+    };
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Class:           SceneMan
@@ -328,7 +340,7 @@ public:
 // Return value:    A pointer to the first Material in the palette. Index into it up to
 //                  255 to access the other Material:s in it.
 
-	const std::unordered_map<uint32_t, Material *>& GetMaterialPalette() { return m_apMatPalette; }
+	const robin_hood::unordered_map<MID, Material *>& GetMaterialPalette() { return m_apMatPalette; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -506,7 +518,7 @@ public:
 // Arguments:       The X and Y coordinates of screen material pixel to get.
 // Return value:    An unsigned char specifying the requested pixel's material index.
 
-    unsigned char GetTerrMatter(int pixelX, int pixelY);
+    MID GetTerrMatter(int pixelX, int pixelY);
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -1701,9 +1713,9 @@ public:
     int m_LayerDrawMode;
 
     // Material palette stuff
-    std::map<std::string, uint32_t> m_MatNameMap;
+    std::map<std::string, MID> m_MatNameMap;
     // This gets filled with holes, not contigous from 0 onward, but whatever the ini specifies. The Material objects are owned here
-	std::unordered_map<uint32_t, Material *> m_apMatPalette;
+	robin_hood::unordered_map<MID, Material *> m_apMatPalette;
     // The total number of added materials so far
     int m_MaterialCount;
 
@@ -1714,7 +1726,7 @@ public:
     Vector m_Offset[c_MaxScreenCount];
     // The difference in current offset and the Update() before.
     Vector m_DeltaOffset[c_MaxScreenCount];
-	// The finahttps://youtu.be/VZu9X6ctEWg?t=869l offset target of the current
+	// The final offset target of the current
 	// scroll interpolation, in scene coordinates!
 	Vector m_ScrollTarget[c_MaxScreenCount];
     // The team associated with each screen.
