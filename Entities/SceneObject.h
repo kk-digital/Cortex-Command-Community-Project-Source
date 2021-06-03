@@ -479,7 +479,7 @@ public:
 // Return value:    A good identifyable graphical representation of this in a BITMAP, if
 //                  available. If not, 0 is returned. Ownership is NOT TRANSFERRED!
 
-    virtual std::shared_ptr<Texture> GetGraphicalIcon() { return 0; }
+    virtual const std::shared_ptr<Texture> GetGraphicalIcon() const { return 0; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -519,7 +519,7 @@ public:
 	/// Draws the current graphical representation using the provided renderer.
 	/// </summary>
 	/// <param name="renderer">
-	/// The renderer to usea.
+	/// The renderer to use.
 	/// </param>
 	/// <param name="targetPos">
 	/// Where to draw the object.

@@ -196,7 +196,7 @@ ClassInfoGetters
 // Return value:    A good identifyable graphical representation of this in a BITMAP, if
 //                  available. If not, 0 is returned. Ownership is NOT TRANSFERRED!
 
-	std::shared_ptr<Texture> GetGraphicalIcon() override;
+	const std::shared_ptr<Texture> GetGraphicalIcon() const override;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////

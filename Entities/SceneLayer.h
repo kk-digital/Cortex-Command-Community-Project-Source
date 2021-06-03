@@ -219,7 +219,7 @@ ClassInfoGetters
 // Arguments:       None.
 // Return value:    A pointer to the BITMAP object. Ownership is NOT transferred!
 
-	std::shared_ptr<Texture> & GetTexture() { return m_pMainTexture; }
+	std::shared_ptr<Texture> GetTexture() { return m_pMainTexture; }
 
 	size_t GetTextureHash() const { return m_TextureFile.GetHash(); }
 

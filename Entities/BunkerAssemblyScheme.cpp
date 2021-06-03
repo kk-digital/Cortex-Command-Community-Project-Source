@@ -303,7 +303,7 @@ void BunkerAssemblyScheme::Destroy(bool notInherited)
 // Description:     Gets a bitmap showing a good identifyable icon of this, for use in
 //                  GUI lists etc.
 
-SharedTexture BunkerAssemblyScheme::GetGraphicalIcon()
+const SharedTexture BunkerAssemblyScheme::GetGraphicalIcon() const
 {
 	return m_pIconBitmap;
 }
