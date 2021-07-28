@@ -70,15 +70,12 @@ namespace RTE {
 		}
 
 		if (g_UInputMan.MouseButtonPressed(SDL_BUTTON_RIGHT)) {
-			std::cout << "Button pushed" << std::endl;
 			m_MouseButtonsEvents[1] = Pushed;
 			m_MouseButtonsStates[1] = Down;
 		} else if (g_UInputMan.MouseButtonHeld(SDL_BUTTON_RIGHT)) {
-			std::cout << "Button held" << std::endl;
 			m_MouseButtonsEvents[1] = Repeat;
 			m_MouseButtonsStates[1] = Down;
 		} else {
-			std::cout << "Button released" << std::endl;
 			m_MouseButtonsEvents[1] = (m_MouseButtonsStates[0] == Down) ? Released : None;
 			m_MouseButtonsStates[1] = Up;
 		}
@@ -98,16 +95,13 @@ namespace RTE {
 
 			// Button states/presses, Primary - ACTUALLY make either button work, we don't have use for secondary in menus
 			if (g_UInputMan.MenuButtonHeld(UInputMan::MENU_EITHER)) {
-				std::cout << "Menu Button held" << std::endl;
 				m_MouseButtonsStates[0] = Down;
 				m_MouseButtonsEvents[0] = Repeat;
 			}
 			if (g_UInputMan.MenuButtonPressed(UInputMan::MENU_EITHER)) {
-				std::cout << "Menu button pressed" << std::endl;
 				m_MouseButtonsStates[0] = Down;
 				m_MouseButtonsEvents[0] = Pushed;
 			} else if (g_UInputMan.MenuButtonReleased(UInputMan::MENU_EITHER)) {
-				// std::cout << "Menu button released" << std::endl;
 				m_MouseButtonsStates[0] = Up;
 				m_MouseButtonsEvents[0] = Released;
 			} else if (m_MouseButtonsEvents[0] == Released) {
