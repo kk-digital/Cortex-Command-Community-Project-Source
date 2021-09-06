@@ -23,6 +23,12 @@
 
 #include "RTEError.h"
 
+
+
+
+#include "BitmapToPolygonHelper.h"
+#include "PrimitiveMan.h"
+
 namespace RTE {
 
 ConcreteClassInfo(MOSRotating, MOSprite, 500)
