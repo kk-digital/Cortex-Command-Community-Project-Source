@@ -131,11 +131,11 @@ ClassInfoGetters
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          GetParentAssemblySchemeName
 //////////////////////////////////////////////////////////////////////////////////////////
-// Description:     
-//                  
+// Description:
+//
 // Arguments:       None.
-// Return value:    
-//                  
+// Return value:
+//
 
     string GetParentAssemblySchemeName() const { return m_ParentAssemblyScheme; }
 
@@ -188,7 +188,7 @@ ClassInfoGetters
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Adds placed object to the internallist of placed objects for this assembly,
 //					applies it's image to presentation bitmap and sets assembly price accordingly.
-//					Added scene object MUST have coordinates relative to this assembly. 
+//					Added scene object MUST have coordinates relative to this assembly.
 // Arguments:       Object to add.
 // Return value:    None.
 

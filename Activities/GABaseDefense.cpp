@@ -30,9 +30,6 @@
 #include "BuyMenuGUI.h"
 #include "SceneEditorGUI.h"
 
-
-extern bool g_ResetActivity;
-
 namespace RTE {
 
 ConcreteClassInfo(GABaseDefense, GameActivity, 0)
@@ -172,7 +169,7 @@ void GABaseDefense::Destroy(bool notInherited)
 int GABaseDefense::Start()
 {
     int error = GameActivity::Start();
-    
+
     ////////////////////////////////
     // Set up teams
 

@@ -20,7 +20,12 @@ sources += files(
 'SDLTexture.cpp',
 # 'StandardIncludes.cpp',
 'System.cpp',
+'InputMapping.cpp',
+'PathFinder.cpp',
+'PieSlice.cpp',
+'DataModule.cpp',
 'Timer.cpp',
 'Vector.cpp',
 'Writer.cpp',
+'Serializable.cpp',
 )

@@ -1,7 +1,4 @@
 sources += files(
-# 'AllegroBitmap.cpp',
-# 'AllegroInput.cpp',
-# 'AllegroScreen.cpp',
 'GUIBanner.cpp',
 'GUIButton.cpp',
 'GUICheckbox.cpp',
@@ -22,6 +19,8 @@ sources += files(
 'GUIProperties.cpp',
 'GUIPropertyPage.cpp',
 'GUIRadioButton.cpp',
+'GUIReader.cpp',
+'GUIScrollbar.cpp',
 'GUIScrollPanel.cpp',
 'GUIScrollbar.cpp',
 'GUISkin.cpp',
@@ -31,15 +30,8 @@ sources += files(
 'GUITextBox.cpp',
 'GUITextPanel.cpp',
 'GUIUtil.cpp',
+'GUIWriter.cpp',
 'SDLScreen.cpp',
 'SDLInput.cpp',
-'SDLGUITexture.cpp',
+'SDLGUITexture.cpp'
 )
-#
-# if build_machine.system() == 'windows'
-  # sources+=files('WinUtil.cpp')
-# endif
-#
-# if build_machine.system() == 'linux'
-  # sources+=files('LinuxUtil.cpp')
-# endif

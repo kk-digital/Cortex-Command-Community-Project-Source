@@ -20,6 +20,7 @@
 #include "BunkerAssemblyScheme.h"
 #include "BunkerAssembly.h"
 #include "Controller.h"
+#include "PieSlice.h"
 
 #include "System/SDLTexture.h"
 
@@ -173,7 +174,7 @@ public:
 // Arguments:       None.
 // Return value:    The enum'd int of any slice activated. See the PieSliceIndex enum.
 
-    int GetActivatedPieSlice();
+    PieSlice::PieSliceIndex GetActivatedPieSlice();
 
 
 //////////////////////////////////////////////////////////////////////////////////////////

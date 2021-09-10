@@ -3,13 +3,24 @@ sources += files(
 'AreaPickerGUI.cpp',
 'AssemblyEditorGUI.cpp',
 'BuyMenuGUI.cpp',
-'GibEditorGUI.cpp', #TODO: add zoom
-'LoadingGUI.cpp',
+'GibEditorGUI.cpp',
+'InventoryMenuGUI.cpp',
+'LoadingScreen.cpp',
 'MainMenuGUI.cpp',
 'MetagameGUI.cpp',
-# 'MultiplayerGameGUI.cpp', # TODO: Multiplayer
+'ModManagerGUI.cpp',
 'ObjectPickerGUI.cpp',
 'PieMenuGUI.cpp',
+'ScenarioActivityConfigGUI.cpp',
 'ScenarioGUI.cpp',
-'SceneEditorGUI.cpp'
+'SceneEditorGUI.cpp',
+'SettingsAudioGUI.cpp',
+'SettingsGameplayGUI.cpp',
+'SettingsGUI.cpp',
+'SettingsInputGUI.cpp',
+'SettingsInputMappingGUI.cpp',
+'SettingsInputMappingWizardGUI.cpp',
+'SettingsMiscGUI.cpp',
+'SettingsVideoGUI.cpp',
+'TitleScreen.cpp',
 )

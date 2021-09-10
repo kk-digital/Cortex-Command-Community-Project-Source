@@ -409,9 +409,10 @@ PROPERTYOWNERSHIPSAFETYFAKER(ACrab, Leg, SetRightFGLeg);
 PROPERTYOWNERSHIPSAFETYFAKER(ACrab, Leg, SetRightBGLeg);
 PROPERTYOWNERSHIPSAFETYFAKER(ACrab, SoundContainer, SetStrideSound);
 
-PROPERTYOWNERSHIPSAFETYFAKER(Turret, HeldDevice, SetMountedDevice);
+PROPERTYOWNERSHIPSAFETYFAKER(Turret, HeldDevice, SetFirstMountedDevice);
 
 PROPERTYOWNERSHIPSAFETYFAKER(ACraft, SoundContainer, SetHatchOpenSound);
+PROPERTYOWNERSHIPSAFETYFAKER(ACraft, SoundContainer, SetHatchCloseSound);
 PROPERTYOWNERSHIPSAFETYFAKER(ACraft, SoundContainer, SetCrashSound);
 
 PROPERTYOWNERSHIPSAFETYFAKER(ACDropShip, AEmitter, SetRightThruster);
@@ -444,6 +445,8 @@ PROPERTYOWNERSHIPSAFETYFAKER(HDFirearm, SoundContainer, SetReloadEndSound);
 //////////////////////////////////////////////////////////////////////////////////////////
 // Other misc adapters to eliminate/emulate default parameters etc
 
+//TODO this is a temporary fix for lua PresetName setting causing scripts to have to rerun. It should be replaced with a DisplayName property someday.
+void SetPresetName(Entity *selfObject, const std::string &presetName) { selfObject->SetPresetName(presetName, true); }
 void GibThis(MOSRotating *pThis) { pThis->GibThis(); }
 void AddMO(MovableMan &This, MovableObject *pMO)
 {
@@ -476,41 +479,21 @@ void AddParticle(MovableMan &This, MovableObject *pParticle)
 double NormalRand() { return RandomNormalNum<double>(); }
 double PosRand() { return RandomNum<double>(); }
 
-/*
-These methods are needed to specially handling removing attachables with Lua in order to avoid memory leaks. They have silly names cause luabind otherwise makes it difficult to pass values to them properly.
-Eventually RemoveAttachable should return the removed attachable, making this whole thing no longer unsafe and these methods unnecessary (there's a TODO in MOSRotating.h for it).
-*/
-bool RemoveAttachableLuaSafe4(MOSRotating *luaSelfObject, Attachable *attachable, bool addToMovableMan, bool addBreakWounds) {
-    if (!addToMovableMan && !attachable->IsSetToDelete()) {
-        attachable->SetToDelete();
+Attachable * RemoveAttachableFromParentLuaSafe1(Attachable *luaSelfObject) {
+    if (luaSelfObject->IsAttached()) {
+        return luaSelfObject->GetParent()->RemoveAttachable(luaSelfObject);
     }
-    return luaSelfObject->RemoveAttachable(attachable, addToMovableMan, addBreakWounds);
+    return luaSelfObject;
 }
-bool RemoveAttachableLuaSafe3(MOSRotating *luaSelfObject, Attachable *attachable) {
-    return RemoveAttachableLuaSafe4(luaSelfObject, attachable, false, false);
-}
-bool RemoveAttachableLuaSafe2(MOSRotating *luaSelfObject, long attachableUniqueID, bool addToMovableMan, bool addBreakWounds) {
-    MovableObject *attachableAsMovableObject = g_MovableMan.FindObjectByUniqueID(attachableUniqueID);
-    if (attachableAsMovableObject) {
-        return RemoveAttachableLuaSafe4(luaSelfObject, dynamic_cast<Attachable *>(attachableAsMovableObject), addToMovableMan, addBreakWounds);
+Attachable * RemoveAttachableFromParentLuaSafe2(Attachable *luaSelfObject, bool addToMovableMan, bool addBreakWounds) {
+    if (luaSelfObject->IsAttached()) {
+        return luaSelfObject->GetParent()->RemoveAttachable(luaSelfObject, addToMovableMan, addBreakWounds);
     }
-    return false;
-}
-bool RemoveAttachableLuaSafe1(MOSRotating *luaSelfObject, long attachableUniqueID) {
-    return RemoveAttachableLuaSafe2(luaSelfObject, attachableUniqueID, false, false);
+    return luaSelfObject;
 }
 
-bool RemoveAttachableFromParentLuaSafe1(Attachable *luaSelfObject) {
-    if (luaSelfObject->IsAttached()) {
-        return RemoveAttachableLuaSafe4(luaSelfObject->GetParent(), luaSelfObject, false, false);
-    }
-    return false;
-}
-bool RemoveAttachableFromParentLuaSafe2(Attachable *luaSelfObject, bool addToMovableMan, bool addBreakWounds) {
-    if (luaSelfObject->IsAttached()) {
-        return RemoveAttachableLuaSafe4(luaSelfObject->GetParent(), luaSelfObject, addToMovableMan, addBreakWounds);
-    }
-    return false;
+void TurretAddMountedFirearm(Turret *luaSelfObject, HDFirearm *newMountedDevice) {
+    luaSelfObject->AddMountedDevice(newMountedDevice);
 }
 
 /*
@@ -696,7 +679,7 @@ int LuaMan::Initialize() {
             .def("Reset", &Entity::Reset)
             .def(tostring(const_self))
             .property("ClassName", &Entity::GetClassName)
-            .property("PresetName", &Entity::GetPresetName, &Entity::SetPresetName)
+            .property("PresetName", &Entity::GetPresetName, &SetPresetName)
             .property("Description", &Entity::GetDescription, &Entity::SetDescription)
             .def("GetModuleAndPresetName", &Entity::GetModuleAndPresetName)
             .property("IsOriginalPreset", &Entity::IsOriginalPreset)
@@ -775,15 +758,18 @@ int LuaMan::Initialize() {
 			.def("GetRootParent", (MovableObject * (MovableObject::*)())&MovableObject::GetRootParent)
 			.def("GetRootParent", (const MovableObject * (MovableObject::*)() const)&MovableObject::GetRootParent)
 			.property("Material", &MovableObject::GetMaterial)
-            .def("ReloadScripts", (int (MovableObject:: *)()) &MovableObject::ReloadScripts)
+            .def("ReloadScripts", &MovableObject::ReloadScripts)
             .def("HasScript", &MovableObject::HasScript)
             .def("AddScript", &MovableObject::AddScript)
             .def("ScriptEnabled", &MovableObject::ScriptEnabled)
             .def("EnableScript", &MovableObject::EnableScript)
             .def("DisableScript", &MovableObject::DisableScript)
+            .def("EnableOrDisableAllScripts", &MovableObject::EnableOrDisableAllScripts)
             .property("Mass", &MovableObject::GetMass, &MovableObject::SetMass)
             .property("Pos", &MovableObject::GetPos, &MovableObject::SetPos)
             .property("Vel", &MovableObject::GetVel, &MovableObject::SetVel)
+			.property("PrevPos", &MovableObject::GetPrevPos)
+			.property("PrevVel", &MovableObject::GetPrevVel)
             .property("AngularVel", &MovableObject::GetAngularVel, &MovableObject::SetAngularVel)
             .property("Radius", &MovableObject::GetRadius)
             .property("Diameter", &MovableObject::GetDiameter)
@@ -848,6 +834,8 @@ int LuaMan::Initialize() {
 			.property("DamageOnCollision", &MovableObject::DamageOnCollision, &MovableObject::SetDamageOnCollision)
 			.property("DamageOnPenetration", &MovableObject::DamageOnPenetration, &MovableObject::SetDamageOnPenetration)
 			.property("WoundDamageMultiplier", &MovableObject::WoundDamageMultiplier, &MovableObject::SetWoundDamageMultiplier)
+            .property("ApplyWoundDamageOnCollision", &MovableObject::GetApplyWoundDamageOnCollision, &MovableObject::SetApplyWoundDamageOnCollision)
+            .property("ApplyWoundBurstDamageOnCollision", &MovableObject::GetApplyWoundBurstDamageOnCollision, &MovableObject::SetApplyWoundBurstDamageOnCollision)
 			.property("HitWhatMOID", &MovableObject::HitWhatMOID)
 			.property("HitWhatTerrMaterial", &MovableObject::HitWhatTerrMaterial)
 			.property("ProvidesPieMenuContext", &MovableObject::ProvidesPieMenuContext, &MovableObject::SetProvidesPieMenuContext)
@@ -868,7 +856,8 @@ int LuaMan::Initialize() {
 			.property("TransformsInto", &Material::GetSpawnMaterial)
 			.property("IsScrap", &Material::IsScrap),
 
-        CONCRETELUABINDING(MOPixel, MovableObject),
+        CONCRETELUABINDING(MOPixel, MovableObject)
+			.property("TrailLength", &MOPixel::GetTrailLength, &MOPixel::SetTrailLength),
 
         CONCRETELUABINDING(TerrainObject, SceneObject)
             .def("GetBitmapOffset", &TerrainObject::GetTextureOffset)
@@ -926,6 +915,7 @@ int LuaMan::Initialize() {
 			.property("GibImpulseLimit", &MOSRotating::GetGibImpulseLimit, &MOSRotating::SetGibImpulseLimit)
 			.property("DamageMultiplier", &MOSRotating::GetDamageMultiplier, &MOSRotating::SetDamageMultiplier)
 			.property("WoundCount", (int (MOSRotating:: *)() const) &MOSRotating::GetWoundCount)
+			.property("OrientToVel", &MOSRotating::GetOrientToVel, &MOSRotating::SetOrientToVel)
             .def("AddRecoil", &MOSRotating::AddRecoil)
             .def("SetRecoil", &MOSRotating::SetRecoil)
             .def("IsRecoiled", &MOSRotating::IsRecoiled)
@@ -958,30 +948,26 @@ int LuaMan::Initialize() {
             .def("ObjectValueExists", &MOSRotating::ObjectValueExists)
             .def("AddAttachable", (void (MOSRotating::*)(Attachable *attachableToAdd))&MOSRotating::AddAttachable, adopt(_2))
             .def("AddAttachable", (void (MOSRotating::*)(Attachable *attachableToAdd, const Vector &parentOffset))&MOSRotating::AddAttachable, adopt(_2))
-            .def("RemoveAttachable", &RemoveAttachableLuaSafe1)
-            .def("RemoveAttachable", &RemoveAttachableLuaSafe2)
-            .def("RemoveAttachable", &RemoveAttachableLuaSafe3)
-            .def("RemoveAttachable", &RemoveAttachableLuaSafe4)
-            /*
-            .def("RemoveAttachable", (bool (MOSRotating:: *)(long uniqueIDOfAttachableToRemove)) &MOSRotating::RemoveAttachable)
-            .def("RemoveAttachable", (bool (MOSRotating:: *)(long uniqueIDOfAttachableToRemove, bool addToMovableMan, bool addBreakWounds)) &MOSRotating::RemoveAttachable)
-            .def("RemoveAttachable", (bool (MOSRotating::*)(Attachable *attachableToRemove))&MOSRotating::RemoveAttachable)
-            .def("RemoveAttachable", (bool (MOSRotating:: *)(Attachable *attachableToRemove, bool addToMovableMan, bool addBreakWounds)) &MOSRotating::RemoveAttachable)
-            */
+            .def("RemoveAttachable", (Attachable *(MOSRotating:: *)(long uniqueIDOfAttachableToRemove)) &MOSRotating::RemoveAttachable, adopt(return_value))
+            .def("RemoveAttachable", (Attachable *(MOSRotating:: *)(long uniqueIDOfAttachableToRemove, bool addToMovableMan, bool addBreakWounds)) &MOSRotating::RemoveAttachable, adopt(return_value))
+            .def("RemoveAttachable", (Attachable *(MOSRotating:: *)(Attachable *attachableToRemove))&MOSRotating::RemoveAttachable, adopt(return_value))
+            .def("RemoveAttachable", (Attachable *(MOSRotating:: *)(Attachable *attachableToRemove, bool addToMovableMan, bool addBreakWounds)) &MOSRotating::RemoveAttachable)
 			.def("AddEmitter", (void (MOSRotating::*)(Attachable *attachableToAdd))&MOSRotating::AddAttachable, adopt(_2))
 			.def("AddEmitter", (void (MOSRotating::*)(Attachable *attachableToAdd, const Vector &parentOffset))&MOSRotating::AddAttachable, adopt(_2))
-			.def("RemoveEmitter", (bool (MOSRotating::*)(Attachable *attachableToRemove))&MOSRotating::RemoveAttachable)
-			.def("RemoveEmitter", (bool (MOSRotating::*)(long uniqueIDOfAttachableToRemove))&MOSRotating::RemoveAttachable)
+            .def("RemoveEmitter", (Attachable *(MOSRotating:: *)(long uniqueIDOfAttachableToRemove)) &MOSRotating::RemoveAttachable, adopt(return_value))
+            .def("RemoveEmitter", (Attachable *(MOSRotating:: *)(long uniqueIDOfAttachableToRemove, bool addToMovableMan, bool addBreakWounds)) &MOSRotating::RemoveAttachable, adopt(return_value))
+            .def("RemoveEmitter", (Attachable *(MOSRotating:: *)(Attachable *attachableToRemove)) &MOSRotating::RemoveAttachable, adopt(return_value))
+            .def("RemoveEmitter", (Attachable *(MOSRotating:: *)(Attachable *attachableToRemove, bool addToMovableMan, bool addBreakWounds)) &MOSRotating::RemoveAttachable, adopt(return_value))
 			.def_readonly("Attachables", &MOSRotating::m_Attachables, return_stl_iterator)
 			.def_readonly("Wounds", &MOSRotating::m_Wounds, return_stl_iterator),
 
         CONCRETELUABINDING(Attachable, MOSRotating)
             .def("IsAttached", &Attachable::IsAttached)
             .def("IsAttachedTo", &Attachable::IsAttachedTo)
-            .def("RemoveFromParent", &RemoveAttachableFromParentLuaSafe1)
-            .def("RemoveFromParent", &RemoveAttachableFromParentLuaSafe2)
+            .def("RemoveFromParent", &RemoveAttachableFromParentLuaSafe1, adopt(return_value))
+            .def("RemoveFromParent", &RemoveAttachableFromParentLuaSafe2, adopt(return_value))
 			.property("ParentOffset", &Attachable::GetParentOffset, &Attachable::SetParentOffset)
-            .def("IsDrawnAfterParent", &Attachable::IsDrawnAfterParent)
+            .property("DrawnAfterParent", &Attachable::IsDrawnAfterParent, &Attachable::SetDrawnAfterParent)
             .property("JointStrength", &Attachable::GetJointStrength, &Attachable::SetJointStrength)
             .property("JointStiffness", &Attachable::GetJointStiffness, &Attachable::SetJointStiffness)
             .property("JointOffset", &Attachable::GetJointOffset, &Attachable::SetJointOffset)
@@ -991,6 +977,7 @@ int LuaMan::Initialize() {
             .property("InheritsHFlipped", &Attachable::InheritsHFlipped, &Attachable::SetInheritsHFlipped)
 			.property("InheritsRotAngle", &Attachable::InheritsRotAngle, &Attachable::SetInheritsRotAngle)
             .property("InheritedRotAngleOffset", &Attachable::GetInheritedRotAngleOffset, &Attachable::SetInheritedRotAngleOffset)
+            .property("InheritsFrame", &Attachable::InheritsFrame, &Attachable::SetInheritsFrame)
             .property("AtomSubgroupID", &Attachable::GetAtomSubgroupID)
 			.property("CollidesWithTerrainWhileAttached", &Attachable::GetCollidesWithTerrainWhileAttached, &Attachable::SetCollidesWithTerrainWhileAttached)
             .property("CanCollideWithTerrain", &Attachable::CanCollideWithTerrain),
@@ -1119,6 +1106,7 @@ int LuaMan::Initialize() {
 			.def("SetStableVelocityThreshold", (void (Actor::*)(Vector))&Actor::SetStableVel)
             .property("Status", &Actor::GetStatus, &Actor::SetStatus)
             .property("Health", &Actor::GetHealth, &Actor::SetHealth)
+            .property("PrevHealth", &Actor::GetPrevHealth)
             .property("MaxHealth", &Actor::GetMaxHealth, &Actor::SetMaxHealth)
             .property("InventoryMass", &Actor::GetInventoryMass)
             .property("GoldCarried", &Actor::GetGoldCarried, &Actor::SetGoldCarried)
@@ -1129,7 +1117,9 @@ int LuaMan::Initialize() {
             .def("HasObjectInGroup", &Actor::HasObjectInGroup)
             .property("CPUPos", &Actor::GetCPUPos)
             .property("EyePos", &Actor::GetEyePos)
+            .property("HolsterOffset", &Actor::GetHolsterOffset, &Actor::SetHolsterOffset)
             .property("ViewPoint", &Actor::GetViewPoint, &Actor::SetViewPoint)
+            .property("ItemInReach", &Actor::GetItemInReach, &Actor::SetItemInReach)
             .property("Height", &Actor::GetHeight)
             .def("IsWithinRange", &Actor::IsWithinRange)
             .def("AddHealth", &Actor::AddHealth)
@@ -1150,6 +1140,7 @@ int LuaMan::Initialize() {
             .def("RemoveMovePathBeginning", &Actor::RemoveMovePathBeginning)
             .def("RemoveMovePathEnd", &Actor::RemoveMovePathEnd)
             .property("Perceptiveness", &Actor::GetPerceptiveness, &Actor::SetPerceptiveness)
+			.property("CanRevealUnseen", &Actor::GetCanRevealUnseen, &Actor::SetCanRevealUnseen)
             .def("AddInventoryItem", &Actor::AddInventoryItem, adopt(_2))
             .def("RemoveInventoryItem", &Actor::RemoveInventoryItem)
             .def("SwapNextInventory", &Actor::SwapNextInventory)
@@ -1192,8 +1183,10 @@ int LuaMan::Initialize() {
 
 		CONCRETELUABINDING(Arm, Attachable)
             .property("HeldDevice", &Arm::GetHeldMO)
+			.property("MaxLength", &Arm::GetMaxLength)
 			.property("IdleOffset", &Arm::GetIdleOffset, &Arm::SetIdleOffset)
             .property("GripStrength", &Arm::GetGripStrength, &Arm::SetGripStrength)
+            .property("ThrowStrength", &Arm::GetThrowStrength, &Arm::SetThrowStrength)
 			.property("HandPos", &Arm::GetHandPos, &Arm::SetHandPos),
 
         CONCRETELUABINDING(Leg, Attachable)
@@ -1278,6 +1271,7 @@ int LuaMan::Initialize() {
 			.property("StrideSound", &AHuman::GetStrideSound, &AHumanSetStrideSound)
 			.property("JetTimeTotal", &AHuman::GetJetTimeTotal, &AHuman::SetJetTimeTotal)
             .property("JetTimeLeft", &AHuman::GetJetTimeLeft, &AHuman::SetJetTimeLeft)
+			.property("JetAngleRange", &AHuman::GetJetAngleRange, &AHuman::SetJetAngleRange)
 			.property("ThrowPrepTime", &AHuman::GetThrowPrepTime, &AHuman::SetThrowPrepTime)
             .def("EquipFirearm", &AHuman::EquipFirearm)
             .def("EquipThrowable", &AHuman::EquipThrowable)
@@ -1296,7 +1290,7 @@ int LuaMan::Initialize() {
             .property("FirearmNeedsReload", &AHuman::FirearmNeedsReload)
             .property("FirearmIsSemiAuto", &AHuman::FirearmIsSemiAuto)
             .property("FirearmActivationDelay", &AHuman::FirearmActivationDelay)
-            .def("ReloadFirearm", &AHuman::ReloadFirearm)
+            .def("ReloadFirearms", &AHuman::ReloadFirearms)
             .def("IsWithinRange", &AHuman::IsWithinRange)
             .def("Look", &AHuman::Look)
             .def("LookForGold", &AHuman::LookForGold)
@@ -1377,7 +1371,7 @@ int LuaMan::Initialize() {
             .property("FirearmNeedsReload", &ACrab::FirearmNeedsReload)
             .property("FirearmIsSemiAuto", &ACrab::FirearmIsSemiAuto)
             .property("FirearmActivationDelay", &ACrab::FirearmActivationDelay)
-            .def("ReloadFirearm", &ACrab::ReloadFirearm)
+            .def("ReloadFirearms", &ACrab::ReloadFirearms)
             .def("IsWithinRange", &ACrab::IsWithinRange)
             .def("Look", &ACrab::Look)
             .def("LookForMOs", &ACrab::LookForMOs)
@@ -1388,7 +1382,11 @@ int LuaMan::Initialize() {
 			.def("SetLimbPathSpeed", &ACrab::SetLimbPathSpeed),
 
         CONCRETELUABINDING(Turret, Attachable)
-			.property("MountedDevice", &Turret::GetMountedDevice, &TurretSetMountedDevice),
+			.property("MountedDevice", &Turret::GetFirstMountedDevice, &TurretSetFirstMountedDevice)
+            .property("MountedDeviceRotationOffset", &Turret::GetMountedDeviceRotationOffset, &Turret::SetMountedDeviceRotationOffset)
+            .def("GetMountedDevices", &Turret::GetMountedDevices, return_stl_iterator)
+            .def("AddMountedDevice", &Turret::AddMountedDevice, adopt(_2))
+            .def("AddMountedDevice", &TurretAddMountedFirearm, adopt(_2)),
 
 		ABSTRACTLUABINDING(ACraft, Actor)
 			.enum_("HatchState")[
@@ -1421,6 +1419,7 @@ int LuaMan::Initialize() {
             .def("CloseHatch", &ACraft::CloseHatch)
             .property("HatchState", &ACraft::GetHatchState)
 			.property("HatchOpenSound", &ACraft::GetHatchOpenSound, &ACraftSetHatchOpenSound)
+			.property("HatchCloseSound", &ACraft::GetHatchCloseSound, &ACraftSetHatchCloseSound)
 			.property("CrashSound", &ACraft::GetCrashSound, &ACraftSetCrashSound)
             .property("MaxPassengers", &ACraft::GetMaxPassengers)
             .property("DeliveryDelayMultiplier", &ACraft::GetDeliveryDelayMultiplier),
@@ -1919,7 +1918,10 @@ int LuaMan::Initialize() {
 		class_<DataModule>("DataModule")
 			.def_readwrite("Presets", &DataModule::m_EntityList, return_stl_iterator)
 			.property("FileName", &DataModule::GetFileName)
-			.property("FriendlyName", &DataModule::GetFriendlyName),
+			.property("FriendlyName", &DataModule::GetFriendlyName)
+			.property("Author", &DataModule::GetAuthor)
+			.property("Description", &DataModule::GetDescription)
+			.property("Version", &DataModule::GetVersionNumber),
 
         class_<BuyMenuGUI>("BuyMenuGUI")
             .def("SetMetaPlayer", &BuyMenuGUI::SetMetaPlayer)
@@ -2167,58 +2169,58 @@ int LuaMan::Initialize() {
             .def("RemovePieMenuSlice", &GameActivity::RemovePieMenuSlice)
 			.def_readwrite("PieMenuSlices", &GameActivity::m_CurrentPieMenuSlices, return_stl_iterator),
 		
-		class_<PieMenuGUI::Slice>("Slice")
-			.enum_("SliceDirection")[
-				value("NONE", PieMenuGUI::Slice::SliceDirection::NONE),
-				value("UP", PieMenuGUI::Slice::SliceDirection::UP),
-				value("RIGHT", PieMenuGUI::Slice::SliceDirection::RIGHT),
-				value("DOWN", PieMenuGUI::Slice::SliceDirection::DOWN),
-				value("LEFT", PieMenuGUI::Slice::SliceDirection::LEFT)
+        class_<PieSlice>("Slice")
+			.enum_("Direction")[
+				value("NONE", PieSlice::SliceDirection::NONE),
+					value("UP", PieSlice::SliceDirection::UP),
+					value("RIGHT", PieSlice::SliceDirection::RIGHT),
+					value("DOWN", PieSlice::SliceDirection::DOWN),
+					value("LEFT", PieSlice::SliceDirection::LEFT)
 			]
 			.enum_("PieSliceIndex")[
-				value("PSI_NONE", PieMenuGUI::PieSliceIndex::PSI_NONE),
-				value("PSI_PICKUP", PieMenuGUI::PieSliceIndex::PSI_PICKUP),
-				value("PSI_DROP", PieMenuGUI::PieSliceIndex::PSI_DROP),
-				value("PSI_NEXTITEM", PieMenuGUI::PieSliceIndex::PSI_NEXTITEM),
-				value("PSI_PREVITEM", PieMenuGUI::PieSliceIndex::PSI_PREVITEM),
-				value("PSI_RELOAD", PieMenuGUI::PieSliceIndex::PSI_RELOAD),
-				value("PSI_BUYMENU", PieMenuGUI::PieSliceIndex::PSI_BUYMENU),
-				value("PSI_STATS", PieMenuGUI::PieSliceIndex::PSI_STATS),
-				value("PSI_MINIMAP", PieMenuGUI::PieSliceIndex::PSI_MINIMAP),
-				value("PSI_FORMSQUAD", PieMenuGUI::PieSliceIndex::PSI_FORMSQUAD),
-				value("PSI_CEASEFIRE", PieMenuGUI::PieSliceIndex::PSI_CEASEFIRE),
-				value("PSI_SENTRY", PieMenuGUI::PieSliceIndex::PSI_SENTRY),
-				value("PSI_PATROL", PieMenuGUI::PieSliceIndex::PSI_PATROL),
-				value("PSI_BRAINHUNT", PieMenuGUI::PieSliceIndex::PSI_BRAINHUNT),
-				value("PSI_GOLDDIG", PieMenuGUI::PieSliceIndex::PSI_GOLDDIG),
-				value("PSI_GOTO", PieMenuGUI::PieSliceIndex::PSI_GOTO),
-				value("PSI_RETURN", PieMenuGUI::PieSliceIndex::PSI_RETURN),
-				value("PSI_STAY", PieMenuGUI::PieSliceIndex::PSI_STAY),
-				value("PSI_DELIVER", PieMenuGUI::PieSliceIndex::PSI_DELIVER),
-				value("PSI_SCUTTLE", PieMenuGUI::PieSliceIndex::PSI_SCUTTLE),
-				value("PSI_DONE", PieMenuGUI::PieSliceIndex::PSI_DONE),
-				value("PSI_LOAD", PieMenuGUI::PieSliceIndex::PSI_LOAD),
-				value("PSI_SAVE", PieMenuGUI::PieSliceIndex::PSI_SAVE),
-				value("PSI_NEW", PieMenuGUI::PieSliceIndex::PSI_NEW),
-				value("PSI_PICK", PieMenuGUI::PieSliceIndex::PSI_PICK),
-				value("PSI_MOVE", PieMenuGUI::PieSliceIndex::PSI_MOVE),
-				value("PSI_REMOVE", PieMenuGUI::PieSliceIndex::PSI_REMOVE),
-				value("PSI_INFRONT", PieMenuGUI::PieSliceIndex::PSI_INFRONT),
-				value("PSI_BEHIND", PieMenuGUI::PieSliceIndex::PSI_BEHIND),
-				value("PSI_ZOOMIN", PieMenuGUI::PieSliceIndex::PSI_ZOOMIN),
-				value("PSI_ZOOMOUT", PieMenuGUI::PieSliceIndex::PSI_ZOOMOUT),
-				value("PSI_TEAM1", PieMenuGUI::PieSliceIndex::PSI_TEAM1),
-				value("PSI_TEAM2", PieMenuGUI::PieSliceIndex::PSI_TEAM2),
-				value("PSI_TEAM3", PieMenuGUI::PieSliceIndex::PSI_TEAM3),
-				value("PSI_TEAM4", PieMenuGUI::PieSliceIndex::PSI_TEAM4),
-				value("PSI_SCRIPTED", PieMenuGUI::PieSliceIndex::PSI_SCRIPTED),
-				value("PSI_COUNT", PieMenuGUI::PieSliceIndex::PSI_COUNT)
+				value("PSI_NONE", PieSlice::PieSliceIndex::PSI_NONE),
+				value("PSI_PICKUP", PieSlice::PieSliceIndex::PSI_PICKUP),
+				value("PSI_DROP", PieSlice::PieSliceIndex::PSI_DROP),
+				value("PSI_NEXTITEM", PieSlice::PieSliceIndex::PSI_NEXTITEM),
+				value("PSI_PREVITEM", PieSlice::PieSliceIndex::PSI_PREVITEM),
+				value("PSI_RELOAD", PieSlice::PieSliceIndex::PSI_RELOAD),
+				value("PSI_BUYMENU", PieSlice::PieSliceIndex::PSI_BUYMENU),
+				value("PSI_STATS", PieSlice::PieSliceIndex::PSI_STATS),
+				value("PSI_MINIMAP", PieSlice::PieSliceIndex::PSI_MINIMAP),
+				value("PSI_FORMSQUAD", PieSlice::PieSliceIndex::PSI_FORMSQUAD),
+				value("PSI_CEASEFIRE", PieSlice::PieSliceIndex::PSI_CEASEFIRE),
+				value("PSI_SENTRY", PieSlice::PieSliceIndex::PSI_SENTRY),
+				value("PSI_PATROL", PieSlice::PieSliceIndex::PSI_PATROL),
+				value("PSI_BRAINHUNT", PieSlice::PieSliceIndex::PSI_BRAINHUNT),
+				value("PSI_GOLDDIG", PieSlice::PieSliceIndex::PSI_GOLDDIG),
+				value("PSI_GOTO", PieSlice::PieSliceIndex::PSI_GOTO),
+				value("PSI_RETURN", PieSlice::PieSliceIndex::PSI_RETURN),
+				value("PSI_STAY", PieSlice::PieSliceIndex::PSI_STAY),
+				value("PSI_DELIVER", PieSlice::PieSliceIndex::PSI_DELIVER),
+				value("PSI_SCUTTLE", PieSlice::PieSliceIndex::PSI_SCUTTLE),
+				value("PSI_DONE", PieSlice::PieSliceIndex::PSI_DONE),
+				value("PSI_LOAD", PieSlice::PieSliceIndex::PSI_LOAD),
+				value("PSI_SAVE", PieSlice::PieSliceIndex::PSI_SAVE),
+				value("PSI_NEW", PieSlice::PieSliceIndex::PSI_NEW),
+				value("PSI_PICK", PieSlice::PieSliceIndex::PSI_PICK),
+				value("PSI_MOVE", PieSlice::PieSliceIndex::PSI_MOVE),
+				value("PSI_REMOVE", PieSlice::PieSliceIndex::PSI_REMOVE),
+				value("PSI_INFRONT", PieSlice::PieSliceIndex::PSI_INFRONT),
+				value("PSI_BEHIND", PieSlice::PieSliceIndex::PSI_BEHIND),
+				value("PSI_ZOOMIN", PieSlice::PieSliceIndex::PSI_ZOOMIN),
+				value("PSI_ZOOMOUT", PieSlice::PieSliceIndex::PSI_ZOOMOUT),
+				value("PSI_TEAM1", PieSlice::PieSliceIndex::PSI_TEAM1),
+				value("PSI_TEAM2", PieSlice::PieSliceIndex::PSI_TEAM2),
+				value("PSI_TEAM3", PieSlice::PieSliceIndex::PSI_TEAM3),
+				value("PSI_TEAM4", PieSlice::PieSliceIndex::PSI_TEAM4),
+				value("PSI_SCRIPTED", PieSlice::PieSliceIndex::PSI_SCRIPTED),
+				value("PSI_COUNT", PieSlice::PieSliceIndex::PSI_COUNT)
 			]
 			.def(constructor<>())
-			.property("FunctionName", &PieMenuGUI::Slice::GetFunctionName)
-			.property("Description", &PieMenuGUI::Slice::GetDescription)
-			.property("Type", &PieMenuGUI::Slice::GetType)
-			.property("Direction", &PieMenuGUI::Slice::GetDirection),
+			.property("FunctionName", &PieSlice::GetFunctionName)
+			.property("Description", &PieSlice::GetDescription)
+			.property("Type", &PieSlice::GetType)
+			.property("Direction", &PieSlice::GetDirection),
 
         ABSTRACTLUABINDING(GlobalScript, Entity)
 			.def("Deactivate", &GlobalScript::Deactivate),
@@ -2232,7 +2234,7 @@ int LuaMan::Initialize() {
             .def("GetActivity", &ActivityMan::GetActivity)
             // Transfers ownership of the Activity to start into the ActivityMan, adopts ownership (_1 is the this ptr)
             .def("StartActivity", (int (ActivityMan::*)(Activity *))&ActivityMan::StartActivity, adopt(_2))
-            .def("StartActivity", (int (ActivityMan::*)(string, string))&ActivityMan::StartActivity)
+            .def("StartActivity", (int (ActivityMan::*)(const std::string &, const std::string &))&ActivityMan::StartActivity)
             .def("RestartActivity", &ActivityMan::RestartActivity)
             .def("PauseActivity", &ActivityMan::PauseActivity)
             .def("EndActivity", &ActivityMan::EndActivity)
@@ -2751,7 +2753,7 @@ int LuaMan::FileOpen(std::string filename, std::string mode)
 		return -1;
 
 	// Do not open paths that aren't written correctly
-	if (!System::PathExistsCaseSensitive(std::filesystem::path(fullPath).lexically_normal().generic_string()))
+	if (!System::PathExistsCaseSensitive(std::filesystem::path(filename).lexically_normal().generic_string()))
 		return -1;
 
 	// Allow to edit files only inside .rte folders

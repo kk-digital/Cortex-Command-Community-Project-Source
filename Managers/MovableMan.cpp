@@ -596,7 +596,7 @@ Actor * MovableMan::GetClosestTeamActor(int team, int player, const Vector &scen
 
 Actor * MovableMan::GetClosestEnemyActor(int team, const Vector &scenePoint, int maxRadius, Vector &getDistance)
 {
-    if (team < Activity::NoTeam || team >= Activity::MaxTeamCount || m_Actors.empty() ||  m_ActorRoster[team].empty())
+    if (team < Activity::NoTeam || team >= Activity::MaxTeamCount || m_Actors.empty())
         return 0;
     
     Activity *pActivity = g_ActivityMan.GetActivity();
@@ -633,7 +633,7 @@ Actor * MovableMan::GetClosestEnemyActor(int team, const Vector &scenePoint, int
 // Description:     Get a pointer to an Actor in the internal Actor list that is closest
 //                  to a specific scene point.
 
-Actor * MovableMan::GetClosestActor(Vector &scenePoint, int maxRadius, float &getDistance, const Actor *pExcludeThis)
+Actor * MovableMan::GetClosestActor(const Vector &scenePoint, int maxRadius, Vector &getDistance, const Actor *pExcludeThis)
 {
     if (m_Actors.empty())
         return 0;
@@ -658,10 +658,10 @@ Actor * MovableMan::GetClosestActor(Vector &scenePoint, int maxRadius, float &ge
         {
             shortestDistance = distance;
             pClosestActor = *aIt;
+			getDistance.SetXY(distanceVec.GetX(), distanceVec.GetY());
         }
     }
 
-    getDistance = shortestDistance;
     return pClosestActor;
 }
 

@@ -378,6 +378,20 @@ ClassInfoGetters
 	void SetJetTimeLeft(float newValue) { m_JetTimeLeft = newValue < m_JetTimeTotal ? newValue : m_JetTimeTotal; }
 
 
+	/// <summary>
+	/// Gets the scalar ratio at which this jetpack's thrust angle follows the aim angle of the user.
+	/// </summary>
+	/// <returns>The ratio at which this jetpack follows the aim angle of the user.</returns>
+	float GetJetAngleRange() const { return m_JetAngleRange; }
+
+
+	/// <summary>
+	/// Sets the scalar ratio at which this jetpack's thrust angle follows the aim angle of the user.
+	/// </summary>
+	/// <param name="newValue">The ratio at which this jetpack follows the aim angle of the user.</param>
+	void SetJetAngleRange(float newValue) { m_JetAngleRange = newValue; }
+
+
 //////////////////////////////////////////////////////////////////////////////////////////
 // Virtual method:  CollideAtPoint
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -411,7 +425,7 @@ ClassInfoGetters
 // Return value:    Whetehr any slice was handled. False if no matching slice handler was
 //                  found, or there was no slice currently activated by the pie menu.
 
-    bool HandlePieCommand(int pieSliceIndex) override;
+    bool HandlePieCommand(PieSlice::PieSliceIndex pieSliceIndex) override;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -442,7 +456,7 @@ ClassInfoGetters
 // Virtual Method:  EquipDeviceInGroup
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Switches the currently held device (if any) to the first found device
-//                  of the specified group in the inventory. If the held device already 
+//                  of the specified group in the inventory. If the held device already
 //                  is of that group, or no device is in inventory, nothing happens.
 // Arguments:       The group the device must belong to.
 //                  Whether to actually equip any matching item found in the inventory,
@@ -456,7 +470,7 @@ ClassInfoGetters
 // Virtual Method:  EquipLoadedFirearmInGroup
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Switches the currently held device (if any) to the first loaded HDFirearm
-//                  of the specified group in the inventory. If no such weapon is in the 
+//                  of the specified group in the inventory. If no such weapon is in the
 //                  inventory, nothing happens.
 // Arguments:       The group the HDFirearm must belong to. "Any" for all groups.
 //                  The group the HDFirearm must *not* belong to. "None" for no group.
@@ -471,7 +485,7 @@ ClassInfoGetters
 // Virtual Method:  EquipNamedDevice
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Switches the currently held device (if any) to the first found device
-//                  of with the specified preset name in the inventory. If the held device already 
+//                  of with the specified preset name in the inventory. If the held device already
 //                  is of that preset name, or no device is in inventory, nothing happens.
 // Arguments:       The preset name the device must have.
 //                  Whether to actually equip any matching item found in the inventory,
@@ -653,7 +667,7 @@ ClassInfoGetters
 // Arguments:       None.
 // Return value:    None.
 
-	void ReloadFirearm() const;
+	void ReloadFirearms() const;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -833,7 +847,7 @@ void Draw(SDL_Renderer* renderer, const Vector &targetPos = Vector(), DrawMode m
 // Method:  GetLimbPathPushForce
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Gets the default force that a limb traveling walking LimbPath can push against
-//                  stuff in the scene with. 
+//                  stuff in the scene with.
 // Arguments:       None.
 // Return value:    The default set force maximum, in kg * m/s^2.
 
@@ -844,7 +858,7 @@ void Draw(SDL_Renderer* renderer, const Vector &targetPos = Vector(), DrawMode m
 // Method:  SetLimbPathPushForce
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Sets the default force that a limb traveling walking LimbPath can push against
-//                  stuff in the scene with. 
+//                  stuff in the scene with.
 // Arguments:       The default set force maximum, in kg * m/s^2.
 // Return value:    None
 
@@ -922,6 +936,8 @@ protected:
     static Entity::ClassInfo m_sClass;
     // Articulated head.
     Attachable *m_pHead;
+	// Ratio at which the head's rotation follows the aim angle
+	float m_LookToAimRatio;
     // Foreground arm.
     Arm *m_pFGArm;
     // Background arm.
@@ -945,6 +961,8 @@ protected:
     float m_JetTimeTotal;
     // How much time left the jetpack can go, in ms
     float m_JetTimeLeft;
+	// Ratio at which the jetpack angle follows aim angle
+	float m_JetAngleRange;
     // Blink timer
     Timer m_IconBlinkTimer;
     // Current upper body state.
@@ -973,8 +991,14 @@ protected:
     int m_GoldInInventoryChunk;
     // For timing throws
     Timer m_ThrowTmr;
-
-    long m_ThrowPrepTime; //!< The duration it takes this AHuman to fully charge a throw.
+	// The duration it takes this AHuman to fully charge a throw.
+    long m_ThrowPrepTime;
+	// For timing the transition from sharp aim back to regular aim
+	Timer m_SharpAimRevertTimer;
+    // The rate at which this AHuman's FG Arm follows the the bodily rotation. Best to keep this at 0 so it doesn't complicate aiming.
+	float m_FGArmFlailScalar;
+    // The rate at which this AHuman's BG Arm follows the the bodily rotation. Set to a negative value for a "counterweight" effect.
+	float m_BGArmFlailScalar;
 
     ////////////////
     // AI States
@@ -1049,9 +1073,6 @@ protected:
     Timer m_PatrolTimer;
     // Timer for how long to be firing the jetpack in a direction
     Timer m_JumpTimer;
-
-	// April 1 prank
-	bool m_GotHat;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////

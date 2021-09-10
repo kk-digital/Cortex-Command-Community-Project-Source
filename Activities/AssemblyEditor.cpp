@@ -41,14 +41,9 @@
 #include "GUI/GUIComboBox.h"
 
 #include "AssemblyEditorGUI.h"
-#include "PieMenuGUI.h"
 #include "GABaseDefense.h"
 #include "BunkerAssembly.h"
 #include "BunkerAssemblyScheme.h"
-
-#include "System.h"
-
-extern bool g_ResetActivity;
 
 namespace RTE {
 
@@ -253,7 +248,7 @@ void AssemblyEditor::End()
 {
     EditorActivity::End();
 
-    
+
 
     m_ActivityState = ActivityState::Over;
 }
@@ -302,19 +297,19 @@ void AssemblyEditor::Update()
     m_NeedSave = m_pEditorGUI->EditMade() || m_NeedSave;
 
     // Get any mode change commands that the user gave the Editor GUI
-    if (m_pEditorGUI->GetActivatedPieSlice() == PieMenuGUI::PSI_NEW && m_EditorMode != NEWDIALOG)
+    if (m_pEditorGUI->GetActivatedPieSlice() == PieSlice::PieSliceIndex::PSI_NEW && m_EditorMode != NEWDIALOG)
     {
         m_pEditorGUI->SetEditorGUIMode(AssemblyEditorGUI::INACTIVE);
         m_EditorMode = EditorActivity::NEWDIALOG;
         m_ModeChange = true;
     }
-    else if (m_pEditorGUI->GetActivatedPieSlice() == PieMenuGUI::PSI_LOAD && m_EditorMode != LOADDIALOG)
+    else if (m_pEditorGUI->GetActivatedPieSlice() == PieSlice::PieSliceIndex::PSI_LOAD && m_EditorMode != LOADDIALOG)
     {
         m_pEditorGUI->SetEditorGUIMode(AssemblyEditorGUI::INACTIVE);
         m_EditorMode = EditorActivity::LOADDIALOG;
         m_ModeChange = true;
     }
-    else if (m_pEditorGUI->GetActivatedPieSlice() == PieMenuGUI::PSI_SAVE && m_EditorMode != SAVEDIALOG)
+    else if (m_pEditorGUI->GetActivatedPieSlice() == PieSlice::PieSliceIndex::PSI_SAVE && m_EditorMode != SAVEDIALOG)
     {
         m_pEditorGUI->SetEditorGUIMode(AssemblyEditorGUI::INACTIVE);
         m_EditorMode = EditorActivity::SAVEDIALOG;
@@ -560,7 +555,7 @@ BunkerAssembly * AssemblyEditor::BuildAssembly(string saveAsName)
 		if ((pos.m_X >= 0) && (pos.m_X < pBA->GetTextureWidth()) &&
 			(pos.m_Y >= 0) && (pos.m_Y < pBA->GetTextureHeight()))
 			skip = false;
-		
+
 		// Try to move scene object across seams and see if it fits into assembly box
 		if (g_SceneMan.GetScene()->WrapsX())
 		{
@@ -568,7 +563,7 @@ BunkerAssembly * AssemblyEditor::BuildAssembly(string saveAsName)
 
 			if ((pos.m_X >= 0) && (pos.m_X < pBA->GetTextureWidth()) &&
 				(pos.m_Y >= 0) && (pos.m_Y < pBA->GetTextureHeight()))
-			{			
+			{
 				skip = false;
 				finalPos = pos;
 			}
@@ -577,7 +572,7 @@ BunkerAssembly * AssemblyEditor::BuildAssembly(string saveAsName)
 
 			if ((pos.m_X >= 0) && (pos.m_X < pBA->GetTextureWidth()) &&
 				(pos.m_Y >= 0) && (pos.m_Y < pBA->GetTextureHeight()))
-			{			
+			{
 				skip = false;
 				finalPos = pos;
 			}
@@ -589,7 +584,7 @@ BunkerAssembly * AssemblyEditor::BuildAssembly(string saveAsName)
 
 			if ((pos.m_X >= 0) && (pos.m_X < pBA->GetTextureWidth()) &&
 				(pos.m_Y >= 0) && (pos.m_Y < pBA->GetTextureHeight()))
-			{			
+			{
 				skip = false;
 				finalPos = pos;
 			}
@@ -598,12 +593,12 @@ BunkerAssembly * AssemblyEditor::BuildAssembly(string saveAsName)
 
 			if ((pos.m_X >= 0) && (pos.m_X < pBA->GetTextureWidth()) &&
 				(pos.m_Y >= 0) && (pos.m_Y < pBA->GetTextureHeight()))
-			{			
+			{
 				skip = false;
 				finalPos = pos;
 			}
 		}
-	
+
 		if (!skip)
 		{
 			SceneObject *pNewSO = dynamic_cast<SceneObject *>((*itr)->Clone());
@@ -698,7 +693,7 @@ bool AssemblyEditor::SaveAssembly(string saveAsName, bool forceOverwrite)
 				// If it's already included, it doens't matter, the definitions will just bounce the second time
 				if (!scenesFileExisted)
 				{
-					string indexFilePath(g_PresetMan.GetDataModule(m_ModuleSpaceID)->GetFileName() + "/Index.ini"); 
+					string indexFilePath(g_PresetMan.GetDataModule(m_ModuleSpaceID)->GetFileName() + "/Index.ini");
 					Writer indexWriter(indexFilePath.c_str(), true);
 					// Add extra tab since the DataModule has everything indented
 					indexWriter.NewProperty("\tIncludeFile");

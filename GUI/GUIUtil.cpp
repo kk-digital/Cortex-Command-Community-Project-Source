@@ -1,73 +1,85 @@
-//////////////////////////////////////////////////////////////////////////////////////////
-// File:            GUIUtil.h
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     GUIUtil class
-// Project:         GUI Library
-// Author(s):       Jason Boettcher
-//                  jackal@shplorb.com
-//                  www.shplorb.com/~jackal
+#include "GUIUtil.h"
 
-//////////////////////////////////////////////////////////////////////////////////////////
-// Inclusions of header files
+#ifdef _WIN32
+#include "Windows.h"
+#endif
 
-#include "GUI.h"
+namespace RTE {
 
-#include <SDL2/SDL_clipboard.h>
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-using namespace RTE;
+	char * GUIUtil::TrimString(char *String) {
+		char *ptr = String;
+		// Find the first non-space character
+		while (*ptr) {
+			if (*ptr != ' ') {
+				break;
+			}
+			ptr++;
+		}
+		// Add a null terminator after the last character
+		for (int i = strlen(ptr) - 1; i >= 0; i--) {
+			if (ptr[i] != ' ') {
+				ptr[i + 1] = '\0';
+				break;
+			}
+		}
+		return ptr;
+	}
 
-//////////////////////////////////////////////////////////////////////////////////////////
-// Method:          TrimString
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Removes the preceeding and ending spaces from a c type string.
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-char *GUIUtil::TrimString(char *String)
-{
-    char *ptr = String;
+	bool GUIUtil::GetClipboardText(std::string *text) {
+#ifdef _WIN32
+		HANDLE clipboardDataHandle;
+		LPSTR clipboardData;
+		assert(text);
 
-    // Find the first non-space character
-    while(*ptr) {
-        if (*ptr != ' ')
-            break;
-        ptr++;
-    }
+		if (IsClipboardFormatAvailable(CF_TEXT) && OpenClipboard(nullptr)) {
+			clipboardDataHandle = GetClipboardData(CF_TEXT);
+			if (clipboardDataHandle) {
+				clipboardData = static_cast<LPSTR>(GlobalLock(clipboardDataHandle));
+				text->erase();
+				text->insert(0, clipboardData);
+				CloseClipboard();
 
-    // Add a null terminator after the last character
-    for(int i=strlen(ptr)-1; i>=0; i--) {
-        if (ptr[i] != ' ') {
-            ptr[i+1] = '\0';
-            break;
-        }
-    }
+				GlobalUnlock(clipboardDataHandle);
+				return true;
+			}
+			CloseClipboard();
+		}
+#elif __unix__
+		// TODO: Implement.
+#endif
+		return false;
+	}
 
-    return ptr;
-}
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-char* GUIUtil::SafeOverlappingStrCpy(char* dst, char* src)
-{
-	memmove(dst, src, strlen(src) + 1);
-	return dst;
-}
+	bool GUIUtil::SetClipboardText(std::string text) {
+#ifdef _WIN32
+		if (OpenClipboard(nullptr)) {
+			// Allocate global memory for the text
+			HGLOBAL hMemory = GlobalAlloc(GMEM_MOVEABLE, text.size() + 1);
+			if (hMemory == nullptr) {
+				CloseClipboard();
+				return false;
+			}
+			EmptyClipboard();
 
-//////////////////////////////////////////////////////////////////////////////////////////
-// Method:          GetClipboardText
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Gets the text from the clipboard.
+			// Copy the text into memory
+			char *clipboardText = static_cast<char *>(GlobalLock(hMemory));
+			memcpy(clipboardText, text.c_str(), text.size());
+			clipboardText[text.size()] = '\0';
+			GlobalUnlock(hMemory);
 
-bool GUIUtil::GetClipboardText(string *Text)
-{
-
-	*Text = std::string(SDL_GetClipboardText());
-	return !Text->empty();
-}
-
-
-//////////////////////////////////////////////////////////////////////////////////////////
-// Method:          SetClipboardText
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Sets the text in the clipboard.
-
-bool GUIUtil::SetClipboardText(string Text)
-{
-	return SDL_SetClipboardText(Text.c_str());
+			SetClipboardData(CF_TEXT, hMemory);
+			CloseClipboard();
+			return true;
+		}
+#elif __unix__
+		// TODO: Implement.
+#endif
+		return false;
+	}
 }

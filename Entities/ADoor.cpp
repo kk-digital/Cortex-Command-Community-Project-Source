@@ -3,6 +3,7 @@
 #include "Attachable.h"
 #include "Matrix.h"
 #include "SLTerrain.h"
+#include "PresetMan.h"
 
 #include "FrameMan.h"
 
@@ -36,7 +37,7 @@ namespace RTE {
 		m_ResetToDefaultStateDelay = 5000;
 		m_DrawMaterialLayerWhenOpen = true;
 		m_DrawMaterialLayerWhenClosed = true;
-		m_DoorMaterialID = 0;
+		m_DoorMaterialID = g_MaterialDoor;
 		m_DoorMaterialDrawn = false;
 		m_DoorMaterialTempErased = false;
 		m_LastDoorMaterialPos.Reset();
@@ -44,6 +45,9 @@ namespace RTE {
 		m_DoorMoveSound = nullptr;
 		m_DoorDirectionChangeSound = nullptr;
 		m_DoorMoveEndSound = nullptr;
+
+		// NOTE: This special override of a parent class member variable avoids needing an extra variable to avoid overwriting INI values.
+		m_CanBeSquished = false;
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -89,9 +93,7 @@ namespace RTE {
 
 	int ADoor::ReadProperty(const std::string_view &propName, Reader &reader) {
 		if (propName == "Door") {
-			m_Door = new Attachable;
-			reader >> m_Door;
-			SetDoor(m_Door);
+			SetDoor(dynamic_cast<Attachable *>(g_PresetMan.ReadReflectedPreset(reader)));
 		} else if (propName == "OpenOffset") {
 			reader >> m_OpenOffset;
 		} else if (propName == "ClosedOffset") {
@@ -208,17 +210,17 @@ namespace RTE {
 		for (ADSensor &sensor : m_Sensors) {
 			sensor.Destroy();
 		}
+		if (m_DoorMaterialDrawn) { EraseDoorMaterial(); }
 		Clear();
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void ADoor::SetDoor(Attachable *newDoor) {
+		if (m_Door && m_Door->IsAttached()) { RemoveAndDeleteAttachable(m_Door); }
 		if (newDoor == nullptr) {
-			if (m_Door && m_Door->IsAttached()) { RemoveAttachable(m_Door); }
 			m_Door = nullptr;
 		} else {
-			if (m_Door && m_Door->IsAttached()) { RemoveAttachable(m_Door); }
 			m_Door = newDoor;
 			AddAttachable(newDoor);
 
@@ -279,7 +281,7 @@ namespace RTE {
 	bool ADoor::EraseDoorMaterial(bool updateMaterialArea, bool keepMaterialDrawnFlag) {
 		if (!keepMaterialDrawnFlag) { m_DoorMaterialDrawn = false; }
 
-		if (!m_Door || !g_SceneMan.GetTerrain() || !g_SceneMan.GetTerrain()->GetMaterialTexture()) {
+		if (!g_SceneMan.GetTerrain() || !g_SceneMan.GetTerrain()->GetMaterialTexture()) {
 			return false;
 		}
 
@@ -458,7 +460,7 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void ADoor::UpdateSensors() {		
+	void ADoor::UpdateSensors() {
 		const Actor *foundActor = 0;
 		bool anySensorInput = false;
 
@@ -470,7 +472,7 @@ namespace RTE {
 				if (foundActor->GetTeam() != m_Team) {
 					CloseDoor();
 					break;
-				} else if (foundActor->GetTeam() == m_Team) {					
+				} else if (foundActor->GetTeam() == m_Team) {
 					OpenDoor();
 				}
 			}

@@ -265,6 +265,7 @@ void ACraft::Clear()
     m_HatchTimer.Reset();
     m_HatchDelay = 0;
     m_HatchOpenSound = nullptr;
+    m_HatchCloseSound = nullptr;
     m_NewInventory.clear();
     m_Exits.clear();
     m_CurrentExit = m_Exits.begin();
@@ -316,6 +317,11 @@ int ACraft::Create(const ACraft &reference)
     m_HatchState = reference.m_HatchState;
     m_HatchDelay = reference.m_HatchDelay;
 	if (reference.m_HatchOpenSound) { m_HatchOpenSound = dynamic_cast<SoundContainer *>(reference.m_HatchOpenSound->Clone()); }
+	if (reference.m_HatchCloseSound) {
+		m_HatchCloseSound = dynamic_cast<SoundContainer *>(reference.m_HatchCloseSound->Clone());
+	} else if (reference.m_HatchOpenSound) {
+		m_HatchCloseSound = dynamic_cast<SoundContainer *>(reference.m_HatchOpenSound->Clone());
+	}
 	for (deque<MovableObject *>::const_iterator niItr = reference.m_NewInventory.begin(); niItr != reference.m_NewInventory.end(); ++niItr)
         m_NewInventory.push_back(dynamic_cast<MovableObject *>((*niItr)->Clone()));
     for (list<Exit>::const_iterator eItr = reference.m_Exits.begin(); eItr != reference.m_Exits.end(); ++eItr)
@@ -352,6 +358,9 @@ int ACraft::ReadProperty(const std::string_view &propName, Reader &reader)
 	else if (propName == "HatchOpenSound") {
 		m_HatchOpenSound = new SoundContainer;
 		reader >> m_HatchOpenSound;
+	} else if (propName == "HatchCloseSound") {
+		m_HatchCloseSound = new SoundContainer;
+		reader >> m_HatchCloseSound;
 	} else if (propName == "CrashSound") {
 		m_CrashSound = new SoundContainer;
 		reader >> m_CrashSound;
@@ -390,6 +399,8 @@ int ACraft::Save(Writer &writer) const
     writer << m_HatchDelay;
     writer.NewProperty("HatchOpenSound");
     writer << m_HatchOpenSound;
+    writer.NewProperty("HatchCloseSound");
+    writer << m_HatchCloseSound;
     for (list<Exit>::const_iterator itr = m_Exits.begin(); itr != m_Exits.end(); ++itr)
     {
         writer.NewProperty("AddExit");
@@ -420,6 +431,7 @@ int ACraft::Save(Writer &writer) const
 void ACraft::Destroy(bool notInherited)
 {
 	delete m_HatchOpenSound;
+	delete m_HatchCloseSound;
 	delete m_CrashSound;
 
     if (!notInherited)
@@ -519,14 +531,14 @@ void ACraft::SetTeam(int team)
 
 bool ACraft::AddPieMenuSlices(PieMenuGUI *pPieMenu)
 {
-	PieMenuGUI::Slice deliverSlice("Deliver Cargo", PieMenuGUI::PSI_DELIVER, PieMenuGUI::Slice::RIGHT);
+	PieSlice deliverSlice("Deliver Cargo", PieSlice::PieSliceIndex::PSI_DELIVER, PieSlice::SliceDirection::RIGHT);
     pPieMenu->AddSlice(deliverSlice);
-    PieMenuGUI::Slice returnSlice("Return", PieMenuGUI::PSI_RETURN, PieMenuGUI::Slice::UP);
+    PieSlice returnSlice("Return", PieSlice::PieSliceIndex::PSI_RETURN, PieSlice::SliceDirection::UP);
 	pPieMenu->AddSlice(returnSlice);
 	
-	PieMenuGUI::Slice staySlice("Stay", PieMenuGUI::PSI_STAY, PieMenuGUI::Slice::DOWN);
+	PieSlice staySlice("Stay", PieSlice::PieSliceIndex::PSI_STAY, PieSlice::SliceDirection::DOWN);
     pPieMenu->AddSlice(staySlice);
-    PieMenuGUI::Slice scuttleSlice("Scuttle!", PieMenuGUI::PSI_SCUTTLE, PieMenuGUI::Slice::LEFT);
+    PieSlice scuttleSlice("Scuttle!", PieSlice::PieSliceIndex::PSI_SCUTTLE, PieSlice::SliceDirection::LEFT);
 	pPieMenu->AddSlice(scuttleSlice);
 
     Actor::AddPieMenuSlices(pPieMenu);
@@ -541,27 +553,27 @@ bool ACraft::AddPieMenuSlices(PieMenuGUI *pPieMenu)
 // Description:     Handles and does whatever a specific activated Pie Menu slice does to
 //                  this.
 
-bool ACraft::HandlePieCommand(int pieSliceIndex)
+bool ACraft::HandlePieCommand(PieSlice::PieSliceIndex pieSliceIndex)
 {
-    if (pieSliceIndex != PieMenuGUI::PSI_NONE)
+    if (pieSliceIndex != PieSlice::PieSliceIndex::PSI_NONE)
     {
-        if (pieSliceIndex == PieMenuGUI::PSI_DELIVER)
+        if (pieSliceIndex == PieSlice::PieSliceIndex::PSI_DELIVER)
         {
             m_AIMode = AIMODE_DELIVER;
             m_DeliveryState = FALL;
             m_HasDelivered = false;
         }
-        else if (pieSliceIndex == PieMenuGUI::PSI_RETURN)
+        else if (pieSliceIndex == PieSlice::PieSliceIndex::PSI_RETURN)
         {
             m_AIMode = AIMODE_RETURN;
             m_DeliveryState = LAUNCH;
         }
-        else if (pieSliceIndex == PieMenuGUI::PSI_STAY)
+        else if (pieSliceIndex == PieSlice::PieSliceIndex::PSI_STAY)
         {
             m_AIMode = AIMODE_STAY;
             m_DeliveryState = FALL;
         }
-        else if (pieSliceIndex == PieMenuGUI::PSI_SCUTTLE)
+        else if (pieSliceIndex == PieSlice::PieSliceIndex::PSI_SCUTTLE)
             m_AIMode = AIMODE_SCUTTLE;
         else
             return Actor::HandlePieCommand(pieSliceIndex);
@@ -615,7 +627,7 @@ void ACraft::CloseHatch()
         m_NewInventory.clear();
 
         // PSCHHT
-		if (m_HatchOpenSound) { m_HatchOpenSound->Play(m_Pos); }
+		if (m_HatchCloseSound) { m_HatchCloseSound->Play(m_Pos); }
 	}
 }
 
@@ -758,9 +770,8 @@ void ACraft::DropAllInventory()
         {
             m_HasDelivered = true;
 
-            // Kill craft if it is lying down.
-            if (fabs(m_Rotation.GetRadAngle()) > c_QuarterPI && m_Status != DYING)
-            {
+			// Kill craft if it is lying down.
+			if (std::fabs(m_Rotation.GetRadAngle()) > c_HalfPI && m_Status != DYING) {
                 m_Status = DYING;
                 m_DeathTmr.Reset();
             }
@@ -815,13 +826,13 @@ bool ACraft::OnMOHit(MovableObject *pOtherMO)
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void ACraft::GibThis(const Vector &impactImpulse, MovableObject *movableObjectToIgnore) {
-	if (g_SettingsMan.EnableCrabBombs() && !s_CrabBombInEffect) {
+	if (g_SettingsMan.CrabBombsEnabled() && !s_CrabBombInEffect) {
 		s_CrabBombInEffect = true;
 		int crabCount = 0;
 		for (const MovableObject *inventoryEntry : m_Inventory) {
 			if (inventoryEntry->GetPresetName() == "Crab") { crabCount++; }
 		}
-		if (crabCount >= g_SettingsMan.CrabBombThreshold()) {
+		if (crabCount >= g_SettingsMan.GetCrabBombThreshold()) {
 			for (int moid = 1; moid < g_MovableMan.GetMOIDCount() - 1; moid++) {
 				Actor *actor = dynamic_cast<Actor *>(g_MovableMan.GetMOFromID(moid));
 				if (actor && actor != this && actor->GetClassName() != "ADoor" && !actor->IsInGroup("Brains")) { actor->GibThis(); }
@@ -851,9 +862,8 @@ void ACraft::Update()
 
     // Set viewpoint based on how we are aiming etc.
     m_ViewPoint = m_Pos.GetFloored();
-    // Add velocity also so the viewpoint moves ahead at high speeds
-    if (m_Vel.GetMagnitude() > 10)
-        m_ViewPoint += m_Vel * 6;
+	// Add velocity also so the viewpoint moves ahead at high speeds
+	if (m_Vel.GetMagnitude() > 10) { m_ViewPoint += m_Vel * std::sqrt(m_Vel.GetMagnitude() * 0.1F); }
 
     ///////////////////////////////////////////////////
     // Crash detection and handling

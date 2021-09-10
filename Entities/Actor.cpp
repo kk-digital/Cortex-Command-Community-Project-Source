@@ -100,6 +100,7 @@ void Actor::Clear() {
     m_LastAlarmPos.Reset();
     m_SightDistance = 450;
     m_Perceptiveness = 0.5;
+	m_CanRevealUnseen = true;
     m_CharHeight = 0;
     m_HolsterOffset.Reset();
     m_ViewPoint.Reset();
@@ -218,6 +219,7 @@ int Actor::Create(const Actor &reference)
     m_SeenTargetPos = reference.m_SeenTargetPos;
     m_SightDistance = reference.m_SightDistance;
     m_Perceptiveness = reference.m_Perceptiveness;
+	m_CanRevealUnseen = reference.m_CanRevealUnseen;
     m_CharHeight = reference.m_CharHeight;
     m_HolsterOffset = reference.m_HolsterOffset;
 
@@ -228,7 +230,7 @@ int Actor::Create(const Actor &reference)
 
     m_MaxInventoryMass = reference.m_MaxInventoryMass;
 
-    for (list<PieMenuGUI::Slice>::const_iterator itr = reference.m_PieSlices.begin(); itr != reference.m_PieSlices.end(); ++itr)
+    for (list<PieSlice>::const_iterator itr = reference.m_PieSlices.begin(); itr != reference.m_PieSlices.end(); ++itr)
         m_PieSlices.push_back(*itr);
     
     // Only load the static AI mode icons once
@@ -354,6 +356,8 @@ int Actor::ReadProperty(const std::string_view &propName, Reader &reader)
         reader >> m_SightDistance;
     else if (propName == "Perceptiveness")
         reader >> m_Perceptiveness;
+	else if (propName == "CanRevealUnseen")
+		reader >> m_CanRevealUnseen;
     else if (propName == "CharHeight")
         reader >> m_CharHeight;
     else if (propName == "HolsterOffset")
@@ -368,10 +372,10 @@ int Actor::ReadProperty(const std::string_view &propName, Reader &reader)
         reader >> m_MaxInventoryMass;
     else if (propName == "AddPieSlice")
     {
-        PieMenuGUI::Slice newSlice;
+        PieSlice newSlice;
         reader >> newSlice;
         m_PieSlices.push_back(newSlice);
-		PieMenuGUI::AddAvailableSlice(newSlice);
+		PieMenuGUI::StoreCustomLuaPieSlice(newSlice);
     }
     else if (propName == "AIMode")
     {
@@ -433,6 +437,8 @@ int Actor::Save(Writer &writer) const
     writer << m_SightDistance;
     writer.NewProperty("Perceptiveness");
     writer << m_Perceptiveness;
+	writer.NewProperty("CanRevealUnseen");
+	writer << m_CanRevealUnseen;
     writer.NewProperty("CharHeight");
     writer << m_CharHeight;
     writer.NewProperty("HolsterOffset");
@@ -444,7 +450,7 @@ int Actor::Save(Writer &writer) const
     }
     writer.NewProperty("MaxInventoryMass");
     writer << m_MaxInventoryMass;
-    for (list<PieMenuGUI::Slice>::const_iterator itr = m_PieSlices.begin(); itr != m_PieSlices.end(); ++itr)
+    for (list<PieSlice>::const_iterator itr = m_PieSlices.begin(); itr != m_PieSlices.end(); ++itr)
     {
         writer.NewProperty("AddPieSlice");
         writer << *itr;
@@ -655,7 +661,7 @@ Controller::InputMode Actor::SwapControllerModes(Controller::InputMode newMode, 
 
 bool Actor::Look(float FOVSpread, float range)
 {
-    if (!g_SceneMan.AnythingUnseen(m_Team))
+    if (!g_SceneMan.AnythingUnseen(m_Team) || m_CanRevealUnseen == false)
         return false;
 
     // Use the 'eyes' on the 'head', if applicable
@@ -731,32 +737,11 @@ void Actor::RestDetection()
 bool Actor::AddPieMenuSlices(PieMenuGUI *pPieMenu)
 {
     // Add the custom scripted options of this Actor
-    for (list<PieMenuGUI::Slice>::iterator itr = m_PieSlices.begin(); itr != m_PieSlices.end(); ++itr)
+    for (list<PieSlice>::iterator itr = m_PieSlices.begin(); itr != m_PieSlices.end(); ++itr)
         pPieMenu->AddSlice(*itr);
 
     m_PieNeedsUpdate = false;
     return true;
-}
-
-
-//////////////////////////////////////////////////////////////////////////////////////////
-// Virtual method:  HandlePieCommand
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Handles and does whatever a specific activated Pie Menu slice does to
-//                  this.
-
-bool Actor::HandlePieCommand(int pieSliceIndex)
-{
-/* Actually don't; the PSI_SCRIPTED is handled earlier in PieMenuGUI::Update
-    // Handle scripted pie commands here; run their scripts
-    if (pieSliceIndex == PieMenuGUI::PSI_SCRIPTED)
-    {
-// TODO: THIS
-
-        return true;
-    }
-*/
-    return false;
 }
 
 
@@ -826,6 +811,19 @@ void Actor::RemoveInventoryItem(string presetName)
 	}
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+MovableObject * Actor::RemoveInventoryItemAtIndex(int inventoryIndex) {
+    if (inventoryIndex >= 0 && inventoryIndex < m_Inventory.size()) {
+        MovableObject *itemAtIndex = m_Inventory.at(inventoryIndex);
+        m_Inventory.erase(m_Inventory.begin() + inventoryIndex);
+        return itemAtIndex;
+    }
+    return nullptr;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          SwapPrevInventory
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -852,6 +850,34 @@ MovableObject * Actor::SwapPrevInventory(MovableObject *pSwapIn)
 
     return pRetDev;
 }
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+bool Actor::SwapInventoryItemsByIndex(int inventoryIndex1, int inventoryIndex2) {
+    if (inventoryIndex1 < 0 || inventoryIndex2 < 0 || inventoryIndex1 >= m_Inventory.size() || inventoryIndex2 >= m_Inventory.size()) {
+        return false;
+    }
+
+    std::swap(m_Inventory.at(inventoryIndex1), m_Inventory.at(inventoryIndex2));
+    return true;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+MovableObject * Actor::SetInventoryItemAtIndex(MovableObject *newInventoryItem, int inventoryIndex) {
+    if (newInventoryItem) {
+        if (inventoryIndex < 0 || inventoryIndex >= m_Inventory.size()) {
+            m_Inventory.emplace_back(newInventoryItem);
+            return nullptr;
+        }
+        MovableObject *currentInventoryItemAtIndex = m_Inventory.at(inventoryIndex);
+        m_Inventory.at(inventoryIndex) = newInventoryItem;
+        return currentInventoryItemAtIndex;
+    }
+    return nullptr;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -1071,21 +1097,25 @@ bool Actor::CollideAtPoint(HitData &hd)
 //                  MO. Appropriate effects will be determined and applied ONLY IF there
 //                  was penetration! If not, nothing will be affected.
 
-bool Actor::ParticlePenetration(HitData &hd)
-{
+bool Actor::ParticlePenetration(HitData &hd) {
     bool penetrated = MOSRotating::ParticlePenetration(hd);
 
-    // If penetrated, be alarmed (if not completely unperceptive, that is)!
-    if (penetrated && m_Perceptiveness > 0)
-    {
-        // Move the alarm point out a bit from the Body so the reaction is better
-//        Vector extruded(g_SceneMan.ShortestDistance(m_Pos, hd.HitPoint));
+    MovableObject *hitor = hd.Body[HITOR];
+    float damageToAdd = hitor->DamageOnCollision();
+    damageToAdd += penetrated ? hitor->DamageOnPenetration() : 0;
+    if (hitor->GetApplyWoundDamageOnCollision()) { damageToAdd += m_pEntryWound->GetEmitDamage() * hitor->WoundDamageMultiplier(); }
+    if (hitor->GetApplyWoundBurstDamageOnCollision()) { damageToAdd += m_pEntryWound->GetBurstDamage() * hitor->WoundDamageMultiplier(); }
 
-        Vector extruded(hd.HitVel[HITOR]);
-        extruded.SetMagnitude(m_CharHeight);
-        extruded = m_Pos - extruded;
-        g_SceneMan.WrapPosition(extruded);
-        AlarmPoint(extruded);
+    if (damageToAdd != 0) {
+        m_Health = std::min(m_Health - damageToAdd * m_DamageMultiplier, m_MaxHealth);
+
+        if (m_Perceptiveness > 0) {
+            Vector extruded(hd.HitVel[HITOR]);
+            extruded.SetMagnitude(m_CharHeight);
+            extruded = m_Pos - extruded;
+            g_SceneMan.WrapPosition(extruded);
+            AlarmPoint(extruded);
+        }
     }
 
     return penetrated;
@@ -1416,7 +1446,8 @@ void Actor::Update()
         else if (!m_pMOMoveTarget)
             m_AIMode = AIMODE_SENTRY;
     }
-
+	// Save health state so we can compare next update
+	m_PrevHealth = m_Health;
     /////////////////////////////////////
     // Take damage/heal from wounds and wounds on Attachables
     for (AEmitter *wound : m_Wounds) {
@@ -1584,8 +1615,6 @@ void Actor::Update()
 			g_MovableMan.RegisterAlarmEvent(AlarmEvent(m_Pos, m_Team, 0.5));
 		}
 	}
-    // Save health state so we can compare next update
-    m_PrevHealth = m_Health;
 
 // Do NOT mess witht he HUD stack in update... it should only be altered in DrawHUD, or it will jitter when multiple sim updates happen
 //    m_HUDStack = -m_CharHeight / 2;
@@ -1632,6 +1661,9 @@ void Actor::Draw(SDL_Renderer* renderer,
 
 void Actor::DrawHUD(SDL_Renderer* renderer, const Vector &targetPos, int whichScreen, bool playerControlled)
 {
+	// This should indeed be a local var and not alter a member one in a draw func! Can cause nasty jittering etc if multiple sim updates are done without a drawing in between etc
+    m_HUDStack = -m_CharHeight / 2;
+
     if (!m_HUDVisible)
         return;
 
@@ -1652,8 +1684,6 @@ void Actor::DrawHUD(SDL_Renderer* renderer, const Vector &targetPos, int whichSc
 
     GUIFont *pSymbolFont = g_FrameMan.GetLargeFont();
     GUIFont *pSmallFont = g_FrameMan.GetSmallFont();
-    // This should indeed be a local var and not alter a member one in a draw func! Can cause nasty jittering etc if multiple sim updates are done without a drawing in between etc
-    m_HUDStack = -m_CharHeight / 2;
     Vector drawPos = m_Pos - targetPos;
     Vector cpuPos = GetCPUPos() - targetPos;
 

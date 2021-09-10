@@ -415,7 +415,7 @@ public:
 // Arguments:       The cost, in oz of gold.
 // Return value:    None.
 
-	void SetGoldValue(float value) { m_OzValue = value; } 
+	void SetGoldValue(float value) { m_OzValue = value; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////

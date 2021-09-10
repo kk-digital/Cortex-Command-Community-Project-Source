@@ -318,7 +318,7 @@ bool TerrainObject::IsOnScenePoint(Vector &scenePoint) const
         }
         if (g_SceneMan.SceneWrapsY())
         {
-            
+
         }
     }
 

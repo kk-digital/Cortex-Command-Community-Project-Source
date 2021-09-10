@@ -196,7 +196,7 @@ ClassInfoGetters
 // Method:          GetBGColorBitmap
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Gets the BITMAP object that this TerrainObject uses for its back-
-//                  ground color representation, if any. 
+//                  ground color representation, if any.
 // Arguments:       None.
 // Return value:    A pointer to the background color BITMAP object. Ownership is not
 //                  transferred. This may be 0 if there is no BG info!
@@ -289,7 +289,7 @@ ClassInfoGetters
 // Virtual method:  GetDisplayAsTerrain
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Returns whether this bunker module should be drawn as terrain object on minimap
-//                  
+//
 // Arguments:       None.
 // Return value:    Returns true if this module should be drawn as part of terrain on minimap.
 

@@ -416,10 +416,15 @@ Vector SceneMan::GetSceneDim() const
 
 int SceneMan::GetSceneWidth() const
 {
-//    RTEAssert(m_pCurrentScene, "Trying to get terrain info before there is a scene or terrain!");
+  #ifdef NETWORK_ENABLED
+	if (g_NetworkClient.IsConnectedAndRegistered()) {
+		return g_NetworkClient.GetSceneWidth();
+	}
+  #endif
+
 	if (m_pCurrentScene)
-		return m_pCurrentScene->GetWidth();
-	return 0;
+        return m_pCurrentScene->GetWidth();
+    return 0;
 }
 
 
@@ -444,9 +449,15 @@ int SceneMan::GetSceneHeight() const
 
 bool SceneMan::SceneWrapsX() const
 {
+#ifdef NETWORK_ENABLED
+	if (g_NetworkClient.IsConnectedAndRegistered()) {
+		return g_NetworkClient.SceneWrapsX();
+	}
+#endif
+
 	if (m_pCurrentScene)
-		return m_pCurrentScene->WrapsX();
-	return false;
+        return m_pCurrentScene->WrapsX();
+    return false;
 }
 
 
@@ -713,6 +724,13 @@ void SceneMan::SetScrollTarget(const Vector &targetCenter,
 	m_ScrollSpeed[screen] = speed;
 	// Don't override a set wrapping, it will be reset to false upon a drawn frame
 	m_TargetWrapped[screen] = m_TargetWrapped[screen] || targetWrapped;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+const Vector & SceneMan::GetScrollTarget(int screen) const {
+	 const Vector & offsetTarget = (g_NetworkClient.IsConnectedAndRegistered()) ? g_NetworkClient.GetFrameTarget() : m_ScrollTarget[screen];
+	 return offsetTarget;
 }
 
 
@@ -2573,7 +2591,7 @@ MOID SceneMan::CastMORay(const Vector &start, const Vector &ray, MOID ignoreMOID
 
 bool SceneMan::CastFindMORay(const Vector &start, const Vector &ray, MOID targetMOID, Vector &resultPos, unsigned char ignoreMaterial, bool ignoreAllTerrain, int skip)
 {
-    int hitCount = 0, error, dom, sub, domSteps, skipped = skip;;
+    int hitCount = 0, error, dom, sub, domSteps, skipped = skip;
     int intPos[2], delta[2], delta2[2], increment[2];
     MOID hitMOID = g_NoMOID;
     unsigned char hitTerrain = 0;

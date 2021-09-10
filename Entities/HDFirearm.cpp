@@ -58,6 +58,7 @@ void HDFirearm::Clear()
     m_SharpShakeRange = 0;
     m_NoSupportFactor = 0;
     m_ParticleSpreadRange = 0;
+	m_ShellEjectAngle = 150;
     m_ShellSpreadRange = 0;
     m_ShellAngVelRange = 0;
     m_AIFireVel = -1;
@@ -131,6 +132,7 @@ int HDFirearm::Create(const HDFirearm &reference) {
     m_SharpShakeRange = reference.m_SharpShakeRange;
     m_NoSupportFactor = reference.m_NoSupportFactor;
     m_ParticleSpreadRange = reference.m_ParticleSpreadRange;
+	m_ShellEjectAngle = reference.m_ShellEjectAngle;
     m_ShellSpreadRange = reference.m_ShellSpreadRange;
     m_ShellAngVelRange = reference.m_ShellAngVelRange;
     m_MuzzleOff = reference.m_MuzzleOff;
@@ -153,11 +155,9 @@ int HDFirearm::Create(const HDFirearm &reference) {
 
 int HDFirearm::ReadProperty(const std::string_view &propName, Reader &reader) {
     if (propName == "Magazine") {
-        const Entity *magazineEntity = g_PresetMan.GetEntityPreset(reader);
-        if (magazineEntity) { SetMagazine(dynamic_cast<Magazine *>(magazineEntity->Clone())); }
+        SetMagazine(dynamic_cast<Magazine *>(g_PresetMan.ReadReflectedPreset(reader)));
     } else if (propName == "Flash") {
-        const Entity *flashEntity = g_PresetMan.GetEntityPreset(reader);
-        if (flashEntity) { SetFlash(dynamic_cast<Attachable *>(flashEntity->Clone())); }
+        SetFlash(dynamic_cast<Attachable *>(g_PresetMan.ReadReflectedPreset(reader)));
     } else if (propName == "PreFireSound") {
 		m_PreFireSound = new SoundContainer;
 		reader >> m_PreFireSound;
@@ -211,6 +211,8 @@ int HDFirearm::ReadProperty(const std::string_view &propName, Reader &reader) {
     } else if (propName == "ParticleSpreadRange") {
         reader >> m_ParticleSpreadRange;
         m_ParticleSpreadRange /= 2;
+	} else if (propName == "ShellEjectAngle") {
+		reader >> m_ShellEjectAngle;
     } else if (propName == "ShellSpreadRange") {
         reader >> m_ShellSpreadRange;
         m_ShellSpreadRange /= 2;
@@ -283,6 +285,8 @@ int HDFirearm::Save(Writer &writer) const
     writer << m_NoSupportFactor;
     writer.NewProperty("ParticleSpreadRange");
     writer << m_ParticleSpreadRange * 2;
+	writer.NewProperty("ShellEjectAngle");
+	writer << m_ShellEjectAngle;
     writer.NewProperty("ShellSpreadRange");
     writer << m_ShellSpreadRange * 2;
     writer.NewProperty("ShellAngVelRange");
@@ -345,11 +349,10 @@ void HDFirearm::Destroy(bool notInherited)
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void HDFirearm::SetMagazine(Magazine *newMagazine) {
+    if (m_pMagazine && m_pMagazine->IsAttached()) { RemoveAndDeleteAttachable(m_pMagazine); }
     if (newMagazine == nullptr) {
-        if (m_pMagazine && m_pMagazine->IsAttached()) { RemoveAttachable(m_pMagazine); }
         m_pMagazine = nullptr;
     } else {
-        if (m_pMagazine && m_pMagazine->IsAttached()) { RemoveAttachable(m_pMagazine); }
         m_pMagazine = newMagazine;
         AddAttachable(newMagazine);
 
@@ -367,14 +370,13 @@ void HDFirearm::SetMagazine(Magazine *newMagazine) {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void HDFirearm::SetFlash(Attachable *newFlash) {
+    if (m_pFlash && m_pFlash->IsAttached()) { RemoveAndDeleteAttachable(m_pFlash); }
     if (newFlash == nullptr) {
-        if (m_pFlash && m_pFlash->IsAttached()) { RemoveAttachable(m_pFlash); }
         m_pFlash = nullptr;
     } else {
         // Note - this is done here because setting mass on attached Attachables causes values to be updated on the parent (and its parent, and so on), which isn't ideal. Better to do it before the new flash is attached, so there are fewer calculations.
         newFlash->SetMass(0.0F);
 
-        if (m_pFlash && m_pFlash->IsAttached()) { RemoveAttachable(m_pFlash); }
 		m_pFlash = newFlash;
         AddAttachable(newFlash);
 
@@ -650,8 +652,11 @@ void HDFirearm::Reload()
     {
         if (m_pMagazine)
         {
-            m_pMagazine->SetVel(m_Vel + Vector(m_HFlipped ? -3 : 3, 0.3));
-            m_pMagazine->SetAngularVel(6.0F + (-RandomNum(0.0F, 6.0F)));
+			Vector constrainedMagazineOffset = g_SceneMan.ShortestDistance(m_Pos, m_pMagazine->GetPos(), g_SceneMan.SceneWrapsX()).SetMagnitude(2.0F);
+			Vector ejectVector = Vector(2.0F * GetFlipFactor(), 0.0F) + constrainedMagazineOffset.RadRotate(RandomNum(-0.2F, 0.2F));
+			m_pMagazine->SetVel(m_Vel + ejectVector);
+			m_pMagazine->SetAngularVel(RandomNum(-3.0F, 3.0F));
+
             if (!m_pMagazine->IsDiscardable()) { m_pMagazine->SetToDelete(); }
             RemoveAttachable(m_pMagazine, m_pMagazine->IsDiscardable(), false);
             m_pMagazine = 0;
@@ -696,7 +701,7 @@ bool HDFirearm::NeedsReloading() const
 // Description:     Tells whether the device is curtrently full and reloading won't have
 //                  any effect.
 
-bool HDFirearm::IsFull()
+bool HDFirearm::IsFull() const
 {
     if (!m_Reloading)
     {
@@ -791,7 +796,7 @@ void HDFirearm::Update()
             MOPixel *pPixel;
             float shake, particleSpread, shellSpread, lethalRange;
 
-            lethalRange = m_MaxSharpLength + max(g_FrameMan.GetPlayerFrameBufferWidth(-1), g_FrameMan.GetPlayerFrameBufferHeight(-1)) * 0.52;
+            lethalRange = m_MaxSharpLength * m_SharpAim + max(g_FrameMan.GetPlayerFrameBufferWidth(-1), g_FrameMan.GetPlayerFrameBufferHeight(-1)) * 0.51F;
             Actor *pUser = dynamic_cast<Actor *>(pRootParent);
             if (pUser)
                 lethalRange += pUser->GetAimDistance();
@@ -818,7 +823,7 @@ void HDFirearm::Update()
                 {
                     pParticle = pRound->PopNextParticle();
 
-                    // Only make the particles separate back behind the nozzle, not in front. THis is to avoid silly penetration firings
+                    // Only make the particles separate back behind the nozzle, not in front. This is to avoid silly penetration firings
 					particlePos = tempNozzle + (roundVel.GetNormalized() * (-RandomNum()) * pRound->GetSeparation());
                     pParticle->SetPos(m_Pos + particlePos);
 
@@ -826,11 +831,12 @@ void HDFirearm::Update()
                     particleSpread = m_ParticleSpreadRange * RandomNormalNum();
                     particleVel.DegRotate(particleSpread);
                     pParticle->SetVel(m_Vel + particleVel);
-                    pParticle->SetRotAngle(particleVel.GetAbsRadAngle());
+                    pParticle->SetRotAngle(particleVel.GetAbsRadAngle() + (m_HFlipped ? -c_PI : 0));
+					pParticle->SetHFlipped(m_HFlipped);
                     // F = m * a
                     totalFireForce += pParticle->GetMass() * pParticle->GetVel().GetMagnitude();
 
-                    // Detach if it's an attachable
+                    // Remove from parent if it's an attachable
                     Attachable *pAttachable = dynamic_cast<Attachable *>(pParticle);
                     if (pAttachable)
                     {
@@ -849,13 +855,16 @@ void HDFirearm::Update()
                     pParticle->SetTeam(m_Team);
 
                     // Also make this not hit team members
+					// TODO: Don't hardcode this???
                     pParticle->SetIgnoresTeamHits(true);
 
                     // Decide for how long until the bullet tumble and start to lose lethality
                     pPixel = dynamic_cast<MOPixel *>(pParticle);
-                    if (pPixel)
-                        pPixel->SetLethalRange(lethalRange);
-
+					if (pPixel) {
+						// Stray bullets heavily affected by bullet shake lose lethality quicker, as if missing on an imaginary "Z" axis
+						lethalRange *= std::max(1.0F - std::abs(shake) / 20.0F, 0.1F);
+						pPixel->SetLethalRange(lethalRange);
+					}
                     g_MovableMan.AddParticle(pParticle);
                 }
                 pParticle = 0;
@@ -871,16 +880,19 @@ void HDFirearm::Update()
 
                     // ##@#@@$ TEMP
                     shellVel.SetXY(pRound->GetShellVel(), 0);
-                    shellVel.DegRotate(degAimAngle + 150 * (m_HFlipped ? -1 : 1) + shellSpread);
+                    shellVel.DegRotate(degAimAngle + m_ShellEjectAngle * (m_HFlipped ? -1 : 1) + shellSpread);
                     pShell->SetVel(m_Vel + shellVel);
                     pShell->SetRotAngle(m_Rotation.GetRadAngle());
                     pShell->SetAngularVel(pShell->GetAngularVel() + (m_ShellAngVelRange * RandomNormalNum()));
 					pShell->SetHFlipped(m_HFlipped);
-//                  // Set the ejected shell to not hit this HeldDevice's parent, if applicable
-//                  if (m_FireIgnoresThis)
-//                      pParticle->SetWhichMOToNotHit(pRootParent, 1.0f);
+					// Set the ejected shell to not hit this HeldDevice's parent, if applicable
+					if (m_FireIgnoresThis)
+						pShell->SetWhichMOToNotHit(this, 1.0f);
                     // Set the team so alarm events that happen if these gib won't freak out the guy firing
                     pShell->SetTeam(m_Team);
+					// Set this to ignore team hits in case it's lethal
+					// TODO: Don't hardcode this???
+					pShell->SetIgnoresTeamHits(true);
                     g_MovableMan.AddParticle(pShell);
                     pShell = 0;
                 }

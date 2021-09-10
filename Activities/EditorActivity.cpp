@@ -41,9 +41,6 @@
 #include "GUI/GUILabel.h"
 #include "GUI/GUIComboBox.h"
 
-
-extern bool g_ResetActivity;
-
 namespace RTE {
 
 AbstractClassInfo(EditorActivity, Activity)
@@ -231,8 +228,9 @@ int EditorActivity::Start()
         m_pGUIInput = new SDLInput(-1, true);
     if (!m_pGUIController)
         m_pGUIController = new GUIControlManager();
-    if(!m_pGUIController->Create(m_pGUIScreen, m_pGUIInput, "Base.rte/GUIs/Skins/Base"))
-        RTEAbort("Failed to create GUI Control Manager and load it from Base.rte/GUIs/Skins/Base");
+    if (!m_pGUIController->Create(m_pGUIScreen, m_pGUIInput, "Base.rte/GUIs/Skins", "DefaultSkin.ini")) {
+		RTEAbort("Failed to create GUI Control Manager and load it from Base.rte/GUIs/Skins/DefaultSkin.ini");
+	}
 
     return error;
 }

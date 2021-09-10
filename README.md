@@ -8,6 +8,11 @@ Stay up to date in our [Discord channel](https://discord.gg/TSU6StNQUG).
 
 ***
 
+# How to Play the Game
+If you just want to play the latest version of the game you can get it from our [website](https://cortex-command-community.github.io), and you can get mods from our [mod portal](https://cccp.mod.io).
+
+***
+
 # Windows Build Instructions
 First you need to download the necessary files:
 
@@ -37,7 +42,9 @@ Simply open `RTEA.sln` with Visual Studio, choose your target platform (x86 or x
 
 The first build will take a while, but future ones should be quicker.
 
-If you want to use an IDE other than Visual Studio, you will want to build using meson. Check the [Linux](#building) and [Installing Dependencies](#installing-dependencies) section for pointers.
+If you want to use an IDE other than Visual Studio, you will have to build using meson. Check the [Linux](#building) and [Installing Dependencies](#installing-dependencies) section for pointers.
+
+***
 
 # Linux Build Instructions
 The Linux build uses the meson build system, and builds against system libraries.
@@ -92,13 +99,15 @@ If you want to change the buildtype aftwerwards, you can use `meson configure --
 **Ubuntu >=20.04:**  
 `# apt-get install build-essential libboost-dev liballegro4-dev libloadpng4-dev libflac++-dev luajit-5.1-dev libminizip-dev liblz4-dev libpng++-dev libx11-dev ninja-build meson`  
 
-**Windows 10 (64-bit)**  
+**Windows 10 (64-bit) without Visual Studio**  
 - [Windows SDK](https://developer.microsoft.com/de-de/windows/downloads/windows-10-sdk/)
 - [Clang Toolset](https://github.com/llvm/llvm-project/releases) (Grab the latest LLVM-...-win64.exe)
 - [git](https://www.git-scm.org)
 - [meson](https://github.com/mesonbuild/meson/releases) (documentation [here](https://www.mesonbuild.com))
 - (optional) Visual Studio for the Developer Consoles since setup otherwise may be unnecessarily hard
 
+***
+
 # More Information
 
-For more information and recommendations, see [here](https://github.com/cortex-command-community/Cortex-Command-Community-Project-Source/wiki/Information,-Recommended-Plugins-and-Useful-Links).
+See the [Information and Recommendations](https://github.com/cortex-command-community/Cortex-Command-Community-Project-Source/wiki/Information,-Recommended-Plugins-and-Useful-Links) page for more details and useful development tools.

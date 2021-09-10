@@ -236,6 +236,7 @@ public:
 
 	float GetJetTimeTotal() const { return m_JetTimeTotal; }
 
+
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          SetJetTimeTotal
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -245,6 +246,7 @@ public:
 
 	void SetJetTimeTotal(float newValue) { m_JetTimeTotal = newValue; }
 
+
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          GetJetTimeLeft
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -253,6 +255,20 @@ public:
 // Return value:    The amount of time this' jetpack can still fire before running out.
 
 	float GetJetTimeLeft() const { return m_JetTimeLeft; }
+
+
+	/// <summary>
+	/// Gets the scalar ratio at which this jetpack's thrust angle follows the aim angle of the user.
+	/// </summary>
+	/// <returns>The ratio at which this jetpack follows the aim angle of the user.</returns>
+	float GetJetAngleRange() const { return m_JetAngleRange; }
+
+
+	/// <summary>
+	/// Sets the scalar ratio at which this jetpack's thrust angle follows the aim angle of the user.
+	/// </summary>
+	/// <param name="newValue">The ratio at which this jetpack follows the aim angle of the user.</param>
+	void SetJetAngleRange(float newValue) { m_JetAngleRange = newValue; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -288,7 +304,7 @@ public:
 // Return value:    Whetehr any slice was handled. False if no matching slice handler was
 //                  found, or there was no slice currently activated by the pie menu.
 
-	bool HandlePieCommand(int pieSliceIndex) override;
+	bool HandlePieCommand(PieSlice::PieSliceIndex pieSliceIndex) override;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -354,13 +370,13 @@ int FirearmActivationDelay() const;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
-// Method:  ReloadFirearm
+// Method:  ReloadFirearms
 //////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Reloads the currently held firearm, if any.
+// Description:     Reloads the currently held firearms, if any.
 // Arguments:       None.
 // Return value:    None.
 
-	void ReloadFirearm();
+	void ReloadFirearms();
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -562,6 +578,8 @@ protected:
 	float m_JetTimeTotal;
 	// How much time left the jetpack can go, in ms
 	float m_JetTimeLeft;
+	// Ratio at which the jetpack angle follows aim angle
+	float m_JetAngleRange;
 	// Blink timer
 	Timer m_IconBlinkTimer;
 	// Current movement state.

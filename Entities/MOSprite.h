@@ -549,7 +549,7 @@ public:
 //////////////////////////////////////////////////////////////////////////////////////////
 // Virtual method:  GetFlipFactor
 //////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Returns a positive or negative number value to multiply with for external calculations. 
+// Description:     Returns a positive or negative number value to multiply with for external calculations.
 // Arguments:       None.
 // Return value:    1 for not flipped, -1 for flipped.
 

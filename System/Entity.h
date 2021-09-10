@@ -39,7 +39,7 @@ namespace RTE {
 		static void * Allocate() { return malloc(sizeof(TYPE)); }										\
 		static void Deallocate(void *instance) { free(instance); }										\
 		static Entity * NewInstance() { return new TYPE; }												\
-		Entity * Clone(Entity *cloneTo = 0) const override {											\
+		Entity * Clone(Entity *cloneTo = nullptr) const override {											\
 			TYPE *ent = cloneTo ? dynamic_cast<TYPE *>(cloneTo) : new TYPE();							\
 			RTEAssert(ent, "Tried to clone to an incompatible instance!");								\
 			if (cloneTo) { ent->Destroy(); }															\
@@ -59,6 +59,7 @@ namespace RTE {
 		g_DrawWhite,
 		g_DrawMOID,
 		g_DrawNoMOID,
+		g_DrawDoor,
 		g_DrawDebug,
 		g_DrawLess,
 		g_DrawTrans,
@@ -124,6 +125,34 @@ namespace RTE {
 			/// </summary>
 			/// <returns>A pointer to the parent ClassInfo. 0 if this is a root class.</returns>
 			const ClassInfo * GetParent() const { return m_ParentInfo; }
+
+			/// <summary>
+			/// Gets whether or not this ClassInfo is the same as, or a parent of the ClassInfo corresponding to the given class name.
+			/// </summary>
+			/// <param name="classNameToCheck">The name of the class to check for.</param>
+			/// <returns>Whether or not this ClassInfo is the same as, or a parent of corresponding ClassInfo for the given class.</returns>
+			bool IsClassOrParentClassOf(const std::string &classNameToCheck) const { return GetClass(classNameToCheck)->IsClassOrChildClassOf(this); }
+
+			/// <summary>
+			/// Gets whether or not this ClassInfo is the same as, or a parent of the given ClassInfo.
+			/// </summary>
+			/// <param name="classNameToCheck">The name of the class to check for.</param>
+			/// <returns>Whether or not this ClassInfo is the same as, or a parent of the given ClassInfo.</returns>
+			bool IsClassOrParentClassOf(const ClassInfo *classInfoToCheck) const { return classInfoToCheck->IsClassOrChildClassOf(this); }
+
+			/// <summary>
+			/// Gets whether or not this ClassInfo is the same as, or a child of the ClassInfo corresponding to the given class name.
+			/// </summary>
+			/// <param name="classNameToCheck">The name of the class to check for.</param>
+			/// <returns>Whether or not this ClassInfo is the same as, or a child of corresponding ClassInfo for the given class.</returns>
+			bool IsClassOrChildClassOf(const std::string &classNameToCheck) const { return IsClassOrChildClassOf(GetClass(classNameToCheck)); }
+
+			/// <summary>
+			/// Gets whether or not this ClassInfo is the same as, or a child of the given ClassInfo.
+			/// </summary>
+			/// <param name="classNameToCheck">The name of the class to check for.</param>
+			/// <returns>Whether or not this ClassInfo is the same as, or a child of the given ClassInfo.</returns>
+			bool IsClassOrChildClassOf(const ClassInfo *classInfoToCheck) const;
 #pragma endregion
 
 #pragma region Memory Management
@@ -231,7 +260,7 @@ namespace RTE {
 		/// </summary>
 		/// <param name="cloneTo">A pointer to an instance to make identical to this. If 0 is passed in, a new instance is made inside here, and ownership of it IS returned!</param>
 		/// <returns>An Entity pointer to the newly cloned-to instance. Ownership IS transferred!</returns>
-		virtual Entity * Clone(Entity *cloneTo = 0) const { RTEAbort("Attempt to clone an abstract or unclonable type!"); return 0; }
+		virtual Entity * Clone(Entity *cloneTo = nullptr) const { RTEAbort("Attempt to clone an abstract or unclonable type!"); return nullptr; }
 #pragma endregion
 
 #pragma region Destruction
@@ -285,8 +314,10 @@ namespace RTE {
 		/// Sets the name of this Entity's data Preset.
 		/// </summary>
 		/// <param name="newName">A string reference with the instance name of this Entity.</param>
+		/// <param name="calledFromLua">Whether this method was called from Lua, in which case this change is cosmetic only and shouldn't affect scripts.</param>
+		// TODO: Replace the calledFromLua flag with some DisplayName property
 		// TODO: Figure out how to handle if same name was set, still make it wasgivenname = true?
-		virtual void SetPresetName(const std::string &newName) { /*if (m_PresetName != newName) { m_IsOriginalPreset = true; }*/ m_IsOriginalPreset = true; m_PresetName = newName; }
+		virtual void SetPresetName(const std::string &newName, bool calledFromLua = false) { /*if (m_PresetName != newName) { m_IsOriginalPreset = true; }*/ m_IsOriginalPreset = calledFromLua ? m_IsOriginalPreset : true; m_PresetName = newName; }
 
 		/// <summary>
 		/// Gets the plain text description of this Entity's data Preset.

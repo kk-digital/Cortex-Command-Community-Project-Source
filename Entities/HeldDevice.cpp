@@ -152,7 +152,7 @@ int HeldDevice::Create(const HeldDevice &reference)
     m_Supported = reference.m_Supported;
     m_Loudness = reference.m_Loudness;
 
-    for (list<PieMenuGUI::Slice>::const_iterator itr = reference.m_PieSlices.begin(); itr != reference.m_PieSlices.end(); ++itr)
+    for (list<PieSlice>::const_iterator itr = reference.m_PieSlices.begin(); itr != reference.m_PieSlices.end(); ++itr)
         m_PieSlices.push_back(*itr);
 
     return 0;
@@ -209,10 +209,10 @@ int HeldDevice::ReadProperty(const std::string_view &propName, Reader &reader)
         reader >> m_Loudness;
     else if (propName == "AddPieSlice")
     {
-        PieMenuGUI::Slice newSlice;
+        PieSlice newSlice;
         reader >> newSlice;
         m_PieSlices.push_back(newSlice);
-		PieMenuGUI::AddAvailableSlice(newSlice);
+		PieMenuGUI::StoreCustomLuaPieSlice(newSlice);
     }
     else
         return Attachable::ReadProperty(propName, reader);
@@ -250,7 +250,7 @@ int HeldDevice::Save(Writer &writer) const
     writer << m_MaxSharpLength;
     writer.NewProperty("Loudness");
     writer << m_Loudness;
-    for (list<PieMenuGUI::Slice>::const_iterator itr = m_PieSlices.begin(); itr != m_PieSlices.end(); ++itr)
+    for (list<PieSlice>::const_iterator itr = m_PieSlices.begin(); itr != m_PieSlices.end(); ++itr)
     {
         writer.NewProperty("AddPieSlice");
         writer << *itr;
@@ -284,8 +284,11 @@ void HeldDevice::Destroy(bool notInherited)
 
 Vector HeldDevice::GetStanceOffset() const
 {
-    if (m_SharpAim > 0)
-        return m_SharpStanceOffset.GetXFlipped(m_HFlipped);
+	if (m_SharpAim > 0) {
+		float rotAngleScalar = std::abs(std::sin(GetRootParent()->GetRotAngle()));
+		// Deviate the vertical axis towards regular StanceOffset based on the user's rotation so that sharp aiming doesn't look awkward when prone
+		return Vector(m_SharpStanceOffset.GetX(), m_SharpStanceOffset.GetY() * (1.0F - rotAngleScalar) + m_StanceOffset.GetY() * rotAngleScalar).GetXFlipped(m_HFlipped);
+	}
     else
         return m_StanceOffset.GetXFlipped(m_HFlipped);
 }
@@ -336,7 +339,7 @@ void HeldDevice::RemovePickupableByPresetName(const std::string &actorPresetName
 bool HeldDevice::AddPieMenuSlices(PieMenuGUI *pPieMenu)
 {
     // Add the custom scripted options of this specific device
-    for (list<PieMenuGUI::Slice>::iterator itr = m_PieSlices.begin(); itr != m_PieSlices.end(); ++itr)
+    for (list<PieSlice>::iterator itr = m_PieSlices.begin(); itr != m_PieSlices.end(); ++itr)
         pPieMenu->AddSlice(*itr);
 
     return false;

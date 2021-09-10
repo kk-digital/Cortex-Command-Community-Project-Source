@@ -1,6 +1,14 @@
 #ifndef _GUI_
 #define _GUI_
 
+#ifndef GUI_STANDALONE
+#define GUIAssert(expression, description) RTEAssert(expression, description)
+#define GUIAbort(description) RTEAbort(description)
+#else
+#define GUIAssert(expression, description) assert(expression)
+#define GUIAbort(description) abort()
+#endif
+
 #pragma region Rectangle Structure
 /// <summary>
 /// The GUIRect structure defines a rectangle by the coordinates of its upper-left and lower-right corners as well as width and height.
@@ -20,21 +28,26 @@ inline void SetRect(GUIRect *rect, int x, int y, int width, int height){
 }
 #pragma endregion
 
+#ifndef GUI_STANDALONE
 #include "RTETools.h"
+#endif
 
-#include "GUI/Interface.h"
-#include "GUI/GUIProperties.h"
-#include "GUI/GUIInput.h"
-#include "GUI/GUIFont.h"
-#include "GUI/GUISkin.h"
-#include "GUI/GUIPanel.h"
-#include "GUI/GUIManager.h"
-#include "GUI/GUIUtil.h"
-#include "GUI/GUIControl.h"
-#include "GUI/GUIEvent.h"
-#include "GUI/GUIControlFactory.h"
-#include "GUI/GUIControlManager.h"
-#include "GUI/GUISound.h"
+#include "GUIInterface.h"
+#include "GUIProperties.h"
+#include "GUIInput.h"
+#include "GUIFont.h"
+#include "GUISkin.h"
+#include "GUIPanel.h"
+#include "GUIManager.h"
+#include "GUIUtil.h"
+#include "GUIControl.h"
+#include "GUIEvent.h"
+#include "GUIControlFactory.h"
+#include "GUIControlManager.h"
+
+#ifndef GUI_STANDALONE
+#include "GUISound.h"
+#endif
 
 // TODO: find better way to do this probably through RTETools
 #if defined(__linux__)

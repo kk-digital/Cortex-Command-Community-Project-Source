@@ -544,7 +544,7 @@ int Scene::Create(const Scene &reference)
         m_AreaList.push_back(*aItr);
 
     m_GlobalAcc = reference.m_GlobalAcc;
-	
+
 	// Deep copy of the bitmap
     if (reference.m_pPreviewBitmap)
     {
@@ -574,7 +574,7 @@ int Scene::LoadData(bool placeObjects, bool initPathfinding, bool placeUnits)
         RTEAbort("Loading Terrain " + m_pTerrain->GetPresetName() + "\'s data failed!");
         return -1;
     }
-    
+
     ///////////////////////////////////
     // Load Unseen layers before applying objects to the scene,
     // so we can reveal around stuff that is getting placed for the appropriate team
@@ -624,7 +624,7 @@ int Scene::LoadData(bool placeObjects, bool initPathfinding, bool placeUnits)
 		// Lists of found brain deployment locations used to place brain
 		std::vector<Vector> brainLocations[Activity::MaxTeamCount];
 
-        
+
 		//for (list<SceneObject *>::iterator oItr = m_PlacedObjects[AIPLAN].begin(); oItr != m_PlacedObjects[AIPLAN].end(); ++oItr) // I'm using this to dump AI plans with ctrl+w
         for (list<SceneObject *>::iterator oItr = m_PlacedObjects[PLACEONLOAD].begin(); oItr != m_PlacedObjects[PLACEONLOAD].end(); ++oItr)
 		{
@@ -693,7 +693,7 @@ int Scene::LoadData(bool placeObjects, bool initPathfinding, bool placeUnits)
 						// Ignore brain hideouts, they are used only by metagame when applying build budget
 						if (pDep->GetPresetName() == "Brain Hideout")
 							toIgnore = true;
-						
+
 						if (!toIgnore)
 						{
 							// Ownership IS transferred here; pass it along into the MovableMan
@@ -796,7 +796,7 @@ int Scene::LoadData(bool placeObjects, bool initPathfinding, bool placeUnits)
 					if (!pTO)
 						pTO = dynamic_cast<TerrainObject *>(*oItr);
 
-					// Add deployments placed by bunker assemblies, but not in metagame, 
+					// Add deployments placed by bunker assemblies, but not in metagame,
 					// as they are spawned and placed during ApplyBuildBudget
 					if (placeUnits && !g_MetaMan.GameInProgress())
 					{
@@ -928,8 +928,8 @@ int Scene::LoadData(bool placeObjects, bool initPathfinding, bool placeUnits)
 //////////////////////////////////////////////////////////////////////////////////////////
 // Virtual method:  ExpandAIPlanAssemblySchemes
 //////////////////////////////////////////////////////////////////////////////////////////
-// Description:     
-//                  
+// Description:
+//
 
 int Scene::ExpandAIPlanAssemblySchemes()
 {
@@ -971,7 +971,7 @@ int Scene::ExpandAIPlanAssemblySchemes()
 				pBA->SetPlacedByPlayer(pBAS->GetPlacedByPlayer());
 
 				newAIPlan.push_back(pBA);
-				
+
 				std::vector<Deployment *>pDeployments = pBA->GetDeployments();
 				for (std::vector<Deployment *>::iterator itr = pDeployments.begin(); itr != pDeployments.end() ; ++itr)
 				{
@@ -1058,10 +1058,10 @@ int Scene::SavePreview(const std::string &bitmapPath) {
 		return -1;
 	}
 
-	if (m_pPreviewBitmap && (m_pPreviewBitmap->getW() != PREVIEW_WIDTH || m_pPreviewBitmap->getH() != PREVIEW_HEIGHT)) {
+	if (m_pPreviewBitmap && (m_pPreviewBitmap->getW() != c_ScenePreviewWidth || m_pPreviewBitmap->getH() != c_ScenePreviewHeight)) {
 		m_pPreviewBitmap.reset();
 	}
-	if (!m_pPreviewBitmap) { m_pPreviewBitmap = std::make_shared<Texture>(g_FrameMan.GetRenderer(), PREVIEW_WIDTH, PREVIEW_HEIGHT, SDL_TEXTUREACCESS_STATIC); }
+	if (!m_pPreviewBitmap) { m_pPreviewBitmap = std::make_shared<Texture>(g_FrameMan.GetRenderer(), c_ScenePreviewWidth, c_ScenePreviewHeight, SDL_TEXTUREACCESS_STATIC); }
 
 	ContentFile scenePreviewGradient("Base.rte/GUIs/PreviewSkyGradient.png");
 	SharedTexture previewGradient = scenePreviewGradient.GetAsTexture();
@@ -1373,7 +1373,7 @@ int Scene::Save(Writer &writer) const
             writer << m_ResidentBrains[player]->IsHFlipped();
             writer.NewProperty("Team");
             writer << m_ResidentBrains[player]->GetTeam();
-			
+
 			//Write out brain's inventory if it is Actor
 			Actor *pActor = dynamic_cast<Actor *>(m_ResidentBrains[player]);
             if (pActor)
@@ -1386,7 +1386,7 @@ int Scene::Save(Writer &writer) const
 
                     writer.NewProperty("CopyOf");
                     writer << (*iitr)->GetModuleAndPresetName();
-                    
+
                     writer.ObjectEnd();
                 }
 
@@ -1400,7 +1400,7 @@ int Scene::Save(Writer &writer) const
                     writer.NewProperty("CopyOf");
                     writer << dynamic_cast<Arm *>(pAHuman->GetFGArm())->GetHeldDevice()->GetModuleAndPresetName();
 
-                    writer.ObjectEnd();                            
+                    writer.ObjectEnd();
                 }
             }
 
@@ -1507,7 +1507,7 @@ int Scene::Save(Writer &writer) const
 
                             writer.NewProperty("CopyOf");
                             writer << (*iitr)->GetModuleAndPresetName();
-                            
+
                             writer.ObjectEnd();
                         }
 
@@ -1521,7 +1521,7 @@ int Scene::Save(Writer &writer) const
                             writer.NewProperty("CopyOf");
                             writer << dynamic_cast<Arm *>(pAHuman->GetFGArm())->GetHeldDevice()->GetModuleAndPresetName();
 
-                            writer.ObjectEnd();                            
+                            writer.ObjectEnd();
                         }
                     }
                 }
@@ -2012,7 +2012,7 @@ int Scene::RetrieveResidentBrains(Activity &oldActivity)
 int Scene::RetrieveActorsAndDevices(int onlyTeam, bool noBrains)
 {
     int found = 0;
-    
+
     // Suck out all the Actors from the MovableMan - TAKING OVER ownership
     found += g_MovableMan.EjectAllActors(m_PlacedObjects[PLACEONLOAD], onlyTeam, noBrains);
     // Suck out all the Items from the MovableMan - TAKING OVER ownership
@@ -2124,7 +2124,7 @@ const SceneObject * Scene::PickPlacedActorInRange(int whichSet, Vector &scenePoi
 {
 	SceneObject * pFoundObject = 0;
 	float distance = range;
-	
+
 	// REVERSE!
     int i = m_PlacedObjects[whichSet].size() - 1;
     for (list<SceneObject *>::const_reverse_iterator itr = m_PlacedObjects[whichSet].rbegin(); itr != m_PlacedObjects[whichSet].rend(); ++itr, --i)
@@ -2418,7 +2418,7 @@ float Scene::CalcBuildBudgetUse(int player, int *pAffordCount, int *pAffordAIPla
             for (list<SceneObject *>::const_iterator bpItr = m_PlacedObjects[set].begin(); bpItr != m_PlacedObjects[set].end(); ++bpItr)
             {
                 // Skip objects on the first pass that aren't placed by this player
-                // Skip objects on the second pass that WERE placed by this player.. because we already counted them 
+                // Skip objects on the second pass that WERE placed by this player.. because we already counted them
                 if ((pass == 0 && (*bpItr)->GetPlacedByPlayer() != player) ||
                     (pass == 1 && (*bpItr)->GetPlacedByPlayer() == player))
                     continue;
@@ -2965,7 +2965,7 @@ int Scene::CalculateScenePath(const Vector start, const Vector end, bool movePat
             }
         }
     }
-    
+
     return pathSize;
 }
 
