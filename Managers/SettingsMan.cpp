@@ -27,6 +27,7 @@ namespace RTE {
 		m_EndlessMetaGameMode = false;
 		m_EnableCrabBombs = false;
 		m_CrabBombThreshold = 42;
+		m_ShowEnemyHUD = true;
 
 		m_NetworkServerAddress = "127.0.0.1:8000";
 		m_PlayerNetworkName = "Dummy";
@@ -138,6 +139,8 @@ namespace RTE {
 			reader >> m_EnableCrabBombs;
 		} else if (propName == "CrabBombThreshold") {
 			reader >> m_CrabBombThreshold;
+		} else if (propName == "ShowEnemyHUD") {
+			reader >> m_ShowEnemyHUD;
 		} else if (propName == "LaunchIntoActivity") {
 			reader >> g_ActivityMan.m_LaunchIntoActivity;
 		} else if (propName == "DefaultActivityType") {
@@ -146,6 +149,8 @@ namespace RTE {
 			reader >> g_ActivityMan.m_DefaultActivityName;
 		} else if (propName == "DefaultSceneName") {
 			reader >> g_SceneMan.m_DefaultSceneName;
+		} else if (propName == "DisableLuaJIT") {
+			reader >> g_LuaMan.m_DisableLuaJIT;
 		} else if (propName == "RecommendedMOIDCount") {
 			reader >> m_RecommendedMOIDCount;
 		} else if (propName == "EnableParticleSettling") {
@@ -300,6 +305,7 @@ namespace RTE {
 		writer.NewPropertyWithValue("EndlessMetaGameMode", m_EndlessMetaGameMode);
 		writer.NewPropertyWithValue("EnableCrabBombs", m_EnableCrabBombs);
 		writer.NewPropertyWithValue("CrabBombThreshold", m_CrabBombThreshold);
+		writer.NewPropertyWithValue("ShowEnemyHUD", m_ShowEnemyHUD);
 
 		writer.NewLine(false, 2);
 		writer.NewDivider(false);
@@ -314,6 +320,7 @@ namespace RTE {
 		writer.NewDivider(false);
 		writer.NewLineString("// Engine Settings", false);
 		writer.NewLine(false);
+		writer.NewPropertyWithValue("DisableLuaJIT", g_LuaMan.m_DisableLuaJIT);
 		writer.NewPropertyWithValue("RecommendedMOIDCount", m_RecommendedMOIDCount);
 		writer.NewPropertyWithValue("EnableParticleSettling", g_MovableMan.m_SettlingEnabled);
 		writer.NewPropertyWithValue("EnableMOSubtraction", g_MovableMan.m_MOSubtractionEnabled);

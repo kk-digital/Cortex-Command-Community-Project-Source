@@ -152,12 +152,12 @@ int MetaMan::NewGame(int gameSize)
         for (int team = Activity::TeamOne; team < m_TeamCount; ++team)
             m_Scenes.back()->FillUnseenLayer(Vector(25, 25), team, false);
 
-		//	Go through all AI plan elements and expand all bunker schemes to concrete assemblies 
+		//	Go through all AI plan elements and expand all bunker schemes to concrete assemblies
 		//	with fixed prices and place deployments
 		m_Scenes.back()->ExpandAIPlanAssemblySchemes();
     }
 
-    // The game that is currently being played is known as 
+    // The game that is currently being played is known as
     m_GameName = DEFAULTGAMENAME;
 
     // Start the game/intro
@@ -199,7 +199,7 @@ int MetaMan::EndGame()
     }
     m_Scenes.clear();
 
-    // The game that is currently being played is known as     
+    // The game that is currently being played is known as
     m_GameName = DEFAULTGAMENAME;
 
     m_GameState = NOGAME;
@@ -500,8 +500,8 @@ MetaPlayer * MetaMan::GetMetaPlayerOfInGamePlayer(int inGamePlayer)
             return &(*itr);
     }
 
-    // Didn't find any metaplayer that is using that in-game player 
-    return 0;    
+    // Didn't find any metaplayer that is using that in-game player
+    return 0;
 }
 
 
@@ -634,7 +634,7 @@ int MetaMan::GetTotalBrainCountOfTeam(int team, bool countPoolsOnly) const
     if (team <= Activity::NoTeam || team >= m_TeamCount)
         return 0;
 
-    // Go through all players and add up the brains of the ones who are on this team 
+    // Go through all players and add up the brains of the ones who are on this team
     int brainCount = 0;
 
     for (int metaPlayer = Players::PlayerOne; metaPlayer < m_Players.size(); ++metaPlayer)
@@ -783,7 +783,7 @@ int MetaMan::WhichTeamIsLeading()
             // No leader - there's a tie
             leaderTeam = Activity::NoTeam;
             tiedTeams[team] = true;
-            baseCountTie = true;  
+            baseCountTie = true;
         }
         // In the lead; clear all other tie flags
         if (baseCount > highestBaseCount)
@@ -920,7 +920,7 @@ int MetaMan::WhichTeamOwnsAllSites()
             else
             {
                 owner = Activity::NoTeam;
-                break;                
+                break;
             }
         }
     }
@@ -1207,7 +1207,7 @@ void MetaMan::AIPlayerTurn(int metaPlayer)
     }
 
 // TODO: Pay for and schedule to scan a random unfriendly site to keep things fair
-    
+
 }
 
 
@@ -1226,7 +1226,7 @@ void MetaMan::Update()
     // Game is temporarily suspended, don't do anything
     if (m_Suspended)
     {
-        
+
     }
     // Game not started; the GUI will show the new game dialog
     else if (m_GameState == NOGAME)
@@ -1321,7 +1321,7 @@ void MetaMan::Update()
         }
 
         // State body
-        
+
 
         // State end
         if (m_pMetaGUI->ContinuePhase())

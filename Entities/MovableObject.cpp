@@ -25,7 +25,7 @@
 
 namespace RTE {
 
-AbstractClassInfo(MovableObject, SceneObject)
+AbstractClassInfo(MovableObject, SceneObject);
 
 unsigned long int MovableObject::m_UniqueIDCounter = 1;
 
@@ -465,11 +465,9 @@ void MovableObject::Destroy(bool notInherited) {
         RunScriptedFunctionInAppropriateScripts("Destroy");
         g_LuaMan.RunScriptString(m_ScriptObjectName + " = nil;");
     }
-
+	g_MovableMan.UnregisterObject(this);
     if (!notInherited) { SceneObject::Destroy(); }
     Clear();
-
-	g_MovableMan.UnregisterObject(this);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -561,11 +559,11 @@ int MovableObject::ReloadScripts() {
     /// <summary>
     /// Internal lambda function to clear a given object's script configurations, and then load them all again in order to reset them.
     /// </summary>
-    auto clearScriptConfigurationAndLoadPreexistingScripts = [](MovableObject *object, bool shouldClearScriptPresetName) {
+    auto clearScriptConfigurationAndLoadPreexistingScripts = [](MovableObject *object, bool isPresetObject) {
         std::map<std::string, bool> loadedScriptsCopy = object->m_AllLoadedScripts;
         object->m_AllLoadedScripts.clear();
         object->m_FunctionsAndScripts.clear();
-        if (shouldClearScriptPresetName) {
+        if (isPresetObject) {
             object->m_ScriptPresetName.clear();
         } else {
             object->m_ScriptObjectName.clear();
@@ -582,11 +580,12 @@ int MovableObject::ReloadScripts() {
     };
 
     //TODO consider getting rid of this const_cast. It would require either code duplication or creating some none const methods (specifically of PresetMan::GetEntityPreset, which may be unsafe. Could be this gross exceptional handling is the best way to go.
-    MovableObject *pPreset = const_cast<MovableObject *>(dynamic_cast<const MovableObject *>(g_PresetMan.GetEntityPreset(GetClassName(), GetPresetName(), GetModuleID())));
-
-    int status = clearScriptConfigurationAndLoadPreexistingScripts(this, pPreset == this);
-    if (status <= 0 && pPreset && pPreset != this) {
-        status = clearScriptConfigurationAndLoadPreexistingScripts(pPreset, true);
+    MovableObject *movableObjectPreset = const_cast<MovableObject *>(dynamic_cast<const MovableObject *>(g_PresetMan.GetEntityPreset(GetClassName(), GetPresetName(), GetModuleID())));
+    int status = 0;
+    if (movableObjectPreset == this) { status = clearScriptConfigurationAndLoadPreexistingScripts(movableObjectPreset, true); }
+    if (status == 0 && movableObjectPreset != this) {
+        if (movableObjectPreset) { m_ScriptPresetName = movableObjectPreset->m_ScriptPresetName; }
+        status = clearScriptConfigurationAndLoadPreexistingScripts(this, false);
     }
 
     return status;

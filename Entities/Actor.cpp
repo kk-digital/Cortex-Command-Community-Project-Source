@@ -69,7 +69,7 @@ void Actor::Clear() {
     m_DeathSound = nullptr;
     m_DeviceSwitchSound = nullptr;
     m_Status = STABLE;
-    m_Health = m_PrevHealth = m_MaxHealth = 100;
+    m_Health = m_PrevHealth = m_MaxHealth = 100.0F;
 	m_pTeamIcon = nullptr;
 	m_pControllerIcon = nullptr;
     m_LastSecondTimer.Reset();
@@ -232,12 +232,11 @@ int Actor::Create(const Actor &reference)
 
     for (list<PieSlice>::const_iterator itr = reference.m_PieSlices.begin(); itr != reference.m_PieSlices.end(); ++itr)
         m_PieSlices.push_back(*itr);
-    
+
     // Only load the static AI mode icons once
     if (!m_sIconsLoaded)
     {
-        ContentFile noTeamFile("Base.rte/GUIs/TeamIcons/NoTeam.png");
-        m_apNoTeamIcon = noTeamFile.GetAsAnimation(2);
+        ContentFile("Base.rte/GUIs/TeamIcons/NoTeam.png").GetAsAnimation(m_apNoTeamIcon, 2);
 
         ContentFile iconFile("Base.rte/GUIs/PieIcons/Blank000.png");
         m_apAIIcons[AIMODE_NONE] = iconFile.GetAsTexture();
@@ -263,10 +262,8 @@ int Actor::Create(const Actor &reference)
         iconFile.SetDataPath("Base.rte/GUIs/PieIcons/Follow000.png");
         m_apAIIcons[AIMODE_SQUAD] = iconFile.GetAsTexture();
 
-        ContentFile arrowFile("Base.rte/GUIs/Indicators/SelectArrow.png");
-        m_apSelectArrow = arrowFile.GetAsAnimation(4);
-        ContentFile alarmFile("Base.rte/GUIs/Indicators/AlarmExclamation.png");
-        m_apAlarmExclamation = alarmFile.GetAsAnimation(2);
+        ContentFile("Base.rte/GUIs/Indicators/SelectArrow.png").GetAsAnimation(m_apSelectArrow, 4);
+        ContentFile("Base.rte/GUIs/Indicators/AlarmExclamation.png").GetAsAnimation(m_apAlarmExclamation, 2);
 
         m_sIconsLoaded = true;
     }
@@ -529,7 +526,7 @@ bool Actor::IsPlayerControlled() const
 
 float Actor::GetTotalValue(int nativeModule, float foreignMult, float nativeMult) const
 {
-	float totalValue = (GetGoldValue(nativeModule, foreignMult, nativeMult) / 2) + ((GetGoldValue(nativeModule, foreignMult, nativeMult) / 2) * ((float)GetHealth() / (float)GetMaxHealth()));
+	float totalValue = (GetGoldValue(nativeModule, foreignMult, nativeMult) / 2) + ((GetGoldValue(nativeModule, foreignMult, nativeMult) / 2) * (GetHealth() / GetMaxHealth()));
     totalValue += GetGoldCarried();
 
     MOSprite *pItem = 0;
@@ -605,7 +602,7 @@ void Actor::SetTeam(int team)
     for (deque<MovableObject *>::const_iterator itr = m_Inventory.begin(); itr != m_Inventory.end(); ++itr)
     {
         pActor = dynamic_cast<Actor *>(*itr);
-        if (pActor) 
+        if (pActor)
             pActor->SetTeam(team);
     }
 }
@@ -790,7 +787,7 @@ MovableObject * Actor::SwapNextInventory(MovableObject *pSwapIn, bool muteSound)
 //////////////////////////////////////////////////////////////////////////////////////////
 // Virtual Method:  RemoveInventoryItem
 //////////////////////////////////////////////////////////////////////////////////////////
-// Description:		Removes a specified item from the actor's inventory. Only one item is removed at a time.     
+// Description:		Removes a specified item from the actor's inventory. Only one item is removed at a time.
 
 void Actor::RemoveInventoryItem(string presetName)
 {
@@ -1428,7 +1425,7 @@ void Actor::Update()
         if (!m_MovePath.empty())
         {
 			Vector notUsed;
-			
+
             // See if we are close enough to the last point in the current path, in which case we can toss teh whole current path and start ont he next
             pathPointVec = g_SceneMan.ShortestDistance(m_Pos, m_MovePath.back());
             // Clear out the current path, the player apparently took a shortcut
@@ -1495,7 +1492,7 @@ void Actor::Update()
         if (m_StableRecoverTimer.IsPastSimMS(1000) && !(fabs(m_Vel.m_X) > fabs(m_StableVel.m_X) || fabs(m_Vel.m_Y) > fabs(m_StableVel.m_Y)))
             m_Status = STABLE;
     }
-    
+
     // Spread the carried items and gold around before death.
     if (m_Status == DYING || m_Status == DEAD)
     {
@@ -1534,8 +1531,7 @@ void Actor::Update()
     ////////////////////////////////
     // Death logic
 
-    if (m_Status != DYING && m_Status != DEAD && std::floor(m_Health) <= 0)
-    {
+	if (m_Status != DYING && m_Status != DEAD && std::round(m_Health) <= 0) {
 		if (m_DeathSound) { m_DeathSound->Play(m_Pos); }
 		m_Controller.SetDisabled(true);
         DropAllInventory();
@@ -1550,7 +1546,7 @@ void Actor::Update()
 	}
 
     if (m_Status == DYING && m_DeathTmr.GetElapsedSimTimeMS() > 1000)
-        m_Status = DEAD; 
+        m_Status = DEAD;
 
     //////////////////////////////////////////////////////
     // Save previous second's position so we can detect larger movement
@@ -1572,9 +1568,9 @@ void Actor::Update()
         {
             if (m_Controller.IsState(MOVE_LEFT) || m_Controller.IsState(MOVE_RIGHT) || m_Controller.GetAnalogMove().GetLargest() > 0.1)
             {
-// TODO: improve; make this 
+// TODO: improve; make this
                 float cycleTime = ((long)m_SpriteAnimTimer.GetElapsedSimTimeMS()) % m_SpriteAnimDuration;
-                m_Frame = std::floor((cycleTime / (float)m_SpriteAnimDuration) * (float)m_FrameCount);           
+                m_Frame = std::floor((cycleTime / (float)m_SpriteAnimDuration) * (float)m_FrameCount);
             }
         }
     }
@@ -1671,13 +1667,11 @@ void Actor::DrawHUD(SDL_Renderer* renderer, const Vector &targetPos, int whichSc
     if (m_Team < 0)
         return;
 
-    // Only draw if the team viewing this is on the same team OR has seen the space where this is located
-    int viewingTeam = g_ActivityMan.GetActivity()->GetTeamOfPlayer(g_ActivityMan.GetActivity()->PlayerOfScreen(whichScreen));
-    if (viewingTeam != m_Team && viewingTeam != Activity::NoTeam)
-    {
-        if (g_SceneMan.IsUnseen(m_Pos.m_X, m_Pos.m_Y, viewingTeam))
-            return;
-    }
+	// Only draw if the team viewing this is on the same team OR has seen the space where this is located.
+	int viewingTeam = g_ActivityMan.GetActivity()->GetTeamOfPlayer(g_ActivityMan.GetActivity()->PlayerOfScreen(whichScreen));
+	if (viewingTeam != m_Team && viewingTeam != Activity::NoTeam && (!g_SettingsMan.ShowEnemyHUD() || g_SceneMan.IsUnseen(m_Pos.GetFloorIntX(), m_Pos.GetFloorIntY(), viewingTeam))) {
+		return;
+	}
 
     // Draw stat info HUD
     char str[64];

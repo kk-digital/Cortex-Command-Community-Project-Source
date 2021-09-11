@@ -51,9 +51,9 @@ public:
 
 
 // Concrete allocation and cloning definitions
-EntityAllocation(HeldDevice)
-SerializableOverrideMethods
-ClassInfoGetters
+EntityAllocation(HeldDevice);
+SerializableOverrideMethods;
+ClassInfoGetters;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////

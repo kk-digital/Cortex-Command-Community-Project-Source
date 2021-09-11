@@ -19,7 +19,7 @@
 
 namespace RTE {
 
-AbstractClassInfo(MOSprite, MovableObject)
+AbstractClassInfo(MOSprite, MovableObject);
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -75,9 +75,9 @@ int MOSprite::Create()
             m_SpriteOffset.m_Y = -m_aSprite[0]->getH() / 2;
         }
         // Calc maximum dimensions from the Pos, based on the sprite
-        float maxX =std::max(fabs(m_SpriteOffset.m_X), fabs(m_aSprite[0]->getW() + m_SpriteOffset.m_X));
-        float maxY =std::max(fabs(m_SpriteOffset.m_Y), fabs(m_aSprite[0]->getH() + m_SpriteOffset.m_Y));
-        m_SpriteRadius = sqrt((float)(maxX * maxX) + (maxY * maxY));
+        float maxX =std::max(fabs(m_SpriteOffset.m_X), std::fabs(m_aSprite[0]->getW() + m_SpriteOffset.m_X));
+        float maxY =std::max(fabs(m_SpriteOffset.m_Y), std::fabs(m_aSprite[0]->getH() + m_SpriteOffset.m_Y));
+        m_SpriteRadius = std::sqrt((float)(maxX * maxX) + (maxY * maxY));
         m_SpriteDiameter = m_SpriteRadius * 2.0F;
     }
     else
@@ -110,9 +110,9 @@ int MOSprite::Create(ContentFile spriteFile,
     m_HFlipped = false;
 
     // Calc maximum dimensions from the Pos, based on the sprite
-    float maxX =std::max(fabs(m_SpriteOffset.m_X), fabs(m_aSprite[0]->getW() + m_SpriteOffset.m_X));
-    float maxY =std::max(fabs(m_SpriteOffset.m_Y), fabs(m_aSprite[0]->getH() + m_SpriteOffset.m_Y));
-    m_SpriteRadius = sqrt((float)(maxX * maxX) + (maxY * maxY));
+    float maxX =std::max(fabs(m_SpriteOffset.m_X), std::fabs(m_aSprite[0]->getW() + m_SpriteOffset.m_X));
+    float maxY =std::max(fabs(m_SpriteOffset.m_Y), std::fabs(m_aSprite[0]->getH() + m_SpriteOffset.m_Y));
+    m_SpriteRadius = std::sqrt((float)(maxX * maxX) + (maxY * maxY));
     m_SpriteDiameter = m_SpriteRadius * 2.0F;
 
     return 0;
@@ -135,10 +135,7 @@ int MOSprite::Create(const MOSprite &reference)
 
     m_FrameCount = reference.m_FrameCount;
     m_Frame = reference.m_Frame;
-    // Allocate a new array of pointers (owned by this),
-    // and copy the pointers' values themselves over by shallow copy
 	m_aSprite = reference.m_aSprite;
-
     m_SpriteOffset = reference.m_SpriteOffset;
     m_SpriteAnimMode = reference.m_SpriteAnimMode;
     m_SpriteAnimDuration = reference.m_SpriteAnimDuration;
@@ -170,9 +167,10 @@ int MOSprite::ReadProperty(const std::string_view &propName, Reader &reader)
 {
     if (propName == "SpriteFile")
         reader >> m_SpriteFile;
-    else if (propName == "FrameCount")
-        reader >> m_FrameCount;
-    else if (propName == "SpriteOffset")
+	else if (propName == "FrameCount") {
+		reader >> m_FrameCount;
+		m_aSprite.reserve(m_FrameCount);
+	} else if (propName == "SpriteOffset")
         reader >> m_SpriteOffset;
     else if (propName == "SpriteAnimMode")
     {
@@ -246,7 +244,7 @@ void MOSprite::SetExitWound(std::string presetName, std::string moduleName)
 
 std::string MOSprite::GetEntryWoundPresetName() const
 {
-	return m_pEntryWound ? m_pEntryWound->GetPresetName() : ""; 
+	return m_pEntryWound ? m_pEntryWound->GetPresetName() : "";
 };
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -255,8 +253,8 @@ std::string MOSprite::GetEntryWoundPresetName() const
 // Description:     Returns exit wound emitter preset name for this MOSprite
 
 std::string MOSprite::GetExitWoundPresetName() const
-{ 
-	return m_pExitWound ? m_pExitWound->GetPresetName() : ""; 
+{
+	return m_pExitWound ? m_pExitWound->GetPresetName() : "";
 };
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -304,7 +302,6 @@ int MOSprite::Save(Writer &writer) const
 
 void MOSprite::Destroy(bool notInherited)
 {
-    //  Delete only the array of pointers, not the BITMAP:s themselves... owned by static contentfile maps
 //    delete m_pEntryWound; Not doing this anymore since we're not owning
 //    delete m_pExitWound;
 
@@ -386,7 +383,7 @@ bool MOSprite::IsOnScenePoint(Vector &scenePoint) const
         }
         if (g_SceneMan.SceneWrapsY())
         {
-            
+
         }
     }
 

@@ -49,7 +49,7 @@ class GameActivity:
     public Activity
 {
 
-    friend class LuaMan;
+    friend struct ActivityLuaBindings;
 
     // Keeps track of everything about a delivery in transit after purchase has been made with the menu
     struct Delivery
@@ -72,8 +72,8 @@ class GameActivity:
 
 public:
 
-	SerializableOverrideMethods
-	ClassInfoGetters
+	SerializableOverrideMethods;
+	ClassInfoGetters;
 
     enum ObjectiveArrowDir
     {
@@ -322,7 +322,7 @@ public:
 //                  messages which can not be missed or ignored.
 // Arguments:       Which color banner to get - see the GameActivity::BannerColor enum.
 //                  Which player's banner to get.
-// Return value:    A pointer to the GUIBanner object that we can 
+// Return value:    A pointer to the GUIBanner object that we can
 
     GUIBanner * GetBanner(int whichColor = YELLOW, int player = Players::PlayerOne) { return whichColor == YELLOW ? m_pBannerYellow[player] : m_pBannerRed[player]; }
 
@@ -488,7 +488,7 @@ public:
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Takes the current order out of a player's buy GUI, creates a Delivery
 //                  based off it, and stuffs it into that player's delivery queue.
-// Arguments:       Which player to create the delivery for. 
+// Arguments:       Which player to create the delivery for.
 // Return value:    Success or not.
 
     bool CreateDelivery(int player) { Vector point( -1, -1 ); return CreateDelivery(player, Actor::AIMODE_SENTRY, point, NULL); };
@@ -657,10 +657,10 @@ public:
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          SetFogOfWarEnabled
 //////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Changes whether fog of war must be enabled for this activity or not. 
+// Description:     Changes whether fog of war must be enabled for this activity or not.
 //					Never hides or reveals anything, just changes internal flag.
 // Arguments:       New fog of war state. true = enabled.
-// Return value:	None.    
+// Return value:	None.
 	void SetFogOfWarEnabled(bool enable) { m_FogOfWarEnabled = enable; }
 
 
@@ -678,127 +678,127 @@ public:
 // Method:          GetRequireClearPathToOrbit
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Tells whether player activity requires a cleat path to orbit to place brain
-//					
+//
 // Arguments:       None.
-// Return value:	Whether we need a clear path to orbit to place brains.    
+// Return value:	Whether we need a clear path to orbit to place brains.
 	bool GetRequireClearPathToOrbit() const { return m_RequireClearPathToOrbit; }
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          SetRequireClearPathToOrbit
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Tells whether player activity requires a cleat path to orbit to place brain
-//					
+//
 // Arguments:       Whether we need a clear path to orbit to place brains.
 // Return value:	None.
 	void SetRequireClearPathToOrbit(bool newvalue) { m_RequireClearPathToOrbit = newvalue; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
-// Method:          
+// Method:
 //////////////////////////////////////////////////////////////////////////////////////////
-// Description:     
+// Description:
 // Arguments:       None.
-// Return value:	
+// Return value:
 	int GetDefaultFogOfWar() const { return m_DefaultFogOfWar; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
-// Method:          
+// Method:
 //////////////////////////////////////////////////////////////////////////////////////////
-// Description:     
+// Description:
 // Arguments:       None.
-// Return value:	
+// Return value:
 	int GetDefaultRequireClearPathToOrbit() const { return m_DefaultRequireClearPathToOrbit; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
-// Method:          
+// Method:
 //////////////////////////////////////////////////////////////////////////////////////////
-// Description:     
+// Description:
 // Arguments:       None.
-// Return value:	
+// Return value:
 	int GetDefaultDeployUnits() const { return m_DefaultDeployUnits; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
-// Method:          
+// Method:
 //////////////////////////////////////////////////////////////////////////////////////////
-// Description:     
+// Description:
 // Arguments:       None.
-// Return value:	
+// Return value:
 	int GetDefaultGoldCake() const { return m_DefaultGoldCake; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
-// Method:          
+// Method:
 //////////////////////////////////////////////////////////////////////////////////////////
-// Description:     
+// Description:
 // Arguments:       None.
-// Return value:	
+// Return value:
 	int GetDefaultGoldEasy() const { return m_DefaultGoldEasy; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
-// Method:          
+// Method:
 //////////////////////////////////////////////////////////////////////////////////////////
-// Description:     
+// Description:
 // Arguments:       None.
-// Return value:	
+// Return value:
 	int GetDefaultGoldMedium() const { return m_DefaultGoldMedium; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
-// Method:          
+// Method:
 //////////////////////////////////////////////////////////////////////////////////////////
-// Description:     
+// Description:
 // Arguments:       None.
-// Return value:	
+// Return value:
 	int GetDefaultGoldHard() const { return m_DefaultGoldHard; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
-// Method:          
+// Method:
 //////////////////////////////////////////////////////////////////////////////////////////
-// Description:     
+// Description:
 // Arguments:       None.
-// Return value:	
+// Return value:
 	int GetDefaultGoldNuts() const { return m_DefaultGoldNuts; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
-// Method:          
+// Method:
 //////////////////////////////////////////////////////////////////////////////////////////
-// Description:     
+// Description:
 // Arguments:       None.
-// Return value:	
+// Return value:
 	bool GetFogOfWarSwitchEnabled() const { return m_FogOfWarSwitchEnabled; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
-// Method:          
+// Method:
 //////////////////////////////////////////////////////////////////////////////////////////
-// Description:     
+// Description:
 // Arguments:       None.
-// Return value:	
+// Return value:
 	bool GetDeployUnitsSwitchEnabled() const { return m_DeployUnitsSwitchEnabled; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
-// Method:          
+// Method:
 //////////////////////////////////////////////////////////////////////////////////////////
-// Description:     
+// Description:
 // Arguments:       None.
-// Return value:	
+// Return value:
 
 	bool GetGoldSwitchEnabled() const { return m_GoldSwitchEnabled; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
-// Method:          
+// Method:
 //////////////////////////////////////////////////////////////////////////////////////////
-// Description:     
+// Description:
 // Arguments:       None.
-// Return value:	
+// Return value:
 
 	bool GetRequireClearPathToOrbitSwitchEnabled() const { return m_RequireClearPathToOrbitSwitchEnabled; }
 
@@ -809,7 +809,7 @@ public:
 // Arguments:       None.
 // Return value:    Crab-To-Human spawn ratio value set for specified module, 0.25 is default.
 
-	float GetCrabToHumanSpawnRatio(int moduleid); 
+	float GetCrabToHumanSpawnRatio(int moduleid);
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -819,7 +819,7 @@ public:
 // Arguments:       None.
 // Return value:    Returns current delivery delay
 
-	long GetDeliveryDelay() const {  return m_DeliveryDelay; } 
+	long GetDeliveryDelay() const {  return m_DeliveryDelay; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -829,7 +829,7 @@ public:
 // Arguments:       New delivery delay value in ms
 // Return value:    None
 
-	void SetDeliveryDelay(long newDeliveryDelay) { m_DeliveryDelay =  newDeliveryDelay > 1 ? newDeliveryDelay : 1; } 
+	void SetDeliveryDelay(long newDeliveryDelay) { m_DeliveryDelay =  newDeliveryDelay > 1 ? newDeliveryDelay : 1; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -856,7 +856,7 @@ public:
 // Method:          GetNetworkPlayerName
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Returns network player name
-// Arguments:       Player 
+// Arguments:       Player
 // Return value:    Network player name
 
 	std::string & GetNetworkPlayerName(int player);
@@ -874,7 +874,7 @@ public:
     virtual void OnPieMenu(Actor *actor) { /* Does nothing, kept here for program control flow. Method is not pure virtual to avoid a bunch of junk implementations in non-scritped activities. */};
 
 	void AddPieMenuSlice(std::string description, std::string functionName, PieSlice::SliceDirection direction, bool isEnabled)
-	{ 
+	{
 		if (m_CurrentPieMenuPlayer >= Players::PlayerOne && m_CurrentPieMenuPlayer < Players::MaxPlayerCount)
 			m_pPieMenu[m_CurrentPieMenuPlayer]->AddPieSliceLua(description, functionName, direction, isEnabled);
 	};
@@ -893,14 +893,14 @@ public:
 	};
 
 	std::vector<PieSlice *> GetCurrentPieMenuSlices(int player) const
-	{ 
+	{
 		//if (player >= Players::PlayerOne && player < Players::MaxPlayerCount)
 			return m_pPieMenu[player]->GetCurrentSlices();
 		//return 0;
 	}
 
-	/*std::vector<PieSlice> * GetAvailablePieMenuSlices(int player) const 
-	{ 
+	/*std::vector<PieSlice> * GetAvailablePieMenuSlices(int player) const
+	{
 		if (player >= Players::PlayerOne && player < Players::MaxPlayerCount)
 			return &m_pPieMenu[player]->GetAvailableSlices();
 		return 0;

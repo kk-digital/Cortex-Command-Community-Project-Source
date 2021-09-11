@@ -54,6 +54,7 @@ void GibEditorGUI::Clear()
     m_RepeatStartTimer.Reset();
     m_RepeatTimer.Reset();
     m_pPieMenu = 0;
+    m_ActivatedPieSliceType = PieSlice::PieSliceIndex::PSI_NONE;
     m_pPicker = 0;
     m_GridSnapping = false;
     m_pZoomSource = 0;
@@ -159,17 +160,6 @@ void GibEditorGUI::SetController(Controller *pController)
 void GibEditorGUI::SetPosOnScreen(int newPosX, int newPosY)
 {
     m_pPicker->SetPosOnScreen(newPosX, newPosY);
-}
-
-
-//////////////////////////////////////////////////////////////////////////////////////////
-// Method:          GetActivatedPieSlice
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Gets any Pie menu slice command activated last update.
-
-PieSlice::PieSliceIndex GibEditorGUI::GetActivatedPieSlice()
-{
-    return m_pPieMenu->GetPieCommand();
 }
 
 
@@ -284,6 +274,7 @@ void GibEditorGUI::Update()
     ///////////////////////////////////////
     // Handle pie menu selections
 
+    m_ActivatedPieSliceType = m_pPieMenu->GetPieCommand();
     if (m_pPieMenu->GetPieCommand() != PieSlice::PieSliceIndex::PSI_NONE)
     {
         if (m_pPieMenu->GetPieCommand() == PieSlice::PieSliceIndex::PSI_PICK)

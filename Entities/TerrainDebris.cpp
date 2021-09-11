@@ -5,7 +5,7 @@
 
 namespace RTE {
 
-	ConcreteClassInfo(TerrainDebris, Entity, 0)
+	ConcreteClassInfo(TerrainDebris, Entity, 0);
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -60,6 +60,7 @@ namespace RTE {
 			reader >> m_DebrisFile;
 		} else if (propName == "DebrisPieceCount") {
 			reader >> m_BitmapCount;
+			m_Bitmaps.reserve(m_BitmapCount);
 		} else if (propName == "DebrisMaterial") {
 			reader >> m_Material;
 		} else if (propName == "TargetMaterial") {
@@ -131,7 +132,7 @@ namespace RTE {
 
 		for (unsigned int piece = 0; piece < pieceCount; ++piece) {
 			bool place = false;
-			unsigned short currentBitmap = RandomNum<unsigned short>(0, m_BitmapCount - 1);
+			unsigned int currentBitmap = RandomNum<int>(0, m_BitmapCount - 1);
 			RTEAssert(currentBitmap >= 0 && currentBitmap < m_BitmapCount, "Bitmap index is out of bounds!");
 
 			pieceBox.SetWidth(m_Textures[currentBitmap]->getW());
@@ -162,12 +163,12 @@ namespace RTE {
 				}
 				// The target locations are on the center of the objects; if supposed to be buried, move down so it is
 				y += depth + static_cast<int>(m_OnlyBuried ? pieceBox.GetHeight() * 0.6F : 0);
-				pieceBox.SetCenter(Vector(x, y));
+				pieceBox.SetCenter(Vector(static_cast<float>(x), static_cast<float>(y)));
 
 				// Make sure we're not trying to place something into a cave or other air pocket
 				if (!g_SceneMan.GetTerrain()->IsAirPixel(x, y) && (!m_OnlyBuried || g_SceneMan.GetTerrain()->IsBoxBuried(pieceBox))) {
 					// Do delayed drawing so that we don't end up placing things on top of each other
-					piecesToPlace.push_back(std::pair<int, Vector>(currentBitmap, pieceBox.GetCorner()));
+					piecesToPlace.emplace_back(currentBitmap, pieceBox.GetCorner());
 					break;
 				}
 			}

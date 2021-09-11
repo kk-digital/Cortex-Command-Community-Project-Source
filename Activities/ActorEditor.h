@@ -54,9 +54,9 @@ public:
 
 
 // Concrete allocation and cloning definitions
-EntityAllocation(ActorEditor)
-SerializableOverrideMethods
-ClassInfoGetters
+EntityAllocation(ActorEditor);
+SerializableOverrideMethods;
+ClassInfoGetters;
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Constructor:     ActorEditor

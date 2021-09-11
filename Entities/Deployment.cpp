@@ -27,11 +27,11 @@
 
 namespace RTE {
 
-ConcreteClassInfo(Deployment, SceneObject, 0)
+ConcreteClassInfo(Deployment, SceneObject, 0);
 
 
 std::vector<std::shared_ptr<Texture>> Deployment::m_apArrowLeftBitmap;
-	std::vector<std::shared_ptr<Texture>> Deployment::m_apArrowRightBitmap;
+std::vector<std::shared_ptr<Texture>> Deployment::m_apArrowRightBitmap;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -63,13 +63,11 @@ int Deployment::Create()
 
 	if (m_apArrowLeftBitmap.empty())
 	{
-		ContentFile arrowFile("Base.rte/GUIs/DeploymentIcons/ArrowLeft.png");
-		m_apArrowLeftBitmap = arrowFile.GetAsAnimation(1);
+		ContentFile("Base.rte/GUIs/DeploymentIcons/ArrowLeft.png").GetAsAnimation(m_apArrowLeftBitmap, 1);
 	}
 	if (m_apArrowRightBitmap.empty())
 	{
-		ContentFile arrowFile("Base.rte/GUIs/DeploymentIcons/ArrowRight.png");
-		m_apArrowRightBitmap = arrowFile.GetAsAnimation(1);
+		ContentFile("Base.rte/GUIs/DeploymentIcons/ArrowRight.png").GetAsAnimation(m_apArrowRightBitmap, 1);
 	}
 
 	return 0;
@@ -92,13 +90,11 @@ int Deployment::Create(string loadoutName, const Icon &icon, float spawnRadius)
 
 	if (m_apArrowLeftBitmap.empty())
 	{
-		ContentFile arrowFile("Base.rte/GUIs/DeploymentIcons/ArrowLeft.png");
-		m_apArrowLeftBitmap = arrowFile.GetAsAnimation(1);
+		ContentFile("Base.rte/GUIs/DeploymentIcons/ArrowLeft.png").GetAsAnimation(m_apArrowLeftBitmap, 1);
 	}
 	if (m_apArrowRightBitmap.empty())
 	{
-		ContentFile arrowFile("Base.rte/GUIs/DeploymentIcons/ArrowRight.png");
-		m_apArrowRightBitmap = arrowFile.GetAsAnimation(1);
+		ContentFile("Base.rte/GUIs/DeploymentIcons/ArrowRight.png").GetAsAnimation(m_apArrowRightBitmap, 1);
 	}
 
     return 0;
@@ -186,7 +182,7 @@ int Deployment::Save(Writer &writer) const
 
 void Deployment::Destroy(bool notInherited)
 {
-    
+
 
     if (!notInherited)
         SceneObject::Destroy();
@@ -225,7 +221,7 @@ Actor * Deployment::CreateDeployedActor(int player, float &costTally)
     float foreignCostMult = 1.0;
 	float nativeCostMult = 1.0;
     MetaPlayer *pMetaPlayer = g_MetaMan.GetMetaPlayerOfInGamePlayer(player);
-    // Put 
+    // Put
 	if (g_MetaMan.GameInProgress() && pMetaPlayer)
     {
         nativeModule = pMetaPlayer->GetNativeTechModule();
@@ -243,22 +239,14 @@ Actor * Deployment::CreateDeployedActor(int player, float &costTally)
 			//m_Team = activity->GetTeamOfPlayer(player);
 			nativeModule = g_PresetMan.GetModuleID(activity->GetTeamTech(m_Team));
 			// Select some random module if player selected all or something else
-			if (nativeModule < 0)
-			{
-			    const DataModule *pModule = 0;
-				vector<string> moduleList;
-				string techName;
-				string techString = " Tech";
-				string::size_type techPos = string::npos;
-				
-				for (int i = 0; i < g_PresetMan.GetTotalModuleCount(); ++i)  
-				{
-					pModule = g_PresetMan.GetDataModule(i);
-					techName = pModule->GetFriendlyName();
-					if (pModule && (techPos = techName.find(techString)) != string::npos)
-						moduleList.push_back(pModule->GetFileName());
-				}
+			if (nativeModule < 0) {
+				std::vector<std::string> moduleList;
 
+				for (int moduleID = 0; moduleID < g_PresetMan.GetTotalModuleCount(); ++moduleID) {
+					if (const DataModule *dataModule = g_PresetMan.GetDataModule(moduleID)) {
+						if (dataModule->IsFaction()) { moduleList.emplace_back(dataModule->GetFileName()); }
+					}
+				}
 				int selection = RandomNum<int>(1, moduleList.size() - 1);
 				nativeModule = g_PresetMan.GetModuleID(moduleList.at(selection));
 			}
@@ -334,25 +322,14 @@ SceneObject * Deployment::CreateDeployedObject(int player, float &costTally)
 			//m_Team = activity->GetTeamOfPlayer(player);
 			nativeModule = g_PresetMan.GetModuleID(activity->GetTeamTech(m_Team));
 			// Select some random module if player selected all or something else
-			if (nativeModule < 0)
-			{
-			    const DataModule *pModule = 0;
-				vector<string> moduleList;
-				string techName;
-				string techString = " Tech";
-				string::size_type techPos = string::npos;
-				
-				for (int i = 0; i < g_PresetMan.GetTotalModuleCount(); ++i)  
-				{
-					pModule = g_PresetMan.GetDataModule(i);
-					if (pModule)
-					{
-						techName = pModule->GetFriendlyName();
-						if (techPos = techName.find(techString) != string::npos)
-							moduleList.push_back(pModule->GetFileName());
+			if (nativeModule < 0) {
+				std::vector<std::string> moduleList;
+
+				for (int moduleID = 0; moduleID < g_PresetMan.GetTotalModuleCount(); ++moduleID) {
+					if (const DataModule *dataModule = g_PresetMan.GetDataModule(moduleID)) {
+						if (dataModule->IsFaction()) { moduleList.emplace_back(dataModule->GetFileName()); }
 					}
 				}
-
 				int selection = RandomNum<int>(1, moduleList.size() - 1);
 				nativeModule = g_PresetMan.GetModuleID(moduleList.at(selection));
 			}
@@ -663,7 +640,7 @@ bool Deployment::IsOnScenePoint(Vector &scenePoint) const
         }
         if (g_SceneMan.SceneWrapsY())
         {
-            
+
         }
     }
 

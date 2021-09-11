@@ -4,6 +4,7 @@
 #include "Matrix.h"
 #include "SLTerrain.h"
 #include "PresetMan.h"
+#include "SettingsMan.h"
 
 #include "FrameMan.h"
 
@@ -11,7 +12,7 @@
 
 namespace RTE {
 
-	ConcreteClassInfo(ADoor, Actor, 20)
+	ConcreteClassInfo(ADoor, Actor, 20);
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -468,8 +469,12 @@ namespace RTE {
 			foundActor = sensor.SenseActor(m_Pos, m_Rotation, m_HFlipped, m_MOID);
 			if (foundActor && foundActor->IsControllable()) {
 				anySensorInput = true;
+
+				if (m_Team == Activity::NoTeam) {
+					OpenDoor();
+					break;
 				// If a sensor has found an enemy Actor, close the door and break so we don't accidentally open it for a friendly Actor.
-				if (foundActor->GetTeam() != m_Team) {
+				} else if (foundActor->GetTeam() != m_Team) {
 					CloseDoor();
 					break;
 				} else if (foundActor->GetTeam() == m_Team) {
@@ -509,7 +514,7 @@ namespace RTE {
 
 		if (m_DoorState == OPEN || m_DoorState == CLOSED) {
 			m_Door->SetParentOffset(endOffset);
-			m_Door->SetRotAngle(m_Rotation.GetRadAngle() + (endAngle * static_cast<float>(GetFlipFactor())));
+			m_Door->SetRotAngle(m_Rotation.GetRadAngle() + (endAngle * GetFlipFactor()));
 		} else if (m_DoorState == OPENING || m_DoorState == CLOSING) {
 			if (m_DoorMoveSound && !m_DoorMoveSound->IsBeingPlayed()) { m_DoorMoveSound->Play(m_Pos); }
 
@@ -517,7 +522,7 @@ namespace RTE {
 				m_ResetToDefaultStateTimer.Reset();
 
 				m_Door->SetParentOffset(endOffset);
-				m_Door->SetRotAngle(m_Rotation.GetRadAngle() + (endAngle * static_cast<float>(GetFlipFactor())));
+				m_Door->SetRotAngle(m_Rotation.GetRadAngle() + (endAngle * GetFlipFactor()));
 
 				if (m_DoorMoveSound) { m_DoorMoveSound->Stop(); }
 				if (m_DoorMoveEndSound) { m_DoorMoveEndSound->Play(m_Pos); }
@@ -546,12 +551,14 @@ namespace RTE {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void ADoor::DrawHUD(SDL_Renderer* renderer, const Vector &targetPos, int whichScreen, bool playerControlled) {
+		m_HUDStack = -m_CharHeight / 2;
+
 		if (!m_HUDVisible) {
 			return;
 		}
-		// Only draw if the team viewing this is on the same team OR has seen the space where this is located
+		// Only draw if the team viewing this is on the same team OR has seen the space where this is located.
 		int viewingTeam = g_ActivityMan.GetActivity()->GetTeamOfPlayer(g_ActivityMan.GetActivity()->PlayerOfScreen(whichScreen));
-		if (viewingTeam != m_Team && viewingTeam != Activity::NoTeam && g_SceneMan.IsUnseen(m_Pos.m_X, m_Pos.m_Y, viewingTeam)) {
+		if (viewingTeam != m_Team && viewingTeam != Activity::NoTeam && (!g_SettingsMan.ShowEnemyHUD() || g_SceneMan.IsUnseen(m_Pos.GetFloorIntX(), m_Pos.GetFloorIntY(), viewingTeam))) {
 			return;
 		}
 	}

@@ -43,7 +43,7 @@
 
 namespace RTE {
 
-AbstractClassInfo(EditorActivity, Activity)
+AbstractClassInfo(EditorActivity, Activity);
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -257,7 +257,7 @@ void EditorActivity::End()
 {
     Activity::End();
 
-    
+
 
     m_ActivityState = ActivityState::Over;
 }

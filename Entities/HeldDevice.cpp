@@ -26,7 +26,7 @@
 
 namespace RTE {
 
-ConcreteClassInfo(HeldDevice, Attachable, 50)
+ConcreteClassInfo(HeldDevice, Attachable, 50);
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          Clear
@@ -85,7 +85,7 @@ int HeldDevice::Create()
         m_IsExplosiveWeapon = true;
     else
         m_IsExplosiveWeapon = false;
-    
+
     // Backwards compatibility so that the tag is added for sure
     if (m_HeldDeviceType == WEAPON)
         AddToGroup("Weapons");
@@ -93,7 +93,7 @@ int HeldDevice::Create()
         AddToGroup("Tools");
     else if (m_HeldDeviceType == SHIELD)
         AddToGroup("Shields");
-    
+
     // No Loudness set in the ini-file
     if (m_Loudness < 0)
     {
@@ -108,10 +108,10 @@ int HeldDevice::Create()
 
     // Make it so users can't accidentally set this to true for HeldDevices, since it'll cause crashes when swapping inventory items around.
     m_DeleteWhenRemovedFromParent = false;
-    
+
     // All HeldDevice:s by default avoid hitting and getting physically hit by AtomGoups when they are at rest
     m_IgnoresAGHitsWhenSlowerThan = 1.0;
-    
+
     // By default, held items should not be able to be squished and destroyed into the ground at all
     m_CanBeSquished = false;
 
@@ -319,7 +319,7 @@ Vector HeldDevice::GetSupportPos() const
 
 Vector HeldDevice::GetMagazinePos() const
 {
-    return m_Pos;    
+    return m_Pos;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

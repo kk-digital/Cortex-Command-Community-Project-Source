@@ -41,11 +41,11 @@
 #include "GUI/GUIComboBox.h"
 
 #include "AreaEditorGUI.h"
-#include "GABaseDefense.h"
+#include "GameActivity.h"
 
 namespace RTE {
 
-ConcreteClassInfo(AreaEditor, EditorActivity, 0)
+ConcreteClassInfo(AreaEditor, EditorActivity, 0);
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -261,7 +261,7 @@ void AreaEditor::End()
 {
     EditorActivity::End();
 
-    
+
 
     m_ActivityState = ActivityState::Over;
 }
@@ -340,7 +340,7 @@ void AreaEditor::Update()
         m_EditorMode = EditorActivity::SAVEDIALOG;
         m_ModeChange = true;
     }
-    // Test the scene by starting a GABaseDefense with it, after saving
+    // Test the scene by starting a Skirmish Defense with it, after saving
     else if (m_pEditorGUI->GetActivatedPieSlice() == PieSlice::PieSliceIndex::PSI_DONE || m_EditorMode == TESTINGOBJECT)
     {
         m_pEditorGUI->SetEditorGUIMode(AreaEditorGUI::INACTIVE);
@@ -365,7 +365,6 @@ void AreaEditor::Update()
         {
             g_SceneMan.SetSceneToLoad(pCurrentScene->GetPresetName());
 
-			//Start a scripted 'Skirmish Defense' activity instead of obsolete GABaseDefense because it simply don't work
 			const Activity *pActivityPreset = dynamic_cast<const Activity *>(g_PresetMan.GetEntityPreset("GAScripted", "Skirmish Defense"));
 			Activity * pActivity = dynamic_cast<Activity *>(pActivityPreset->Clone());
 			GameActivity *pTestGame = dynamic_cast<GameActivity *>(pActivity);

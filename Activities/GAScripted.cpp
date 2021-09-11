@@ -35,7 +35,7 @@
 
 namespace RTE {
 
-ConcreteClassInfo(GAScripted, GameActivity, 0)
+ConcreteClassInfo(GAScripted, GameActivity, 0);
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -295,7 +295,7 @@ int GAScripted::Start()
 	// Clear active global scripts
 	for (std::vector<GlobalScript *>::iterator sItr = m_GlobalScriptsList.begin(); sItr < m_GlobalScriptsList.end(); ++sItr)
 		delete (*sItr);
-	
+
 	m_GlobalScriptsList.clear();
 
 	// Get all global scripts and add to execution list
@@ -405,7 +405,7 @@ void GAScripted::Update()
 
     // If the game didn't end, keep updating activity
     if (m_ActivityState != ActivityState::Over)
-    {   
+    {
         // Call the defined function, but only after first checking if it exists
         g_LuaMan.RunScriptString("if " + m_LuaClassName + ".UpdateActivity then " + m_LuaClassName + ":UpdateActivity(); end");
 

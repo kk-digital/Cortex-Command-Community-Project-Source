@@ -16,12 +16,12 @@ namespace RTE {
 	/// A representation of a DataModule containing zero or many Material, Effect, Ammo, Device, Actor, or Scene definitions.
 	/// </summary>
 	class DataModule : public Serializable {
-		friend class LuaMan;
+		friend struct SystemLuaBindings;
 
 	public:
 
-		SerializableClassNameGetter
-		SerializableOverrideMethods
+		SerializableClassNameGetter;
+		SerializableOverrideMethods;
 
 #pragma region Creation
 		/// <summary>
@@ -104,6 +104,12 @@ namespace RTE {
 		/// </summary>
 		/// <returns>A string with the description.</returns>
 		const std::string & GetDescription() const { return m_Description; }
+
+		/// <summary>
+		/// Gets whether this DataModule is considered a faction.
+		/// </summary>
+		/// <returns>Whether this DataModule is considered a faction or not.</returns>
+		bool IsFaction() const { return m_IsFaction; }
 
 		/// <summary>
 		/// Gets the version number of this DataModule.
@@ -259,6 +265,7 @@ namespace RTE {
 		std::string m_Author; //!< Name of the author of this module.
 		std::string m_Description; //!< Brief description of what this module is and contains.
 		std::string m_ScriptPath; //!< Path to script to execute when this module is loaded.
+		bool m_IsFaction; //!< Whether this data module is considered a faction.
 		int m_Version; //!< Version number, starting with 1.
 		int m_ModuleID; //!< ID number assigned to this upon loading, for internal use only, don't reflect in ini's.
 

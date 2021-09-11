@@ -46,9 +46,9 @@ public:
 
 
 // Concrete allocation and cloning definitions
-EntityAllocation(SceneLayer)
-SerializableOverrideMethods
-ClassInfoGetters
+EntityAllocation(SceneLayer);
+SerializableOverrideMethods;
+ClassInfoGetters;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////

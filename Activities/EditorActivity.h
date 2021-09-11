@@ -52,8 +52,8 @@ class EditorActivity:
 
 public:
 
-	SerializableOverrideMethods
-	ClassInfoGetters
+	SerializableOverrideMethods;
+	ClassInfoGetters;
 
     // Different modes of this editor
     enum EditorMode

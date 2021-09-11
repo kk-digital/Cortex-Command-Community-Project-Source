@@ -27,7 +27,7 @@
 
 namespace RTE {
 
-ConcreteClassInfo(MOSRotating, MOSprite, 500)
+ConcreteClassInfo(MOSRotating, MOSprite, 500);
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -367,7 +367,7 @@ int MOSRotating::GetWoundCount(bool includePositiveDamageAttachables, bool inclu
 
 void MOSRotating::AddWound(AEmitter *woundToAdd, const Vector &parentOffsetToSet, bool checkGibWoundLimit) {
     if (woundToAdd) {
-        if (checkGibWoundLimit && !ToDelete() && m_GibWoundLimit > 0 && m_Wounds.size() + 1 > m_GibWoundLimit) {
+        if (checkGibWoundLimit && !ToDelete() && m_GibWoundLimit > 0 && m_Wounds.size() + 1 >= m_GibWoundLimit) {
             // Indicate blast in opposite direction of emission
             // TODO: don't hardcode here, get some data from the emitter
             Vector blast(-5, 0);

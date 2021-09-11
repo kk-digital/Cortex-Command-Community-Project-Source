@@ -53,9 +53,9 @@ public:
 
 
 // Concrete allocation and cloning definitions
-EntityAllocation(GibEditor)
-SerializableOverrideMethods
-ClassInfoGetters
+EntityAllocation(GibEditor);
+SerializableOverrideMethods;
+ClassInfoGetters;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////

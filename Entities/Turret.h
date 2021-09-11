@@ -16,9 +16,9 @@ namespace RTE {
 
 	public:
 
-		EntityAllocation(Turret)
-		SerializableOverrideMethods
-		ClassInfoGetters
+		EntityAllocation(Turret);
+		SerializableOverrideMethods;
+		ClassInfoGetters;
 
 #pragma region Creation
 		/// <summary>

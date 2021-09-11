@@ -35,7 +35,7 @@
 
 namespace RTE {
 
-ConcreteClassInfo(AHuman, Actor, 20)
+ConcreteClassInfo(AHuman, Actor, 20);
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -774,7 +774,7 @@ bool AHuman::AddPieMenuSlices(PieMenuGUI *pPieMenu)
 	pPieMenu->AddSlice(patrolAISlice);
 	PieSlice formSquadSlice("Form Squad", PieSlice::PieSliceIndex::PSI_FORMSQUAD, PieSlice::SliceDirection::UP);
     pPieMenu->AddSlice(formSquadSlice);
-	
+
 	PieSlice goToSlice("Go-To AI Mode", PieSlice::PieSliceIndex::PSI_GOTO, PieSlice::SliceDirection::DOWN);
     pPieMenu->AddSlice(goToSlice);
     PieSlice goldAISlice("Gold Dig AI Mode", PieSlice::PieSliceIndex::PSI_GOLDDIG, PieSlice::SliceDirection::DOWN);
@@ -937,7 +937,7 @@ bool AHuman::EquipFirearm(bool doEquip)
 // Virtual Method:  EquipDeviceInGroup
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Switches the currently held device (if any) to the first found device
-//                  of the specified group in the inventory. If the held device already 
+//                  of the specified group in the inventory. If the held device already
 //                  is of that group, or no device is in inventory, nothing happens.
 
 bool AHuman::EquipDeviceInGroup(string group, bool doEquip)
@@ -1003,7 +1003,7 @@ bool AHuman::EquipDeviceInGroup(string group, bool doEquip)
 // Virtual Method:  EquipLoadedFirearmInGroup
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Switches the currently held device (if any) to the first loaded HDFirearm
-//                  of the specified group in the inventory. If no such weapon is in the 
+//                  of the specified group in the inventory. If no such weapon is in the
 //                  inventory, nothing happens.
 
 bool AHuman::EquipLoadedFirearmInGroup(string group, string excludeGroup, bool doEquip)
@@ -1065,7 +1065,7 @@ bool AHuman::EquipLoadedFirearmInGroup(string group, string excludeGroup, bool d
 // Virtual Method:  EquipNamedDevice
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Switches the currently held device (if any) to the first found device
-//                  of with the specified preset name in the inventory. If the held device already 
+//                  of with the specified preset name in the inventory. If the held device already
 //                  is of that preset name, or no device is in inventory, nothing happens.
 
 bool AHuman::EquipNamedDevice(const string name, bool doEquip)
@@ -1257,10 +1257,10 @@ bool AHuman::EquipDiggingTool(bool doEquip)
 float AHuman::EstimateDigStrenght()
 {
     float maxPenetration = 1;
-    
+
     if (!(m_pFGArm && m_pFGArm->IsAttached()))
         return maxPenetration;
-    
+
     HDFirearm *pTool = 0;
 
     // Check if the currently held device is already the desired type
@@ -1279,7 +1279,7 @@ float AHuman::EstimateDigStrenght()
         if (pTool && pTool->IsInGroup("Tools - Diggers"))
             maxPenetration = max(pTool->EstimateDigStrenght(), maxPenetration);
     }
-    
+
     return maxPenetration;
 }
 
@@ -1776,7 +1776,7 @@ bool AHuman::UpdateMovePath()
 {
     // Estimate how much material this actor can dig through
     m_DigStrength = EstimateDigStrenght();
-    
+
     // Do the real path calc; abort and pass along the message if it didn't happen due to throttling
     if (!Actor::UpdateMovePath())
         return false;
@@ -2254,7 +2254,7 @@ void AHuman::UpdateAI()
                 if (m_DigState != FINISHINGDIG && (fabs(m_PrevPathTarget.m_X - m_Pos.m_X) < (m_CharHeight * 0.33)))
                 {
 					Vector notUsed;
-					
+
                     // If we have cleared the buried path segment, advance to the next
                     if (!g_SceneMan.CastStrengthRay(m_PrevPathTarget, g_SceneMan.ShortestDistance(m_PrevPathTarget, m_MoveTarget), 5, notUsed, 1, g_MaterialDoor))
                     {
@@ -2284,7 +2284,7 @@ void AHuman::UpdateAI()
                     m_DeviceState = SCANNING;
                     m_DigState = NOTDIGGING;
                 }
-            }  
+            }
         }
         // If we need to and can, pick up any weapon on the ground
         else if (m_pItemInReach)
@@ -2567,8 +2567,8 @@ void AHuman::UpdateAI()
     // Already in a jump
     if (m_ObstacleState == JUMPING)
     {
-        // Override the lateral control for the precise jump 
-        // Turn around 
+        // Override the lateral control for the precise jump
+        // Turn around
         if (m_MoveVector.m_X > 0 && m_LateralMoveState == LAT_LEFT)
             m_LateralMoveState = LAT_RIGHT;
         else if (m_MoveVector.m_X < 0 && m_LateralMoveState == LAT_RIGHT)
@@ -2615,14 +2615,14 @@ void AHuman::UpdateAI()
                 m_JumpTimer.Reset();
             }
         }
-		
+
 		Vector notUsed;
-		
+
         // Got the height, now wait until we crest the top and start falling again
         if (m_JumpState == APEXJUMP)
         {
 			Vector notUsedInner;
-			
+
             m_PointingTarget = m_JumpTarget;
 
             // We are falling again, and we can still see the target! start adjusting our aim and jet nozzle forward
@@ -2658,7 +2658,7 @@ void AHuman::UpdateAI()
         if (m_JumpState == LANDJUMP)
         {
 			Vector notUsedInner;
-			
+
             m_PointingTarget = m_JumpTarget;
 
             // Burn the jetpack for a short while to get forward momentum, but not too much
@@ -2700,7 +2700,7 @@ void AHuman::UpdateAI()
     else if (!m_MoveTarget.IsZero() && !m_Crawling)
     {
 		Vector notUsed;
-		
+
         // UPWARD JUMP TRIGGERINGS if it's a good time to jump up to a ledge
         if ((-m_MoveVector.m_Y > m_CharHeight * 0.75) && m_DeviceState != AIMING && m_DeviceState != FIRING)// && (fabs(m_MoveVector.m_X) < m_CharHeight))
         {
@@ -2754,9 +2754,9 @@ void AHuman::UpdateAI()
                     if (rise >= m_CharHeight)
                         break;
                 }
-				
+
 				Vector notUsedInner;
-				
+
                 // The rise is high enough to warrant looking across the trench for obstacles in the way of a jump
                 if (rise >= m_CharHeight && !g_SceneMan.CastStrengthRay(cpuPos, Vector((*pItr).m_X - cpuPos.m_X, 0), 5, notUsedInner, 3))
                 {
@@ -3016,7 +3016,7 @@ void AHuman::UpdateAI()
             {
                 m_ObstacleState = BACKSTEPPING;
                 m_StuckTimer.Reset();
-            }  
+            }
         }
         else
         {
@@ -3167,26 +3167,22 @@ void AHuman::Update()
 			m_JetTimeLeft = std::min(m_JetTimeLeft + g_TimerMan.GetDeltaTimeMS() * 2.0F, m_JetTimeTotal);
 		}
 
-		// If pie menu is on, keep the angle to what it was before
-		if (m_Controller.IsState(PIE_MENU_ACTIVE))
-		{
-			// Don't change anything
-		}
-		// Direct the jetpack nozzle according to movement stick if analog input is present
-		else if (m_Controller.GetAnalogMove().GetMagnitude() > 0.1F)
-		{
-			//To-do: test whether this works properly
-			float jetAngle = (m_Controller.GetAnalogMove().GetAbsRadAngle() - c_PI);
-			if (jetAngle > c_PI) { jetAngle -= c_TwoPI; }
-			m_pJetpack->SetEmitAngle(FacingAngle(jetAngle * m_JetAngleRange));
-		}
-		// Or just use the aim angle if we're getting digital input
-		else {
-			// Halve the jet angle when looking downwards so the actor isn't forced to go sideways (To-do: don't hardcode this value?)
-			float jetAngle = m_AimAngle > 0 ? m_AimAngle * m_JetAngleRange : -m_AimAngle * m_JetAngleRange * 0.5F;
-			jetAngle -= (c_HalfPI * m_JetAngleRange + c_HalfPI);
-			// Don't need to use FacingAngle on this because it's already applied to the AimAngle since last update.
-			m_pJetpack->SetEmitAngle(jetAngle);
+		float maxAngle = c_HalfPI * m_JetAngleRange;
+		// If pie menu is on, keep the angle to what it was before.
+		if (!m_Controller.IsState(PIE_MENU_ACTIVE)) {
+			// Direct the jetpack nozzle according to movement stick if analog input is present.
+			if (m_Controller.GetAnalogMove().GetMagnitude() > 0.1F) {
+				float jetAngle = std::clamp(m_Controller.GetAnalogMove().GetAbsRadAngle() - c_HalfPI, -maxAngle, maxAngle);
+				m_pJetpack->SetEmitAngle(FacingAngle(jetAngle - c_HalfPI));
+			// Use the aim angle if we're getting digital input.
+			} else {
+				// Halve the jet angle when looking downwards so the actor isn't forced to go sideways
+				// TODO: don't hardcode this value?
+				float jetAngle = m_AimAngle > 0 ? m_AimAngle * m_JetAngleRange : -m_AimAngle * m_JetAngleRange * 0.5F;
+				jetAngle -= (maxAngle + c_HalfPI);
+				// Don't need to use FacingAngle on this because it's already applied to the AimAngle since last update.
+				m_pJetpack->SetEmitAngle(jetAngle);
+			}
 		}
 	}
 
@@ -3337,7 +3333,7 @@ void AHuman::Update()
         // get a sluggish feeling at start of aim
         if (m_AimState != AIMUP)
             m_AimTmr.SetElapsedSimTimeMS(150);
-        m_AimState = AIMUP; 
+        m_AimState = AIMUP;
         m_AimAngle += m_Controller.IsState(AIM_SHARP) ?
                       std::min(m_AimTmr.GetElapsedSimTimeMS() * 0.00005, 0.05) :
                       std::min(m_AimTmr.GetElapsedSimTimeMS() * 0.00015, 0.1);
@@ -3402,7 +3398,7 @@ void AHuman::Update()
     // Sharp aim calculation
 
 // TODO: make the delay data driven by both the actor and the device!
-    // 
+    //
     if (m_Controller.IsState(AIM_SHARP) && (m_MoveState == STAND || m_MoveState == CROUCH || m_MoveState == NOMOVE || m_MoveState == WALK) && m_Vel.GetMagnitude() < 5.0F) {
 /*
         float halfDelay = m_SharpAimDelay / 2;
@@ -3563,7 +3559,7 @@ void AHuman::Update()
 	if (m_Controller.IsState(WEAPON_DROP) && m_Status != INACTIVE) {
 		if (m_pFGArm && m_pFGArm->HoldsSomething()) {
 			if (MovableObject *pMO = m_pFGArm->ReleaseHeldMO()) {
-				pMO->SetPos(m_Pos + Vector(m_HFlipped ? -10 : 10, -8));
+				pMO->SetPos(m_Pos + Vector(10.0F * GetFlipFactor(), -8.0F));
 				Vector tossVec(RandomNum(3.0F, 6.0F), RandomNum(-3.0F, -1.5F));
 				tossVec.RadRotate(m_AimAngle);
 				pMO->SetVel(m_Vel * 0.5F + tossVec.GetXFlipped(m_HFlipped) * m_Rotation);
@@ -3584,7 +3580,7 @@ void AHuman::Update()
 			}
 		} else if (m_pBGArm) {
 			if (MovableObject *pMO = m_pBGArm->ReleaseHeldMO()) {
-				pMO->SetPos(m_Pos + Vector(m_HFlipped ? -10 : 10, -8));
+				pMO->SetPos(m_Pos + Vector(10.0F * GetFlipFactor(), -8.0F));
 				Vector tossVec(RandomNum(3.0F, 6.0F), RandomNum(-3.0F, -1.5F));
 				tossVec.RadRotate(m_AimAngle);
 				pMO->SetVel(m_Vel * 0.5F + tossVec.GetXFlipped(m_HFlipped) * m_Rotation);
@@ -4048,9 +4044,8 @@ void AHuman::Update()
     if (m_pHead && m_pHead->IsAttached()) {
         float toRotate = 0;
         // Only rotate the head to match the aim angle if body is stable and upright
-        if (m_Status == STABLE && std::fabs(m_Rotation.GetRadAngle()) < (c_HalfPI + c_QuarterPI)) {
-            toRotate = m_pHead->GetRotMatrix().GetRadAngleTo((m_AimAngle * static_cast<float>(GetFlipFactor())) * m_LookToAimRatio + m_Rotation.GetRadAngle() * (0.9F - m_LookToAimRatio));
-            toRotate *= 0.15F;
+        if (m_Status == STABLE && std::abs(rot) < (c_HalfPI + c_QuarterPI)) {
+            toRotate = m_pHead->GetRotMatrix().GetRadAngleTo((m_AimAngle * GetFlipFactor()) * m_LookToAimRatio + rot * (0.9F - m_LookToAimRatio)) * 0.15F;
         }
         // If dying upright, make head slump forward or back depending on body lean
 // TODO: Doesn't work too well, but probably could
@@ -4087,7 +4082,7 @@ void AHuman::Update()
 
 			affectingBodyAngle = std::abs(std::sin(rot)) * rot * m_FGArmFlailScalar * (1.0F - aimScalar);
 		}
-		m_pFGArm->SetRotAngle(affectingBodyAngle + m_AimAngle * static_cast<float>(GetFlipFactor()));
+		m_pFGArm->SetRotAngle(affectingBodyAngle + m_AimAngle * GetFlipFactor());
 
         if (m_Status == STABLE) {
             if (m_ArmClimbing[FGROUND]) {
@@ -4103,8 +4098,8 @@ void AHuman::Update()
     }
 
     if (m_pBGArm) {
-		m_pBGArm->SetRotAngle(std::abs(std::sin(rot)) * rot * m_BGArmFlailScalar + (m_AimAngle * static_cast<float>(GetFlipFactor())));
-        if (m_Status == STABLE) { 
+		m_pBGArm->SetRotAngle(std::abs(std::sin(rot)) * rot * m_BGArmFlailScalar + (m_AimAngle * GetFlipFactor()));
+        if (m_Status == STABLE) {
 			if (m_ArmClimbing[BGROUND]) {
 				// Can't climb or crawl with the shield
 				if (m_MoveState == CLIMB || (m_MoveState == CRAWL && m_ProneState == PRONE)) { UnequipBGArm(); }
@@ -4201,7 +4196,7 @@ void AHuman::Update()
 /* Done by pie menu now, see HandlePieCommand()
     ////////////////////////////////////////
     // AI mode setting
-    
+
     if (m_Controller.IsState(AI_MODE_SET))
     {
         if (m_Controller.IsState(PRESS_RIGHT))
@@ -4293,8 +4288,8 @@ void AHuman::Update()
             }
 		} else {
 			// Upright body posture
-			float rotDiff = rot - (GetRotAngleTarget(m_MoveState) * (m_AimAngle > 0 ? 1 - (m_AimAngle / c_HalfPI) : 1) * static_cast<float>(GetFlipFactor()));
-			m_AngularVel = m_AngularVel * (0.98F - 0.08F * (m_Health / m_MaxHealth)) - (rotDiff * 0.5F);
+			float rotDiff = rot - (GetRotAngleTarget(m_MoveState) * (m_AimAngle > 0 ? 1.0F - (m_AimAngle / c_HalfPI) : 1.0F) * GetFlipFactor());
+			m_AngularVel = m_AngularVel * (0.98F - 0.06F * (m_Health / m_MaxHealth)) - (rotDiff * 0.5F);
 		}
     }
     // Keel over
@@ -4338,12 +4333,11 @@ void AHuman::Update()
     ///////////////////////////////////////////////////
     // Death detection and handling
 
-    // Losing head should kill
-    if (!m_pHead && m_Status != DYING && m_Status != DEAD)
-        m_Health -= m_MaxHealth + 1;
-    // Losing all limbs should kill... eventually
-    else if (!m_pFGArm && !m_pBGArm && !m_pFGLeg && !m_pBGLeg && m_Status != DYING && m_Status != DEAD)
-        m_Health -= 0.1;
+	if (!m_pHead && m_Status != DYING && m_Status != DEAD) {
+		m_Health -= m_MaxHealth + 1.0F;
+	} else if (!m_pFGArm && !m_pBGArm && !m_pFGLeg && !m_pBGLeg && m_Status != DYING && m_Status != DEAD) {
+		m_Health -= 0.1F;
+	}
 
     if (m_Status == DYING)
     {
@@ -4376,16 +4370,14 @@ void AHuman::DrawThrowingReticule(SDL_Renderer* renderer, const Vector &targetPo
 		//colors[index].SetRGB(255 - index * 3, 225 - index * 20, index);
 	}
 
-    Vector outOffset(m_HFlipped ? -15 : 15, -4);
-//    Matrix aimMatrix(m_AimAngle);
-//    aimMatrix.SetXFlipped(m_HFlipped);
+    Vector outOffset(15.0F * GetFlipFactor(), -5.0F);
 
 	std::vector<SDL_Point> drawPoints(pointCount);
 
     for (int i = 0; i < pointCount * amount; ++i) {
         points[i].FlipX(m_HFlipped);
         points[i] += outOffset;
-        points[i].RadRotate(m_HFlipped ? -m_AimAngle : m_AimAngle);
+        points[i].RadRotate((m_AimAngle * GetFlipFactor()) + m_Rotation.GetRadAngle());
         points[i] += m_Pos;
         if (m_pFGArm && m_pFGArm->IsAttached())
             points[i] += m_pFGArm->GetParentOffset();
@@ -4449,6 +4441,8 @@ void AHuman::Draw(SDL_Renderer* renderer, const Vector &targetPos, DrawMode mode
 //                  BITMAP of choice.
 
 void AHuman::DrawHUD(SDL_Renderer* renderer, const Vector &targetPos, int whichScreen, bool playerControlled) {
+	m_HUDStack = -m_CharHeight / 2;
+
     if (!m_HUDVisible)
         return;
 
@@ -4456,11 +4450,11 @@ void AHuman::DrawHUD(SDL_Renderer* renderer, const Vector &targetPos, int whichS
     if (m_Team < 0)
         return;
 
-    // Only draw if the team viewing this is on the same team OR has seen the space where this is located
-    int viewingTeam = g_ActivityMan.GetActivity()->GetTeamOfPlayer(g_ActivityMan.GetActivity()->PlayerOfScreen(whichScreen));
-    if (viewingTeam != m_Team && viewingTeam != Activity::NoTeam && g_SceneMan.IsUnseen(m_Pos.GetFloorIntX(), m_Pos.GetFloorIntY(), viewingTeam)) {
+	// Only draw if the team viewing this is on the same team OR has seen the space where this is located.
+	int viewingTeam = g_ActivityMan.GetActivity()->GetTeamOfPlayer(g_ActivityMan.GetActivity()->PlayerOfScreen(whichScreen));
+    if (viewingTeam != m_Team && viewingTeam != Activity::NoTeam && (!g_SettingsMan.ShowEnemyHUD() || g_SceneMan.IsUnseen(m_Pos.GetFloorIntX(), m_Pos.GetFloorIntY(), viewingTeam))) {
 		return;
-    }
+	}
 
     Actor::DrawHUD(renderer, targetPos, whichScreen);
 
@@ -4494,7 +4488,7 @@ void AHuman::DrawHUD(SDL_Renderer* renderer, const Vector &targetPos, int whichS
     filledCircleColor(renderer, lastPoint.m_X, lastPoint.m_Y, 2, g_YellowGlowColor);
     // Raidus
 //    waypoint = m_Pos - targetPos;
-//    circle(pTargetBitmap, waypoint.m_X, waypoint.m_Y, m_MoveProximityLimit, g_RedColor);  
+//    circle(pTargetBitmap, waypoint.m_X, waypoint.m_Y, m_MoveProximityLimit, g_RedColor);
 #endif
 
     // Player AI drawing
@@ -4503,7 +4497,7 @@ void AHuman::DrawHUD(SDL_Renderer* renderer, const Vector &targetPos, int whichS
 	if (m_Controller.IsState(AIM_SHARP) && m_pFGArm && m_pFGArm->IsAttached() && m_pFGArm->HoldsHeldDevice()) {
 		m_pFGArm->GetHeldDevice()->DrawHUD(renderer, targetPos, whichScreen, m_Controller.IsPlayerControlled());
 	}
-        
+
 
     // Throwing reticule
 	if (m_ArmsState == THROWING_PREP) {
@@ -4697,7 +4691,7 @@ void AHuman::DrawHUD(SDL_Renderer* renderer, const Vector &targetPos, int whichS
             int iconOff = m_apAIIcons[0]->w + 2;
             int iconColor = m_Team == Activity::TeamOne ? AIICON_RED : AIICON_GREEN;
             Vector iconPos = GetCPUPos() - targetPos;
-            
+
             if (m_AIMode == AIMODE_SENTRY)
             {
                 std::snprintf(str, sizeof(str), "%s", "Sentry");
@@ -4832,7 +4826,7 @@ void AHuman::SetLimbPathSpeed(int speedPreset, float speed)
 // Virtual method:  GetLimbPathPushForce
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Gets the force that a limb traveling walking LimbPath can push against
-//                  stuff in the scene with. 
+//                  stuff in the scene with.
 
 float AHuman::GetLimbPathPushForce() const
 {
@@ -4843,7 +4837,7 @@ float AHuman::GetLimbPathPushForce() const
 // Virtual method:  SetLimbPathPushForce
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Sets the default force that a limb traveling walking LimbPath can push against
-//                  stuff in the scene with. 
+//                  stuff in the scene with.
 
 void AHuman::SetLimbPathPushForce(float force)
 {

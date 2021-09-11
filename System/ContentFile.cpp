@@ -9,6 +9,9 @@
 #include "SDLHelper.h"
 #include <SDL2/SDL_image.h>
 
+#include "fmod/fmod.hpp"
+#include "fmod/fmod_errors.h"
+
 namespace RTE {
 
 	const std::string ContentFile::c_ClassName = "ContentFile";
@@ -124,10 +127,7 @@ namespace RTE {
 					dataPathToLoad =
 					    dataPathWithoutExtension + altFileExtension;
 				} else {
-					RTEAbort(
-					    "Failed to find image file with following path and name:\n\n" +
-					    m_DataPath + " or " + altFileExtension + "\n" +
-					    m_FormattedReaderPosition);
+					RTEAbort("Failed to find image file with following path and name:\n\n" + dataPathToLoad + " or " + altFileExtension + "\n" + m_FormattedReaderPosition);
 				}
 			}
 			// NOTE: This takes ownership of the texture file
@@ -155,15 +155,14 @@ namespace RTE {
 		std::vector<std::shared_ptr<Texture>> returnTextures;
 		SetFormattedReaderPosition(GetFormattedReaderPosition());
 
-		// Don't try to append numbers if there's only one frame
 		if (frameCount == 1) {
 			// Check for 000 in the file name in case it is part of an animation but the FrameCount was set to 1. Do not warn about this because it's normal operation, but warn about incorrect extension.
-			if (!std::filesystem::exists(m_DataPath)) {
+			if (!System::PathExistsCaseSensitive(m_DataPath)) {
 				const std::string altFileExtension = (m_DataPathExtension == ".png") ? ".bmp" : ".png";
 
-				if (std::filesystem::exists(m_DataPathWithoutExtension + "000" + m_DataPathExtension)) {
+				if (System::PathExistsCaseSensitive(m_DataPathWithoutExtension + "000" + m_DataPathExtension)) {
 					SetDataPath(m_DataPathWithoutExtension + "000" + m_DataPathExtension);
-				} else if (std::filesystem::exists(m_DataPathWithoutExtension + "000" + altFileExtension)) {
+				} else if (System::PathExistsCaseSensitive(m_DataPathWithoutExtension + "000" + altFileExtension)) {
 					g_ConsoleMan.AddLoadWarningLogEntry(m_DataPath, m_FormattedReaderPosition, altFileExtension);
 					SetDataPath(m_DataPathWithoutExtension + "000" + altFileExtension);
 				}
@@ -292,7 +291,7 @@ namespace RTE {
 			returnSample = LoadAndReleaseSound(abortGameForInvalidSound, asyncLoading); //NOTE: This takes ownership of the sample file
 
 			// Insert the Sound object into the map, PASSING OVER OWNERSHIP OF THE LOADED FILE
-			s_LoadedSamples.insert({ m_DataPath, returnSample });
+			s_LoadedSamples.try_emplace(m_DataPath, returnSample);
 		}
 		return returnSample;
 	}
@@ -322,7 +321,7 @@ namespace RTE {
 			}
 		}
 		if (std::filesystem::file_size(m_DataPath) == 0) {
-			const std::string errorMessage = "Failed to create sound because because the file was empty. The path and name were: ";
+			const std::string errorMessage = "Failed to create sound because the file was empty. The path and name were: ";
 			RTEAssert(!abortGameForInvalidSound, errorMessage + "\n\n" + m_DataPathAndReaderPosition);
 			g_ConsoleMan.PrintString("ERROR: " + errorMessage + m_DataPath);
 			return nullptr;

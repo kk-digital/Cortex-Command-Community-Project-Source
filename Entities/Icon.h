@@ -15,9 +15,9 @@ namespace RTE {
 
 	public:
 
-		EntityAllocation(Icon)
-		SerializableOverrideMethods
-		ClassInfoGetters
+		EntityAllocation(Icon);
+		SerializableOverrideMethods;
+		ClassInfoGetters;
 
 #pragma region Creation
 		/// <summary>
@@ -68,7 +68,7 @@ namespace RTE {
 		/// Gets the number of frames in this Icon's animation.
 		/// </summary>
 		/// <returns>The number of frames in the animation.</returns>
-		unsigned short GetFrameCount() const { return m_FrameCount; }
+		unsigned int GetFrameCount() const { return m_FrameCount; }
 
 		/// <summary>
 		/// Gets the array of 32-bit bitmaps of this Icon, as many as GetFrameCount says.
@@ -91,7 +91,7 @@ namespace RTE {
 		static Entity::ClassInfo m_sClass; //!< ClassInfo for this class.
 
 		ContentFile m_BitmapFile; //!< ContentFile containing the bitmap file of this Icon.
-		unsigned short m_FrameCount; //!< Number of frames in this Icon's animation.
+		unsigned int m_FrameCount; //!< Number of frames in this Icon's animation.
 
 		std::vector<std::shared_ptr<Texture>> m_Textures; //!< The 32bpp Textures of this Icon.
 

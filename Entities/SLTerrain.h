@@ -57,8 +57,8 @@ class SLTerrain:
 
     public:
 
-		SerializableClassNameGetter
-		SerializableOverrideMethods
+		SerializableClassNameGetter;
+		SerializableOverrideMethods;
 
 
     //////////////////////////////////////////////////////////////////////////////////////////

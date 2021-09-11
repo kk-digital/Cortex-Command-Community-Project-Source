@@ -4,9 +4,7 @@
 #include "Serializable.h"
 #include "SDLTexture.h"
 
-#include "fmod/fmod.hpp"
-#include "fmod/fmod_errors.h"
-
+namespace FMOD { class Sound; }
 
 namespace RTE {
 
@@ -17,8 +15,8 @@ namespace RTE {
 
 	public:
 
-		SerializableClassNameGetter
-		SerializableOverrideMethods
+		SerializableClassNameGetter;
+		SerializableOverrideMethods;
 
 #pragma region Creation
 		/// <summary>
@@ -30,13 +28,13 @@ namespace RTE {
 		/// Constructor method used to instantiate a ContentFile object in system memory, and also do a Create() in the same line.
 		/// </summary>
 		/// <param name="filePath">A string defining the path to where the content file itself is located.</param>
-		ContentFile(const char *filePath) { Clear(); Create(filePath); }
+		explicit ContentFile(const char *filePath) { Clear(); Create(filePath); }
 
 		/// <summary>
 		/// Constructor method used to instantiate a ContentFile object in system memory from a hash value of the file path, and also do a Create() in the same line.
 		/// </summary>
 		/// <param name="hash">A hash value containing the path to where the content file itself is located.</param>
-		ContentFile(size_t hash) { Clear(); Create(GetPathFromHash(hash).c_str()); }
+		explicit ContentFile(size_t hash) { Clear(); Create(GetPathFromHash(hash).c_str()); }
 
 		/// <summary>
 		/// Makes the ContentFile object ready for use.
@@ -57,12 +55,7 @@ namespace RTE {
 		/// <summary>
 		/// Destructor method used to clean up a ContentFile object before deletion from system memory.
 		/// </summary>
-		~ContentFile() { Destroy(); }
-
-		/// <summary>
-		/// Destroys and resets (through Clear()) the ContentFile object.
-		/// </summary>
-		void Destroy() { Clear(); }
+		~ContentFile() override = default;
 
 		/// <summary>
 		/// Resets the entire ContentFile, including its inherited members, to their default settings or values.

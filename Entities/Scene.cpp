@@ -38,7 +38,7 @@
 
 namespace RTE {
 
-ConcreteClassInfo(Scene, Entity, 0)
+ConcreteClassInfo(Scene, Entity, 0);
 const string Scene::Area::c_ClassName = "Area";
 	constexpr int Scene::PREVIEW_WIDTH;
 	constexpr int Scene::PREVIEW_HEIGHT;

@@ -19,7 +19,7 @@
 
 namespace RTE {
 
-ConcreteClassInfo(TerrainObject, SceneObject, 0)
+ConcreteClassInfo(TerrainObject, SceneObject, 0);
 
 
 //////////////////////////////////////////////////////////////////////////////////////////

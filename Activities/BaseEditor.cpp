@@ -45,11 +45,10 @@
 #include "GUI/GUIComboBox.h"
 
 #include "SceneEditorGUI.h"
-#include "GABaseDefense.h"
 
 namespace RTE {
 
-ConcreteClassInfo(BaseEditor, Activity, 0)
+ConcreteClassInfo(BaseEditor, Activity, 0);
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -208,7 +207,7 @@ int BaseEditor::Start()
 //    }
 
     // Kill off any actors not of this player's team.. they're not supposed to be here
-    g_MovableMan.KillAllActors(GetTeamOfPlayer(editingPlayer));
+    g_MovableMan.KillAllEnemyActors(GetTeamOfPlayer(editingPlayer));
 
     //////////////////////////////////////////////
     // Allocate and (re)create the Editor GUI
@@ -398,7 +397,7 @@ bool BaseEditor::SaveScene(string saveAsName, bool forceOverwrite)
             // If it's already included, it doens't matter, the definitions will just bounce the second time
             if (!scenesFileExisted)
             {
-                string indexFilePath(g_PresetMan.GetDataModule(m_ModuleSpaceID)->GetFileName() + "/Index.ini"); 
+                string indexFilePath(g_PresetMan.GetDataModule(m_ModuleSpaceID)->GetFileName() + "/Index.ini");
                 Writer indexWriter(indexFilePath.c_str(), true);
                 // Add extra tab since the DataModule has everything indented
                 indexWriter.NewProperty("\tIncludeFile");

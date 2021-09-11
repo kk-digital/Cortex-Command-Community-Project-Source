@@ -2905,7 +2905,6 @@ void SceneMan::StructuralCalc(unsigned long calcTime) {
 		std::shared_ptr<Texture> pColTexture = pTerrain->GetFGColorTexture();
 		std::shared_ptr<Texture> pMatTexture = pTerrain->GetMaterialTexture();
 		std::shared_ptr<Texture> pStructTexture = pTerrain->GetStructuralTexture();
-    // Material **pMatPalette = GetMaterialPalette(); // TODO: Unused???
     int posX, posY, height = pColTexture->getH(), width = pColTexture->getW();
 
     // Lock all bitmaps involved, outside the loop.

@@ -30,7 +30,7 @@
 
 namespace RTE {
 
-AbstractClassInfo(ACraft, Actor)
+AbstractClassInfo(ACraft, Actor);
 const string ACraft::Exit::c_ClassName = "Exit";
 
 bool ACraft::s_CrabBombInEffect = false;
@@ -266,7 +266,7 @@ void ACraft::Clear()
     m_HatchDelay = 0;
     m_HatchOpenSound = nullptr;
     m_HatchCloseSound = nullptr;
-    m_NewInventory.clear();
+    m_CollectedInventory.clear();
     m_Exits.clear();
     m_CurrentExit = m_Exits.begin();
     m_ExitInterval = 1000;
@@ -322,8 +322,8 @@ int ACraft::Create(const ACraft &reference)
 	} else if (reference.m_HatchOpenSound) {
 		m_HatchCloseSound = dynamic_cast<SoundContainer *>(reference.m_HatchOpenSound->Clone());
 	}
-	for (deque<MovableObject *>::const_iterator niItr = reference.m_NewInventory.begin(); niItr != reference.m_NewInventory.end(); ++niItr)
-        m_NewInventory.push_back(dynamic_cast<MovableObject *>((*niItr)->Clone()));
+	for (deque<MovableObject *>::const_iterator niItr = reference.m_CollectedInventory.begin(); niItr != reference.m_CollectedInventory.end(); ++niItr)
+        m_CollectedInventory.push_back(dynamic_cast<MovableObject *>((*niItr)->Clone()));
     for (list<Exit>::const_iterator eItr = reference.m_Exits.begin(); eItr != reference.m_Exits.end(); ++eItr)
         m_Exits.push_back(*eItr);
     m_CurrentExit = m_Exits.begin();
@@ -451,7 +451,7 @@ float ACraft::GetTotalValue(int nativeModule, float foreignMult, float nativeMul
     float totalValue = Actor::GetTotalValue(nativeModule, foreignMult, nativeMult);
 
     MOSprite *pItem = 0;
-    for (deque<MovableObject *>::const_iterator itr = m_NewInventory.begin(); itr != m_NewInventory.end(); ++itr)
+    for (deque<MovableObject *>::const_iterator itr = m_CollectedInventory.begin(); itr != m_CollectedInventory.end(); ++itr)
     {
         pItem = dynamic_cast<MOSprite *>(*itr);
         if (pItem)
@@ -473,7 +473,7 @@ bool ACraft::HasObject(string objectName) const
     if (Actor::HasObject(objectName))
         return true;
 
-    for (deque<MovableObject *>::const_iterator itr = m_NewInventory.begin(); itr != m_NewInventory.end(); ++itr)
+    for (deque<MovableObject *>::const_iterator itr = m_CollectedInventory.begin(); itr != m_CollectedInventory.end(); ++itr)
     {
         if ((*itr) && (*itr)->HasObject(objectName))
             return true;
@@ -495,7 +495,7 @@ bool ACraft::HasObjectInGroup(std::string groupName) const
     if (Actor::HasObjectInGroup(groupName))
         return true;
 
-    for (deque<MovableObject *>::const_iterator itr = m_NewInventory.begin(); itr != m_NewInventory.end(); ++itr)
+    for (deque<MovableObject *>::const_iterator itr = m_CollectedInventory.begin(); itr != m_CollectedInventory.end(); ++itr)
     {
         if ((*itr) && (*itr)->HasObjectInGroup(groupName))
             return true;
@@ -516,7 +516,7 @@ void ACraft::SetTeam(int team)
 
     // Also set all actors in the new inventory
     Actor *pActor = 0;
-    for (deque<MovableObject *>::iterator itr = m_NewInventory.begin(); itr != m_NewInventory.end(); ++itr)
+    for (deque<MovableObject *>::iterator itr = m_CollectedInventory.begin(); itr != m_CollectedInventory.end(); ++itr)
     {
         pActor = dynamic_cast<Actor *>(*itr);
         if (pActor)
@@ -535,7 +535,7 @@ bool ACraft::AddPieMenuSlices(PieMenuGUI *pPieMenu)
     pPieMenu->AddSlice(deliverSlice);
     PieSlice returnSlice("Return", PieSlice::PieSliceIndex::PSI_RETURN, PieSlice::SliceDirection::UP);
 	pPieMenu->AddSlice(returnSlice);
-	
+
 	PieSlice staySlice("Stay", PieSlice::PieSliceIndex::PSI_STAY, PieSlice::SliceDirection::DOWN);
     pPieMenu->AddSlice(staySlice);
     PieSlice scuttleSlice("Scuttle!", PieSlice::PieSliceIndex::PSI_SCUTTLE, PieSlice::SliceDirection::LEFT);
@@ -620,11 +620,11 @@ void ACraft::CloseHatch()
         m_HatchTimer.Reset();
 
         // When closing, move all newly added inventory to the regular inventory list so it'll be ejected next time doors open
-        for (deque<MovableObject *>::const_iterator niItr = m_NewInventory.begin(); niItr != m_NewInventory.end(); ++niItr)
+        for (deque<MovableObject *>::const_iterator niItr = m_CollectedInventory.begin(); niItr != m_CollectedInventory.end(); ++niItr)
             m_Inventory.push_back(*niItr);
 
         // Clear the new inventory hold, it's all been moved to the regular inventory
-        m_NewInventory.clear();
+        m_CollectedInventory.clear();
 
         // PSCHHT
 		if (m_HatchCloseSound) { m_HatchCloseSound->Play(m_Pos); }
@@ -646,7 +646,7 @@ void ACraft::AddInventoryItem(MovableObject *pItemToAdd)
         // If the hatch is open, then only add the new item to the intermediate new inventory list
         // so that it doesn't get chucked out right away again
         if (m_HatchState == OPEN || m_HatchState == OPENING)
-            m_NewInventory.push_back(pItemToAdd);
+            m_CollectedInventory.push_back(pItemToAdd);
         // If doors are already closed, it's safe to put the item directly the regular inventory
         else
             m_Inventory.push_back(pItemToAdd);
@@ -793,6 +793,17 @@ void ACraft::DropAllInventory()
     }
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+float ACraft::GetCollectedInventoryMass() const {
+	float inventoryMass = 0.0F;
+	for (const MovableObject *inventoryItem : m_CollectedInventory) {
+		inventoryMass += inventoryItem->GetMass();
+	}
+	return inventoryMass;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Virtual method:  OnMOHit
@@ -874,7 +885,7 @@ void ACraft::Update()
 // TODO: HELLA GHETTO, REWORK
         if (m_CrashTimer.GetElapsedSimTimeMS() > 500)
         {
-			if (m_CrashSound) { m_CrashSound->Play(m_Pos); } 
+			if (m_CrashSound) { m_CrashSound->Play(m_Pos); }
             m_CrashTimer.Reset();
         }
     }
@@ -986,6 +997,7 @@ void ACraft::Update()
 
 void ACraft::DrawHUD(SDL_Renderer* renderer, const Vector &targetPos, int whichScreen, bool playerControlled)
 {
+	m_HUDStack = -m_CharHeight / 2;
     if (!m_HUDVisible)
         return;
 
@@ -993,13 +1005,11 @@ void ACraft::DrawHUD(SDL_Renderer* renderer, const Vector &targetPos, int whichS
     if (m_Team < 0)
         return;
 
-    // Only draw if the team viewing this is on the same team OR has seen the space where this is located
-    int viewingTeam = g_ActivityMan.GetActivity()->GetTeamOfPlayer(g_ActivityMan.GetActivity()->PlayerOfScreen(whichScreen));
-    if (viewingTeam != m_Team && viewingTeam != Activity::NoTeam)
-    {
-        if (g_SceneMan.IsUnseen(m_Pos.m_X, m_Pos.m_Y, viewingTeam))
-            return;
-    }
+	// Only draw if the team viewing this is on the same team OR has seen the space where this is located.
+	int viewingTeam = g_ActivityMan.GetActivity()->GetTeamOfPlayer(g_ActivityMan.GetActivity()->PlayerOfScreen(whichScreen));
+	if (viewingTeam != m_Team && viewingTeam != Activity::NoTeam && (!g_SettingsMan.ShowEnemyHUD() || g_SceneMan.IsUnseen(m_Pos.GetFloorIntX(), m_Pos.GetFloorIntY(), viewingTeam))) {
+		return;
+	}
 
     Actor::DrawHUD(renderer, targetPos, whichScreen);
 
@@ -1059,7 +1069,7 @@ void ACraft::DrawHUD(SDL_Renderer* renderer, const Vector &targetPos, int whichS
             int iconOff = m_apAIIcons[0]->w + 2;
             int iconColor = m_Team == Activity::TeamOne ? AIICON_RED : AIICON_GREEN;
             Vector iconPos = GetCPUPos() - targetPos;
-            
+
             if (m_AIMode == AIMODE_RETURN)
             {
                 std::snprintf(str, sizeof(str), "%s", "Return");

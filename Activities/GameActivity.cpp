@@ -47,7 +47,7 @@
 
 namespace RTE {
 
-AbstractClassInfo(GameActivity, Activity)
+AbstractClassInfo(GameActivity, Activity);
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -1025,25 +1025,25 @@ int GameActivity::Start()
     if (m_aLZCursor[0].empty())
     {
         ContentFile cursorFile("Base.rte/GUIs/Indicators/LZArrowRedL.png");
-        m_aLZCursor[0] = cursorFile.GetAsAnimation(LZCURSORFRAMECOUNT);
+        cursorFile.GetAsAnimation(m_aLZCursor[0], LZCURSORFRAMECOUNT);
         cursorFile.SetDataPath("Base.rte/GUIs/Indicators/LZArrowGreenL.png");
-        m_aLZCursor[1] = cursorFile.GetAsAnimation(LZCURSORFRAMECOUNT);
+        cursorFile.GetAsAnimation(m_aLZCursor[1], LZCURSORFRAMECOUNT);
 		cursorFile.SetDataPath("Base.rte/GUIs/Indicators/LZArrowBlueL.png");
-		m_aLZCursor[2] = cursorFile.GetAsAnimation(LZCURSORFRAMECOUNT);
+		cursorFile.GetAsAnimation(m_aLZCursor[2], LZCURSORFRAMECOUNT);
 		cursorFile.SetDataPath("Base.rte/GUIs/Indicators/LZArrowYellowL.png");
-		m_aLZCursor[3] = cursorFile.GetAsAnimation(LZCURSORFRAMECOUNT);
+		cursorFile.GetAsAnimation(m_aLZCursor[3], LZCURSORFRAMECOUNT);
     }
 
     if (m_aObjCursor[0].empty())
     {
         ContentFile cursorFile("Base.rte/GUIs/Indicators/ObjArrowRed.png");
-        m_aObjCursor[0] = cursorFile.GetAsAnimation(OBJARROWFRAMECOUNT);
+        cursorFile.GetAsAnimation(m_aObjCursor[0], OBJARROWFRAMECOUNT);
         cursorFile.SetDataPath("Base.rte/GUIs/Indicators/ObjArrowGreen.png");
-        m_aObjCursor[1] = cursorFile.GetAsAnimation(OBJARROWFRAMECOUNT);
+        cursorFile.GetAsAnimation(m_aObjCursor[1], OBJARROWFRAMECOUNT);
 		cursorFile.SetDataPath("Base.rte/GUIs/Indicators/ObjArrowBlue.png");
-		m_aObjCursor[2] = cursorFile.GetAsAnimation(OBJARROWFRAMECOUNT);
+		cursorFile.GetAsAnimation(m_aObjCursor[2], OBJARROWFRAMECOUNT);
 		cursorFile.SetDataPath("Base.rte/GUIs/Indicators/ObjArrowYellow.png");
-		m_aObjCursor[3] = cursorFile.GetAsAnimation(OBJARROWFRAMECOUNT);
+		cursorFile.GetAsAnimation(m_aObjCursor[3], OBJARROWFRAMECOUNT);
     }
 
     // Start the in-game music
@@ -2332,46 +2332,34 @@ void GameActivity::DrawGUI(SDL_Renderer* renderer, const Vector &targetPos, int 
 		pIcon->GetTextures()[0]->render(renderer, std::max(2, static_cast<int>(g_SceneMan.GetScreenOcclusion(which).m_X)), 2);
 	}
 
-	// Gold
-	std::snprintf(str, sizeof(str), "%c Funds: %.0f oz",
-		          TeamFundsChanged(which) ? -57 : -58,
-		          GetTeamFunds(m_Team[PoS]));
-	g_FrameMan.GetLargeFont()->DrawAligned(&pBitmapInt, std::max(16, static_cast<int>(g_SceneMan.GetScreenOcclusion(which).m_X + 16)), yTextPos, str, GUIFont::Left);
-	/* Not applicable anymore to the 4-team games
-		// Body losses
-		std::snprintf(str, sizeof(str), "%c Losses: %c%i %c%i", -39, -62,
-	   GetTeamDeathCount(Teams::TeamOne), -59,
-	   GetTeamDeathCount(Teams::TeamTwo));
-		g_FrameMan.GetLargeFont()->DrawAligned(&pBitmapInt, MIN(viewport.w
-	   - 4, viewport.w - 4 + g_SceneMan.GetScreenOcclusion(which).m_X),
-	   yTextPos, str, GUIFont::Right);
-	*/
-	// Show the player's controller scheme icon in the upper right corner of his
-	// screen, but only for a minute
-	if (m_GameTimer.GetElapsedRealTimeS() < 30) {
-		// TODO: Only blink if there hasn't been any input on a controller since
-		// start of game?? Blink them at first, but only if there's more than
-		// one human player
-		if (m_GameTimer.GetElapsedRealTimeS() > 4 ||
-			m_GameTimer.AlternateReal(150) || GetHumanCount() < 2) {
-			pIcon = g_UInputMan.GetSchemeIcon(PoS);
-			if (pIcon) {
-				pIcon->GetTextures()[0]->render(
-					renderer,
-					std::min(viewport.w - pIcon->GetTextures()[0]->getW() - 2,
-						viewport.w - pIcon->GetTextures()[0]->getW() - 2 +
-						static_cast<int>(g_SceneMan.GetScreenOcclusion(which).m_X)),
-					yTextPos);
-				// TODO: make a black Activity intro screen, saying "Player X,
-				// press any key/button to show that you are ready!, and display
-				// their controller icon, then fade into the scene"
-				//                stretch_sprite(pTargetBitmap,
-				//                pIcon->GetTextures()[0], 10, 10,
-				//                pIcon->GetTextures()[0]->w * 4,
-				//                pIcon->GetTextures()[0]->h * 4);
-			}
-		}
-	}
+    // Team Icon up in the top left corner
+    const Icon *pIcon = GetTeamIcon(m_Team[PoS]);
+    if (pIcon)
+        draw_sprite(pTargetBitmap, pIcon->GetBitmaps8()[0], MAX(2, g_SceneMan.GetScreenOcclusion(which).m_X + 2), 2);
+    // Gold
+    std::snprintf(str, sizeof(str), "%c Funds: %.10g oz", TeamFundsChanged(which) ? -57 : -58, std::floor(GetTeamFunds(m_Team[PoS])));
+    g_FrameMan.GetLargeFont()->DrawAligned(&pBitmapInt, MAX(16, g_SceneMan.GetScreenOcclusion(which).m_X + 16), yTextPos, str, GUIFont::Left);
+/* Not applicable anymore to the 4-team games
+    // Body losses
+    std::snprintf(str, sizeof(str), "%c Losses: %c%i %c%i", -39, -62, GetTeamDeathCount(Teams::TeamOne), -59, GetTeamDeathCount(Teams::TeamTwo));
+    g_FrameMan.GetLargeFont()->DrawAligned(&pBitmapInt, MIN(pTargetBitmap->w - 4, pTargetBitmap->w - 4 + g_SceneMan.GetScreenOcclusion(which).m_X), yTextPos, str, GUIFont::Right);
+*/
+    // Show the player's controller scheme icon in the upper right corner of his screen, but only for a minute
+    if (m_GameTimer.GetElapsedRealTimeS() < 30)
+    {
+// TODO: Only blink if there hasn't been any input on a controller since start of game??
+        // Blink them at first, but only if there's more than one human player
+        if (m_GameTimer.GetElapsedRealTimeS() > 4 || m_GameTimer.AlternateReal(150) || GetHumanCount() < 2)
+        {
+            pIcon = g_UInputMan.GetSchemeIcon(PoS);
+            if (pIcon)
+            {
+                draw_sprite(pTargetBitmap, pIcon->GetBitmaps8()[0], MIN(pTargetBitmap->w - pIcon->GetBitmaps8()[0]->w - 2, pTargetBitmap->w - pIcon->GetBitmaps8()[0]->w - 2 + g_SceneMan.GetScreenOcclusion(which).m_X), yTextPos);
+// TODO: make a black Activity intro screen, saying "Player X, press any key/button to show that you are ready!, and display their controller icon, then fade into the scene"
+//                stretch_sprite(pTargetBitmap, pIcon->GetBitmaps8()[0], 10, 10, pIcon->GetBitmaps8()[0]->w * 4, pIcon->GetBitmaps8()[0]->h * 4);
+            }
+        }
+    }
 
 	if (m_ActivityState == ActivityState::Running) {
 		// Pie menu may be visible if we're choosing actors

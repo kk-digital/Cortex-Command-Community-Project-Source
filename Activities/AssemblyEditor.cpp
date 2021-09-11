@@ -41,13 +41,12 @@
 #include "GUI/GUIComboBox.h"
 
 #include "AssemblyEditorGUI.h"
-#include "GABaseDefense.h"
 #include "BunkerAssembly.h"
 #include "BunkerAssemblyScheme.h"
 
 namespace RTE {
 
-ConcreteClassInfo(AssemblyEditor, EditorActivity, 0)
+ConcreteClassInfo(AssemblyEditor, EditorActivity, 0);
 
 
 //////////////////////////////////////////////////////////////////////////////////////////

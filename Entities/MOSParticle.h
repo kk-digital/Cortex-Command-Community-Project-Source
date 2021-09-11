@@ -16,9 +16,9 @@ namespace RTE {
 
 	public:
 
-		EntityAllocation(MOSParticle)
-		ClassInfoGetters
-		SerializableOverrideMethods
+		EntityAllocation(MOSParticle);
+		ClassInfoGetters;
+		SerializableOverrideMethods;
 
 #pragma region Creation
 		/// <summary>

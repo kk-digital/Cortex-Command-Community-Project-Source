@@ -28,7 +28,7 @@
 
 namespace RTE {
 
-ConcreteClassInfo(SLTerrain, SceneLayer, 0)
+ConcreteClassInfo(SLTerrain, SceneLayer, 0);
 
 const string SLTerrain::TerrainFrosting::c_ClassName = "TerrainFrosting";
 

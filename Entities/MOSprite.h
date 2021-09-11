@@ -43,8 +43,8 @@ class MOSprite:
 
 public:
 
-	SerializableOverrideMethods
-	ClassInfoGetters
+	SerializableOverrideMethods;
+	ClassInfoGetters;
 
     enum SpriteAnimMode
     {
@@ -460,7 +460,7 @@ public:
     /// </summary>
     /// <param name="angle">The input angle in radians.</param>
     /// <returns>The output angle in radians, which will be unaltered if this MOSprite is not flipped.</returns>
-    float FacingAngle(float angle) const { return (m_HFlipped ? c_PI : 0) + (angle * static_cast<float>(GetFlipFactor())); }
+    float FacingAngle(float angle) const { return (m_HFlipped ? c_PI : 0) + (angle * GetFlipFactor()); }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -553,7 +553,7 @@ public:
 // Arguments:       None.
 // Return value:    1 for not flipped, -1 for flipped.
 
-	int GetFlipFactor() const { return m_HFlipped ? -1 : 1; }
+	float GetFlipFactor() const { return m_HFlipped ? -1.0F : 1.0F; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////

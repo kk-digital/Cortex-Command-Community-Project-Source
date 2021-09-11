@@ -46,9 +46,9 @@ public:
 
 
 // Concrete allocation and cloning definitions
-EntityAllocation(Deployment)
-SerializableOverrideMethods
-ClassInfoGetters
+EntityAllocation(Deployment);
+SerializableOverrideMethods;
+ClassInfoGetters;
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Constructor:     Deployment
@@ -288,14 +288,6 @@ ClassInfoGetters
 // Return value:    The current value of this and all contained assets.
 
 	float GetTotalValue(int nativeModule = 0, float foreignMult = 1.0, float nativeMult = 1.0) const override;
-
-//////////////////////////////////////////////////////////////////////////////////////////
-// Method:          GetTotalValueOld
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     DOES THE SAME THING AS GetTotalValue, USED ONLY TO PRESERVE LUA COMPATIBILITY
-
-	float GetTotalValueOld(int nativeModule = 0, float foreignMult = 1.0) const override { return GetTotalValue(nativeModule, foreignMult, 1.0); }
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////

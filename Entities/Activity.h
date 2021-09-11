@@ -17,8 +17,8 @@ namespace RTE {
 
 	public:
 
-		SerializableOverrideMethods
-		ClassInfoGetters
+		SerializableOverrideMethods;
+		ClassInfoGetters;
 
 		/// <summary>
 		/// Enumeration for the different states the Activity can be in.

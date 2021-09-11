@@ -60,16 +60,16 @@ class MovableObject:
 {
 
 friend class Atom;
-friend class LuaMan;
+friend struct EntityLuaBindings;
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Public member variable, method and friend function declarations
 
 public:
 
-	ScriptFunctionNames("Create", "Destroy", "Update", "OnScriptDisable", "OnScriptEnable", "OnPieMenu", "OnCollideWithTerrain", "OnCollideWithMO")
-	SerializableOverrideMethods
-	ClassInfoGetters
+	ScriptFunctionNames("Create", "Destroy", "Update", "OnScriptDisable", "OnScriptEnable", "OnPieMenu", "OnCollideWithTerrain", "OnCollideWithMO");
+	SerializableOverrideMethods;
+	ClassInfoGetters;
 
 enum MOType
 {
