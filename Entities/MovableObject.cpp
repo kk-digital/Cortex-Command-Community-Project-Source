@@ -21,6 +21,7 @@
 #include "Atom.h"
 #include "Actor.h"
 
+#include "System.h"
 #include "SDLHelper.h"
 
 namespace RTE {

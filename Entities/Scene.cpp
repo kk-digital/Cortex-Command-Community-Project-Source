@@ -40,8 +40,6 @@ namespace RTE {
 
 ConcreteClassInfo(Scene, Entity, 0);
 const string Scene::Area::c_ClassName = "Area";
-	constexpr int Scene::PREVIEW_WIDTH;
-	constexpr int Scene::PREVIEW_HEIGHT;
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          Clear
@@ -1112,7 +1110,7 @@ int Scene::SavePreview(const std::string &bitmapPath) {
 	}
 
 	g_FrameMan.PopRenderTarget();
-	Texture preview(renderer, PREVIEW_WIDTH, PREVIEW_HEIGHT);
+	Texture preview(renderer, c_ScenePreviewWidth, c_ScenePreviewHeight);
 	g_FrameMan.PushRenderTarget(preview.getAsRenderTarget());
 	previewBuffer.render(renderer, 0,0);
 	g_FrameMan.PopRenderTarget();

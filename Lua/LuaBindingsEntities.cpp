@@ -1155,9 +1155,9 @@ namespace RTE {
 	LuaBindingRegisterFunctionDefinitionForType(EntityLuaBindings, TerrainObject) {
 		return ConcreteTypeLuaClassDefinition(TerrainObject, SceneObject)
 
-		.def("GetBitmapOffset", &TerrainObject::GetBitmapOffset)
-		.def("GetBitmapWidth", &TerrainObject::GetBitmapWidth)
-		.def("GetBitmapHeight", &TerrainObject::GetBitmapHeight);
+		.def("GetBitmapOffset", &TerrainObject::GetTextureOffset)
+		.def("GetBitmapWidth", &TerrainObject::GetTextureWidth)
+		.def("GetBitmapHeight", &TerrainObject::GetTextureHeight);
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

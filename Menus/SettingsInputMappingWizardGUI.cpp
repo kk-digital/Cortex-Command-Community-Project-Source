@@ -2,7 +2,7 @@
 #include "UInputMan.h"
 
 #include "GUI.h"
-#include "AllegroBitmap.h"
+#include "SDLGUITexture.h"
 #include "GUICollectionBox.h"
 #include "GUIButton.h"
 #include "GUILabel.h"
@@ -44,11 +44,11 @@ namespace RTE {
 		m_InputWizardTitleLabel = dynamic_cast<GUILabel *>(m_GUIControlManager->GetControl("LabelPlayerInputMappingWizardTitle"));
 
 		int dpadDiagramBitampCount = 13;
-		ContentFile("Base.rte/GUIs/Controllers/D-Pad.png").GetAsAnimation(m_DPadDiagramBitmaps, dpadDiagramBitampCount, COLORCONV_8_TO_32);
+		ContentFile("Base.rte/GUIs/Controllers/D-Pad.png").GetAsAnimation(m_DPadDiagramBitmaps, dpadDiagramBitampCount);
 
 		int analogDiagramBitmapCount = 21;
-		ContentFile("Base.rte/GUIs/Controllers/DualAnalogDS.png").GetAsAnimation(m_DualAnalogDSDiagramBitmaps, analogDiagramBitmapCount, COLORCONV_8_TO_32);
-		ContentFile("Base.rte/GUIs/Controllers/DualAnalogXB.png").GetAsAnimation(m_DualAnalogXBDiagramBitmaps, analogDiagramBitmapCount, COLORCONV_8_TO_32);
+		ContentFile("Base.rte/GUIs/Controllers/DualAnalogDS.png").GetAsAnimation(m_DualAnalogDSDiagramBitmaps, analogDiagramBitmapCount);
+		ContentFile("Base.rte/GUIs/Controllers/DualAnalogXB.png").GetAsAnimation(m_DualAnalogXBDiagramBitmaps, analogDiagramBitmapCount);
 
 		CreateManualConfigScreen();
 		CreatePresetSelectionScreen();
@@ -87,12 +87,12 @@ namespace RTE {
 		m_WizardPresetSelectScreen.StartConfigAnalogXBTypeButton = dynamic_cast<GUIButton *>(m_GUIControlManager->GetControl("ButtonConfigAnalogTypeXB"));
 
 		// Ownership of the AllegroBitmaps is passed to the GUIControlManager.
-		dynamic_cast<GUICollectionBox *>(m_GUIControlManager->GetControl("CollectionBoxConfigDPadTypeDiagram"))->SetDrawImage(new AllegroBitmap(m_DPadDiagramBitmaps.at(0)));
-		dynamic_cast<GUICollectionBox *>(m_GUIControlManager->GetControl("CollectionBoxPresetDPadSNESDiagram"))->SetDrawImage(new AllegroBitmap(m_DPadDiagramBitmaps.at(0)));
-		dynamic_cast<GUICollectionBox *>(m_GUIControlManager->GetControl("CollectionBoxConfigAnalogTypeDSDiagram"))->SetDrawImage(new AllegroBitmap(m_DualAnalogDSDiagramBitmaps.at(0)));
-		dynamic_cast<GUICollectionBox *>(m_GUIControlManager->GetControl("CollectionBoxPresetAnalogDS4Diagram"))->SetDrawImage(new AllegroBitmap(m_DualAnalogDSDiagramBitmaps.at(0)));
-		dynamic_cast<GUICollectionBox *>(m_GUIControlManager->GetControl("CollectionBoxConfigAnalogTypeXBDiagram"))->SetDrawImage(new AllegroBitmap(m_DualAnalogXBDiagramBitmaps.at(0)));
-		dynamic_cast<GUICollectionBox *>(m_GUIControlManager->GetControl("CollectionBoxPresetAnalogXB360Diagram"))->SetDrawImage(new AllegroBitmap(m_DualAnalogXBDiagramBitmaps.at(0)));
+		dynamic_cast<GUICollectionBox *>(m_GUIControlManager->GetControl("CollectionBoxConfigDPadTypeDiagram"))->SetDrawImage(new SDLGUITexture(m_DPadDiagramBitmaps.at(0)));
+		dynamic_cast<GUICollectionBox *>(m_GUIControlManager->GetControl("CollectionBoxPresetDPadSNESDiagram"))->SetDrawImage(new SDLGUITexture(m_DPadDiagramBitmaps.at(0)));
+		dynamic_cast<GUICollectionBox *>(m_GUIControlManager->GetControl("CollectionBoxConfigAnalogTypeDSDiagram"))->SetDrawImage(new SDLGUITexture(m_DualAnalogDSDiagramBitmaps.at(0)));
+		dynamic_cast<GUICollectionBox *>(m_GUIControlManager->GetControl("CollectionBoxPresetAnalogDS4Diagram"))->SetDrawImage(new SDLGUITexture(m_DualAnalogDSDiagramBitmaps.at(0)));
+		dynamic_cast<GUICollectionBox *>(m_GUIControlManager->GetControl("CollectionBoxConfigAnalogTypeXBDiagram"))->SetDrawImage(new SDLGUITexture(m_DualAnalogXBDiagramBitmaps.at(0)));
+		dynamic_cast<GUICollectionBox *>(m_GUIControlManager->GetControl("CollectionBoxPresetAnalogXB360Diagram"))->SetDrawImage(new SDLGUITexture(m_DualAnalogXBDiagramBitmaps.at(0)));
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -161,15 +161,15 @@ namespace RTE {
 			switch (m_ConfiguringGamepadType) {
 				case SettingsInputMappingWizardGUI::DPad:
 					inputDeviceName = "Gamepad (Classic D-Pad Style)";
-					m_WizardManualConfigScreen.GamepadConfigRecommendedDiagramBox->Resize(m_DPadDiagramBitmaps.at(0)->w, m_DPadDiagramBitmaps.at(0)->h);
+					m_WizardManualConfigScreen.GamepadConfigRecommendedDiagramBox->Resize(m_DPadDiagramBitmaps.at(0)->getW(), m_DPadDiagramBitmaps.at(0)->getH());
 					break;
 				case SettingsInputMappingWizardGUI::AnalogDualShock:
 					inputDeviceName = "Dual Analog Gamepad (DualShock Style)";
-					m_WizardManualConfigScreen.GamepadConfigRecommendedDiagramBox->Resize(m_DualAnalogDSDiagramBitmaps.at(0)->w, m_DualAnalogDSDiagramBitmaps.at(0)->h);
+					m_WizardManualConfigScreen.GamepadConfigRecommendedDiagramBox->Resize(m_DualAnalogDSDiagramBitmaps.at(0)->getW(), m_DualAnalogDSDiagramBitmaps.at(0)->getH());
 					break;
 				case SettingsInputMappingWizardGUI::AnalogXbox:
 					inputDeviceName = "Dual Analog Gamepad (Xbox Style)";
-					m_WizardManualConfigScreen.GamepadConfigRecommendedDiagramBox->Resize(m_DualAnalogXBDiagramBitmaps.at(0)->w, m_DualAnalogXBDiagramBitmaps.at(0)->h);
+					m_WizardManualConfigScreen.GamepadConfigRecommendedDiagramBox->Resize(m_DualAnalogXBDiagramBitmaps.at(0)->getW(), m_DualAnalogXBDiagramBitmaps.at(0)->getH());
 					break;
 				default:
 					RTEAbort("Invalid GamepadType passed to SettingsInputMappingWizardGUI::ShowManualConfigScreen!");
@@ -354,13 +354,13 @@ namespace RTE {
 				default:
 					int diagramBitmapIndex = m_BlinkTimer.AlternateReal(500) ? m_ConfigStep + 1 : 0;
 					if (m_ConfiguringGamepadType == GamepadType::DPad) {
-						m_WizardManualConfigScreen.GamepadConfigRecommendedDiagramBox->SetDrawImage(new AllegroBitmap(m_DPadDiagramBitmaps.at(diagramBitmapIndex)));
+						m_WizardManualConfigScreen.GamepadConfigRecommendedDiagramBox->SetDrawImage(new SDLGUITexture(m_DPadDiagramBitmaps.at(diagramBitmapIndex)));
 						inputCaptured = UpdateGamepadDPadConfigSequence();
 					} else {
 						if (m_ConfiguringGamepadType == GamepadType::AnalogDualShock) {
-							m_WizardManualConfigScreen.GamepadConfigRecommendedDiagramBox->SetDrawImage(new AllegroBitmap(m_DualAnalogDSDiagramBitmaps.at(diagramBitmapIndex)));
+							m_WizardManualConfigScreen.GamepadConfigRecommendedDiagramBox->SetDrawImage(new SDLGUITexture(m_DualAnalogDSDiagramBitmaps.at(diagramBitmapIndex)));
 						} else {
-							m_WizardManualConfigScreen.GamepadConfigRecommendedDiagramBox->SetDrawImage(new AllegroBitmap(m_DualAnalogXBDiagramBitmaps.at(diagramBitmapIndex)));
+							m_WizardManualConfigScreen.GamepadConfigRecommendedDiagramBox->SetDrawImage(new SDLGUITexture(m_DualAnalogXBDiagramBitmaps.at(diagramBitmapIndex)));
 						}
 						inputCaptured = UpdateGamepadAnalogConfigSequence();
 					}

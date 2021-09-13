@@ -9,11 +9,14 @@
 
 #include "GUI.h"
 #include "GUIFont.h"
-#include "AllegroBitmap.h"
+#include "SDLGUITexture.h"
+
+#include <SDL2/SDL.h>
+#include "SDL2_gfxPrimitives.h"
 
 namespace RTE {
 
-	BITMAP *PieMenuGUI::s_CursorBitmap;
+	SharedTexture PieMenuGUI::s_CursorBitmap;
 	std::unordered_map<std::string, PieSlice> PieMenuGUI::s_AllCustomLuaSlices;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -43,7 +46,7 @@ namespace RTE {
 		m_InnerRadius = 0;
 		m_CursorAngle = 0;
 
-		m_BGBitmap = nullptr;
+		m_BGTexture.reset();
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -51,7 +54,7 @@ namespace RTE {
 	int PieMenuGUI::Create(Controller *controller, MovableObject *affectedObject) {
 		RTEAssert(controller, "No controller sent to PieMenuGUI on creation!");
 
-		if (!s_CursorBitmap) { s_CursorBitmap = ContentFile("Base.rte/GUIs/Skins/PieCursor.png").GetAsBitmap(); }
+		if (!s_CursorBitmap) { s_CursorBitmap = ContentFile("Base.rte/GUIs/Skins/PieCursor.png").GetAsTexture(); }
 
 		if (!m_LargeFont) { m_LargeFont = g_FrameMan.GetLargeFont(); }
 
@@ -62,10 +65,9 @@ namespace RTE {
 			m_CenterPos = (affectedObjectAsActor ? affectedObjectAsActor->GetCPUPos() : m_AffectedObject->GetPos());
 		}
 
-		if (!m_BGBitmap) {
+		if (!m_BGTexture) {
 			int diameter = (c_FullRadius + std::max(m_BackgroundThickness, m_BackgroundSeparatorSize) + 2) * 2;
-			m_BGBitmap = create_bitmap_ex(8, diameter, diameter);
-			clear_to_color(m_BGBitmap, g_MaskColor);
+			m_BGTexture = std::make_shared<Texture>(g_FrameMan.GetRenderer(), diameter, diameter, SDL_TEXTUREACCESS_TARGET);
 		}
 
 		return 0;
@@ -74,8 +76,6 @@ namespace RTE {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void PieMenuGUI::Destroy() {
-		destroy_bitmap(m_BGBitmap);
-
 		Clear();
 	}
 
@@ -316,22 +316,23 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void PieMenuGUI::Draw(BITMAP *targetBitmap, const Vector &targetPos) const {
+	void PieMenuGUI::Draw(SDL_Renderer *renderer, const Vector &targetPos) const {
 		Vector drawPos;
-		CalculateDrawPosition(targetBitmap, targetPos, drawPos);
+		CalculateDrawPosition(renderer, targetPos, drawPos);
 
 		if (m_EnabledState != EnabledState::Disabled) {
 			if (m_DrawBackgroundTransparent && !g_FrameMan.IsInMultiplayerMode()) {
-				g_FrameMan.SetTransTable(MoreTrans);
-				draw_trans_sprite(targetBitmap, m_BGBitmap, drawPos.GetFloorIntX() - m_BGBitmap->w / 2, drawPos.GetFloorIntY() - m_BGBitmap->h / 2);
+				m_BGTexture->setAlphaMod(MoreTrans);
+				m_BGTexture->render(renderer, drawPos.GetFloorIntX() - m_BGTexture->getW() / 2, drawPos.GetFloorIntY() - m_BGTexture->getH() / 2);
+				m_BGTexture->setAlphaMod(255);
 			} else {
-				draw_sprite(targetBitmap, m_BGBitmap, drawPos.GetFloorIntX() - m_BGBitmap->w / 2, drawPos.GetFloorIntY() - m_BGBitmap->h / 2);
+				m_BGTexture->render(renderer, drawPos.GetFloorIntX() - m_BGTexture->getW() / 2, drawPos.GetFloorIntY() - m_BGTexture->getH() / 2);
 			}
 		}
 
 		if (m_EnabledState == EnabledState::Enabled) {
-			DrawPieIcons(targetBitmap, drawPos);
-			if (m_HoveredSlice) { DrawPieCursorAndSliceDescriptions(targetBitmap, drawPos); }
+			DrawPieIcons(renderer, drawPos);
+			if (m_HoveredSlice) { DrawPieCursorAndSliceDescriptions(renderer, drawPos); }
 		}
 	}
 
@@ -484,8 +485,10 @@ namespace RTE {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void PieMenuGUI::UpdatePredrawnMenuBackgroundBitmap() {
-		int centerX = m_BGBitmap->w / 2;
-		int centerY = m_BGBitmap->h / 2;
+		// TODO: Use shader logic instead
+		int centerX = m_BGTexture->getW() / 2;
+		int centerY = m_BGTexture->getH() / 2;
+		g_FrameMan.PushRenderTarget(m_BGTexture);
 
 		/// <summary>
 		/// Lambda for drawing separators when in Line IconSeparatorMode.
@@ -493,10 +496,10 @@ namespace RTE {
 		/// </summary>
 		auto DrawLineIconSeparator = [this, &centerX, &centerY](const PieSlice *slice, Vector &separator) {
 			separator.SetXY(static_cast<float>(m_InnerRadius + m_BackgroundThickness + m_BackgroundSeparatorSize), 0).RadRotate(slice->GetAreaStart());
-			line(m_BGBitmap, centerX, centerY, centerX + separator.GetCeilingIntX(), centerY + separator.GetCeilingIntY(), m_BackgroundBorderColor);
-			line(m_BGBitmap, centerX + 1, centerY, centerX + 1 + separator.GetCeilingIntX(), centerY + separator.GetCeilingIntY(), m_BackgroundBorderColor);
-			line(m_BGBitmap, centerX, centerY + 1, centerX + separator.GetCeilingIntX(), centerY + 1 + separator.GetCeilingIntY(), m_BackgroundBorderColor);
-			line(m_BGBitmap, centerX + 1, centerY + 1, centerX + 1 + separator.GetCeilingIntX(), centerY + 1 + separator.GetCeilingIntY(), m_BackgroundBorderColor);
+			lineColor(g_FrameMan.GetRenderer(), centerX, centerY, centerX + separator.GetCeilingIntX(), centerY + separator.GetCeilingIntY(), m_BackgroundBorderColor);
+			lineColor(g_FrameMan.GetRenderer(), centerX + 1, centerY, centerX + 1 + separator.GetCeilingIntX(), centerY + separator.GetCeilingIntY(), m_BackgroundBorderColor);
+			lineColor(g_FrameMan.GetRenderer(), centerX, centerY + 1, centerX + separator.GetCeilingIntX(), centerY + 1 + separator.GetCeilingIntY(), m_BackgroundBorderColor);
+			lineColor(g_FrameMan.GetRenderer(), centerX + 1, centerY + 1, centerX + 1 + separator.GetCeilingIntX(), centerY + 1 + separator.GetCeilingIntY(), m_BackgroundBorderColor);
 		};
 
 		/// <summary>
@@ -504,13 +507,13 @@ namespace RTE {
 		/// </summary>
 		auto DrawCircleIconSeparator = [this, &centerX, &centerY](const PieSlice *slice, Vector &positionOffset) {
 			positionOffset = Vector(static_cast<float>(m_InnerRadius) + (static_cast<float>(m_BackgroundThickness) / 2.0F), 0).RadRotate(slice->GetMidAngle());
-			circlefill(m_BGBitmap, centerX + positionOffset.GetFloorIntX(), centerY + positionOffset.GetFloorIntY(), m_BackgroundSeparatorSize, m_BackgroundBorderColor);
-			circlefill(m_BGBitmap, centerX + positionOffset.GetFloorIntX(), centerY + positionOffset.GetFloorIntY(), m_BackgroundSeparatorSize - 1, slice == m_HoveredSlice && slice->IsEnabled() ? m_SelectedItemBackgroundColor : m_BackgroundColor);
+			filledCircleColor(g_FrameMan.GetRenderer(), centerX + positionOffset.GetFloorIntX(), centerY + positionOffset.GetFloorIntY(), m_BackgroundSeparatorSize, m_BackgroundBorderColor);
+			filledCircleColor(g_FrameMan.GetRenderer(), centerX + positionOffset.GetFloorIntX(), centerY + positionOffset.GetFloorIntY(), m_BackgroundSeparatorSize - 1, slice == m_HoveredSlice && slice->IsEnabled() ? m_SelectedItemBackgroundColor : m_BackgroundColor);
 		};
 
-		clear_to_color(m_BGBitmap, g_MaskColor);
-		circlefill(m_BGBitmap, centerX, centerY, m_InnerRadius + m_BackgroundThickness, m_BackgroundColor);
-		circlefill(m_BGBitmap, centerX, centerY, m_InnerRadius, g_MaskColor);
+		m_BGTexture->clearAll();
+		m_BGTexture->setBlendMode(SDL_BLENDMODE_NONE);
+		filledCircleColor(g_FrameMan.GetRenderer(), centerX, centerY, m_InnerRadius + m_BackgroundThickness, m_BackgroundColor);
 
 		if (m_EnabledState == EnabledState::Enabled) {
 			Vector separatorVector;
@@ -520,7 +523,9 @@ namespace RTE {
 
 					if (m_HoveredSlice && m_HoveredSlice->IsEnabled()) {
 						separatorVector.SetXY(static_cast<float>(m_InnerRadius + (m_BackgroundThickness / 2)), 0.0F).RadRotate(m_HoveredSlice->GetMidAngle());
-						floodfill(m_BGBitmap, centerX + separatorVector.GetFloorIntX(), centerY + separatorVector.GetFloorIntY(), m_SelectedItemBackgroundColor);
+						filledPieColor(g_FrameMan.GetRenderer(), centerX, centerY, m_InnerRadius + m_BackgroundThickness + 5, m_HoveredSlice->GetAreaStart(), m_HoveredSlice->GetAreaStart() + m_HoveredSlice->GetAreaArc(), 0);
+						filledPieColor(g_FrameMan.GetRenderer(), centerX, centerY, m_InnerRadius + m_BackgroundThickness, m_HoveredSlice->GetAreaStart(), m_HoveredSlice->GetAreaStart() + m_HoveredSlice->GetAreaArc(), m_SelectedItemBackgroundColor);
+						filledPieColor(g_FrameMan.GetRenderer(), centerX, centerY, m_InnerRadius, m_HoveredSlice->GetAreaStart(), m_HoveredSlice->GetAreaStart() + m_HoveredSlice->GetAreaArc(), 0);
 					}
 					break;
 				case IconSeparatorMode::Circle:
@@ -533,18 +538,23 @@ namespace RTE {
 			}
 		}
 
+		filledCircleColor(g_FrameMan.GetRenderer(), centerX, centerY, m_InnerRadius, 0);
+
 		m_BGBitmapNeedsRedrawing = false;
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	//TODO Need to investigate this stuff, I don't fully understand what it does and maybe it's mostly undesirable since we'll want to be able to draw pie menus partly off the screen
-	void PieMenuGUI::CalculateDrawPosition(const BITMAP *targetBitmap, const Vector &targetPos, Vector &drawPos) const {
+	void PieMenuGUI::CalculateDrawPosition(SDL_Renderer *renderer, const Vector &targetPos, Vector &drawPos) const {
 		drawPos = m_CenterPos - targetPos;
+		SDL_Rect viewport;
+		SDL_RenderGetViewport(g_FrameMan.GetRenderer(), &viewport);
+
 		if (!targetPos.IsZero()) {
 			const Box *nearestBox = nullptr;
 
-			Box screenBox(targetPos, static_cast<float>(targetBitmap->w), static_cast<float>(targetBitmap->h));
+			Box screenBox(targetPos, static_cast<float>(viewport.w), static_cast<float>(viewport.h));
 			std::list<Box> wrappedBoxes;
 			bool withinAnyBox = false;
 			float distance = std::numeric_limits<float>::max();
@@ -575,47 +585,47 @@ namespace RTE {
 		int menuDrawRadius = m_InnerRadius + m_BackgroundThickness + 2 + m_LargeFont->GetFontHeight();
 		if (drawPos.m_X - static_cast<float>(menuDrawRadius) < 0.0F) {
 			drawPos.m_X = static_cast<float>(menuDrawRadius);
-		} else if (drawPos.m_X + static_cast<float>(menuDrawRadius) > static_cast<float>(targetBitmap->w)) {
-			drawPos.m_X = static_cast<float>(targetBitmap->w - menuDrawRadius);
+		} else if (drawPos.m_X + static_cast<float>(menuDrawRadius) > static_cast<float>(viewport.w)) {
+			drawPos.m_X = static_cast<float>(viewport.w - menuDrawRadius);
 		}
 		if (drawPos.m_Y - static_cast<float>(menuDrawRadius) < 0.0F) {
 			drawPos.m_Y = static_cast<float>(menuDrawRadius);
-		} else if (drawPos.m_Y + static_cast<float>(menuDrawRadius) > static_cast<float>(targetBitmap->h)) {
-			drawPos.m_Y = static_cast<float>(targetBitmap->h - menuDrawRadius);
+		} else if (drawPos.m_Y + static_cast<float>(menuDrawRadius) > static_cast<float>(viewport.h)) {
+			drawPos.m_Y = static_cast<float>(viewport.h - menuDrawRadius);
 		}
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void PieMenuGUI::DrawPieIcons(BITMAP *targetBitmap, const Vector &drawPos) const {
-		BITMAP *sliceIcon;
+	void PieMenuGUI::DrawPieIcons(SDL_Renderer *renderer, const Vector &drawPos) const {
+		SharedTexture sliceIcon;
 		Vector sliceIconOffset;
 
 		for (const PieSlice *slice : m_CurrentSlices) {
 			sliceIcon = slice->GetAppropriateIcon(slice == m_HoveredSlice);
 
 			if (sliceIcon) {
-				sliceIconOffset = Vector(static_cast<float>(m_InnerRadius + (m_BackgroundThickness / 2)), 0).RadRotate(slice->GetMidAngle()) + Vector(1.0F - static_cast<float>(sliceIcon->w / 2), 1.0F - static_cast<float>(sliceIcon->h / 2));
-				draw_sprite(targetBitmap, sliceIcon, drawPos.GetFloorIntX() + sliceIconOffset.GetFloorIntX(), drawPos.GetFloorIntY() + sliceIconOffset.GetFloorIntY());
+				sliceIconOffset = Vector(static_cast<float>(m_InnerRadius + (m_BackgroundThickness / 2)), 0).RadRotate(slice->GetMidAngle()) + Vector(1.0F - static_cast<float>(sliceIcon->getW() / 2), 1.0F - static_cast<float>(sliceIcon->getH() / 2));
+				sliceIcon->render(renderer, drawPos.GetFloorIntX() + sliceIconOffset.GetFloorIntX(), drawPos.GetFloorIntY() + sliceIconOffset.GetFloorIntY());
 			}
 		}
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void PieMenuGUI::DrawPieCursorAndSliceDescriptions(BITMAP *targetBitmap, const Vector &drawPos) const {
+	void PieMenuGUI::DrawPieCursorAndSliceDescriptions(SDL_Renderer *renderer, const Vector &drawPos) const {
 		Vector cursorPos = Vector(static_cast<float>(m_InnerRadius)/* - s_CursorBitmap->w*/, 0.0F).RadRotate(m_CursorAngle);
-		pivot_sprite(targetBitmap, s_CursorBitmap, drawPos.GetFloorIntX() + cursorPos.GetFloorIntX(), drawPos.GetFloorIntY() + cursorPos.GetFloorIntY(), s_CursorBitmap->w / 2, s_CursorBitmap->h / 2, ftofix((m_CursorAngle / c_PI) * -128));
+		s_CursorBitmap->render(renderer, drawPos.GetFloorIntX() + cursorPos.GetFloorIntX(), drawPos.GetFloorIntY() + cursorPos.GetFloorIntY(), (m_CursorAngle / c_PI));
 
 		// Align text center, left or right respectively, based on which side of the menu the hovered slice is on.
-		AllegroBitmap allegroBitmap(targetBitmap);
+		SDLGUITexture sdlBitmap;
 		Vector textPos = Vector(static_cast<float>(m_InnerRadius + m_BackgroundThickness + m_LargeFont->GetFontHeight()) * 0.5F, 0.0F).RadRotate(m_HoveredSlice->GetMidAngle()) - Vector(0.0F, static_cast<float>(m_LargeFont->GetFontHeight()) * 0.45F);
 		if (m_HoveredSlice == &m_UpSlice || m_HoveredSlice == &m_DownSlice) {
-			m_LargeFont->DrawAligned(&allegroBitmap, drawPos.GetFloorIntX() + textPos.GetFloorIntX(), drawPos.GetFloorIntY() + textPos.GetFloorIntY(), m_HoveredSlice->GetDescription().c_str(), GUIFont::Centre);
+			m_LargeFont->DrawAligned(&sdlBitmap, drawPos.GetFloorIntX() + textPos.GetFloorIntX(), drawPos.GetFloorIntY() + textPos.GetFloorIntY(), m_HoveredSlice->GetDescription().c_str(), GUIFont::Centre);
 		} else if (m_CursorAngle < c_HalfPI || m_CursorAngle > c_PI + c_HalfPI) {
-			m_LargeFont->DrawAligned(&allegroBitmap, drawPos.GetFloorIntX() + textPos.GetFloorIntX(), drawPos.GetFloorIntY() + textPos.GetFloorIntY(), m_HoveredSlice->GetDescription().c_str(), GUIFont::Left);
+			m_LargeFont->DrawAligned(&sdlBitmap, drawPos.GetFloorIntX() + textPos.GetFloorIntX(), drawPos.GetFloorIntY() + textPos.GetFloorIntY(), m_HoveredSlice->GetDescription().c_str(), GUIFont::Left);
 		} else {
-			m_LargeFont->DrawAligned(&allegroBitmap, drawPos.GetFloorIntX() + textPos.GetFloorIntX(), drawPos.GetFloorIntY() + textPos.GetFloorIntY(), m_HoveredSlice->GetDescription().c_str(), GUIFont::Right);
+			m_LargeFont->DrawAligned(&sdlBitmap, drawPos.GetFloorIntX() + textPos.GetFloorIntX(), drawPos.GetFloorIntY() + textPos.GetFloorIntY(), m_HoveredSlice->GetDescription().c_str(), GUIFont::Right);
 		}
 	}
 

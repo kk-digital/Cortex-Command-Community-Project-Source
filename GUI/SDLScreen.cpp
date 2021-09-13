@@ -14,7 +14,7 @@ namespace RTE{
 
 	void SDLScreen::Destroy() { }
 
-	GUIBitmap* SDLScreen::CreateBitmap(const std::string filename){
+	GUIBitmap* SDLScreen::CreateBitmap(const std::string &filename){
 		SDLGUITexture* pBitmap = new SDLGUITexture();
 		if(!pBitmap)
 			return nullptr;
@@ -59,7 +59,7 @@ namespace RTE{
 		pBitmap->DrawTrans(nullptr, x, y, pRect);
 	}
 
-	GUIBitmap* SDLScreen::GetBitmap(){
+	GUIBitmap* SDLScreen::GetBitmap() const{
 		return m_GUIBitmap.get();
 	}
 

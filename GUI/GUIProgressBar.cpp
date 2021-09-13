@@ -178,8 +178,8 @@ void GUIProgressBar::Draw(GUIScreen *Screen) {
 
 	// Setup the clipping
 	GUIRect Rect = *GetRect();
-	Rect.left++;
-	Rect.right -= 2;
+	Rect.w += 3;
+	Rect.x -= 2;
 	Screen->GetBitmap()->SetClipRect(&Rect);
 
 	int x = m_X + 2;

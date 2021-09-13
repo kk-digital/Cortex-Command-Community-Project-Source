@@ -135,6 +135,14 @@ namespace RTE {
 		std::vector<std::shared_ptr<Texture>> GetAsAnimation(int frameCount = 1);
 
 		/// <summary>
+		/// Gets the data represented by this ContentFile object as an array of SDL_Textures, each representing a frame in the animation.
+		/// It loads the SDL_Textures into the static maps if they're not already loaded.
+		/// </summary>
+		/// <param name="frameCount">The number of frames to attempt to load, more than 1 frame will mean 00# is appended to datapath to handle naming conventions.</param>
+		/// <returns>Pointer to the beginning of the array of SDL_Texture pointers loaded from the disk, the length of which is specified with the FrameCount argument.</returns>
+		void GetAsAnimation(std::vector<std::shared_ptr<Texture>> & vectorToFill, int frameCount = 1) {vectorToFill = GetAsAnimation(frameCount);};
+
+		/// <summary>
 		/// Gets the data represented by this ContentFile object as an FMOD FSOUND_SAMPLE, loading it into the static maps if it's not already loaded. Ownership of the FSOUND_SAMPLE is NOT transferred!
 		/// </summary>
 		/// <param name="abortGameForInvalidSound">Whether to abort the game if the sound couldn't be added, or just show a console error. Default true.</param>

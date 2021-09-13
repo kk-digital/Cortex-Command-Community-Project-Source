@@ -9,7 +9,7 @@
 
 namespace RTE {
 
-	class AllegroScreen;
+	class SDLScreen;
 	class GUIFont;
 
 	/// <summary>
@@ -47,13 +47,13 @@ namespace RTE {
 		/// Constructor method used to instantiate a TitleScreen object in system memory and make it ready for use.
 		/// </summary>
 		/// <param name="guiScreen">Pointer to a GUIScreen interface that will be used to create this TitleScreen's GUIFont. Ownership is NOT transferred!</param>
-		explicit TitleScreen(AllegroScreen *guiScreen) { Clear(); Create(guiScreen); }
+		explicit TitleScreen(SDLScreen *guiScreen) { Clear(); Create(guiScreen); }
 
 		/// <summary>
 		/// Makes the TitleScreen object ready for use.
 		/// </summary>
 		/// <param name="guiScreen">Pointer to a GUIScreen interface that will be used to create this TitleScreen's GUIFont. Ownership is NOT transferred!</param>
-		void Create(AllegroScreen *guiScreen);
+		void Create(SDLScreen *guiScreen);
 #pragma endregion
 
 #pragma region Getters and Setters
@@ -145,12 +145,13 @@ namespace RTE {
 			enum class StarSize { StarSmall, StarLarge, StarHuge };
 
 			StarSize Size; //!< The size of the Star. Used for the appropriate Bitmap selection and Intensity randomization when drawing.
-			BITMAP *Bitmap; //!< The bitmap to draw, not owned by this. Not Owned.
+			SharedTexture Bitmap; //!< The bitmap to draw, not owned by this. Not Owned.
 			int Intensity; //!< Intensity value on a scale from 0 to 255.
 			Vector Position; //!< The position of the Star on the title screen scene backdrop.
 		};
 
 		int m_FadeAmount; //!< The amount of blending to use when drawing the screen overlay bitmap.
+		uint32_t m_FadeColor; //!< The color to use while drawing the screen overlay (i.e. white/black).
 
 		std::vector<Star> m_BackdropStars; //!< Vector that contains all the individual Stars that are present in the title screen scene background.
 		SceneLayer m_Nebula; //!< The title screen scene nebula background layer.
@@ -194,11 +195,11 @@ namespace RTE {
 		float m_SlideFadeOutDuration; //!< How many seconds the duration of a slideshow slide fade out is supposed to elapse.
 		std::unique_ptr<GUIFont> m_IntroTextFont; //!< The GUIFont used for drawing text during the logo splash screens and slideshow.
 		std::string m_SlideshowSlideText; //!< String containing the slide text during each section of the slideshow.
-		BITMAP *m_DataRealmsLogo; //!< The DataRealms logo bitmap used in the logo splash screen. Not Owned.
-		BITMAP *m_FmodLogo; //!< The Fmod logo bitmap used in the logo splash screen. Not Owned.
+		SharedTexture m_DataRealmsLogo; //!< The DataRealms logo bitmap used in the logo splash screen. Not Owned.
+		SharedTexture m_FmodLogo; //!< The Fmod logo bitmap used in the logo splash screen. Not Owned.
 		MOSParticle m_PreGameLogoText; //!< The pre-game logo text that appears at the end of the slideshow.
 		MOSParticle m_PreGameLogoTextGlow; //!< The pre-game logo text glow.
-		std::array<BITMAP *, 8> m_IntroSlides; //!< Array that contains all the slideshow slide bitmaps. Not Owned.
+		std::array<SharedTexture, 8> m_IntroSlides; //!< Array that contains all the slideshow slide bitmaps. Not Owned.
 
 #pragma region Create Breakdown
 		/// <summary>

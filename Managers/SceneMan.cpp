@@ -729,7 +729,11 @@ void SceneMan::SetScrollTarget(const Vector &targetCenter,
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 const Vector & SceneMan::GetScrollTarget(int screen) const {
+#ifdef NETWORK_ENABLED
 	 const Vector & offsetTarget = (g_NetworkClient.IsConnectedAndRegistered()) ? g_NetworkClient.GetFrameTarget() : m_ScrollTarget[screen];
+#else
+	const Vector &offsetTarget = m_ScrollTarget[screen];
+#endif
 	 return offsetTarget;
 }
 

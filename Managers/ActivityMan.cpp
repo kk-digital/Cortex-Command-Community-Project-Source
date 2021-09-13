@@ -18,9 +18,11 @@
 #include "ActorEditor.h"
 #include "AssemblyEditor.h"
 
+#ifdef NETWORK_ENABLED
 #include "NetworkServer.h"
 #include "MultiplayerServerLobby.h"
 #include "MultiplayerGame.h"
+#endif
 
 namespace RTE {
 
@@ -43,9 +45,12 @@ namespace RTE {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	bool ActivityMan::Initialize() {
+#ifdef NETWORK_ENABLED
 		if (g_NetworkServer.IsServerModeEnabled()) {
 			return SetStartMultiplayerServerOverview();
-		} else if (IsSetToLaunchIntoEditor()) {
+		} else
+#endif
+		if (IsSetToLaunchIntoEditor()) {
 			// Evaluate LaunchIntoEditor before LaunchIntoActivity so it takes priority when both are set, otherwise it is ignored and editor is never launched.
 			return SetStartEditorActivitySetToLaunchInto();
 		} else if (IsSetToLaunchIntoActivity()) {
@@ -120,6 +125,7 @@ namespace RTE {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	bool ActivityMan::SetStartMultiplayerActivity() {
+#ifdef NETWORK_ENABLED
 		if (std::unique_ptr<MultiplayerGame> multiplayerGame = std::make_unique<MultiplayerGame>()) {
 			if (g_MetaMan.GameInProgress()) { g_MetaMan.EndGame(); }
 			g_SceneMan.SetSceneToLoad("Multiplayer Scene");
@@ -128,12 +134,14 @@ namespace RTE {
 			m_ActivityNeedsRestart = true;
 			return true;
 		}
+#endif
 		return false;
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	bool ActivityMan::SetStartMultiplayerServerOverview() {
+#ifdef NETWORK_ENABLED
 		g_NetworkServer.Start();
 
 		if (std::unique_ptr<MultiplayerServerLobby> multiplayerServerLobby = std::make_unique<MultiplayerServerLobby>()) {
@@ -152,6 +160,7 @@ namespace RTE {
 			m_ActivityNeedsRestart = true;
 			return true;
 		}
+#endif
 		return false;
 	}
 
@@ -255,8 +264,8 @@ namespace RTE {
 			m_InActivity = true;
 			m_ActivityNeedsResume = false;
 
-			g_FrameMan.ClearBackBuffer8();
-			g_FrameMan.FlipFrameBuffers();
+			g_FrameMan.RenderClear();
+			g_FrameMan.RenderPresent();
 
 			PauseActivity(false);
 			g_TimerMan.PauseSim(false);
@@ -269,8 +278,8 @@ namespace RTE {
 		m_ActivityNeedsRestart = false;
 		g_ConsoleMan.PrintString("SYSTEM: Activity was reset!");
 
-		g_FrameMan.ClearBackBuffer8();
-		g_FrameMan.FlipFrameBuffers();
+		g_FrameMan.RenderClear();
+		g_FrameMan.RenderPresent();
 
 		g_AudioMan.StopAll();
 		g_MovableMan.PurgeAllMOs();

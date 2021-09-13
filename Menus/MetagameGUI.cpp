@@ -24,9 +24,9 @@
 #include "MetaSave.h"
 
 #include "GUI.h"
-#include "AllegroBitmap.h"
-#include "AllegroScreen.h"
-#include "AllegroInput.h"
+#include "SDLGUITexture.h"
+#include "SDLScreen.h"
+#include "SDLInput.h"
 #include "GUIControlManager.h"
 #include "GUICollectionBox.h"
 #include "GUIComboBox.h"
@@ -50,6 +50,12 @@
 #include "SLTerrain.h"
 #include "DataModule.h"
 #include "Loadout.h"
+#include "System/System.h"
+
+#include <SDL2/SDL.h>
+#include "SDL2_gfxPrimitives.h"
+
+#include "System/SDLHelper.h"
 
 using namespace RTE;
 
@@ -73,9 +79,9 @@ const string MetagameGUI::c_ClassName = "MetagameGUI";
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Draws a neat animation over a site to show it changing team ownership.
 
-void MetagameGUI::SiteTarget::Draw(BITMAP *drawBitmap) const
+void MetagameGUI::SiteTarget::Draw(SDL_Renderer *renderer) const
 {
-    if (!drawBitmap)
+    if (!renderer)
         return;
 
     // Draw the appropriate growing geometric figure around the location, growing
@@ -94,7 +100,7 @@ void MetagameGUI::SiteTarget::Draw(BITMAP *drawBitmap) const
             outer.SetXY(radius + lineLen, 0);
             inner.RadRotate(rotation + (c_HalfPI * i));
             outer.RadRotate(rotation + (c_HalfPI * i));
-            DrawGlowLine(drawBitmap, m_CenterPos + inner, m_CenterPos + outer, m_Color);
+            DrawGlowLine(renderer, m_CenterPos + inner, m_CenterPos + outer, m_Color);
         }
     }
     else if (m_Style == SiteTarget::CROSSHAIRSGROW)
@@ -112,38 +118,47 @@ void MetagameGUI::SiteTarget::Draw(BITMAP *drawBitmap) const
             outer.SetXY(radius + lineLen, 0);
             inner.RadRotate(rotation + (c_HalfPI * i));
             outer.RadRotate(rotation + (c_HalfPI * i));
-            DrawGlowLine(drawBitmap, m_CenterPos + inner, m_CenterPos + outer, m_Color);
+            DrawGlowLine(renderer, m_CenterPos + inner, m_CenterPos + outer, m_Color);
         }
     }
     else if (m_Style == SiteTarget::CIRCLESHRINK)
     {
         float radius = LERP(0.0, 1.0, 24, 6, m_AnimProgress);
         int blendAmount = LERP(0.0, 1.0, 0, 255, m_AnimProgress);// + 15 * NormalRand();
-        set_screen_blender(blendAmount, blendAmount, blendAmount, blendAmount);
-        circle(drawBitmap, m_CenterPos.m_X, m_CenterPos.m_Y, radius, m_Color);
+		SDL_SetRenderDrawBlendMode(renderer, BLENDMODE_SCREEN);
+		uint32_t blendColor = m_Color * (static_cast<float>(blendAmount) / 255);
+		blendColor |= 0xFF;
+        circleColor(renderer, m_CenterPos.m_X, m_CenterPos.m_Y, radius, blendColor);
     }
     else if (m_Style == SiteTarget::CIRCLEGROW)
     {
         float radius = LERP(0.0, 1.0, 6, 24, m_AnimProgress);
         int blendAmount = LERP(0.0, 1.0, 255, 0, m_AnimProgress);// + 15 * NormalRand();
-        set_screen_blender(blendAmount, blendAmount, blendAmount, blendAmount);
-        circle(drawBitmap, m_CenterPos.m_X, m_CenterPos.m_Y, radius, m_Color);
+		SDL_SetRenderDrawBlendMode(renderer, BLENDMODE_SCREEN);
+		uint32_t blendColor = m_Color * (static_cast<float>(blendAmount) / 255);
+		blendColor |= 0xFF;
+		circleColor(renderer, m_CenterPos.m_X, m_CenterPos.m_Y, radius, blendColor);
     }
     else if (m_Style == SiteTarget::SQUARESHRINK)
     {
         float radius = LERP(0.0, 1.0, 24, 6, m_AnimProgress);
         int blendAmount = LERP(0.0, 1.0, 0, 255, m_AnimProgress);// + 15 * NormalRand();
-        set_screen_blender(blendAmount, blendAmount, blendAmount, blendAmount);
-        rect(drawBitmap, m_CenterPos.m_X - radius, m_CenterPos.m_Y - radius, m_CenterPos.m_X + radius, m_CenterPos.m_Y + radius, m_Color);
+		SDL_SetRenderDrawBlendMode(renderer, BLENDMODE_SCREEN);
+		uint32_t blendColor = m_Color * (static_cast<float>(blendAmount) / 255);
+		blendColor |= 0xFF;
+        rectangleColor(renderer, m_CenterPos.m_X - radius, m_CenterPos.m_Y - radius, m_CenterPos.m_X + radius, m_CenterPos.m_Y + radius, m_Color);
     }
     // Default
     else// if (m_Style == SiteTarget::SQUAREGROW)
     {
         float radius = LERP(0.0, 1.0, 6, 24, m_AnimProgress);
         int blendAmount = LERP(0.0, 1.0, 255, 0, m_AnimProgress);// + 15 * NormalRand();
-        set_screen_blender(blendAmount, blendAmount, blendAmount, blendAmount);
-        rect(drawBitmap, m_CenterPos.m_X - radius, m_CenterPos.m_Y - radius, m_CenterPos.m_X + radius, m_CenterPos.m_Y + radius, m_Color);
+		SDL_SetRenderDrawBlendMode(renderer, BLENDMODE_SCREEN);
+		uint32_t blendColor = m_Color * (static_cast<float>(blendAmount) / 255);
+		blendColor |= 0xFF;
+        rectangleColor(renderer, m_CenterPos.m_X - radius, m_CenterPos.m_Y - radius, m_CenterPos.m_X + radius, m_CenterPos.m_Y + radius, m_Color);
     }
+	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 }
 
 
@@ -364,16 +379,16 @@ int MetagameGUI::Create(Controller *pController)
 
     char str[256];
 
-    if (!m_pGUIScreen)
-        m_pGUIScreen = new AllegroScreen(g_FrameMan.GetBackBuffer32());
-    if (!m_pGUIInput)
-        m_pGUIInput = new AllegroInput(-1, true);
-    if (!m_pGUIController)
-        m_pGUIController = new GUIControlManager();
+	if (!m_pGUIScreen)
+		m_pGUIScreen = new SDLScreen();
+	if (!m_pGUIInput)
+		m_pGUIInput = new SDLInput(-1, true);
+	if (!m_pGUIController)
+		m_pGUIController = new GUIControlManager();
 	if (!m_pGUIController->Create(m_pGUIScreen, m_pGUIInput, "Base.rte/GUIs/Skins/Menus", "MainMenuSubMenuSkin.ini")) {
 		RTEAbort("Failed to create GUI Control Manager and load it from Base.rte/GUIs/Skins/Menus/MainMenuSubMenuSkin.ini");
 	}
-    m_pGUIController->Load("Base.rte/GUIs/MetagameGUI.ini");
+	m_pGUIController->Load("Base.rte/GUIs/MetagameGUI.ini");
 
     // Make sure we have convenient points to the containing GUI colleciton boxes that we will manipulate the positions of
     GUICollectionBox *pRootBox = m_apScreenBox[ROOTBOX] = dynamic_cast<GUICollectionBox *>(m_pGUIController->GetControl("root"));
@@ -524,7 +539,7 @@ int MetagameGUI::Create(Controller *pController)
     m_pSceneBudgetLabel = dynamic_cast<GUILabel *>(m_pGUIController->GetControl("SceneBudgetLabel"));
     m_pSceneBudgetSlider = dynamic_cast<GUISlider *>(m_pGUIController->GetControl("SceneBudgetSlider"));
     m_pSceneBudgetBar = dynamic_cast<GUICollectionBox *>(m_pGUIController->GetControl("SceneBudgetBar"));
-    m_pSceneBudgetBar->SetDrawColor(makecol(55, 5, 10));
+    m_pSceneBudgetBar->SetDrawColor(0xFF37050A);
     m_pAutoDesignCheckbox = dynamic_cast<GUICheckbox *>(m_pGUIController->GetControl("AutoDesignCheckbox"));
     m_pScanInfoLabel = dynamic_cast<GUILabel *>(m_pGUIController->GetControl("ScanInfoLabel"));
 
@@ -843,7 +858,7 @@ void MetagameGUI::SetEnabled(bool enable)
 	g_PresetMan.GetAllOfGroup(flagList, "Flags", "Icon");
 	for (int player = Players::PlayerOne; player < Players::MaxPlayerCount; ++player) {
 		for (list<Entity *>::iterator itr = flagList.begin(); itr != flagList.end(); ++itr) {
-			if (const Icon *pIcon = dynamic_cast<Icon *>(*itr)) { m_apPlayerTeamSelect[player]->AddItem("", "", new AllegroBitmap(pIcon->GetBitmaps32()[0]), pIcon); }
+			if (const Icon *pIcon = dynamic_cast<Icon *>(*itr)) { m_apPlayerTeamSelect[player]->AddItem("", "", new SDLGUITexture(pIcon->GetTextures()[0]), pIcon); }
 		}
 	}
 	if (m_apPlayerTeamSelect[Players::PlayerOne]->GetSelectedIndex() < 0) { m_apPlayerTeamSelect[Players::PlayerOne]->SetSelectedIndex(0); }
@@ -1130,7 +1145,7 @@ bool MetagameGUI::StartNewGame()
             // Start with the baseline setting
             newPlayer.m_BrainPool = m_pLengthSlider->GetValue();
             // Baseline can never be 0
-            newPlayer.m_BrainPool = MAX(newPlayer.m_BrainPool, 1);
+            newPlayer.m_BrainPool = std::max(newPlayer.m_BrainPool, 1);
             // Apply the handicap!
             if (m_apPlayerHandicap[player]->GetSelectedIndex() == 0)
                 newPlayer.m_BrainPool += 5;
@@ -1145,7 +1160,7 @@ bool MetagameGUI::StartNewGame()
             else if (m_apPlayerHandicap[player]->GetSelectedIndex() == 6)
                 newPlayer.m_BrainPool -= 5;
             // Give at least ONE brain!
-            newPlayer.m_BrainPool = MAX(newPlayer.m_BrainPool, 1);
+            newPlayer.m_BrainPool = std::max(newPlayer.m_BrainPool, 1);
 
             // Starting gold amount; common to all
             newPlayer.m_Funds = startGold;
@@ -1926,56 +1941,58 @@ void MetagameGUI::Update()
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Draws the menu
 
-void MetagameGUI::Draw(BITMAP *drawBitmap)
+void MetagameGUI::Draw(SDL_Renderer *renderer)
 {
     // Don't draw site lines and dots if we're in the menus
     if (!g_MetaMan.IsSuspended())
     {
-        // Transparency effect on the scene dots and lines
-        drawing_mode(DRAW_MODE_TRANS, 0, 0, 0);
         // Screen blend the dots and lines, with some flickering in its intensity
 		int blendAmount = 130 + RandomNum(-45, 45);
-        set_screen_blender(blendAmount, blendAmount, blendAmount, blendAmount);
+		SDL_SetRenderDrawBlendMode(renderer, BLENDMODE_SCREEN);
 
         // Draw the scene location dots
         Vector screenLocation;
-        BITMAP *pIcon = 0;
+        SharedTexture pIcon;
         for (vector<Scene *>::const_iterator sItr = g_MetaMan.m_Scenes.begin(); sItr != g_MetaMan.m_Scenes.end(); ++sItr)
         {
-            // Only draw Scenes that are revealed yet
-            if (!(*sItr)->IsRevealed())
-                continue;
+			// Only draw Scenes that are revealed yet
+			if (!(*sItr)->IsRevealed())
+				continue;
 
-            screenLocation = m_PlanetCenter + (*sItr)->GetLocation() + (*sItr)->GetLocationOffset();
-            // If currently being shown as being fought over; make more dramatic
-            bool battleSite = m_PostBattleReview && (*sItr) == m_pAnimScene;
+			screenLocation = m_PlanetCenter + (*sItr)->GetLocation() + (*sItr)->GetLocationOffset();
+			// If currently being shown as being fought over; make more dramatic
+			bool battleSite = m_PostBattleReview && (*sItr) == m_pAnimScene;
 
-            // Find out what team we should show here.. it is not always the current team ownership; but might be a previous one temporarily displayed for dramatic effect
-            int team = battleSite ? m_PreBattleTeamOwnership : (*sItr)->GetTeamOwnership();
+			// Find out what team we should show here.. it is not always the current team ownership; but might be a previous one temporarily displayed for dramatic effect
+			int team = battleSite ? m_PreBattleTeamOwnership : (*sItr)->GetTeamOwnership();
 
-            // Make sure team is within bounds to show an icon
-            pIcon = g_MetaMan.IsActiveTeam(team) ? g_MetaMan.GetTeamIcon(team).GetBitmaps32()[0] : 0;
-            if (pIcon)
-                masked_blit(pIcon, drawBitmap, 0, 0, screenLocation.m_X - (pIcon->w / 2), screenLocation.m_Y - (pIcon->h / 2), pIcon->w, pIcon->h);
-            // Ownership not known, so place nondescript dot instead
-            else
-            {
-                // Make it flicker more if it's currently being fought over
+			// Make sure team is within bounds to show an icon
+			pIcon = g_MetaMan.IsActiveTeam(team) ? g_MetaMan.GetTeamIcon(team).GetTextures()[0] : nullptr;
+			if (pIcon) {
+				pIcon->setColorMod(blendAmount, blendAmount, blendAmount);
+				pIcon->render(renderer, screenLocation.m_X - (pIcon->getW() / 2), screenLocation.m_Y - (pIcon->getH() / 2));
+				pIcon->setColorMod(255, 255, 255);
+				// Ownership not known, so place nondescript dot instead
+			} else {
+				// Make it flicker more if it's currently being fought over
 				blendAmount = 95 + (battleSite ? RandomNum(-25, 25) : RandomNum(-15, 15));
-                set_screen_blender(blendAmount, blendAmount, blendAmount, blendAmount);
-                circlefill(drawBitmap, screenLocation.m_X, screenLocation.m_Y, 4, c_GUIColorYellow);
-                circlefill(drawBitmap, screenLocation.m_X, screenLocation.m_Y, 2, c_GUIColorYellow);
+				uint32_t blendColor = c_GUIColorYellow * static_cast<double>(blendAmount) / 255.0;
+				blendColor |= 0xFF000000;
+				filledCircleColor(renderer, screenLocation.m_X, screenLocation.m_Y, 4, blendColor);
+				filledCircleColor(renderer, screenLocation.m_X, screenLocation.m_Y, 2, blendColor);
 				blendAmount = 210 + RandomNum(-45, 45);
-                set_screen_blender(blendAmount, blendAmount, blendAmount, blendAmount);
-                circlefill(drawBitmap, screenLocation.m_X, screenLocation.m_Y, 1, c_GUIColorYellow);
-            }
-        }
+				blendColor = c_GUIColorYellow * static_cast<double>(blendAmount) / 255.0;
+				filledCircleColor(renderer, screenLocation.m_X, screenLocation.m_Y, 1, blendColor);
+			}
+		}
 
-        // Draw the lines etc pointing at the selected Scene from the Scene Info box
+		SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+
+		// Draw the lines etc pointing at the selected Scene from the Scene Info box
         if (m_pSelectedScene && m_pSceneInfoPopup->GetVisible() && !m_PreTurn)
         {
             Vector sceneInfoBoxPos(m_pSceneInfoPopup->GetXPos() + (m_pSceneInfoPopup->GetWidth() / 2), m_pSceneInfoPopup->GetYPos() + (m_pSceneInfoPopup->GetHeight() / 2));
-            DrawScreenLineToSitePoint(drawBitmap, sceneInfoBoxPos, m_pSelectedScene->GetLocation() + m_pSelectedScene->GetLocationOffset(), c_GUIColorWhite, -1, -1, (m_pSceneInfoPopup->GetHeight() / 2) + CHAMFERSIZE + 6, 1.0, g_MetaMan.IsActiveTeam(m_pSelectedScene->GetTeamOwnership()));
+            DrawScreenLineToSitePoint(renderer, sceneInfoBoxPos, m_pSelectedScene->GetLocation() + m_pSelectedScene->GetLocationOffset(), c_GUIColorWhite, -1, -1, (m_pSceneInfoPopup->GetHeight() / 2) + CHAMFERSIZE + 6, 1.0, g_MetaMan.IsActiveTeam(m_pSelectedScene->GetTeamOwnership()));
         }
 
         // Draw all the player income site lines we are supposed to
@@ -1990,10 +2007,10 @@ void MetagameGUI::Draw(BITMAP *drawBitmap)
                 continue;
             // If this is the line currently being animated, report back if the line connected with the current parameters
             if (slI == m_AnimIncomeLine)
-                m_LineConnected = DrawPlayerLineToSitePoint(drawBitmap, m_IncomeSiteLines[slI]) || m_LineConnected;
+                m_LineConnected = DrawPlayerLineToSitePoint(renderer, m_IncomeSiteLines[slI]) || m_LineConnected;
             // Just draw the regular unanimated line
             else
-                DrawPlayerLineToSitePoint(drawBitmap, m_IncomeSiteLines[slI]);
+                DrawPlayerLineToSitePoint(renderer, m_IncomeSiteLines[slI]);
         }
 
         // Action lines
@@ -2015,10 +2032,10 @@ void MetagameGUI::Draw(BITMAP *drawBitmap)
 //                    continue;
                 // If this is the line currently being animated, report back if the line connected with the current parameters
                 if (slI == m_AnimActionLine)
-                    m_LineConnected = DrawPlayerLineToSitePoint(drawBitmap, m_ActionSiteLines[metaPlayer][slI], m_ActionMeterDrawOverride) || m_LineConnected;
+                    m_LineConnected = DrawPlayerLineToSitePoint(renderer, m_ActionSiteLines[metaPlayer][slI], m_ActionMeterDrawOverride) || m_LineConnected;
                 // Just draw the regular unanimated line
                 else
-                    DrawPlayerLineToSitePoint(drawBitmap, m_ActionSiteLines[metaPlayer][slI], m_ActionMeterDrawOverride);
+                    DrawPlayerLineToSitePoint(renderer, m_ActionSiteLines[metaPlayer][slI], m_ActionMeterDrawOverride);
             }
         }
 
@@ -2026,48 +2043,45 @@ void MetagameGUI::Draw(BITMAP *drawBitmap)
         if (g_MetaMan.m_GameState == MetaMan::REVEALSCENES && !g_MetaMan.m_StateChanged)
         {
             for (vector<SiteTarget>::iterator stItr = m_NewSiteIndicators.begin(); stItr != m_NewSiteIndicators.end(); ++stItr)
-                (*stItr).Draw(drawBitmap);
+                (*stItr).Draw(renderer);
         }
 
         // Draw any site ownership change animations
 //        if (g_MetaMan.m_GameState == MetaMan::REVEALSCENES && !g_MetaMan.m_StateChanged)
         {
             for (vector<SiteTarget>::iterator stItr = m_SiteSwitchIndicators.begin(); stItr != m_SiteSwitchIndicators.end(); ++stItr)
-                (*stItr).Draw(drawBitmap);
+                (*stItr).Draw(renderer);
         }
 
         // Draw the attack activity crosshairs over the site being violated
         if (g_MetaMan.m_GameState == MetaMan::RUNACTIVITIES && !g_MetaMan.m_StateChanged)
         {
             // Draw the target crosshairs on the attacked site
-            m_SiteAttackTarget.Draw(drawBitmap);
+            m_SiteAttackTarget.Draw(renderer);
 
             // Draw the attack lines that are currently being revealed by possibly multiple attackers
             for (int metaPlayer = Players::PlayerOne; metaPlayer < Players::MaxPlayerCount; ++metaPlayer)
             {
                 for (int slI = 0; slI < m_ActionSiteLines[metaPlayer].size(); ++slI)
                 {
-                    DrawPlayerLineToSitePoint(drawBitmap, m_ActionSiteLines[metaPlayer][slI], m_ActionMeterDrawOverride);
+                    DrawPlayerLineToSitePoint(renderer, m_ActionSiteLines[metaPlayer][slI], m_ActionMeterDrawOverride);
                 }
             }
         }
     }
 
-    // Back to solid drawing
-    drawing_mode(DRAW_MODE_SOLID, 0, 0, 0);
-
     // Draw the GUI elements first
-    AllegroScreen drawScreen(drawBitmap);
+    SDLScreen drawScreen;
     m_pGUIController->Draw(&drawScreen);
     m_pGUIController->DrawMouse();
 
     // Draw the banners on top of all GUI
     if (!g_MetaMan.IsSuspended())
     {
-        m_pBannerRedTop->Draw(drawBitmap);
-        m_pBannerRedBottom->Draw(drawBitmap);
-        m_pBannerYellowTop->Draw(drawBitmap);
-        m_pBannerYellowBottom->Draw(drawBitmap);
+        m_pBannerRedTop->Draw(renderer);
+        m_pBannerRedBottom->Draw(renderer);
+        m_pBannerYellowTop->Draw(renderer);
+        m_pBannerYellowBottom->Draw(renderer);
     }
 }
 
@@ -2082,7 +2096,7 @@ void MetagameGUI::Draw(BITMAP *drawBitmap)
 void MetagameGUI::UpdateInput()
 {
     // If esc pressed, show campaign dialog if applicable
-	if (g_UInputMan.KeyPressed(KEY_ESC)) {
+	if (g_UInputMan.KeyPressed(SDLK_ESCAPE)) {
 		if (m_MenuScreen == MENUDIALOG) {
 			g_MetaMan.SetSuspend(false);
 			SwitchToScreen(ROOTBOX);
@@ -2231,7 +2245,6 @@ void MetagameGUI::UpdateInput()
                 // Signal that we want to go back to main menu
                 m_BackToMain = true;
                 g_GUISound.BackButtonPressSound()->Play();
-				
             }
 
 			// Open save menu button pressed
@@ -3233,7 +3246,7 @@ bool MetagameGUI::AutoResolveOffensive(GAScripted *pOffensive, Scene *pScene, bo
             {
                 // Just mess with the funds; the metaplayers' funds will be affected afterward, according to their shares
                 // Never let team funds dip below 0
-                pOffensive->SetTeamFunds(MAX(0, pOffensive->GetTeamFunds(team) * RandomNum()), team);
+                pOffensive->SetTeamFunds(std::max(0.0f, pOffensive->GetTeamFunds(team) * RandomNum()), team);
             }
         }
     }
@@ -4564,7 +4577,7 @@ void MetagameGUI::UpdateOffensives()
         m_SiteAttackTarget.m_AnimProgress = 0.975 + 0.025 * cos(c_TwoPI * (float)((int)m_AnimTimer2.GetElapsedRealTimeMS() % 666) / 666.0f);
 
         // Animate the brain label travel animations
-        UpdatePreBattleAttackers(EaseInOut(0, 1.0, MIN(1.0, m_AnimTimer2.GetElapsedRealTimeMS() / m_AnimModeDuration)));
+        UpdatePreBattleAttackers(EaseInOut(0, 1.0, std::min(1.0, m_AnimTimer2.GetElapsedRealTimeMS() / m_AnimModeDuration)));
         UpdatePreBattleDefenders(0);
 
         // Just wait until the players hit the continue button..
@@ -4603,7 +4616,7 @@ void MetagameGUI::UpdateOffensives()
 
         // Keep the brain label travel animations in one spot and their labels updated
         UpdatePreBattleAttackers(1.0);
-        UpdatePreBattleDefenders(EaseOut(0, 1.0, MIN(1.0, m_AnimTimer2.GetElapsedRealTimeMS() / m_AnimModeDuration)));
+        UpdatePreBattleDefenders(EaseOut(0, 1.0, std::min(1.0, m_AnimTimer2.GetElapsedRealTimeMS() / m_AnimModeDuration)));
 
         // Just wait until the players hit the continue button..
         if (m_BattleToResume)
@@ -4883,7 +4896,7 @@ void MetagameGUI::UpdateOffensives()
 
         // The retreating brain label travel animations get updated to go back to their pools
         if (g_MetaMan.m_RoundOffensives[g_MetaMan.m_CurrentOffensive]->AnyBrainWasEvacuated())
-            UpdatePostBattleRetreaters(EaseInOut(0, 1.0, MIN(1.0, m_AnimTimer2.GetElapsedRealTimeMS() / m_AnimModeDuration)));
+            UpdatePostBattleRetreaters(EaseInOut(0, 1.0, std::min(1.0, m_AnimTimer2.GetElapsedRealTimeMS() / m_AnimModeDuration)));
         else
             UpdatePostBattleRetreaters(1.0);
         UpdatePostBattleResidents(0);
@@ -4939,9 +4952,9 @@ void MetagameGUI::UpdateOffensives()
         UpdatePostBattleRetreaters(1.0);
         // Tweak the animaiton slightly based on whether the site switched hands or not
         if (m_BattleCausedOwnershipChange)
-            UpdatePostBattleResidents(EaseIn(0, 1.0, MIN(1.0, m_AnimTimer2.GetElapsedRealTimeMS() / m_AnimModeDuration)));
+            UpdatePostBattleResidents(EaseIn(0, 1.0, std::min(1.0, m_AnimTimer2.GetElapsedRealTimeMS() / m_AnimModeDuration)));
         else
-            UpdatePostBattleResidents(EaseOut(0, 1.0, MIN(1.0, m_AnimTimer2.GetElapsedRealTimeMS() / m_AnimModeDuration)));
+            UpdatePostBattleResidents(EaseOut(0, 1.0, std::min(1.0, m_AnimTimer2.GetElapsedRealTimeMS() / m_AnimModeDuration)));
 
         // Find the players who are involved in this battle
         for (int mp = Players::PlayerOne; mp < g_MetaMan.m_Players.size(); ++mp)
@@ -5153,7 +5166,7 @@ void MetagameGUI::ResetBattleInfo()
         {
             // Set the flag icons on the floating player bars
             m_apPlayerTeamActionBox[mp]->SetDrawType(GUICollectionBox::Image);
-            m_apPlayerTeamActionBox[mp]->SetDrawImage(new AllegroBitmap(g_MetaMan.m_TeamIcons[(*mpItr).GetTeam()].GetBitmaps32()[0]));
+            m_apPlayerTeamActionBox[mp]->SetDrawImage(new SDLGUITexture(g_MetaMan.m_TeamIcons[(*mpItr).GetTeam()].GetTextures()[0]));
         }
         // Hide everything initially
         m_apPlayerTeamActionBox[mp]->SetVisible(false);
@@ -5973,7 +5986,7 @@ void MetagameGUI::UpdateScenesBox(bool sceneChanged)
             // Set the team flag icon
             m_pSceneOwnerTeam->SetVisible(true);
             m_pSceneOwnerTeam->SetDrawType(GUICollectionBox::Image);
-            m_pSceneOwnerTeam->SetDrawImage(new AllegroBitmap(g_MetaMan.m_TeamIcons[m_pSelectedScene->GetTeamOwnership()].GetBitmaps32()[0]));
+            m_pSceneOwnerTeam->SetDrawImage(new SDLGUITexture(g_MetaMan.m_TeamIcons[m_pSelectedScene->GetTeamOwnership()].GetTextures()[0]));
             // Show how many resident brains there are hanging out here
             std::snprintf(str, sizeof(str), "%c", -26);
             string brainString = "";
@@ -6210,7 +6223,7 @@ void MetagameGUI::UpdateGameSizeLabels()
 
     // Set the length label also according to the game length slider
     int brainCount = m_pLengthSlider->GetValue();
-    brainCount = MAX(brainCount, 1);
+    brainCount = std::max(brainCount, 1);
     std::snprintf(str, sizeof(str), "Game Length: %c%c%d starting brains", -48, -36, brainCount);
     m_pLengthLabel->SetText(str);
 
@@ -6338,7 +6351,7 @@ void MetagameGUI::UpdatePlayerBars()
             {
                 // Set the flag icons on the floating player bars
                 m_apPlayerTeamBox[metaPlayer]->SetDrawType(GUICollectionBox::Image);
-                m_apPlayerTeamBox[metaPlayer]->SetDrawImage(new AllegroBitmap(g_MetaMan.m_TeamIcons[(*mpItr).GetTeam()].GetBitmaps32()[0]));
+                m_apPlayerTeamBox[metaPlayer]->SetDrawImage(new SDLGUITexture(g_MetaMan.m_TeamIcons[(*mpItr).GetTeam()].GetTextures()[0]));
             }
 
             // Show funds of player if income lines are showing, or we are counting income/expenses somehow
@@ -6633,11 +6646,13 @@ void MetagameGUI::UpdatePlayerLineRatios(vector<SiteLine> &lineList, int metaPla
 // Description:     Draws a fancy thick flickering line to point out scene points on the
 //                  planet.
 
-void MetagameGUI::DrawGlowLine(BITMAP *drawBitmap, const Vector &start, const Vector &end, int color)
+void MetagameGUI::DrawGlowLine(SDL_Renderer *renderer, const Vector &start, const Vector &end, uint32_t color)
 {
 	int blendAmount = 210 + RandomNum(-15, 15);
-    set_screen_blender(blendAmount, blendAmount, blendAmount, blendAmount);
-    line(drawBitmap, start.m_X, start.m_Y, end.m_X, end.m_Y, color);
+	SDL_SetRenderDrawBlendMode(renderer, BLENDMODE_SCREEN);
+	uint32_t blendColor = color * (blendAmount / 255.0);
+	blendColor |= 0xFF000000;
+    lineColor(renderer, start.m_X, start.m_Y, end.m_X, end.m_Y, blendColor);
 /* Looks like ass
     // Draw the thickener lines thicker in the appropriate directions
     if (fabs(end.m_X - start.m_X) > fabs(end.m_Y - start.m_Y))
@@ -6652,11 +6667,12 @@ void MetagameGUI::DrawGlowLine(BITMAP *drawBitmap, const Vector &start, const Ve
     }
 */
 	blendAmount = 45 + RandomNum(-25, 25);
-    set_screen_blender(blendAmount, blendAmount, blendAmount, blendAmount);
-    line(drawBitmap, start.m_X + 1, start.m_Y, end.m_X + 1, end.m_Y, color);
-    line(drawBitmap, start.m_X - 1, start.m_Y, end.m_X - 1, end.m_Y, color);
-    line(drawBitmap, start.m_X, start.m_Y + 1, end.m_X, end.m_Y + 1, color);
-    line(drawBitmap, start.m_X, start.m_Y - 1, end.m_X, end.m_Y - 1, color);
+	blendColor = color * (blendAmount / 255.0);
+    lineColor(renderer, start.m_X + 1, start.m_Y, end.m_X + 1, end.m_Y, blendColor);
+    lineColor(renderer, start.m_X - 1, start.m_Y, end.m_X - 1, end.m_Y, blendColor);
+    lineColor(renderer, start.m_X, start.m_Y + 1, end.m_X, end.m_Y + 1, blendColor);
+    lineColor(renderer, start.m_X, start.m_Y - 1, end.m_X, end.m_Y - 1, blendColor);
+	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 }
 
 
@@ -6666,10 +6682,10 @@ void MetagameGUI::DrawGlowLine(BITMAP *drawBitmap, const Vector &start, const Ve
 // Description:     Draws a fancy thick flickering lines to point out scene points on the
 //                  planet, FROM an arbitrary screen point.
 
-bool MetagameGUI::DrawScreenLineToSitePoint(BITMAP *drawBitmap,
+bool MetagameGUI::DrawScreenLineToSitePoint(SDL_Renderer *renderer,
                                             const Vector &screenPoint,
                                             const Vector &planetPoint,
-                                            int color,
+                                            uint32_t color,
                                             int onlyFirstSegments,
                                             int onlyLastSegments,
                                             int channelHeight,
@@ -6709,82 +6725,86 @@ bool MetagameGUI::DrawScreenLineToSitePoint(BITMAP *drawBitmap,
         totalSegments = lastSegmentsToDraw = 1 + 1;
         // Draw the line to the site
         if (!(drawnFirstSegments++ >= onlyFirstSegments || lastSegmentsToDraw-- > onlyLastSegments))
-            DrawGlowLine(drawBitmap, screenPoint + Vector(sitePos.m_X - screenPoint.m_X, 0), sitePos + Vector(0, (circleRadius + 1) * -yDirMult), color);
+            DrawGlowLine(renderer, screenPoint + Vector(sitePos.m_X - screenPoint.m_X, 0), sitePos + Vector(0, (circleRadius + 1) * -yDirMult), color);
     }
     // Extra lines depending on whether there needs to be two bends due to the site being in the 'channel', ie next to the floating player bar
     else if (twoBends)
     {
         // Cap the chamfer size on the second bend appropriately
-        chamferSize = MIN((firstBend - secondBend).GetMagnitude() - 15, chamferSize);
-        chamferSize = MIN((secondBend - sitePos).GetMagnitude() - circleRadius * 3, chamferSize);
+        chamferSize = std::fmin((firstBend - secondBend).GetMagnitude() - 15, chamferSize);
+        chamferSize = std::fmin((secondBend - sitePos).GetMagnitude() - circleRadius * 3, chamferSize);
         // Snap the chamfer to not exist below a minimum size
         chamferSize = (chamferSize < 15) ? 0 : chamferSize;
         // No inverted chamfer
-        chamferSize = MAX(0, chamferSize);
+        chamferSize = std::max(0, chamferSize);
         chamferPoint1.SetXY(secondBend.m_X + chamferSize * -xDirMult, secondBend.m_Y);
         chamferPoint2.SetXY(secondBend.m_X, secondBend.m_Y + chamferSize * -yDirMult);
         // How many of the last segments to draw: to first bend + to second bend chamfer + chamfer + to site + circle
         totalSegments = lastSegmentsToDraw = 1 + 1 + (int)(chamferSize > 0) + 1 + 1;
         // Line to the first bend
         if (!(drawnFirstSegments++ >= onlyFirstSegments || lastSegmentsToDraw-- > onlyLastSegments))
-            DrawGlowLine(drawBitmap, screenPoint, firstBend, color);
+            DrawGlowLine(renderer, screenPoint, firstBend, color);
         // Line to the second bend, incl the chamfer
         if (!(drawnFirstSegments++ >= onlyFirstSegments || lastSegmentsToDraw-- > onlyLastSegments))
-            DrawGlowLine(drawBitmap, firstBend, chamferPoint1, color);
+            DrawGlowLine(renderer, firstBend, chamferPoint1, color);
         if (chamferSize > 0 && !(drawnFirstSegments++ >= onlyFirstSegments || lastSegmentsToDraw-- > onlyLastSegments))
-            DrawGlowLine(drawBitmap, chamferPoint1, chamferPoint2, color);
+            DrawGlowLine(renderer, chamferPoint1, chamferPoint2, color);
         // Line to the site
         if (!(drawnFirstSegments++ >= onlyFirstSegments || lastSegmentsToDraw-- > onlyLastSegments))
-            DrawGlowLine(drawBitmap, chamferPoint2, sitePos + Vector(0, (circleRadius + 1) * yDirMult), color);
+            DrawGlowLine(renderer, chamferPoint2, sitePos + Vector(0, (circleRadius + 1) * yDirMult), color);
     }
     // Just one bend
     else
     {
         // Cap the chamfer size on the first bend appropriately
-        chamferSize = MIN((screenPoint - firstBend).GetMagnitude() - 15, chamferSize);
-        chamferSize = MIN((firstBend - sitePos).GetMagnitude() - circleRadius * 3, chamferSize);
+        chamferSize = std::fmin((screenPoint - firstBend).GetMagnitude() - 15, chamferSize);
+        chamferSize = std::fmin((firstBend - sitePos).GetMagnitude() - circleRadius * 3, chamferSize);
         // Snap the chamfer to not exist below a minimum size
         chamferSize = (chamferSize < 15) ? 0 : chamferSize;
         // No inverted chamfer
-        chamferSize = MAX(0, chamferSize);
+        chamferSize = std::max(0, chamferSize);
         chamferPoint1.SetXY(screenPoint.m_X, firstBend.m_Y + chamferSize * -yDirMult);
         chamferPoint2.SetXY(firstBend.m_X + chamferSize * xDirMult, sitePos.m_Y);
         // How many of the last segments to draw: to first bend chamfer + chamfer + to site + circle
         totalSegments = lastSegmentsToDraw = 1 + (int)(chamferSize > 0) + 1 + 1;
         // Draw line to the first bend, incl the chamfer
         if (!(drawnFirstSegments++ >= onlyFirstSegments || lastSegmentsToDraw-- > onlyLastSegments))
-            DrawGlowLine(drawBitmap, screenPoint, chamferPoint1, color);
+            DrawGlowLine(renderer, screenPoint, chamferPoint1, color);
         if (chamferSize > 0 && !(drawnFirstSegments++ >= onlyFirstSegments || lastSegmentsToDraw-- > onlyLastSegments))
-            DrawGlowLine(drawBitmap, chamferPoint1, chamferPoint2, color);
+            DrawGlowLine(renderer, chamferPoint1, chamferPoint2, color);
         // Draw line to the site
         if (!(drawnFirstSegments++ >= onlyFirstSegments || lastSegmentsToDraw-- > onlyLastSegments))
-            DrawGlowLine(drawBitmap, chamferPoint2, sitePos + Vector((circleRadius + 1) * -xDirMult, 0), color);
+            DrawGlowLine(renderer, chamferPoint2, sitePos + Vector((circleRadius + 1) * -xDirMult, 0), color);
     }
 
     // Draw a circle around the site target
     if (!(drawnFirstSegments++ >= onlyFirstSegments || lastSegmentsToDraw-- > onlyLastSegments))
     {
+		SDL_SetRenderDrawBlendMode(renderer, BLENDMODE_SCREEN);
 		int blendAmount = 225 + RandomNum(-20, 20);
-        set_screen_blender(blendAmount, blendAmount, blendAmount, blendAmount);
+		uint32_t blendColor = color * (blendAmount / 255.0);
+		blendColor |= 0xFF000000;
 
         // If specified, draw a squareSite instead (with chamfered corners)
         if (squareSite)
         {
-            hline(drawBitmap, sitePos.m_X - circleRadius - 1, sitePos.m_Y - circleRadius - 1, sitePos.m_X + circleRadius, color);
-            hline(drawBitmap, sitePos.m_X - circleRadius - 1, sitePos.m_Y - circleRadius - 1 - 1, sitePos.m_X + circleRadius, color);
-            hline(drawBitmap, sitePos.m_X - circleRadius - 1, sitePos.m_Y + circleRadius, sitePos.m_X + circleRadius, color);
-            hline(drawBitmap, sitePos.m_X - circleRadius - 1, sitePos.m_Y + circleRadius + 1, sitePos.m_X + circleRadius, color);
-            vline(drawBitmap, sitePos.m_X - circleRadius - 1, sitePos.m_Y - circleRadius - 1, sitePos.m_Y + circleRadius, color);
-            vline(drawBitmap, sitePos.m_X - circleRadius - 1 - 1, sitePos.m_Y - circleRadius - 1, sitePos.m_Y + circleRadius, color);
-            vline(drawBitmap, sitePos.m_X + circleRadius, sitePos.m_Y + circleRadius, sitePos.m_Y - circleRadius - 1, color);
-            vline(drawBitmap, sitePos.m_X + circleRadius + 1, sitePos.m_Y + circleRadius, sitePos.m_Y - circleRadius - 1, color);
+            hlineColor(renderer, sitePos.m_X - circleRadius - 1, sitePos.m_Y - circleRadius - 1, sitePos.m_X + circleRadius, blendColor);
+            hlineColor(renderer, sitePos.m_X - circleRadius - 1, sitePos.m_Y - circleRadius - 1 - 1, sitePos.m_X + circleRadius, blendColor);
+            hlineColor(renderer, sitePos.m_X - circleRadius - 1, sitePos.m_Y + circleRadius, sitePos.m_X + circleRadius, color);
+            hlineColor(renderer, sitePos.m_X - circleRadius - 1, sitePos.m_Y + circleRadius + 1, sitePos.m_X + circleRadius, blendColor);
+            vlineColor(renderer, sitePos.m_X - circleRadius - 1, sitePos.m_Y - circleRadius - 1, sitePos.m_Y + circleRadius, blendColor);
+            vlineColor(renderer, sitePos.m_X - circleRadius - 1 - 1, sitePos.m_Y - circleRadius - 1, sitePos.m_Y + circleRadius, blendColor);
+            vlineColor(renderer, sitePos.m_X + circleRadius, sitePos.m_Y + circleRadius, sitePos.m_Y - circleRadius - 1, color);
+            vlineColor(renderer, sitePos.m_X + circleRadius + 1, sitePos.m_Y + circleRadius, sitePos.m_Y - circleRadius - 1, blendColor);
         }
         else
         {
-            circle(drawBitmap, sitePos.m_X, sitePos.m_Y, circleRadius, color);
-            circle(drawBitmap, sitePos.m_X, sitePos.m_Y, circleRadius - 1, color);            
+            circleColor(renderer, sitePos.m_X, sitePos.m_Y, circleRadius, blendColor);
+            circleColor(renderer, sitePos.m_X, sitePos.m_Y, circleRadius - 1, blendColor);
         }
     }
+
+	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 
     return totalSegments <= onlyFirstSegments && totalSegments <= onlyLastSegments;
 }
@@ -6796,12 +6816,12 @@ bool MetagameGUI::DrawScreenLineToSitePoint(BITMAP *drawBitmap,
 // Description:     Draws a fancy thick flickering lines to point out scene points on the
 //                  planet, FROM a floating player bar, showing a certain ratio.
 
-bool MetagameGUI::DrawPlayerLineToSitePoint(BITMAP *drawBitmap,
+bool MetagameGUI::DrawPlayerLineToSitePoint(SDL_Renderer *renderer,
                                           int metaPlayer,
                                           float startMeterAt,
                                           float meterAmount,
                                           const Vector &planetPoint,
-                                          int color,
+                                          uint32_t color,
                                           int onlyFirstSegments,
                                           int onlyLastSegments,
                                           int channelHeight,
@@ -6813,8 +6833,8 @@ bool MetagameGUI::DrawPlayerLineToSitePoint(BITMAP *drawBitmap,
     // No part of the line is visible with these params, so just quit
     if ((onlyFirstSegments == 0 || onlyLastSegments == 0) && !drawMeterOverride)
         return false;
-    startMeterAt = MAX(0, startMeterAt);
-    startMeterAt = MIN(1.0, startMeterAt);
+    startMeterAt = std::max(0.0f, startMeterAt);
+    startMeterAt = std::min(1.0f, startMeterAt);
     if ((startMeterAt + meterAmount) > 1.0)
         meterAmount = 1.0 - startMeterAt;
     // Detect disabling of the segment controls
@@ -6837,8 +6857,8 @@ bool MetagameGUI::DrawPlayerLineToSitePoint(BITMAP *drawBitmap,
     float yDirMult = siteIsAbove ? -1.0 : 1.0;
     bool twoBends = fabs(sitePos.m_Y - boxMidY) < (channelHeight - circleRadius);
     Vector startMeter(m_apPlayerBox[metaPlayer]->GetXPos() + (m_apPlayerBox[metaPlayer]->GetWidth() - 1) * startMeterAt + 1, m_apPlayerBox[metaPlayer]->GetYPos() + (siteIsAbove ? 0 : m_apPlayerBox[metaPlayer]->GetHeight()));
-    Vector endMeter(startMeter.m_X + MAX(0, (m_apPlayerBox[metaPlayer]->GetWidth() - 1) * meterAmount - 2), startMeter.m_Y);
-    Vector midMeter(startMeter.m_X + MAX(0, (m_apPlayerBox[metaPlayer]->GetWidth() - 1) * meterAmount * 0.5 - 1), startMeter.m_Y + meterHeight * yDirMult);
+    Vector endMeter(startMeter.m_X + std::max(0.0f, (m_apPlayerBox[metaPlayer]->GetWidth() - 1) * meterAmount - 2), startMeter.m_Y);
+    Vector midMeter(startMeter.m_X + std::max(0.0, (m_apPlayerBox[metaPlayer]->GetWidth() - 1) * meterAmount * 0.5 - 1), startMeter.m_Y + meterHeight * yDirMult);
     bool noBends = (fabs(sitePos.m_X - midMeter.m_X) < circleRadius) && ((m_apPlayerBox[metaPlayer]->GetWidth() * meterAmount * 0.5) >= fabs(sitePos.m_X - midMeter.m_X));
     Vector firstBend(midMeter.m_X, twoBends ? (boxMidY + channelHeight * yDirMult) : sitePos.m_Y);
     Vector secondBend(sitePos.m_X, firstBend.m_Y);
@@ -6853,24 +6873,24 @@ bool MetagameGUI::DrawPlayerLineToSitePoint(BITMAP *drawBitmap,
         // Draw the meter
         if (!(drawnFirstSegments++ >= onlyFirstSegments || lastSegmentsToDraw-- > onlyLastSegments) || drawMeterOverride)
         {
-            DrawGlowLine(drawBitmap, startMeter, startMeter + Vector(0, meterHeight * yDirMult), color);
-            DrawGlowLine(drawBitmap, endMeter, endMeter + Vector(0, meterHeight * yDirMult), color);
-            DrawGlowLine(drawBitmap, startMeter + Vector(0, meterHeight * yDirMult), endMeter + Vector(0, meterHeight * yDirMult), color);
+            DrawGlowLine(renderer, startMeter, startMeter + Vector(0, meterHeight * yDirMult), color);
+            DrawGlowLine(renderer, endMeter, endMeter + Vector(0, meterHeight * yDirMult), color);
+            DrawGlowLine(renderer, startMeter + Vector(0, meterHeight * yDirMult), endMeter + Vector(0, meterHeight * yDirMult), color);
         }
         // Draw the line to the site
         if (!(drawnFirstSegments++ >= onlyFirstSegments || lastSegmentsToDraw-- > onlyLastSegments))
-            DrawGlowLine(drawBitmap, midMeter + Vector(sitePos.m_X - midMeter.m_X, 0), sitePos + Vector(0, (circleRadius + 1) * -yDirMult), color);
+            DrawGlowLine(renderer, midMeter + Vector(sitePos.m_X - midMeter.m_X, 0), sitePos + Vector(0, (circleRadius + 1) * -yDirMult), color);
     }
     // Extra lines depending on whether there needs to be two bends due to the site being in the 'channel', ie next to teh floating metaPlayer bar
     else if (twoBends)
     {
         // Cap the chamfer size on the second bend appropriately
-        chamferSize = MIN((firstBend - secondBend).GetMagnitude() - meterHeight * 3, chamferSize);
-        chamferSize = MIN((secondBend - sitePos).GetMagnitude() - circleRadius * 3, chamferSize);
+        chamferSize = std::fmin((firstBend - secondBend).GetMagnitude() - meterHeight * 3, chamferSize);
+        chamferSize = std::fmin((secondBend - sitePos).GetMagnitude() - circleRadius * 3, chamferSize);
         // Snap the chamfer to not exist below a minimum size
         chamferSize = (chamferSize < (meterHeight * 3)) ? 0 : chamferSize;
         // No inverted chamfer
-        chamferSize = MAX(0, chamferSize);
+        chamferSize = std::max(0, chamferSize);
         chamferPoint1.SetXY(secondBend.m_X + chamferSize * -xDirMult, secondBend.m_Y);
         chamferPoint2.SetXY(secondBend.m_X, secondBend.m_Y + chamferSize * -yDirMult);
         // How many of the last segments to draw: meter + to first bend + to second bend chamfer + chamfer + to site + circle
@@ -6878,32 +6898,32 @@ bool MetagameGUI::DrawPlayerLineToSitePoint(BITMAP *drawBitmap,
         // Draw the meter
         if (!(drawnFirstSegments++ >= onlyFirstSegments || lastSegmentsToDraw-- > onlyLastSegments) || drawMeterOverride)
         {
-            DrawGlowLine(drawBitmap, startMeter, startMeter + Vector(0, meterHeight * yDirMult), color);
-            DrawGlowLine(drawBitmap, endMeter, endMeter + Vector(0, meterHeight * yDirMult), color);
-            DrawGlowLine(drawBitmap, startMeter + Vector(0, meterHeight * yDirMult), endMeter + Vector(0, meterHeight * yDirMult), color);
+            DrawGlowLine(renderer, startMeter, startMeter + Vector(0, meterHeight * yDirMult), color);
+            DrawGlowLine(renderer, endMeter, endMeter + Vector(0, meterHeight * yDirMult), color);
+            DrawGlowLine(renderer, startMeter + Vector(0, meterHeight * yDirMult), endMeter + Vector(0, meterHeight * yDirMult), color);
         }
         // Line to the first bend
         if (!(drawnFirstSegments++ >= onlyFirstSegments || lastSegmentsToDraw-- > onlyLastSegments))
-            DrawGlowLine(drawBitmap, midMeter, firstBend, color);
+            DrawGlowLine(renderer, midMeter, firstBend, color);
         // Line to the second bend, incl the chamfer
         if (!(drawnFirstSegments++ >= onlyFirstSegments || lastSegmentsToDraw-- > onlyLastSegments))
-            DrawGlowLine(drawBitmap, firstBend, chamferPoint1, color);
+            DrawGlowLine(renderer, firstBend, chamferPoint1, color);
         if (chamferSize > 0 && !(drawnFirstSegments++ >= onlyFirstSegments || lastSegmentsToDraw-- > onlyLastSegments))
-            DrawGlowLine(drawBitmap, chamferPoint1, chamferPoint2, color);
+            DrawGlowLine(renderer, chamferPoint1, chamferPoint2, color);
         // Line to the site
         if (!(drawnFirstSegments++ >= onlyFirstSegments || lastSegmentsToDraw-- > onlyLastSegments))
-            DrawGlowLine(drawBitmap, chamferPoint2, sitePos + Vector(0, (circleRadius + 1) * yDirMult), color);
+            DrawGlowLine(renderer, chamferPoint2, sitePos + Vector(0, (circleRadius + 1) * yDirMult), color);
     }
     // Just one bend
     else
     {
         // Cap the chamfer size on the first bend appropriately
-        chamferSize = MIN((midMeter - firstBend).GetMagnitude() - meterHeight * 3, chamferSize);
-        chamferSize = MIN((firstBend - sitePos).GetMagnitude() - circleRadius * 3, chamferSize);
+        chamferSize = std::fmin((midMeter - firstBend).GetMagnitude() - meterHeight * 3, chamferSize);
+        chamferSize = std::fmin((firstBend - sitePos).GetMagnitude() - circleRadius * 3, chamferSize);
         // Snap the chamfer to not exist below a minimum size
         chamferSize = (chamferSize < (meterHeight * 3)) ? 0 : chamferSize;
         // No inverted chamfer
-        chamferSize = MAX(0, chamferSize);
+        chamferSize = std::max(0, chamferSize);
         chamferPoint1.SetXY(midMeter.m_X, firstBend.m_Y + chamferSize * -yDirMult);
         chamferPoint2.SetXY(firstBend.m_X + chamferSize * xDirMult, sitePos.m_Y);
         // How many of the last segments to draw: meter + to first bend chamfer + chamfer + to site + circle
@@ -6911,44 +6931,47 @@ bool MetagameGUI::DrawPlayerLineToSitePoint(BITMAP *drawBitmap,
         // Draw the meter
         if (!(drawnFirstSegments++ >= onlyFirstSegments || lastSegmentsToDraw-- > onlyLastSegments) || drawMeterOverride)
         {
-            DrawGlowLine(drawBitmap, startMeter, startMeter + Vector(0, meterHeight * yDirMult), color);
-            DrawGlowLine(drawBitmap, endMeter, endMeter + Vector(0, meterHeight * yDirMult), color);
-            DrawGlowLine(drawBitmap, startMeter + Vector(0, meterHeight * yDirMult), endMeter + Vector(0, meterHeight * yDirMult), color);
+            DrawGlowLine(renderer, startMeter, startMeter + Vector(0, meterHeight * yDirMult), color);
+            DrawGlowLine(renderer, endMeter, endMeter + Vector(0, meterHeight * yDirMult), color);
+            DrawGlowLine(renderer, startMeter + Vector(0, meterHeight * yDirMult), endMeter + Vector(0, meterHeight * yDirMult), color);
         }
         // Draw line to the first bend, incl the chamfer
         if (!(drawnFirstSegments++ >= onlyFirstSegments || lastSegmentsToDraw-- > onlyLastSegments))
-            DrawGlowLine(drawBitmap, midMeter, chamferPoint1, color);
+            DrawGlowLine(renderer, midMeter, chamferPoint1, color);
         if (chamferSize > 0 && !(drawnFirstSegments++ >= onlyFirstSegments || lastSegmentsToDraw-- > onlyLastSegments))
-            DrawGlowLine(drawBitmap, chamferPoint1, chamferPoint2, color);
+            DrawGlowLine(renderer, chamferPoint1, chamferPoint2, color);
         // Draw line to the site
         if (!(drawnFirstSegments++ >= onlyFirstSegments || lastSegmentsToDraw-- > onlyLastSegments))
-            DrawGlowLine(drawBitmap, chamferPoint2, sitePos + Vector((circleRadius + 1) * -xDirMult, 0), color);
+            DrawGlowLine(renderer, chamferPoint2, sitePos + Vector((circleRadius + 1) * -xDirMult, 0), color);
     }
 
     // Draw a circle around the site target
     if (!(drawnFirstSegments++ >= onlyFirstSegments || lastSegmentsToDraw-- > onlyLastSegments))
     {
         int blendAmount = 225 + RandomNum(-20, 20);
-        set_screen_blender(blendAmount, blendAmount, blendAmount, blendAmount);
+		uint32_t blendColor = color * (blendAmount / 255.0);
+		blendColor |= 0xFF000000;
 
         // If specified, draw a squareSite instead (with chamfered corners)
         if (squareSite)
         {
-            hline(drawBitmap, sitePos.m_X - circleRadius - 1, sitePos.m_Y - circleRadius - 1, sitePos.m_X + circleRadius, color);
-            hline(drawBitmap, sitePos.m_X - circleRadius - 1, sitePos.m_Y - circleRadius - 1 - 1, sitePos.m_X + circleRadius, color);
-            hline(drawBitmap, sitePos.m_X - circleRadius - 1, sitePos.m_Y + circleRadius, sitePos.m_X + circleRadius, color);
-            hline(drawBitmap, sitePos.m_X - circleRadius - 1, sitePos.m_Y + circleRadius + 1, sitePos.m_X + circleRadius, color);
-            vline(drawBitmap, sitePos.m_X - circleRadius - 1, sitePos.m_Y - circleRadius - 1, sitePos.m_Y + circleRadius, color);
-            vline(drawBitmap, sitePos.m_X - circleRadius - 1 - 1, sitePos.m_Y - circleRadius - 1, sitePos.m_Y + circleRadius, color);
-            vline(drawBitmap, sitePos.m_X + circleRadius, sitePos.m_Y + circleRadius, sitePos.m_Y - circleRadius - 1, color);
-            vline(drawBitmap, sitePos.m_X + circleRadius + 1, sitePos.m_Y + circleRadius, sitePos.m_Y - circleRadius - 1, color);
+            hlineColor(renderer, sitePos.m_X - circleRadius - 1, sitePos.m_Y - circleRadius - 1, sitePos.m_X + circleRadius, blendColor);
+            hlineColor(renderer, sitePos.m_X - circleRadius - 1, sitePos.m_Y - circleRadius - 1 - 1, sitePos.m_X + circleRadius, blendColor);
+            hlineColor(renderer, sitePos.m_X - circleRadius - 1, sitePos.m_Y + circleRadius, sitePos.m_X + circleRadius, blendColor);
+            hlineColor(renderer, sitePos.m_X - circleRadius - 1, sitePos.m_Y + circleRadius + 1, sitePos.m_X + circleRadius, blendColor);
+            vlineColor(renderer, sitePos.m_X - circleRadius - 1, sitePos.m_Y - circleRadius - 1, sitePos.m_Y + circleRadius, blendColor);
+            vlineColor(renderer, sitePos.m_X - circleRadius - 1 - 1, sitePos.m_Y - circleRadius - 1, sitePos.m_Y + circleRadius, blendColor);
+            vlineColor(renderer, sitePos.m_X + circleRadius, sitePos.m_Y + circleRadius, sitePos.m_Y - circleRadius - 1, blendColor);
+            vlineColor(renderer, sitePos.m_X + circleRadius + 1, sitePos.m_Y + circleRadius, sitePos.m_Y - circleRadius - 1, blendColor);
         }
         else
         {
-            circle(drawBitmap, sitePos.m_X, sitePos.m_Y, circleRadius, color);
-            circle(drawBitmap, sitePos.m_X, sitePos.m_Y, circleRadius - 1, color);            
+            circleColor(renderer, sitePos.m_X, sitePos.m_Y, circleRadius, blendColor);
+            circleColor(renderer, sitePos.m_X, sitePos.m_Y, circleRadius - 1, blendColor);
         }
     }
+
+	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 
     return totalSegments <= onlyFirstSegments && totalSegments <= onlyLastSegments;
 }

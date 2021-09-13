@@ -1,13 +1,14 @@
 #include "ModManagerGUI.h"
 
 #include "SettingsMan.h"
+#include "FrameMan.h"
 #include "PresetMan.h"
 #include "DataModule.h"
 #include "GlobalScript.h"
 
 #include "GUI.h"
-#include "AllegroScreen.h"
-#include "AllegroInput.h"
+#include "SDLScreen.h"
+#include "SDLInput.h"
 #include "GUICollectionBox.h"
 #include "GUILabel.h"
 #include "GUIButton.h"
@@ -17,7 +18,7 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	ModManagerGUI::ModManagerGUI(AllegroScreen *guiScreen, AllegroInput *guiInput) {
+	ModManagerGUI::ModManagerGUI(SDLScreen *guiScreen, SDLInput *guiInput) {
 		m_GUIControlManager = std::make_unique<GUIControlManager>();
 		RTEAssert(m_GUIControlManager->Create(guiScreen, guiInput, "Base.rte/GUIs/Skins/Menus", "MainMenuSubMenuSkin.ini"), "Failed to create GUI Control Manager and load it from Base.rte/GUIs/Skins/Menus/MainMenuSubMenuSkin.ini");
 		m_GUIControlManager->Load("Base.rte/GUIs/ModManagerGUI.ini");

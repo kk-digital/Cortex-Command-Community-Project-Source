@@ -30,8 +30,6 @@ namespace RTE {
 
 		m_BitmapFile = reference.m_BitmapFile;
 		m_FrameCount = reference.m_FrameCount;
-		m_BitmapsIndexed = reference.m_BitmapsIndexed;
-		m_BitmapsTrueColor = reference.m_BitmapsTrueColor;
 
 		m_Textures.clear();
 		m_Textures = reference.m_Textures;

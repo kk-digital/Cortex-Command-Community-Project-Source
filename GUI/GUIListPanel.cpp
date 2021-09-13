@@ -21,7 +21,6 @@ GUIListPanel::GUIListPanel(GUIManager *Manager) : GUIPanel(Manager) {
 	m_FontColor = 0;
 	m_FontSelectColor = 0;
 	m_SelectedColorIndex = 0;
-	m_UnselectedColorIndex = 0;
 	m_CapturedHorz = false;
 	m_CapturedVert = false;
 	m_ExternalCapture = false;
@@ -51,7 +50,6 @@ GUIListPanel::GUIListPanel() : GUIPanel() {
 	m_FontColor = 0;
 	m_FontSelectColor = 0;
 	m_SelectedColorIndex = 0;
-	m_UnselectedColorIndex = 0;
 	m_CapturedHorz = false;
 	m_CapturedVert = false;
 	m_ExternalCapture = false;

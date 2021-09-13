@@ -6,11 +6,12 @@
 #include "MetaMan.h"
 
 #include "GUI.h"
-#include "AllegroScreen.h"
-#include "AllegroBitmap.h"
-#include "AllegroInput.h"
+#include "SDLScreen.h"
+#include "SDLGUITexture.h"
+#include "SDLInput.h"
 
 #include "Controller.h"
+#include "System.h"
 #include "TitleScreen.h"
 #include "MainMenuGUI.h"
 #include "ScenarioGUI.h"
@@ -18,14 +19,17 @@
 #include "LoadingScreen.h"
 
 namespace RTE {
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	MenuMan::MenuMan() = default;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void MenuMan::Initialize(bool firstTimeInit) {
 		m_ActiveMenu = ActiveMenu::MenusDisabled;
 
-		m_GUIScreen = std::make_unique<AllegroScreen>(g_FrameMan.GetBackBuffer32());
-		m_GUIInput = std::make_unique<AllegroInput>(-1, g_UInputMan.GetJoystickCount() > 0);
+		m_GUIScreen = std::make_unique<SDLScreen>();
+		m_GUIInput = std::make_unique<SDLInput>(-1, g_UInputMan.GetJoystickCount() > 0);
 
 		if (firstTimeInit) { g_LoadingScreen.Create(m_GUIScreen.get(), m_GUIInput.get(), g_SettingsMan.GetLoadingScreenProgressReportDisabled()); }
 
@@ -197,7 +201,7 @@ namespace RTE {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void MenuMan::Draw() const {
-		g_FrameMan.ClearBackBuffer32();
+		g_FrameMan.RenderClear();
 
 		// Early return when changing resolution so screen remains black while everything is being recreated instead of being stuck showing a badly aligned title screen.
 		if (g_FrameMan.ResolutionChanged()) {
@@ -214,7 +218,7 @@ namespace RTE {
 				m_ScenarioMenu->Draw();
 				break;
 			case ActiveMenu::MetaGameMenuActive:
-				g_MetaMan.Draw(g_FrameMan.GetBackBuffer32());
+				g_MetaMan.Draw(g_FrameMan.GetRenderer());
 				break;
 			default:
 				break;
@@ -227,16 +231,16 @@ namespace RTE {
 				int mouseX = 0;
 				int mouseY = 0;
 				m_GUIInput->GetMousePosition(&mouseX, &mouseY);
-				BITMAP *deviceIcon = g_UInputMan.GetDeviceIcon(device)->GetBitmaps32()[0];
-				if (deviceIcon) { draw_sprite(g_FrameMan.GetBackBuffer32(), deviceIcon, mouseX + (deviceIcon->w / 2), mouseY - (deviceIcon->h / 5)); }
+				SharedTexture deviceIcon = g_UInputMan.GetDeviceIcon(device)->GetTextures()[0];
+				if (deviceIcon) { deviceIcon->render(g_FrameMan.GetRenderer(), mouseX + (deviceIcon->getW() / 2), mouseY - (deviceIcon->getH() / 5)); }
 			}
 			// Show which joysticks are detected by the game.
 			for (int playerIndex = Players::PlayerOne; playerIndex < Players::MaxPlayerCount; playerIndex++) {
 				if (g_UInputMan.JoystickActive(playerIndex)) {
 					int matchedDevice = InputDevice::DEVICE_GAMEPAD_1 + playerIndex;
 					if (matchedDevice != device) {
-						BITMAP *deviceIcon = g_UInputMan.GetDeviceIcon(matchedDevice)->GetBitmaps32()[0];
-						if (deviceIcon) { draw_sprite(g_FrameMan.GetBackBuffer32(), deviceIcon, g_FrameMan.GetResX() - 30 * g_UInputMan.GetJoystickCount() + 30 * playerIndex, g_FrameMan.GetResY() - 25); }
+						SharedTexture deviceIcon = g_UInputMan.GetDeviceIcon(matchedDevice)->GetTextures()[0];
+						if (deviceIcon) { deviceIcon->render(g_FrameMan.GetRenderer(), g_FrameMan.GetResX() - 30 * g_UInputMan.GetJoystickCount() + 30 * playerIndex, g_FrameMan.GetResY() - 25); }
 					}
 				}
 			}

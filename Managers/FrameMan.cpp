@@ -25,8 +25,6 @@
 #include "System/SDLHelper.h"
 #include "SDL2_gfxPrimitives.h"
 
-extern bool g_InActivity;
-
 namespace RTE {
 
 	FrameMan::FrameMan() { Clear(); }
@@ -55,8 +53,7 @@ namespace RTE {
 
 		m_HSplit = false;
 		m_VSplit = false;
-		m_HSplitOverride = false;
-		m_VSplitOverride = false;
+		m_TwoPlayerVSplit = false;
 
 		for (; !m_TargetStack.empty(); m_TargetStack.pop())
 			;
@@ -105,11 +102,11 @@ namespace RTE {
 		SDL_RenderClear(m_Renderer);
 
 		m_Palette = m_PaletteFile.GetAsTexture();
-		RTEAssert(m_Palette.get(), "Failed loading palette");
+		RTEAssert(m_Palette.get(), "Failed loading palette because: " + std::string(SDL_GetError()));
 
 		m_MatPaletteFile.Create("Base.rte/palettemat.bmp");
 		m_MatPalette = m_MatPaletteFile.GetAsTexture();
-		RTEAssert(m_MatPalette.get(), "Failed to load material palette");
+		RTEAssert(m_MatPalette.get(), "Failed to load material palette because: " + std::string(SDL_GetError()));
 
 		return 0;
 	}
@@ -370,7 +367,7 @@ namespace RTE {
 		}
 #endif
 
-		if (g_InActivity) {
+		if (g_ActivityMan.IsInActivity()) {
 			g_PostProcessMan.PostProcess();
 		}
 
@@ -507,16 +504,17 @@ namespace RTE {
 		if (isSmall) {
 			if (!m_SmallFont) {
 				m_SmallFont = std::make_shared<GUIFont>("SmallFont");
-				m_SmallFont->Load(m_GUIScreen.get(), "Base.rte/GUIs/Skins/Base/smallfont.png");
+				m_SmallFont->Load(m_GUIScreen.get(), "Base.rte/GUIs/Skins/FontSmall.png");
 			}
 			return m_SmallFont.get();
 		}
 		if (!m_LargeFont) {
 			m_LargeFont = std::make_shared<GUIFont>("FatFont");
-			m_LargeFont->Load(m_GUIScreen.get(), "Base.rte/GUIs/Skins/Base/fatfont.png");
+			m_LargeFont->Load(m_GUIScreen.get(), "Base.rte/GUIs/Skins/FontLarge.png");
 		}
 		return m_LargeFont.get();
 	}
+
 	void FrameMan::DrawScreenText(int playerScreen, SDLGUITexture playerGUIBitmap) {
 		int textPosY = 0;
 		// Only draw screen text to actual human players

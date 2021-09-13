@@ -1777,13 +1777,9 @@ void Actor::DrawHUD(SDL_Renderer* renderer, const Vector &targetPos, int whichSc
                 if (!apIconTextures.empty() && m_pTeamIcon && m_pTeamIcon->GetFrameCount() > 0)
                 {
                     // Make team icon blink faster as the health goes down
-                    int f = m_HeartBeat.AlternateReal(200 + 800 * (m_Health / 100)) ? 0 : 1;
-					f = std::min(
-						f, m_pTeamIcon ? m_pTeamIcon->GetFrameCount() - 1 : 1);
-					apIconTextures[f]->render(
-						renderer, drawPos.m_X - apIconTextures[f]->getW() - 2,
-						drawPos.m_Y + m_HUDStack - (apIconTextures[f]->getH() / 2) +
-						    8);
+                    unsigned int f = m_HeartBeat.AlternateReal(200 + 800 * (m_Health / 100)) ? 0 : 1;
+					f = std::min(f, m_pTeamIcon ? m_pTeamIcon->GetFrameCount() - 1 : 1);
+					apIconTextures[f]->render(renderer, drawPos.m_X - apIconTextures[f]->getW() - 2, drawPos.m_Y + m_HUDStack - (apIconTextures[f]->getH() / 2) + 8);
 				}
             }
             // Draw death icon

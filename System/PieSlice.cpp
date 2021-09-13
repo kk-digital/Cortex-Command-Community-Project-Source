@@ -170,15 +170,15 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	BITMAP *RTE::PieSlice::GetAppropriateIcon(bool sliceIsSelected) const {
+	SharedTexture RTE::PieSlice::GetAppropriateIcon(bool sliceIsSelected) const {
 		int iconFrameCount = m_Icon.GetFrameCount();
 		if (iconFrameCount > 0) {
 			if (!IsEnabled() && iconFrameCount > 2) {
-				return m_Icon.GetBitmaps8()[2];
+				return m_Icon.GetTextures()[2];
 			} else if (sliceIsSelected && iconFrameCount > 1) {
-				return m_Icon.GetBitmaps8()[1];
+				return m_Icon.GetTextures()[1];
 			} else {
-				return m_Icon.GetBitmaps8()[0];
+				return m_Icon.GetTextures()[0];
 			}
 		}
 		return nullptr;

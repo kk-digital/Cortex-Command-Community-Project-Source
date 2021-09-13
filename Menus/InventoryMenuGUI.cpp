@@ -10,7 +10,7 @@
 #include "HDFirearm.h"
 #include "Icon.h"
 
-#include "AllegroBitmap.h"
+#include "SDLGUITexture.h"
 #include "GUIFont.h"
 
 #include "GUIControlManager.h"
@@ -19,6 +19,10 @@
 #include "GUIButton.h"
 #include "GUIScrollbar.h"
 
+#include "SDLHelper.h"
+#include <SDL2/SDL.h>
+#include "SDL2_gfxPrimitives.h"
+
 namespace RTE {
 
 	const Vector InventoryMenuGUI::c_CarouselBoxMaxSize(50, 32);
@@ -26,11 +30,11 @@ namespace RTE {
 	const Vector InventoryMenuGUI::c_CarouselBoxSizeStep = (c_CarouselBoxMaxSize - c_CarouselBoxMinSize) / (c_ItemsPerRow / 2);
 	const int InventoryMenuGUI::c_CarouselBoxCornerRadius = ((c_CarouselBoxMaxSize.GetFloorIntY() - c_CarouselBoxMinSize.GetFloorIntY()) / 2) - 1;
 
-	BITMAP *InventoryMenuGUI::s_CursorBitmap = nullptr;
+	SharedTexture InventoryMenuGUI::s_CursorBitmap;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void InventoryMenuGUI::CarouselItemBox::GetIconsAndMass(std::vector<BITMAP *> &itemIcons, float &totalItemMass, const std::vector<std::pair<MovableObject *, MovableObject *>> *equippedItems) const {
+	void InventoryMenuGUI::CarouselItemBox::GetIconsAndMass(std::vector<SharedTexture> &itemIcons, float &totalItemMass, const std::vector<std::pair<MovableObject *, MovableObject *>> *equippedItems) const {
 		if (IsForEquippedItems) {
 			itemIcons.reserve(equippedItems->size());
 			for (const auto &[equippedItem, offhandEquippedItem] : *equippedItems) {
@@ -145,9 +149,6 @@ namespace RTE {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void InventoryMenuGUI::Destroy() {
-		destroy_bitmap(m_CarouselBitmap.release());
-		destroy_bitmap(m_CarouselBGBitmap.release());
-
 		Clear();
 	}
 
@@ -180,8 +181,8 @@ namespace RTE {
 		m_CarouselExitingItemBox->IconCenterPosition.SetY(c_CarouselBoxMaxSize.GetY() / 2 + static_cast<float>(m_SmallFont->GetFontHeight() / 2));
 		m_CarouselExitingItemBox->FullSize = c_CarouselBoxMinSize - c_CarouselBoxSizeStep;
 
-		m_CarouselBitmap = std::unique_ptr<BITMAP>(create_bitmap_ex(8, carouselBitmapWidth, c_CarouselBoxMaxSize.GetFloorIntY() + m_SmallFont->GetFontHeight() / 2));
-		m_CarouselBGBitmap = std::unique_ptr<BITMAP>(create_bitmap_ex(8, carouselBitmapWidth, c_CarouselBoxMaxSize.GetFloorIntY() + m_SmallFont->GetFontHeight() / 2));
+		m_CarouselBitmap = std::make_unique<Texture>(g_FrameMan.GetRenderer(), carouselBitmapWidth, c_CarouselBoxMaxSize.GetFloorIntY() + m_SmallFont->GetFontHeight() / 2);
+		m_CarouselBGBitmap = std::make_unique<Texture>(g_FrameMan.GetRenderer(), carouselBitmapWidth, c_CarouselBoxMaxSize.GetFloorIntY() + m_SmallFont->GetFontHeight() / 2);
 
 		return 0;
 	}
@@ -190,8 +191,8 @@ namespace RTE {
 
 	int InventoryMenuGUI::SetupFullOrTransferMode() {
 		if (!m_GUIControlManager) { m_GUIControlManager = std::make_unique<GUIControlManager>(); }
-		if (!m_GUIScreen) { m_GUIScreen = std::make_unique<AllegroScreen>(g_FrameMan.GetBackBuffer8()); }
-		if (!m_GUIInput) { m_GUIInput = std::make_unique<AllegroInput>(m_MenuController->GetPlayer()); }
+		if (!m_GUIScreen) { m_GUIScreen = std::make_unique<SDLScreen>(); }
+		if (!m_GUIInput) { m_GUIInput = std::make_unique<SDLInput>(m_MenuController->GetPlayer()); }
 		RTEAssert(m_GUIControlManager->Create(m_GUIScreen.get(), m_GUIInput.get(), "Base.rte/GUIs/Skins", "InventoryMenuSkin.ini"), "Failed to create InventoryMenuGUI GUIControlManager and load it from Base.rte/GUIs/Skins/Menus/InventoryMenuSkin.ini");
 
 		//TODO When this is split into 2 classes, full mode should use the fonts from its gui control manager while transfer mode, will need to get its fonts from FrameMan. May be good for the ingame menu base class to have these font pointers, even if some subclasses set em up in different ways.
@@ -202,7 +203,7 @@ namespace RTE {
 		m_GUIControlManager->EnableMouse(m_MenuController->IsMouseControlled());
 		if (!s_CursorBitmap) {
 			ContentFile cursorFile("Base.rte/GUIs/Skins/Cursor.png");
-			s_CursorBitmap = cursorFile.GetAsBitmap();
+			s_CursorBitmap = cursorFile.GetAsTexture();
 		}
 
 		if (g_FrameMan.IsInMultiplayerMode()) {
@@ -379,7 +380,7 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void InventoryMenuGUI::Draw(BITMAP *targetBitmap, const Vector &targetPos) const {
+	void InventoryMenuGUI::Draw(SDL_Renderer *renderer, const Vector &targetPos) const {
 		Vector drawPos = m_CenterPos - targetPos;
 
 		switch (m_MenuMode) {
@@ -388,14 +389,14 @@ namespace RTE {
 					return;
 				}
 				drawPos -= Vector(0, c_CarouselMenuVerticalOffset + c_CarouselBoxMaxSize.GetY() * 0.5F);
-				DrawCarouselMode(targetBitmap, drawPos);
+				DrawCarouselMode(renderer, drawPos);
 				break;
 			case MenuMode::Full:
 				if (!m_InventoryActor) {
 					return;
 				}
 				drawPos -= Vector((m_GUITopLevelBoxFullSize.GetX() - static_cast<float>(m_GUIInventoryItemsScrollbar->IsEnabled() ? m_GUIInventoryItemsScrollbar->GetWidth() : 0)) / 2.0F, m_GUITopLevelBoxFullSize.GetY() + c_FullMenuVerticalOffset);
-				DrawFullMode(targetBitmap, drawPos);
+				DrawFullMode(renderer, drawPos);
 				break;
 			case MenuMode::Transfer:
 				break;
@@ -726,9 +727,9 @@ namespace RTE {
 
 		for (const auto &[button, icon] : buttonsToCheckIconsFor) {
 			if (button->IsEnabled()) {
-				button->SetIcon((button->HasFocus() || button->IsMousedOver() || button->IsPushed()) ? icon->GetBitmaps8()[1] : icon->GetBitmaps8()[0]);
+				button->SetIcon((button->HasFocus() || button->IsMousedOver() || button->IsPushed()) ? icon->GetTextures()[1] : icon->GetTextures()[0]);
 			} else {
-				button->SetIcon(icon->GetBitmaps8()[2]);
+				button->SetIcon(icon->GetTextures()[2]);
 			}
 
 			if (!button->IsEnabled() && button->GetWidth() == 15 && (button->HasFocus() || button->IsMousedOver() || button->IsPushed())) {
@@ -1295,49 +1296,58 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void InventoryMenuGUI::DrawCarouselMode(BITMAP *targetBitmap, const Vector &drawPos) const {
-		clear_to_color(m_CarouselBitmap.get(), g_MaskColor);
-		clear_to_color(m_CarouselBGBitmap.get(), g_MaskColor);
-		AllegroBitmap carouselAllegroBitmap(m_CarouselBitmap.get());
+	void InventoryMenuGUI::DrawCarouselMode(SDL_Renderer *renderer, const Vector &drawPos) const {
+		// TODO: Use shaders here
+		g_FrameMan.PushRenderTarget(m_CarouselBitmap);
+		SDL_RenderClear(g_FrameMan.GetRenderer());
+		g_FrameMan.PopRenderTarget();
+		g_FrameMan.PushRenderTarget(m_CarouselBGBitmap);
+		SDL_RenderClear(g_FrameMan.GetRenderer());
+		SDLGUITexture carouselSDLGUITexture;
 		float enableDisableProgress = static_cast<float>(m_EnableDisableAnimationTimer.RealTimeLimitProgress());
 
 		for (const std::unique_ptr<CarouselItemBox> &carouselItemBox : m_CarouselItemBoxes) {
 			if (carouselItemBox->Item || (carouselItemBox->IsForEquippedItems && !m_InventoryActorEquippedItems.empty())) {
 				DrawCarouselItemBoxBackground(*carouselItemBox);
-				DrawCarouselItemBoxForeground(*carouselItemBox, &carouselAllegroBitmap);
+				DrawCarouselItemBoxForeground(*carouselItemBox, &carouselSDLGUITexture);
 			} else if (m_CarouselDrawEmptyBoxes) {
 				DrawCarouselItemBoxBackground(*carouselItemBox);
-				m_SmallFont->DrawAligned(&carouselAllegroBitmap, carouselItemBox->IconCenterPosition.GetFloorIntX(), carouselItemBox->IconCenterPosition.GetFloorIntY() - (m_SmallFont->GetFontHeight() / 2), "Empty", GUIFont::Centre);
+				m_SmallFont->DrawAligned(&carouselSDLGUITexture, carouselItemBox->IconCenterPosition.GetFloorIntX(), carouselItemBox->IconCenterPosition.GetFloorIntY() - (m_SmallFont->GetFontHeight() / 2), "Empty", GUIFont::Centre);
 			}
 		}
 		if (m_CarouselAnimationDirection != CarouselAnimationDirection::None && (m_CarouselExitingItemBox->Item || m_CarouselDrawEmptyBoxes)) {
 			if (m_CarouselExitingItemBox->Item) {
 				DrawCarouselItemBoxBackground(*m_CarouselExitingItemBox);
-				DrawCarouselItemBoxForeground(*m_CarouselExitingItemBox, &carouselAllegroBitmap);
+				DrawCarouselItemBoxForeground(*m_CarouselExitingItemBox, &carouselSDLGUITexture);
 			} else if (m_CarouselDrawEmptyBoxes) {
 				DrawCarouselItemBoxBackground(*m_CarouselExitingItemBox);
-				m_SmallFont->DrawAligned(&carouselAllegroBitmap, m_CarouselExitingItemBox->IconCenterPosition.GetFloorIntX(), m_CarouselExitingItemBox->IconCenterPosition.GetFloorIntY() - (m_SmallFont->GetFontHeight() / 2), "Empty", GUIFont::Centre);
+				m_SmallFont->DrawAligned(&carouselSDLGUITexture, m_CarouselExitingItemBox->IconCenterPosition.GetFloorIntX(), m_CarouselExitingItemBox->IconCenterPosition.GetFloorIntY() - (m_SmallFont->GetFontHeight() / 2), "Empty", GUIFont::Centre);
 			}
 		}
 		if (IsEnablingOrDisabling()) {
-			int hiddenAreaHalfWidth = static_cast<int>((m_EnabledState == EnabledState::Enabling ? 1.0F - enableDisableProgress : enableDisableProgress) * static_cast<float>(m_CarouselBitmap->w / 2));
-			rectfill(m_CarouselBitmap.get(), 0, 0, hiddenAreaHalfWidth, m_CarouselBitmap->h, g_MaskColor);
-			rectfill(m_CarouselBitmap.get(), m_CarouselBitmap->w - hiddenAreaHalfWidth, 0, m_CarouselBitmap->w, m_CarouselBitmap->h, g_MaskColor);
-			rectfill(m_CarouselBGBitmap.get(), 0, 0, hiddenAreaHalfWidth, m_CarouselBGBitmap->h, g_MaskColor);
-			rectfill(m_CarouselBGBitmap.get(), m_CarouselBGBitmap->w - hiddenAreaHalfWidth, 0, m_CarouselBGBitmap->w, m_CarouselBGBitmap->h, g_MaskColor);
+			int hiddenAreaHalfWidth = static_cast<int>((m_EnabledState == EnabledState::Enabling ? 1.0F - enableDisableProgress : enableDisableProgress) * static_cast<float>(m_CarouselBitmap->getW() / 2));
+			g_FrameMan.PushRenderTarget(m_CarouselBitmap);
+			boxColor(g_FrameMan.GetRenderer(), 0, 0, hiddenAreaHalfWidth, m_CarouselBitmap->getH(), g_MaskColor);
+			boxColor(g_FrameMan.GetRenderer(), m_CarouselBitmap->getW() - hiddenAreaHalfWidth, 0, m_CarouselBitmap->getW(), m_CarouselBitmap->getH(), g_MaskColor);
+			g_FrameMan.PopRenderTarget();
+			g_FrameMan.PushRenderTarget(m_CarouselBGBitmap);
+			boxColor(g_FrameMan.GetRenderer(), 0, 0, hiddenAreaHalfWidth, m_CarouselBGBitmap->getH(), g_MaskColor);
+			boxColor(g_FrameMan.GetRenderer(), m_CarouselBGBitmap->getW() - hiddenAreaHalfWidth, 0, m_CarouselBGBitmap->getW() , m_CarouselBGBitmap->getH(), g_MaskColor);
+			g_FrameMan.PopRenderTarget();
 		}
 
 		bool hasDrawnAtLeastOnce = false;
 		std::list<IntRect> wrappedRectangles;
-		g_SceneMan.WrapRect(IntRect(drawPos.GetFloorIntX(), drawPos.GetFloorIntY(), drawPos.GetFloorIntX() + m_CarouselBitmap->w, drawPos.GetFloorIntY() + m_CarouselBitmap->h), wrappedRectangles);
+		g_SceneMan.WrapRect(IntRect(drawPos.GetFloorIntX(), drawPos.GetFloorIntY(), drawPos.GetFloorIntX() + m_CarouselBitmap->getW(), drawPos.GetFloorIntY() + m_CarouselBitmap->getH()), wrappedRectangles);
 		for (const IntRect &wrappedRectangle : wrappedRectangles) {
 			if (m_CarouselBackgroundTransparent && !g_FrameMan.IsInMultiplayerMode()) {
-				g_FrameMan.SetTransTable(MoreTrans);
-				draw_trans_sprite(targetBitmap, m_CarouselBGBitmap.get(), wrappedRectangle.m_Left - m_CarouselBGBitmap->w / 2, wrappedRectangle.m_Top - m_CarouselBGBitmap->h / 2);
-				draw_sprite(targetBitmap, m_CarouselBitmap.get(), wrappedRectangle.m_Left - m_CarouselBitmap->w / 2, wrappedRectangle.m_Top - m_CarouselBitmap->h / 2);
+				m_CarouselBGBitmap->setAlphaMod(MoreTrans);
+				m_CarouselBGBitmap->render(g_FrameMan.GetRenderer(), wrappedRectangle.m_Left - m_CarouselBGBitmap->getW() / 2, wrappedRectangle.m_Top - m_CarouselBGBitmap->getH() / 2);
+				m_CarouselBGBitmap->setAlphaMod(255);
+				m_CarouselBitmap->render(g_FrameMan.GetRenderer(), wrappedRectangle.m_Left - m_CarouselBitmap->getW() / 2, wrappedRectangle.m_Top - m_CarouselBitmap->getH() / 2);
 			} else {
-				if (!hasDrawnAtLeastOnce) { draw_sprite(m_CarouselBGBitmap.get(), m_CarouselBitmap.get(), 0, 0); }
-				draw_sprite(targetBitmap, m_CarouselBGBitmap.get(), wrappedRectangle.m_Left - m_CarouselBGBitmap->w / 2, wrappedRectangle.m_Top - m_CarouselBGBitmap->h / 2);
+				// if (!hasDrawnAtLeastOnce) { draw_sprite(m_CarouselBGBitmap.get(), m_CarouselBitmap.get(), 0, 0); }
+				// draw_sprite(targetBitmap, m_CarouselBGBitmap.get(), wrappedRectangle.m_Left - m_CarouselBGBitmap->w / 2, wrappedRectangle.m_Top - m_CarouselBGBitmap->h / 2);
 			}
 			hasDrawnAtLeastOnce = true;
 		}
@@ -1346,31 +1356,33 @@ namespace RTE {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void InventoryMenuGUI::DrawCarouselItemBoxBackground(const CarouselItemBox &itemBoxToDraw) const {
-		auto DrawBox = [](BITMAP *targetBitmap, const Vector &boxTopLeftCorner, const Vector &boxBottomRightCorner, int color, bool roundedLeftSide, bool roundedRightSide) {
+		auto DrawBox = [](SDL_Renderer *renderer, const Vector &boxTopLeftCorner, const Vector &boxBottomRightCorner, int color, bool roundedLeftSide, bool roundedRightSide) {
 			if (roundedLeftSide) {
-				circlefill(targetBitmap, boxTopLeftCorner.GetFloorIntX() + c_CarouselBoxCornerRadius, boxTopLeftCorner.GetFloorIntY() + c_CarouselBoxCornerRadius, c_CarouselBoxCornerRadius, color);
-				circlefill(targetBitmap, boxTopLeftCorner.GetFloorIntX() + c_CarouselBoxCornerRadius, boxBottomRightCorner.GetFloorIntY() - c_CarouselBoxCornerRadius, c_CarouselBoxCornerRadius, color);
-				rectfill(targetBitmap, boxTopLeftCorner.GetFloorIntX(), boxTopLeftCorner.GetFloorIntY() + c_CarouselBoxCornerRadius, boxTopLeftCorner.GetFloorIntX() + c_CarouselBoxCornerRadius, boxBottomRightCorner.GetFloorIntY() - c_CarouselBoxCornerRadius, color);
+				filledCircleColor(renderer, boxTopLeftCorner.GetFloorIntX() + c_CarouselBoxCornerRadius, boxTopLeftCorner.GetFloorIntY() + c_CarouselBoxCornerRadius, c_CarouselBoxCornerRadius, color);
+				filledCircleColor(renderer, boxTopLeftCorner.GetFloorIntX() + c_CarouselBoxCornerRadius, boxBottomRightCorner.GetFloorIntY() - c_CarouselBoxCornerRadius, c_CarouselBoxCornerRadius, color);
+				boxColor(renderer, boxTopLeftCorner.GetFloorIntX(), boxTopLeftCorner.GetFloorIntY() + c_CarouselBoxCornerRadius, boxTopLeftCorner.GetFloorIntX() + c_CarouselBoxCornerRadius, boxBottomRightCorner.GetFloorIntY() - c_CarouselBoxCornerRadius, color);
 			}
 			if (roundedRightSide) {
-				circlefill(targetBitmap, boxBottomRightCorner.GetFloorIntX() - c_CarouselBoxCornerRadius, boxTopLeftCorner.GetFloorIntY() + c_CarouselBoxCornerRadius, c_CarouselBoxCornerRadius, color);
-				circlefill(targetBitmap, boxBottomRightCorner.GetFloorIntX() - c_CarouselBoxCornerRadius, boxBottomRightCorner.GetFloorIntY() - c_CarouselBoxCornerRadius, c_CarouselBoxCornerRadius, color);
-				rectfill(targetBitmap, boxBottomRightCorner.GetFloorIntX() - c_CarouselBoxCornerRadius, boxTopLeftCorner.GetFloorIntY() + c_CarouselBoxCornerRadius, boxBottomRightCorner.GetFloorIntX(), boxBottomRightCorner.GetFloorIntY() - c_CarouselBoxCornerRadius, color);
+				filledCircleColor(renderer, boxBottomRightCorner.GetFloorIntX() - c_CarouselBoxCornerRadius, boxTopLeftCorner.GetFloorIntY() + c_CarouselBoxCornerRadius, c_CarouselBoxCornerRadius, color);
+				filledCircleColor(renderer, boxBottomRightCorner.GetFloorIntX() - c_CarouselBoxCornerRadius, boxBottomRightCorner.GetFloorIntY() - c_CarouselBoxCornerRadius, c_CarouselBoxCornerRadius, color);
+				boxColor(renderer, boxBottomRightCorner.GetFloorIntX() - c_CarouselBoxCornerRadius, boxTopLeftCorner.GetFloorIntY() + c_CarouselBoxCornerRadius, boxBottomRightCorner.GetFloorIntX(), boxBottomRightCorner.GetFloorIntY() - c_CarouselBoxCornerRadius, color);
 			}
-			rectfill(targetBitmap, boxTopLeftCorner.GetFloorIntX() + (roundedLeftSide ? c_CarouselBoxCornerRadius : 0), boxTopLeftCorner.GetFloorIntY(), boxBottomRightCorner.GetFloorIntX() - (roundedRightSide ? c_CarouselBoxCornerRadius : 0), boxBottomRightCorner.GetFloorIntY(), color);
+			boxColor(renderer, boxTopLeftCorner.GetFloorIntX() + (roundedLeftSide ? c_CarouselBoxCornerRadius : 0), boxTopLeftCorner.GetFloorIntY(), boxBottomRightCorner.GetFloorIntX() - (roundedRightSide ? c_CarouselBoxCornerRadius : 0), boxBottomRightCorner.GetFloorIntY(), color);
 		};
 
 		Vector spriteZeroIndexSizeOffset(1, 1);
+		g_FrameMan.PushRenderTarget(m_CarouselBGBitmap);
 		if (!m_CarouselBackgroundBoxBorderSize.IsZero()) {
-			DrawBox(m_CarouselBGBitmap.get(), itemBoxToDraw.Pos, itemBoxToDraw.Pos + itemBoxToDraw.CurrentSize - spriteZeroIndexSizeOffset, m_CarouselBackgroundBoxBorderColor, itemBoxToDraw.RoundedAndBorderedSides.first, itemBoxToDraw.RoundedAndBorderedSides.second);
+			DrawBox(g_FrameMan.GetRenderer(), itemBoxToDraw.Pos, itemBoxToDraw.Pos + itemBoxToDraw.CurrentSize - spriteZeroIndexSizeOffset, m_CarouselBackgroundBoxBorderColor, itemBoxToDraw.RoundedAndBorderedSides.first, itemBoxToDraw.RoundedAndBorderedSides.second);
 		}
-		DrawBox(m_CarouselBGBitmap.get(), itemBoxToDraw.Pos + (itemBoxToDraw.RoundedAndBorderedSides.first ? m_CarouselBackgroundBoxBorderSize : Vector(0, m_CarouselBackgroundBoxBorderSize.GetY())), itemBoxToDraw.Pos + itemBoxToDraw.CurrentSize - spriteZeroIndexSizeOffset - (itemBoxToDraw.RoundedAndBorderedSides.second ? m_CarouselBackgroundBoxBorderSize : Vector(0, m_CarouselBackgroundBoxBorderSize.GetY())), m_CarouselBackgroundBoxColor, itemBoxToDraw.RoundedAndBorderedSides.first, itemBoxToDraw.RoundedAndBorderedSides.second);
+		DrawBox(g_FrameMan.GetRenderer(), itemBoxToDraw.Pos + (itemBoxToDraw.RoundedAndBorderedSides.first ? m_CarouselBackgroundBoxBorderSize : Vector(0, m_CarouselBackgroundBoxBorderSize.GetY())), itemBoxToDraw.Pos + itemBoxToDraw.CurrentSize - spriteZeroIndexSizeOffset - (itemBoxToDraw.RoundedAndBorderedSides.second ? m_CarouselBackgroundBoxBorderSize : Vector(0, m_CarouselBackgroundBoxBorderSize.GetY())), m_CarouselBackgroundBoxColor, itemBoxToDraw.RoundedAndBorderedSides.first, itemBoxToDraw.RoundedAndBorderedSides.second);
+		g_FrameMan.PopRenderTarget();
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void InventoryMenuGUI::DrawCarouselItemBoxForeground(const CarouselItemBox &itemBoxToDraw, AllegroBitmap *carouselAllegroBitmap) const {
-		std::vector<BITMAP *> itemIcons;
+	void InventoryMenuGUI::DrawCarouselItemBoxForeground(const CarouselItemBox &itemBoxToDraw, SDLGUITexture *carouselSDLGUITexture) const {
+		std::vector<SharedTexture> itemIcons;
 		float totalItemMass = 0;
 		itemBoxToDraw.GetIconsAndMass(itemIcons, totalItemMass, &m_InventoryActorEquippedItems);
 
@@ -1379,28 +1391,30 @@ namespace RTE {
 		Vector iconMaxSize = itemBoxToDraw.CurrentSize - Vector(c_MinimumItemPadding * 2, c_MinimumItemPadding * 2) - spriteZeroIndexSizeOffset;
 		if (itemBoxToDraw.RoundedAndBorderedSides.first) { iconMaxSize.SetX(iconMaxSize.GetX() - m_CarouselBackgroundBoxBorderSize.GetX()); }
 		if (itemBoxToDraw.RoundedAndBorderedSides.second) { iconMaxSize.SetX(iconMaxSize.GetX() - m_CarouselBackgroundBoxBorderSize.GetX()); }
-		std::for_each(itemIcons.crbegin(), itemIcons.crend(), [this, &itemBoxToDraw, &multiItemDrawOffset, &iconMaxSize](BITMAP *iconToDraw) {
-			float stretchRatio = std::max(static_cast<float>(iconToDraw->w - 1 + (multiItemDrawOffset.GetFloorIntX() / 2)) / iconMaxSize.GetX(), static_cast<float>(iconToDraw->h - 1 + (multiItemDrawOffset.GetFloorIntY() / 2)) / iconMaxSize.GetY());
+		g_FrameMan.PushRenderTarget(m_CarouselBitmap);
+		std::for_each(itemIcons.crbegin(), itemIcons.crend(), [this, &itemBoxToDraw, &multiItemDrawOffset, &iconMaxSize](SharedTexture iconToDraw) {
+			float stretchRatio = std::max(static_cast<float>(iconToDraw->getW() - 1 + (multiItemDrawOffset.GetFloorIntX() / 2)) / iconMaxSize.GetX(), static_cast<float>(iconToDraw->getH() - 1 + (multiItemDrawOffset.GetFloorIntY() / 2)) / iconMaxSize.GetY());
 			if (stretchRatio > 1) {
-				float stretchedWidth = static_cast<float>(iconToDraw->w) / stretchRatio;
-				float stretchedHeight = static_cast<float>(iconToDraw->h) / stretchRatio;
-				stretch_sprite(m_CarouselBitmap.get(), iconToDraw,
+				float stretchedWidth = static_cast<float>(iconToDraw->getW()) / stretchRatio;
+				float stretchedHeight = static_cast<float>(iconToDraw->getH()) / stretchRatio;
+				iconToDraw->render(g_FrameMan.GetRenderer(),
 					itemBoxToDraw.IconCenterPosition.GetFloorIntX() - static_cast<int>(itemBoxToDraw.RoundedAndBorderedSides.first ? std::floor(stretchedWidth / 2.0F) : std::ceil(stretchedWidth / 2.0F)) + multiItemDrawOffset.GetFloorIntX() + (itemBoxToDraw.RoundedAndBorderedSides.first ? m_CarouselBackgroundBoxBorderSize.GetFloorIntX() / 2 : 0) - (itemBoxToDraw.RoundedAndBorderedSides.second ? m_CarouselBackgroundBoxBorderSize.GetFloorIntX() / 2 : 0),
 					itemBoxToDraw.IconCenterPosition.GetFloorIntY() - static_cast<int>(stretchedHeight / 2.0F) + multiItemDrawOffset.GetFloorIntY(),
 					static_cast<int>(itemBoxToDraw.RoundedAndBorderedSides.first ? std::ceil(stretchedWidth) : std::floor(stretchedWidth)), static_cast<int>(stretchedHeight));
 			} else {
-				draw_sprite(m_CarouselBitmap.get(), iconToDraw, itemBoxToDraw.IconCenterPosition.GetFloorIntX() - (iconToDraw->w / 2) + multiItemDrawOffset.GetFloorIntX(), itemBoxToDraw.IconCenterPosition.GetFloorIntY() - (iconToDraw->h / 2) + multiItemDrawOffset.GetFloorIntY());
+				iconToDraw->render(g_FrameMan.GetRenderer(), itemBoxToDraw.IconCenterPosition.GetFloorIntX() - (iconToDraw->getW() / 2) + multiItemDrawOffset.GetFloorIntX(), itemBoxToDraw.IconCenterPosition.GetFloorIntY() - (iconToDraw->getH() / 2) + multiItemDrawOffset.GetFloorIntY());
 			}
 			multiItemDrawOffset -= Vector(c_MultipleItemInBoxOffset, -c_MultipleItemInBoxOffset);
 		});
+		g_FrameMan.PopRenderTarget();
 
 		std::string massString = RoundFloatToPrecision(std::fminf(999, totalItemMass), 0) + (totalItemMass > 999 ? "+ " : " ") + "KG";
-		m_SmallFont->DrawAligned(carouselAllegroBitmap, itemBoxToDraw.IconCenterPosition.GetFloorIntX(), itemBoxToDraw.IconCenterPosition.GetFloorIntY() - ((itemBoxToDraw.CurrentSize.GetFloorIntY() + m_SmallFont->GetFontHeight()) / 2) + 1, massString.c_str(), GUIFont::Centre);
+		m_SmallFont->DrawAligned(carouselSDLGUITexture, itemBoxToDraw.IconCenterPosition.GetFloorIntX(), itemBoxToDraw.IconCenterPosition.GetFloorIntY() - ((itemBoxToDraw.CurrentSize.GetFloorIntY() + m_SmallFont->GetFontHeight()) / 2) + 1, massString.c_str(), GUIFont::Centre);
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void InventoryMenuGUI::DrawFullMode(BITMAP *targetBitmap, const Vector &drawPos) const {
+	void InventoryMenuGUI::DrawFullMode(SDL_Renderer *renderer, const Vector &drawPos) const {
 		m_GUITopLevelBox->SetPositionAbs(drawPos.GetFloorIntX(), drawPos.GetFloorIntY());
 
 		if (IsEnablingOrDisabling()) {
@@ -1410,14 +1424,14 @@ namespace RTE {
 			m_GUITopLevelBox->SetPositionAbs(m_GUITopLevelBox->GetXPos() + ((m_GUITopLevelBoxFullSize.GetFloorIntX() - m_GUITopLevelBox->GetWidth()) / 2), m_GUITopLevelBox->GetYPos() + ((m_GUITopLevelBoxFullSize.GetFloorIntY() - m_GUITopLevelBox->GetHeight()) / 2));
 		}
 
-		AllegroScreen guiScreen(targetBitmap);
+		SDLScreen guiScreen;
 		m_GUIControlManager->Draw(&guiScreen);
 		if (IsEnabled() && !m_GUIDisplayOnly && m_MenuController->IsMouseControlled()) {
 			if (m_GUISelectedItem && m_GUISelectedItem->DragWasHeldForLongEnough()) {
-				BITMAP *selectedObjectIcon = m_GUISelectedItem->Object->GetGraphicalIcon();
-				draw_sprite(targetBitmap, selectedObjectIcon, m_GUICursorPos.GetFloorIntX() - (selectedObjectIcon->w / 2), m_GUICursorPos.GetFloorIntY() - (selectedObjectIcon->h / 2));
+				SharedTexture selectedObjectIcon = m_GUISelectedItem->Object->GetGraphicalIcon();
+				selectedObjectIcon->render(renderer, m_GUICursorPos.GetFloorIntX() - (selectedObjectIcon->getW() / 2), m_GUICursorPos.GetFloorIntY() - (selectedObjectIcon->getH() / 2));
 			} else {
-				draw_sprite(targetBitmap, s_CursorBitmap, m_GUICursorPos.GetFloorIntX(), m_GUICursorPos.GetFloorIntY());
+				s_CursorBitmap->render(renderer, m_GUICursorPos.GetFloorIntX(), m_GUICursorPos.GetFloorIntY());
 			}
 		}
 	}

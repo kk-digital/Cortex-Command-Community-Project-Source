@@ -6,7 +6,7 @@
 namespace RTE {
 
 	class GameActivity;
-	class AllegroBitmap;
+	class SDLGUITexture;
 	class GUIControlManager;
 	class GUICollectionBox;
 	class GUIComboBox;

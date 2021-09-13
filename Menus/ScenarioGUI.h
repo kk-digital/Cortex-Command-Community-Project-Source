@@ -8,9 +8,9 @@ namespace RTE {
 
 	class Activity;
 	class Scene;
-	class AllegroScreen;
-	class AllegroInput;
-	class AllegroBitmap;
+	class SDLScreen;
+	class SDLInput;
+	class SDLGUITexture;
 	class GUIControlManager;
 	class GUICollectionBox;
 	class GUIComboBox;
@@ -40,14 +40,14 @@ namespace RTE {
 		/// </summary>
 		/// <param name="guiScreen">Pointer to a GUIScreen interface that will be used by this ScenarioGUI's GUIControlManager. Ownership is NOT transferred!</param>
 		/// <param name="guiInput">Pointer to a GUIInput interface that will be used by this ScenarioGUI's GUIControlManager. Ownership is NOT transferred!</param>
-		ScenarioGUI(AllegroScreen *guiScreen, AllegroInput *guiInput) { Clear(); Create(guiScreen, guiInput); }
+		ScenarioGUI(SDLScreen *guiScreen, SDLInput *guiInput) { Clear(); Create(guiScreen, guiInput); }
 
 		/// <summary>
 		/// Makes the ScenarioGUI object ready for use.
 		/// </summary>
 		/// <param name="guiScreen">Pointer to a GUIScreen interface that will be used by this ScenarioGUI's GUIControlManager. Ownership is NOT transferred!</param>
 		/// <param name="guiInput">Pointer to a GUIInput interface that will be used by this ScenarioGUI's GUIControlManager. Ownership is NOT transferred!</param>
-		void Create(AllegroScreen *guiScreen, AllegroInput *guiInput);
+		void Create(SDLScreen *guiScreen, SDLInput *guiInput);
 #pragma endregion
 
 #pragma region Setters
@@ -114,7 +114,7 @@ namespace RTE {
 		GUILabel *m_SceneNameLabel;
 		GUILabel *m_SceneDescriptionLabel;
 		GUICollectionBox *m_ScenePreviewImageBox;
-		std::unique_ptr<AllegroBitmap> m_ScenePreviewBitmap;
+		std::unique_ptr<SDLGUITexture> m_ScenePreviewBitmap;
 		GUIButton *m_StartActivityConfigButton;
 		GUILabel *m_SitePointNameLabel;
 
@@ -195,13 +195,13 @@ namespace RTE {
 		/// Draws the site points on top of the planet.
 		/// </summary>
 		/// <param name="drawBitmap">The bitmap to draw on.</param>
-		void DrawSitePoints(BITMAP *drawBitmap) const;
+		void DrawSitePoints(SDL_Renderer *renderer) const;
 
 		/// <summary>
 		/// Draws fancy thick flickering lines from the Scene info box to the selected scene point on the planet.
 		/// </summary>
 		/// <param name="drawBitmap">The bitmap to draw to.</param>
-		void DrawLinesToSitePoint(BITMAP *drawBitmap) const;
+		void DrawLinesToSitePoint(SDL_Renderer *renderer) const;
 #pragma endregion
 
 		/// <summary>

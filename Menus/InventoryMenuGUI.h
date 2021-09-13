@@ -6,8 +6,8 @@
 
 #include "GUI.h"
 #include "GUIControlManager.h"
-#include "AllegroScreen.h"
-#include "AllegroInput.h"
+#include "SDLScreen.h"
+#include "SDLInput.h"
 
 namespace RTE {
 
@@ -15,7 +15,6 @@ namespace RTE {
 	class MovableObject;
 	class Actor;
 	class Icon;
-	class AllegroBitmap;
 	class GUIFont;
 	class GUICollectionBox;
 	class GUILabel;
@@ -159,7 +158,7 @@ namespace RTE {
 		/// </summary>
 		/// <param name="targetBitmap">A pointer to a BITMAP to draw on. Generally a screen BITMAP.</param>
 		/// <param name="targetPos">The absolute position of the target bitmap's upper left corner in the scene.</param>
-		void Draw(BITMAP *targetBitmap, const Vector &targetPos = Vector()) const;
+		void Draw(SDL_Renderer *renderer, const Vector &targetPos = Vector()) const;
 #pragma endregion
 
 	private:
@@ -183,7 +182,7 @@ namespace RTE {
 			/// <param name="itemIcons">A vector of Bitmaps to be filled in with the icon(s) for this CarouselItemBox's item(s).</param>
 			/// <param name="totalItemMass">A float to be filled in with the total mass of this CarouselItemBox's item(s).</param>
 			/// <param name="equippedItems">A pointer to the vector of sets of equipped items to be used if the CarouselItemBox IsForEquippedItem.</param>
-			void GetIconsAndMass(std::vector<BITMAP *> &itemIcons, float &totalItemMass, const std::vector<std::pair<MovableObject *, MovableObject *>> *equippedItems) const;
+			void GetIconsAndMass(std::vector<SharedTexture> &itemIcons, float &totalItemMass, const std::vector<std::pair<MovableObject *, MovableObject *>> *equippedItems) const;
 		};
 
 		/// <summary>
@@ -227,7 +226,7 @@ namespace RTE {
 		static constexpr int c_FullViewPageItemLimit = c_ItemsPerRow * 3; //!< The default number of rows in the full inventory display. Used in Full/Transfer MenuModes.
 		static constexpr int c_FullMenuVerticalOffset = 50; //!< How high above its target the full GUI will be. Used in Full/Transfer MenuModes.
 
-		static BITMAP *s_CursorBitmap; //!< The cursor image shared by all GUIs.
+		static SharedTexture s_CursorBitmap; //!< The cursor image shared by all GUIs.
 
 		GUIFont *m_SmallFont; //!< A pointer to the small font from FrameMan. Not owned here.
 		GUIFont *m_LargeFont; //!< A pointer to the large font from FrameMan. Not owned here.
@@ -253,8 +252,8 @@ namespace RTE {
 		Timer m_CarouselAnimationTimer; //!< Timer for progressing carousel animations.
 		std::array<std::unique_ptr<CarouselItemBox>, c_ItemsPerRow> m_CarouselItemBoxes; //!< An array of CarouselItemBoxes that make up the carousel. Used in Carousel MenuMode.
 		std::unique_ptr<CarouselItemBox> m_CarouselExitingItemBox; //!< A special case CarouselItemBox used to display the item that is exiting during animations. Used in Carousel MenuMode.
-		std::unique_ptr<BITMAP> m_CarouselBitmap; //!< The intermediary Bitmap onto which the carousel's items and mass indicators are drawn. It is then drawn onto the Bitmap the carousel is drawn to. Used in Carousel MenuMode.
-		std::unique_ptr<BITMAP> m_CarouselBGBitmap; //!< The intermediary Bitmap onto which the carousel's background boxes are drawn. It is then drawn onto the Bitmap the carousel is drawn to. Used in Carousel MenuMode.
+		SharedTexture m_CarouselBitmap; //!< The intermediary Bitmap onto which the carousel's items and mass indicators are drawn. It is then drawn onto the Bitmap the carousel is drawn to. Used in Carousel MenuMode.
+		SharedTexture m_CarouselBGBitmap; //!< The intermediary Bitmap onto which the carousel's background boxes are drawn. It is then drawn onto the Bitmap the carousel is drawn to. Used in Carousel MenuMode.
 
 		bool m_GUIDisplayOnly; //!< Whether this GUI is display only, or can be interacted with, and thereby affect the inventory it's displaying. Used in Full/Transfer MenuModes.
 		bool m_GUIShowEmptyRows; //!< Whether this GUI should show empty rows, up to the FullPageViewItemLimit.
@@ -282,8 +281,8 @@ namespace RTE {
 		/// GUI elements that make up the full mode InventoryMenuGUI.
 		/// </summary>
 		std::unique_ptr<GUIControlManager> m_GUIControlManager;
-		std::unique_ptr<AllegroScreen> m_GUIScreen;
-		std::unique_ptr<AllegroInput> m_GUIInput;
+		std::unique_ptr<SDLScreen> m_GUIScreen;
+		std::unique_ptr<SDLInput> m_GUIInput;
 		GUICollectionBox *m_GUITopLevelBox;
 		GUILabel *m_GUIInformationText;
 		GUIButton *m_GUIInformationToggleButton;
@@ -461,14 +460,14 @@ namespace RTE {
 		/// </summary>
 		/// <param name="targetBitmap">A pointer to a BITMAP to draw on. Generally a screen BITMAP.</param>
 		/// <param name="drawPos">The position at which to draw the carousel.</param>
-		void DrawCarouselMode(BITMAP *targetBitmap, const Vector &drawPos) const;
+		void DrawCarouselMode(SDL_Renderer *renderer, const Vector &drawPos) const;
 
 		/// <summary>
 		/// Draws the InventoryMenuGUI when it's in Full MenuMode.
 		/// </summary>
 		/// <param name="targetBitmap">A pointer to a BITMAP to draw on. Generally a screen BITMAP.</param>
 		/// <param name="drawPos">The position at which to draw the GUI.</param>
-		void DrawFullMode(BITMAP *targetBitmap, const Vector &drawPos) const;
+		void DrawFullMode(SDL_Renderer *renderer, const Vector &drawPos) const;
 
 		/// <summary>
 		/// Draws the specified CarouselItemBox's background to the carousel background Bitmap.
@@ -481,7 +480,7 @@ namespace RTE {
 		/// </summary>
 		/// <param name="itemBoxToDraw">The CarouselItemBox to draw.</param>
 		/// <param name="carouselAllegroBitmap">An AllegroBitmap of the bitmap the CarouselItemBox should draw its foreground to. Used for drawing mass strings, and predefined to avoid needless creation.</param>
-		void DrawCarouselItemBoxForeground(const CarouselItemBox &itemBoxToDraw, AllegroBitmap *carouselAllegroBitmap) const;
+		void DrawCarouselItemBoxForeground(const CarouselItemBox &itemBoxToDraw, SDLGUITexture *carouselllegroBitmap) const;
 #pragma endregion
 
 		/// <summary>

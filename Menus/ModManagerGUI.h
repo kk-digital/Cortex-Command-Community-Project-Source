@@ -3,8 +3,8 @@
 
 namespace RTE {
 
-	class AllegroScreen;
-	class AllegroInput;
+	class SDLScreen;
+	class SDLInput;
 	class GUIControlManager;
 	class GUILabel;
 	class GUIButton;
@@ -23,7 +23,7 @@ namespace RTE {
 		/// </summary>
 		/// <param name="guiScreen">Pointer to a GUIScreen interface that will be used by this ModManagerGUI's GUIControlManager. Ownership is NOT transferred!</param>
 		/// <param name="guiInput">Pointer to a GUIInput interface that will be used by this ModManagerGUI's GUIControlManager. Ownership is NOT transferred!</param>
-		ModManagerGUI(AllegroScreen *guiScreen, AllegroInput *guiInput);
+		ModManagerGUI(SDLScreen *guiScreen, SDLInput *guiInput);
 #pragma endregion
 
 #pragma region Concrete Methods

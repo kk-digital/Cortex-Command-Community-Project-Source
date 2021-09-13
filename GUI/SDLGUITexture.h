@@ -1,11 +1,10 @@
 #ifndef _RTESDLBITMAP_
 #define _RTESDLBITMAP_
 
-#include "GUI/Interface.h"
+#include "GUIInterface.h"
 #include "System/ContentFile.h"
 #include "System/SDLTexture.h"
 
-struct GUIRect;
 namespace RTE {
 	class SDLGUITexture : public GUIBitmap {
 	public:
@@ -51,7 +50,7 @@ namespace RTE {
 		/// Unused, all textures will be created to match the screen colordepth
 		/// </param>
 		/// <returns> True if the texture was successfully created </returns>
-		bool Create(int width, int height, int) {Create(width, height, false);}
+		bool Create(int width, int height, int) { Create(width, height, false); }
 
 		bool Create(int width, int height, bool renderer);
 
@@ -60,11 +59,15 @@ namespace RTE {
 		/// </summary>
 		void Destroy() override;
 
-		void Render(int x, int y, GUIRect *pRect, bool trans = true, SDL_Rect* clip = nullptr);
+		void Lock();
+
+		void Unlock();
+
+		void Render(int x, int y, GUIRect *pRect, bool trans = true, SDL_Rect *clip = nullptr);
 		void RenderScaled(int x, int y, int width, int height, bool trans = true);
 
-		void Blit(GUIBitmap* pDestBitmap, int x, int y, GUIRect* pRect, bool trans = true);
-		void BlitScaled(GUIBitmap* pDestBitmap, int x, int y, int width, int height, bool trans = true);
+		void Blit(GUIBitmap *pDestBitmap, int x, int y, GUIRect *pRect, bool trans = true);
+		void BlitScaled(GUIBitmap *pDestBitmap, int x, int y, int width, int height, bool trans = true);
 
 		/// <summary>
 		/// Draw the SDLBitmap to the destination bitmap
@@ -93,7 +96,7 @@ namespace RTE {
 		/// <param name="y">y position on the target</param>
 		/// <param name="width">width to scale to</param>
 		/// <param name="height">height to scale to</param>
-		void DrawTransScaled(GUIBitmap *pDestBitmap, int x, int y, int width, int height) override { pDestBitmap ? BlitScaled(pDestBitmap, x, y, width, height) : RenderScaled(x, y, width, height);}
+		void DrawTransScaled(GUIBitmap *pDestBitmap, int x, int y, int width, int height) override { pDestBitmap ? BlitScaled(pDestBitmap, x, y, width, height) : RenderScaled(x, y, width, height); }
 
 		/// <summary>
 		/// Draw a Line on the Bitmap
@@ -121,7 +124,7 @@ namespace RTE {
 		/// <param name="x">x coordinate</param>
 		/// <param name="y">y coordinate</param>
 		/// <returns> Color of the Pixel at coordinate (x,y)</returns>
-		unsigned long GetPixel(int x, int y) override;
+		unsigned long GetPixel(int x, int y) const override;
 
 		/// <summary>
 		/// Set the Color of the pixel at coordinates (x,y).
@@ -136,33 +139,31 @@ namespace RTE {
 		/// Get the width of the texture
 		/// </summary>
 		/// <returns> Width of the texture</returns>
-		int GetWidth() override { return m_Width; }
+		int GetWidth() const override { return m_Width; }
 
 		/// <summary>
 		/// Get the height of the texture
 		/// </summary>
 		/// <returns> Height of the texture </returns>
-		int GetHeight() override { return m_Height; }
+		int GetHeight() const override { return m_Height; }
 
 		/// @deprecated
 		/// <summary>
 		/// Get the color depth of the texture
 		/// </summary>
-		int GetColorDepth() override { return 32; };
+		int GetColorDepth() const override { return 32; };
 
 		/// <summary>
 		/// Get the clipping rectangle
 		/// </summary>
 		/// <param name="rect">Pointer to a rectangle to store the data</param>
-		void GetClipRect(GUIRect *rect) override;
+		void GetClipRect(GUIRect *rect) const override;
 
 		/// <summary>
 		/// Set the clipping rectangle
 		/// </summary>
 		/// <param name="rect">The rectangle to clip to</param>
 		void SetClipRect(GUIRect *rect) override;
-
-		void ResetClipRect() override;
 
 		/// <summary>
 		/// Set the clipping rectangle as the intersection of the current
@@ -175,26 +176,18 @@ namespace RTE {
 		/// Get the path to the datafile object in use by this GUIBitmap
 		/// </summary>
 		/// <returns> The Path to the datafile </returns>
-		std::string GetDataPath() override {
+		std::string GetDataPath() const override {
 			return m_TextureFile.GetDataPath();
 		}
 
 		/// <summary>
 		/// Get the texture of the SDLTexture object
 		/// </summary>
-		SharedTexture GetTexture() { return m_Texture; }
+		SharedTexture GetTexture() const override { return m_Texture; }
 
-		/// <summary>
-		/// Returns wether this SDLTexture has texture data.
-		/// </summary>
-		/// <returns> True if a texture is set</returns>
-		bool HasBitmap() override { return m_Texture != 0; }
+		void SetBitmap(SharedTexture) override {}
 
-		void Lock();
-
-		void Unlock();
-
-		void SetColorKey(unsigned long key) override { m_ColorKey = key;}
+		void SetColorKey(unsigned long key) override { m_ColorKey = key; }
 
 	private:
 		ContentFile m_TextureFile;
@@ -210,7 +203,6 @@ namespace RTE {
 		int m_Height;
 
 	public:
-
 	};
 } // namespace RTE
 #endif

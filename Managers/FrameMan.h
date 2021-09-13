@@ -6,6 +6,8 @@
 #include "Timer.h"
 #include "ContentFile.h"
 
+#include <SDL2/SDL_rect.h>
+
 #include "System/SDLTexture.h"
 
 #define g_FrameMan FrameMan::Instance()
@@ -99,6 +101,10 @@ namespace RTE {
 		/// Wether or not to have a vertical split.
 		/// </param>
 		void SetVSplit(bool vSplit) { m_VSplit = vSplit; }
+
+		bool GetTwoPlayerVSplit() const { return m_TwoPlayerVSplit; }
+
+		void SetTwoPlayerVSplit(bool twoPlayerVSplit) {m_TwoPlayerVSplit = twoPlayerVSplit;}
 
 		/// <summary>
 		/// Sets new values for the split screen configuration
@@ -239,6 +245,9 @@ namespace RTE {
 		/// </returns>
 		unsigned short GetResY() const { return m_ResY; }
 
+		unsigned short GetMaxResX() const { return m_ScreenRes->w; }
+		unsigned short GetMaxResY() const { return m_ScreenRes->h; }
+
 		/// <summary>
 		/// Gets the horizontal resolution of the screen that will be used the
 		/// next time this FrameMan is created.
@@ -279,6 +288,8 @@ namespace RTE {
 		/// </param>
 		void SetNewResY(unsigned short newResY) { m_NewResY = newResY; }
 
+		void ChangeResolution(int newResX, int newResY, bool newResUpscaled, bool newFullscreen) {m_NewResX = newResX; m_NewResY = newResY;}
+
 		/// <summary>
 		/// Indicates wether a new resolution has been set for the next time
 		/// this FrameMan is created
@@ -308,7 +319,7 @@ namespace RTE {
 		/// <returns>
 		/// What multiple the screen resolution is run in (1 normal)
 		/// </returns>
-		int ResolutionMultiplier() const { return m_ResMultiplier; }
+		int GetResMultiplier() const { return m_ResMultiplier; }
 
 		/// <summary>
 		/// Gets wether resolution validation in multi-monitor mode is disabled
@@ -600,12 +611,9 @@ namespace RTE {
 		//!< screen, i.e. as two splitscreens side by side.
 		bool m_VSplit;
 
-		//!< Wether the screen is set to split
-		//!< horizontally in settings
-		bool m_HSplitOverride;
 		//!< Wether the screen is set to split vertically
 		//!< in settings
-		bool m_VSplitOverride;
+		bool m_TwoPlayerVSplit;
 
 		std::array<std::string, c_MaxScreenCount> m_ScreenText;
 		std::array<bool, c_MaxScreenCount> m_TextCentered;

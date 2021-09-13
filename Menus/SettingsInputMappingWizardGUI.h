@@ -4,10 +4,10 @@
 #include "Timer.h"
 #include "InputScheme.h"
 
-struct BITMAP;
-
 namespace RTE {
 
+	class Texture;
+	typedef std::shared_ptr<Texture> SharedTexture;
 	class InputScheme;
 	class GUIControlManager;
 	class GUICollectionBox;
@@ -135,9 +135,9 @@ namespace RTE {
 
 		Timer m_BlinkTimer; //!< Timer for blinking the "Apply Changes" button and animating the recommended input diagram when configuring gamepads.
 
-		std::vector<BITMAP *> m_DPadDiagramBitmaps; //!< Vector containing all the D-Pad type gamepad recommended input diagram bitmaps.
-		std::vector<BITMAP *> m_DualAnalogDSDiagramBitmaps; //!< Vector containing all the DualShock type gamepad recommended input diagram bitmaps.
-		std::vector<BITMAP *> m_DualAnalogXBDiagramBitmaps; //!< Vector containing all the Xbox type gamepad recommended input diagram bitmaps.
+		std::vector<SharedTexture> m_DPadDiagramBitmaps; //!< Vector containing all the D-Pad type gamepad recommended input diagram bitmaps.
+		std::vector<SharedTexture> m_DualAnalogDSDiagramBitmaps; //!< Vector containing all the DualShock type gamepad recommended input diagram bitmaps.
+		std::vector<SharedTexture> m_DualAnalogXBDiagramBitmaps; //!< Vector containing all the Xbox type gamepad recommended input diagram bitmaps.
 
 		WizardManualConfigScreen m_WizardManualConfigScreen; //!< The manual input configuration menu screen.
 		WizardPresetSelectScreen m_WizardPresetSelectScreen; //!< The preset selection menu screen.

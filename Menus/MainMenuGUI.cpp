@@ -7,8 +7,8 @@
 #include "ConsoleMan.h"
 
 #include "GUI.h"
-#include "AllegroScreen.h"
-#include "AllegroInput.h"
+#include "SDLScreen.h"
+#include "SDLInput.h"
 #include "GUICollectionBox.h"
 #include "GUIButton.h"
 #include "GUILabel.h"
@@ -48,7 +48,7 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void MainMenuGUI::Create(AllegroScreen *guiScreen, AllegroInput *guiInput) {
+	void MainMenuGUI::Create(SDLScreen *guiScreen, SDLInput *guiInput) {
 		m_MainMenuScreenGUIControlManager = std::make_unique<GUIControlManager>();
 		RTEAssert(m_MainMenuScreenGUIControlManager->Create(guiScreen, guiInput, "Base.rte/GUIs/Skins/Menus", "MainMenuScreenSkin.ini"), "Failed to create GUI Control Manager and load it from Base.rte/GUIs/Skins/Menus/MainMenuScreenSkin.ini");
 		m_MainMenuScreenGUIControlManager->Load("Base.rte/GUIs/MainMenuGUI.ini");
@@ -361,7 +361,7 @@ namespace RTE {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void MainMenuGUI::HandleBackNavigation(bool backButtonPressed) {
-		if ((!m_ActiveDialogBox || m_ActiveDialogBox == m_MainMenuScreens.at(MenuScreen::QuitScreen)) && (backButtonPressed || g_UInputMan.KeyPressed(KEY_ESC))) {
+		if ((!m_ActiveDialogBox || m_ActiveDialogBox == m_MainMenuScreens.at(MenuScreen::QuitScreen)) && (backButtonPressed || g_UInputMan.KeyPressed(SDLK_ESCAPE))) {
 			if (m_ActiveMenuScreen != MenuScreen::MainScreen) {
 				if (m_ActiveMenuScreen == MenuScreen::SettingsScreen || m_ActiveMenuScreen == MenuScreen::ModManagerScreen) {
 					if (m_ActiveMenuScreen == MenuScreen::SettingsScreen) { m_SettingsMenu->RefreshActiveSettingsMenuScreen(); }
@@ -375,7 +375,7 @@ namespace RTE {
 			} else {
 				ShowQuitScreenOrQuit();
 			}
-		} else if (m_ActiveMenuScreen == MenuScreen::SettingsScreen && m_ActiveDialogBox && g_UInputMan.KeyPressed(KEY_ESC)) {
+		} else if (m_ActiveMenuScreen == MenuScreen::SettingsScreen && m_ActiveDialogBox && g_UInputMan.KeyPressed(SDLK_ESCAPE)) {
 			m_SettingsMenu->CloseActiveDialogBox();
 		}
 	}
@@ -534,8 +534,9 @@ namespace RTE {
 				break;
 		}
 		if (m_ActiveDialogBox) {
-			set_trans_blender(128, 128, 128, 128);
-			draw_trans_sprite(g_FrameMan.GetBackBuffer32(), g_FrameMan.GetOverlayBitmap32(), 0, 0);
+			// TODO: \/ Overlay Layer (but what do it do??)
+			// set_trans_blender(128, 128, 128, 128);
+			// draw_trans_sprite(g_FrameMan.GetBackBuffer32(), g_FrameMan.GetOverlayBitmap32(), 0, 0);
 			// Whatever this box may be at this point it's already been drawn by the owning GUIControlManager, but we need to draw it again on top of the overlay so it's not affected by it.
 			m_ActiveDialogBox->Draw(m_ActiveGUIControlManager->GetScreen());
 		}

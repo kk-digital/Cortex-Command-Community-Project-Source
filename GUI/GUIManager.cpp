@@ -329,7 +329,7 @@ bool GUIManager::MouseInRect(const GUIRect *Rect, int X, int Y) {
 	if (!Rect) {
 		return false;
 	}
-	if (X >= Rect->left && X <= Rect->right && Y >= Rect->top && Y <= Rect->bottom) {
+	if (X >= Rect->x + Rect->w && X <= Rect->x && Y >= Rect->y && Y <= Rect->y + Rect->h) {
 		return true;
 	}
 	return false;

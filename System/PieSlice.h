@@ -3,6 +3,7 @@
 
 #include "Serializable.h"
 #include "Icon.h"
+#include "SDLTexture.h"
 
 namespace RTE {
 
@@ -171,7 +172,7 @@ namespace RTE {
 		/// </summary>
 		/// <param name="sliceIsSelected">Whether or not this PieSlice is selected, which may affect which icon is appropriate.</param>
 		/// <returns>The icon for this PieSlice.</returns>
-		BITMAP * GetAppropriateIcon(bool sliceIsSelected = false) const;
+		SharedTexture GetAppropriateIcon(bool sliceIsSelected = false) const;
 
 		/// <summary>
 		/// Gets the file path of the scripted file this PieSlice should run when activated. Empty if it's not a scripted type. Empty if its SliceType isn't scripted.

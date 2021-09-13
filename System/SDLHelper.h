@@ -45,4 +45,7 @@ struct sdl_deleter {
 	void operator()(SDL_Window *p) { SDL_DestroyWindow(p); }
 };
 
+const SDL_BlendMode BLENDMODE_SCREEN = SDL_ComposeCustomBlendMode(
+    SDL_BLENDFACTOR_ONE, SDL_BLENDFACTOR_ONE_MINUS_SRC_COLOR, SDL_BLENDOPERATION_ADD,
+    SDL_BLENDFACTOR_ONE, SDL_BLENDFACTOR_ONE_MINUS_SRC_ALPHA, SDL_BLENDOPERATION_ADD);
 #endif

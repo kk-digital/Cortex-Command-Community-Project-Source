@@ -137,7 +137,7 @@ void GUITab::Draw(GUIScreen *Screen) {
 
 	// Calculate the y position of the base
 	// Make it centered vertically
-	int YPos = m_Height / 2 - (m_ImageRects[0].bottom - m_ImageRects[0].top) / 2 + m_Y;
+	int YPos = m_Height / 2 - (m_ImageRects[0].h) / 2 + m_Y;
 
 	// Draw the base
 	m_Image->DrawTrans(Screen->GetBitmap(), m_X, YPos, &m_ImageRects[0]);

@@ -247,21 +247,21 @@ public:
     /// <summary>
     /// Gets whether or not this GUIButton has an icon with a Bitmap.
     /// </summary>
-    bool HasIcon() const { return m_Icon->GetBitmap(); }
+    bool HasIcon() const { return m_Icon->GetTexture().get(); }
 
     /// <summary>
     /// Sets the icon for this GUIButton. Ownership is NOT transferred.
     /// </summary>
     /// <param name="newIcon">A pointer to the new icon BITMAP for this GUIButton.</param>
     /// <param name="noBitmapRebuild">Lets this method NOT rebuild the button bitmap, even if the icon has changed. Defaults to false and should almost always stay that way.</param>
-    void SetIcon(BITMAP *newIcon, bool noBitmapRebuild = false);
+    void SetIcon(SharedTexture newIcon, bool noBitmapRebuild = false);
 
     /// <summary>
     /// Helper method to set both text and icon for this GUIButton at the same time.
     /// </summary>
     /// <param name="newIcon">A pointer to the new icon BITMAP for this GUIButton.</param>
     /// <param name="newText">The new text for this GUIButton's GUILabel.</param>
-    void SetIconAndText(BITMAP *newIcon, const std::string_view &newText);
+    void SetIconAndText(SharedTexture newIcon, const std::string_view &newText);
 
 
 //////////////////////////////////////////////////////////////////////////////////////////

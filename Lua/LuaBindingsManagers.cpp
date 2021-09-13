@@ -68,13 +68,13 @@ namespace RTE {
 		.property("PlayerScreenWidth", &FrameMan::GetPlayerScreenWidth)
 		.property("PlayerScreenHeight", &FrameMan::GetPlayerScreenHeight)
 
-		.def("LoadPalette", &FrameMan::LoadPalette)
+		// .def("LoadPalette", &FrameMan::LoadPalette) // TODO: SDL  implement
 		.def("SetScreenText", &FrameMan::SetScreenText)
 		.def("ClearScreenText", &FrameMan::ClearScreenText)
-		.def("FadeInPalette", &FrameMan::FadeInPalette)
-		.def("FadeOutPalette", &FrameMan::FadeOutPalette)
+		// .def("FadeInPalette", &FrameMan::FadeInPalette) // TODO: SDL implement
+		// .def("FadeOutPalette", &FrameMan::FadeOutPalette) // TODO: SDL implement
 		.def("SaveScreenToPNG", &FrameMan::SaveScreenToPNG)
-		.def("SaveBitmapToPNG", &FrameMan::SaveBitmapToPNG)
+		.def("SaveBitmapToPNG", &FrameMan::SaveTextureToPNG)
 		.def("FlashScreen", &FrameMan::FlashScreen)
 		.def("CalculateTextHeight", &FrameMan::CalculateTextHeight)
 		.def("CalculateTextWidth", &FrameMan::CalculateTextWidth);

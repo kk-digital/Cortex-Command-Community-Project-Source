@@ -127,7 +127,7 @@ namespace RTE {
 		/// </summary>
 		/// <param name="whichPlayer">Which player to affect.</param>
 		/// <param name="whichInput">Which input element to clear all mappings of.</param>
-		void ClearMapping(int whichPlayer, int whichInput) { m_ControlScheme[whichPlayer].GetInputMappings()[whichInput].Reset(); }
+		// void ClearMapping(int whichPlayer, int whichInput) { m_ControlScheme[whichPlayer].GetInputMappings()[whichInput].Reset(); }
 
 		/// <summary>
 		/// Gets the name of the key/mouse/joystick button/direction that a particular input element is mapped to.
@@ -135,7 +135,7 @@ namespace RTE {
 		/// <param name="whichPlayer">Which player to look up.</param>
 		/// <param name="whichElement">Which input element to look up.</param>
 		/// <returns>A string with the appropriate clear text description of the mapped thing.</returns>
-		std::string GetMappingName(int whichPlayer, int whichElement);
+		// std::string GetMappingName(int whichPlayer, int whichElement);
 
 		/// <summary>
 		/// Gets which keyboard key is mapped to a specific input element.
@@ -143,31 +143,8 @@ namespace RTE {
 		/// <param name="whichPlayer">Which player to look up.</param>
 		/// <param name="whichInput">Which input element to look up.</param>
 		/// <returns>Which keyboard key is mapped to the specified player and element.</returns>
-		SDL_Keycode GetKeyMapping(int whichPlayer, int whichInput) { return m_ControlScheme[whichPlayer].GetInputMappings()[whichInput].GetKey(); }
+		// SDL_Keycode GetKeyMapping(int whichPlayer, int whichInput) { return m_ControlScheme[whichPlayer].GetInputMappings()[whichInput].GetKey(); }
 
-		/// <summary>
-		/// Sets a keyboard key mapped to a specific input element.
-		/// </summary>
-		/// <param name="whichPlayer">Which player to do this for.</param>
-		/// <param name="whichInput">Which input element to map to.</param>
-		/// <param name="whichKey">The scancode of which keyboard key to map to above input element.</param>
-		void SetKeyMapping(int whichPlayer, int whichInput, SDL_Keycode whichKey) { m_ControlScheme[whichPlayer].GetInputMappings()[whichInput].SetKey(whichKey); }
-
-		/// <summary>
-		/// Gets which joystick button is mapped to a specific input element.
-		/// </summary>
-		/// <param name="whichPlayer">Which player to look up.</param>
-		/// <param name="whichInput">Which input element to look up.</param>
-		/// <returns>Which joystick button is mapped to the specified player and element.</returns>
-		int GetButtonMapping(int whichPlayer, int whichInput) { return m_ControlScheme[whichPlayer].GetInputMappings()[whichInput].GetJoyButton(); }
-
-		/// <summary>
-		/// Sets a joystick button mapped to a specific input element.
-		/// </summary>
-		/// <param name="whichPlayer">Which player to do this for.</param>
-		/// <param name="whichInput">Which input element to map to.</param>
-		/// <param name="whichButton">Which joystick button to map to the specified input element.</param>
-		void SetButtonMapping(int whichPlayer, int whichInput, int whichButton) { m_ControlScheme[whichPlayer].GetInputMappings()[whichInput].SetJoyButton(whichButton); }
 
 		/// <summary>
 		/// Checks for any key press this frame and creates an input mapping for a specific player accordingly.
@@ -175,7 +152,7 @@ namespace RTE {
 		/// <param name="whichPlayer">Which player to create a map for.</param>
 		/// <param name="whichInput">Which input element to map to for that player.</param>
 		/// <returns>Whether there were any key presses this frame and therefore whether a mapping was successfully captured or not.</returns>
-		bool CaptureKeyMapping(int whichPlayer, int whichInput);
+		// bool CaptureKeyMapping(int whichPlayer, int whichInput);
 
 		/// <summary>
 		/// Checks for any button press this frame and creates an input mapping for a specific player accordingly.
@@ -184,7 +161,7 @@ namespace RTE {
 		/// <param name="whichJoy">Which joystick to scan for button presses.</param>
 		/// <param name="whichInput">Which input element to map to for that player.</param>
 		/// <returns>Whether there were any button presses this frame and therefore whether a mapping was successfully captured or not.</returns>
-		bool CaptureButtonMapping(int whichPlayer, int whichJoy, int whichInput);
+		// bool CaptureButtonMapping(int whichPlayer, int whichJoy, int whichInput);
 
 		/// <summary>
 		/// Checks for any joystick pad or stick direction press this frame and creates an input mapping for a specific player accordingly.
@@ -193,7 +170,7 @@ namespace RTE {
 		/// <param name="whichJoy">Which joystick to scan for pad and stick direction presses.</param>
 		/// <param name="whichInput">Which input element to map to for that player.</param>
 		/// <returns>Whether there were any direction presses this frame and therefore whether a mapping was successfully captured or not.</returns>
-		bool CaptureDirectionMapping(int whichPlayer, int whichJoy, int whichInput);
+		// bool CaptureDirectionMapping(int whichPlayer, int whichJoy, int whichInput);
 
 		/// <summary>
 		/// Checks for any button or direction press this frame and creates an input mapping for a specific player accordingly.
@@ -202,7 +179,7 @@ namespace RTE {
 		/// <param name="whichJoy">Which joystick to scan for button and stick presses.</param>
 		/// <param name="whichInput">Which input element to map to for that player.</param>
 		/// <returns>Whether there were any button or stick presses this frame and therefore whether a mapping was successfully captured or not.</returns>
-		bool CaptureJoystickMapping(int whichPlayer, int whichJoy, int whichInput);
+		// bool CaptureJoystickMapping(int whichPlayer, int whichJoy, int whichInput);
 #pragma endregion
 
 #pragma region General Input Handling
@@ -319,6 +296,8 @@ namespace RTE {
 		/// </summary>
 		/// <returns>The state of the Shift key.</returns>
 		bool FlagShiftState() const;
+
+		bool DetectJoystickHotPlug(){return false;}
 #pragma endregion
 
 #pragma region Keyboard Handling
@@ -391,7 +370,7 @@ namespace RTE {
 		/// Set the mouse's analog emulation output to be of a specific normalized magnitude.
 		/// </summary>
 		/// <param name="magCap">The normalized magnitude, between 0 and 1.0.</param>
-		void SetMouseValueMagnitude(float magCap) { m_AnalogMouseData.CapMagnitude(m_MouseTrapRadius * magCap); }
+		void SetMouseValueMagnitude(float magCap, int whichPlayer = Players::NoPlayer) { m_AnalogMouseData.CapMagnitude(m_MouseTrapRadius * magCap); }
 
 		/// <summary>
 		/// Sets the absolute screen position of the mouse cursor.
@@ -612,6 +591,7 @@ namespace RTE {
 		/// <param name="whichJoy">Which joystick to check for.</param>
 		/// <returns>Whether any joystick buttons have been pressed at all since last frame, of a specific joystick.</returns>
 		bool AnyJoyButtonPress(int whichJoy) const;
+		void SetGUIInputInstanceToCaptureKeyStateFrom(GUIInput*) {};
 #pragma endregion
 
 #pragma region Network Handling
@@ -739,7 +719,7 @@ namespace RTE {
 
 		bool m_OverrideInput; //!< If true then this instance operates in multiplayer mode and the input is overridden by network input.
 
-		InputScheme m_ControlScheme[Players::MaxPlayerCount]; //!< Which control scheme is being used by each player.
+		std::array<InputScheme, Players::MaxPlayerCount> m_ControlScheme; //!< Which control scheme is being used by each player.
 		const Icon *m_DeviceIcons[InputDevice::DEVICE_COUNT]; //!< The Icons representing all different devices.
 
 		Vector m_RawMouseMovement; //!< The raw absolute movement of the mouse between the last two Updates.

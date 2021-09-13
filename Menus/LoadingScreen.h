@@ -2,13 +2,14 @@
 #define _RTELOADINGSCREEN_
 
 #include "Singleton.h"
+#include "SDLTexture.h"
 
 #define g_LoadingScreen LoadingScreen::Instance()
 
 namespace RTE {
 
-	class AllegroScreen;
-	class AllegroInput;
+	class SDLScreen;
+	class SDLInput;
 	class GUIControlManager;
 	class Writer;
 
@@ -31,7 +32,7 @@ namespace RTE {
 		/// <param name="guiScreen">Pointer to a GUIScreen interface that will be used by this LoadingScreen's GUIControlManager. Ownership is NOT transferred!</param>
 		/// <param name="guiInput">Pointer to a GUIInput interface that will be used by this LoadingScreen's GUIControlManager. Ownership is NOT transferred!</param>
 		/// <param name="progressReportDisabled">Whether the loading screen progress report is disabled meaning GUI elements and adjustments relevant to it can be skipped.</param>
-		void Create(AllegroScreen *guiScreen, AllegroInput *guiInput, bool progressReportDisabled);
+		void Create(SDLScreen *guiScreen, SDLInput *guiInput, bool progressReportDisabled);
 
 		/// <summary>
 		/// Creates the GUIListBox that the progress report will be drawn to, if not disabled through the settings file to speed up loading times.
@@ -61,7 +62,7 @@ namespace RTE {
 
 		std::unique_ptr<Writer> m_LoadingLogWriter; //!< The Writer that generates the loading log.
 
-		BITMAP *m_ProgressListboxBitmap; //!< BITMAP that the progress report will be drawn into.
+		SharedTexture m_ProgressListboxBitmap; //!< BITMAP that the progress report will be drawn into.
 		int m_ProgressListboxPosX; //!< Position of the progress report box on X axis.
 		int m_ProgressListboxPosY; //!< Position of the progress report box on Y axis.
 

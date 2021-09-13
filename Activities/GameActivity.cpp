@@ -1025,26 +1025,26 @@ int GameActivity::Start()
     if (m_aLZCursor[0].empty())
     {
         ContentFile cursorFile("Base.rte/GUIs/Indicators/LZArrowRedL.png");
-        cursorFile.GetAsAnimation(m_aLZCursor[0], LZCURSORFRAMECOUNT);
+        m_aLZCursor[0] = cursorFile.GetAsAnimation(LZCURSORFRAMECOUNT);
         cursorFile.SetDataPath("Base.rte/GUIs/Indicators/LZArrowGreenL.png");
-        cursorFile.GetAsAnimation(m_aLZCursor[1], LZCURSORFRAMECOUNT);
+		m_aLZCursor[1] = cursorFile.GetAsAnimation(LZCURSORFRAMECOUNT);
 		cursorFile.SetDataPath("Base.rte/GUIs/Indicators/LZArrowBlueL.png");
-		cursorFile.GetAsAnimation(m_aLZCursor[2], LZCURSORFRAMECOUNT);
+		m_aLZCursor[2] = cursorFile.GetAsAnimation(LZCURSORFRAMECOUNT);
 		cursorFile.SetDataPath("Base.rte/GUIs/Indicators/LZArrowYellowL.png");
-		cursorFile.GetAsAnimation(m_aLZCursor[3], LZCURSORFRAMECOUNT);
+		m_aLZCursor[2] = cursorFile.GetAsAnimation(LZCURSORFRAMECOUNT);
     }
 
     if (m_aObjCursor[0].empty())
     {
         ContentFile cursorFile("Base.rte/GUIs/Indicators/ObjArrowRed.png");
-        cursorFile.GetAsAnimation(m_aObjCursor[0], OBJARROWFRAMECOUNT);
-        cursorFile.SetDataPath("Base.rte/GUIs/Indicators/ObjArrowGreen.png");
-        cursorFile.GetAsAnimation(m_aObjCursor[1], OBJARROWFRAMECOUNT);
+		m_aObjCursor[0] = cursorFile.GetAsAnimation(OBJARROWFRAMECOUNT);
+		cursorFile.SetDataPath("Base.rte/GUIs/Indicators/ObjArrowGreen.png");
+		m_aObjCursor[1] = cursorFile.GetAsAnimation(OBJARROWFRAMECOUNT);
 		cursorFile.SetDataPath("Base.rte/GUIs/Indicators/ObjArrowBlue.png");
-		cursorFile.GetAsAnimation(m_aObjCursor[2], OBJARROWFRAMECOUNT);
+		m_aObjCursor[2] = cursorFile.GetAsAnimation(OBJARROWFRAMECOUNT);
 		cursorFile.SetDataPath("Base.rte/GUIs/Indicators/ObjArrowYellow.png");
-		cursorFile.GetAsAnimation(m_aObjCursor[3], OBJARROWFRAMECOUNT);
-    }
+		m_aObjCursor[3] = cursorFile.GetAsAnimation(OBJARROWFRAMECOUNT);
+	}
 
     // Start the in-game music
     g_AudioMan.ClearMusicQueue();
@@ -2332,13 +2332,9 @@ void GameActivity::DrawGUI(SDL_Renderer* renderer, const Vector &targetPos, int 
 		pIcon->GetTextures()[0]->render(renderer, std::max(2, static_cast<int>(g_SceneMan.GetScreenOcclusion(which).m_X)), 2);
 	}
 
-    // Team Icon up in the top left corner
-    const Icon *pIcon = GetTeamIcon(m_Team[PoS]);
-    if (pIcon)
-        draw_sprite(pTargetBitmap, pIcon->GetBitmaps8()[0], MAX(2, g_SceneMan.GetScreenOcclusion(which).m_X + 2), 2);
     // Gold
     std::snprintf(str, sizeof(str), "%c Funds: %.10g oz", TeamFundsChanged(which) ? -57 : -58, std::floor(GetTeamFunds(m_Team[PoS])));
-    g_FrameMan.GetLargeFont()->DrawAligned(&pBitmapInt, MAX(16, g_SceneMan.GetScreenOcclusion(which).m_X + 16), yTextPos, str, GUIFont::Left);
+    g_FrameMan.GetLargeFont()->DrawAligned(&pBitmapInt, std::max(16.0f, g_SceneMan.GetScreenOcclusion(which).m_X + 16), yTextPos, str, GUIFont::Left);
 /* Not applicable anymore to the 4-team games
     // Body losses
     std::snprintf(str, sizeof(str), "%c Losses: %c%i %c%i", -39, -62, GetTeamDeathCount(Teams::TeamOne), -59, GetTeamDeathCount(Teams::TeamTwo));
@@ -2354,7 +2350,7 @@ void GameActivity::DrawGUI(SDL_Renderer* renderer, const Vector &targetPos, int 
             pIcon = g_UInputMan.GetSchemeIcon(PoS);
             if (pIcon)
             {
-                draw_sprite(pTargetBitmap, pIcon->GetBitmaps8()[0], MIN(pTargetBitmap->w - pIcon->GetBitmaps8()[0]->w - 2, pTargetBitmap->w - pIcon->GetBitmaps8()[0]->w - 2 + g_SceneMan.GetScreenOcclusion(which).m_X), yTextPos);
+                pIcon->GetTextures()[0]->render(renderer, std::fmin(renderSize.w - pIcon->GetTextures()[0]->getW() - 2, renderSize.w - pIcon->GetTextures()[0]->getW() - 2 + g_SceneMan.GetScreenOcclusion(which).m_X), yTextPos);
 // TODO: make a black Activity intro screen, saying "Player X, press any key/button to show that you are ready!, and display their controller icon, then fade into the scene"
 //                stretch_sprite(pTargetBitmap, pIcon->GetBitmaps8()[0], 10, 10, pIcon->GetBitmaps8()[0]->w * 4, pIcon->GetBitmaps8()[0]->h * 4);
             }
@@ -2370,7 +2366,7 @@ void GameActivity::DrawGUI(SDL_Renderer* renderer, const Vector &targetPos, int 
         if (m_InventoryMenuGUI[PoS] && m_InventoryMenuGUI[PoS]->IsVisible()) { m_InventoryMenuGUI[PoS]->Draw(renderer, targetPos); }
 
         if (m_pBuyGUI[PoS] && m_pBuyGUI[PoS]->IsVisible())
-            m_pBuyGUI[PoS]->Draw(rendere);
+            m_pBuyGUI[PoS]->Draw(renderer);
     }
 
 	// Draw actor picking crosshairs if applicable

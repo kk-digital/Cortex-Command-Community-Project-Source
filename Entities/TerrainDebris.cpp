@@ -60,7 +60,7 @@ namespace RTE {
 			reader >> m_DebrisFile;
 		} else if (propName == "DebrisPieceCount") {
 			reader >> m_BitmapCount;
-			m_Bitmaps.reserve(m_BitmapCount);
+			m_Textures.reserve(m_BitmapCount);
 		} else if (propName == "DebrisMaterial") {
 			reader >> m_Material;
 		} else if (propName == "TargetMaterial") {

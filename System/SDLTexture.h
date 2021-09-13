@@ -925,6 +925,14 @@ namespace RTE {
 		/// </param>
 		int setColorMod(uint8_t r, uint8_t g, uint8_t b);
 
+		/// <summary>
+		/// Set values for all color channels to be multiplied onto render operations.
+		/// </summary>
+		/// <param name="rgb">
+		/// The color multiplier.
+		/// </param>
+		int setColorMod(uint8_t rgb = 255) {return setColorMod(rgb, rgb, rgb);}
+
 	private:
 		//! Internal SDL_Texture
 		std::unique_ptr<SDL_Texture, sdl_texture_deleter> m_Texture;

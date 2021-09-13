@@ -9,8 +9,8 @@
 
 namespace RTE {
 
-	class AllegroScreen;
-	class AllegroInput;
+	class SDLScreen;
+	class SDLInput;
 	class GUIControlManager;
 	class GUIButton;
 	class GUITab;
@@ -28,7 +28,7 @@ namespace RTE {
 		/// </summary>
 		/// <param name="guiScreen">Pointer to a GUIScreen interface that will be used by this SettingsGUI's GUIControlManager. Ownership is NOT transferred!</param>
 		/// <param name="guiInput">Pointer to a GUIInput interface that will be used by this SettingsGUI's GUIControlManager. Ownership is NOT transferred!</param>
-		SettingsGUI(AllegroScreen *guiScreen, AllegroInput *guiInput);
+		SettingsGUI(SDLScreen *guiScreen, SDLInput *guiInput);
 #pragma endregion
 
 #pragma region Getters

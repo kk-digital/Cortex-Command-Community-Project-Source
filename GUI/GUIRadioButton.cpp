@@ -135,7 +135,7 @@ void GUIRadioButton::Draw(GUIScreen *Screen) {
 
 	// Calculate the y position of the base
 	// Make it centered vertically
-	int YPos = m_Height / 2 - (m_ImageRects[0].bottom - m_ImageRects[0].top) / 2 + m_Y;
+	int YPos = m_Height / 2 - (m_ImageRects[0].h) / 2 + m_Y;
 
 	// Draw the base
 	if (m_Mouseover || m_GotFocus) {
@@ -165,7 +165,7 @@ void GUIRadioButton::Draw(GUIScreen *Screen) {
 	if (m_Font) {
 		m_Font->SetColor(m_FontColor);
 		m_Font->SetKerning(m_FontKerning);
-		m_Font->Draw(Screen->GetBitmap(), m_X + (m_ImageRects[0].right - m_ImageRects[0].left), m_Y + (m_Height / 2) - (m_Font->GetFontHeight() / 2) - 1, Text, m_FontShadow);
+		m_Font->Draw(Screen->GetBitmap(), m_X + (m_ImageRects[0].w), m_Y + (m_Height / 2) - (m_Font->GetFontHeight() / 2) - 1, Text, m_FontShadow);
 	}
 	Screen->GetBitmap()->SetClipRect(nullptr);
 

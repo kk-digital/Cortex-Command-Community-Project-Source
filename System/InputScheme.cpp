@@ -1,6 +1,8 @@
 #include "InputScheme.h"
 #include "UInputMan.h"
 
+#include <SDL2/SDL_keyboard.h>
+
 namespace RTE {
 
 	const std::string InputScheme::c_ClassName = "InputScheme";
@@ -185,50 +187,50 @@ namespace RTE {
 		}
 		switch (m_SchemePreset) {
 			case InputPreset::PresetArrowKeys:
-				m_InputMappings.at(InputElements::INPUT_L_UP).SetKey(KEY_UP);
-				m_InputMappings.at(InputElements::INPUT_L_DOWN).SetKey(KEY_DOWN);
-				m_InputMappings.at(InputElements::INPUT_L_LEFT).SetKey(KEY_LEFT);
-				m_InputMappings.at(InputElements::INPUT_L_RIGHT).SetKey(KEY_RIGHT);
-				m_InputMappings.at(InputElements::INPUT_FIRE).SetKey(KEY_1_PAD);
-				m_InputMappings.at(InputElements::INPUT_AIM).SetKey(KEY_2_PAD);
-				m_InputMappings.at(InputElements::INPUT_AIM_UP).SetKey(KEY_UP);
-				m_InputMappings.at(InputElements::INPUT_AIM_DOWN).SetKey(KEY_DOWN);
-				m_InputMappings.at(InputElements::INPUT_PIEMENU).SetKey(KEY_3_PAD);
-				m_InputMappings.at(InputElements::INPUT_JUMP).SetKey(KEY_ENTER_PAD);
-				m_InputMappings.at(InputElements::INPUT_CROUCH).SetKey(KEY_0_PAD);
-				m_InputMappings.at(InputElements::INPUT_NEXT).SetKey(KEY_5_PAD);
-				m_InputMappings.at(InputElements::INPUT_PREV).SetKey(KEY_4_PAD);
-				m_InputMappings.at(InputElements::INPUT_WEAPON_RELOAD).SetKey(KEY_DEL_PAD);
-				m_InputMappings.at(InputElements::INPUT_WEAPON_PICKUP).SetKey(KEY_6_PAD);
-				m_InputMappings.at(InputElements::INPUT_WEAPON_DROP).SetKey(KEY_9_PAD);
-				m_InputMappings.at(InputElements::INPUT_WEAPON_CHANGE_PREV).SetKey(KEY_7_PAD);
-				m_InputMappings.at(InputElements::INPUT_WEAPON_CHANGE_NEXT).SetKey(KEY_8_PAD);
+				m_InputMappings.at(InputElements::INPUT_L_UP).SetKey(SDLK_UP);
+				m_InputMappings.at(InputElements::INPUT_L_DOWN).SetKey(SDLK_DOWN);
+				m_InputMappings.at(InputElements::INPUT_L_LEFT).SetKey(SDLK_LEFT);
+				m_InputMappings.at(InputElements::INPUT_L_RIGHT).SetKey(SDLK_RIGHT);
+				m_InputMappings.at(InputElements::INPUT_FIRE).SetKey(SDLK_KP_1);
+				m_InputMappings.at(InputElements::INPUT_AIM).SetKey(SDLK_KP_2);
+				m_InputMappings.at(InputElements::INPUT_AIM_UP).SetKey(SDLK_UP);
+				m_InputMappings.at(InputElements::INPUT_AIM_DOWN).SetKey(SDLK_DOWN);
+				m_InputMappings.at(InputElements::INPUT_PIEMENU).SetKey(SDLK_KP_3);
+				m_InputMappings.at(InputElements::INPUT_JUMP).SetKey(SDLK_KP_ENTER);
+				m_InputMappings.at(InputElements::INPUT_CROUCH).SetKey(SDLK_KP_0);
+				m_InputMappings.at(InputElements::INPUT_NEXT).SetKey(SDLK_KP_5);
+				m_InputMappings.at(InputElements::INPUT_PREV).SetKey(SDLK_KP_4);
+				m_InputMappings.at(InputElements::INPUT_WEAPON_RELOAD).SetKey(SDLK_KP_DECIMAL);
+				m_InputMappings.at(InputElements::INPUT_WEAPON_PICKUP).SetKey(SDLK_KP_6);
+				m_InputMappings.at(InputElements::INPUT_WEAPON_DROP).SetKey(SDLK_KP_9);
+				m_InputMappings.at(InputElements::INPUT_WEAPON_CHANGE_PREV).SetKey(SDLK_KP_7);
+				m_InputMappings.at(InputElements::INPUT_WEAPON_CHANGE_NEXT).SetKey(SDLK_KP_8);
 				break;
 			case InputPreset::PresetWASDKeys:
-				m_InputMappings.at(InputElements::INPUT_L_UP).SetKey(KEY_W);
-				m_InputMappings.at(InputElements::INPUT_L_DOWN).SetKey(KEY_S);
-				m_InputMappings.at(InputElements::INPUT_L_LEFT).SetKey(KEY_A);
-				m_InputMappings.at(InputElements::INPUT_L_RIGHT).SetKey(KEY_D);
-				m_InputMappings.at(InputElements::INPUT_FIRE).SetKey(KEY_H);
-				m_InputMappings.at(InputElements::INPUT_AIM).SetKey(KEY_J);
-				m_InputMappings.at(InputElements::INPUT_AIM_UP).SetKey(KEY_W);
-				m_InputMappings.at(InputElements::INPUT_AIM_DOWN).SetKey(KEY_S);
-				m_InputMappings.at(InputElements::INPUT_PIEMENU).SetKey(KEY_K);
-				m_InputMappings.at(InputElements::INPUT_JUMP).SetKey(KEY_L);
-				m_InputMappings.at(InputElements::INPUT_CROUCH).SetKey(KEY_C);
-				m_InputMappings.at(InputElements::INPUT_NEXT).SetKey(KEY_U);
-				m_InputMappings.at(InputElements::INPUT_PREV).SetKey(KEY_Y);
-				m_InputMappings.at(InputElements::INPUT_WEAPON_RELOAD).SetKey(KEY_R);
-				m_InputMappings.at(InputElements::INPUT_WEAPON_PICKUP).SetKey(KEY_F);
-				m_InputMappings.at(InputElements::INPUT_WEAPON_DROP).SetKey(KEY_B);
-				m_InputMappings.at(InputElements::INPUT_WEAPON_CHANGE_PREV).SetKey(KEY_Q);
-				m_InputMappings.at(InputElements::INPUT_WEAPON_CHANGE_NEXT).SetKey(KEY_E);
+				m_InputMappings.at(InputElements::INPUT_L_UP).SetKey(SDLK_w);
+				m_InputMappings.at(InputElements::INPUT_L_DOWN).SetKey(SDLK_s);
+				m_InputMappings.at(InputElements::INPUT_L_LEFT).SetKey(SDLK_a);
+				m_InputMappings.at(InputElements::INPUT_L_RIGHT).SetKey(SDLK_d);
+				m_InputMappings.at(InputElements::INPUT_FIRE).SetKey(SDLK_h);
+				m_InputMappings.at(InputElements::INPUT_AIM).SetKey(SDLK_j);
+				m_InputMappings.at(InputElements::INPUT_AIM_UP).SetKey(SDLK_w);
+				m_InputMappings.at(InputElements::INPUT_AIM_DOWN).SetKey(SDLK_s);
+				m_InputMappings.at(InputElements::INPUT_PIEMENU).SetKey(SDLK_k);
+				m_InputMappings.at(InputElements::INPUT_JUMP).SetKey(SDLK_l);
+				m_InputMappings.at(InputElements::INPUT_CROUCH).SetKey(SDLK_c);
+				m_InputMappings.at(InputElements::INPUT_NEXT).SetKey(SDLK_u);
+				m_InputMappings.at(InputElements::INPUT_PREV).SetKey(SDLK_y);
+				m_InputMappings.at(InputElements::INPUT_WEAPON_RELOAD).SetKey(SDLK_r);
+				m_InputMappings.at(InputElements::INPUT_WEAPON_PICKUP).SetKey(SDLK_f);
+				m_InputMappings.at(InputElements::INPUT_WEAPON_DROP).SetKey(SDLK_b);
+				m_InputMappings.at(InputElements::INPUT_WEAPON_CHANGE_PREV).SetKey(SDLK_q);
+				m_InputMappings.at(InputElements::INPUT_WEAPON_CHANGE_NEXT).SetKey(SDLK_e);
 				break;
 			case InputPreset::PresetMouseWASDKeys:
-				m_InputMappings.at(InputElements::INPUT_L_UP).SetKey(KEY_W);
-				m_InputMappings.at(InputElements::INPUT_L_DOWN).SetKey(KEY_S);
-				m_InputMappings.at(InputElements::INPUT_L_LEFT).SetKey(KEY_A);
-				m_InputMappings.at(InputElements::INPUT_L_RIGHT).SetKey(KEY_D);
+				m_InputMappings.at(InputElements::INPUT_L_UP).SetKey(SDLK_w);
+				m_InputMappings.at(InputElements::INPUT_L_DOWN).SetKey(SDLK_s);
+				m_InputMappings.at(InputElements::INPUT_L_LEFT).SetKey(SDLK_a);
+				m_InputMappings.at(InputElements::INPUT_L_RIGHT).SetKey(SDLK_d);
 				m_InputMappings.at(InputElements::INPUT_FIRE).SetMouseButton(MouseButtons::MOUSE_LEFT);
 				m_InputMappings.at(InputElements::INPUT_AIM).SetPresetDescription("Mouse Move");
 				m_InputMappings.at(InputElements::INPUT_AIM_UP).SetPresetDescription("Mouse Move");
@@ -236,15 +238,15 @@ namespace RTE {
 				m_InputMappings.at(InputElements::INPUT_AIM_LEFT).SetPresetDescription("Mouse Move");
 				m_InputMappings.at(InputElements::INPUT_AIM_RIGHT).SetPresetDescription("Mouse Move");
 				m_InputMappings.at(InputElements::INPUT_PIEMENU).SetMouseButton(MouseButtons::MOUSE_RIGHT);
-				m_InputMappings.at(InputElements::INPUT_JUMP).SetKey(KEY_W);
-				m_InputMappings.at(InputElements::INPUT_CROUCH).SetKey(KEY_S);
-				m_InputMappings.at(InputElements::INPUT_NEXT).SetKey(KEY_E);
-				m_InputMappings.at(InputElements::INPUT_PREV).SetKey(KEY_Q);
-				m_InputMappings.at(InputElements::INPUT_WEAPON_RELOAD).SetKey(KEY_R);
-				m_InputMappings.at(InputElements::INPUT_WEAPON_PICKUP).SetKey(KEY_F);
-				m_InputMappings.at(InputElements::INPUT_WEAPON_DROP).SetKey(KEY_G);
-				m_InputMappings.at(InputElements::INPUT_WEAPON_CHANGE_PREV).SetKey(KEY_1);
-				m_InputMappings.at(InputElements::INPUT_WEAPON_CHANGE_NEXT).SetKey(KEY_2);
+				m_InputMappings.at(InputElements::INPUT_JUMP).SetKey(SDLK_w);
+				m_InputMappings.at(InputElements::INPUT_CROUCH).SetKey(SDLK_s);
+				m_InputMappings.at(InputElements::INPUT_NEXT).SetKey(SDLK_e);
+				m_InputMappings.at(InputElements::INPUT_PREV).SetKey(SDLK_q);
+				m_InputMappings.at(InputElements::INPUT_WEAPON_RELOAD).SetKey(SDLK_r);
+				m_InputMappings.at(InputElements::INPUT_WEAPON_PICKUP).SetKey(SDLK_f);
+				m_InputMappings.at(InputElements::INPUT_WEAPON_DROP).SetKey(SDLK_g);
+				m_InputMappings.at(InputElements::INPUT_WEAPON_CHANGE_PREV).SetKey(SDLK_1);
+				m_InputMappings.at(InputElements::INPUT_WEAPON_CHANGE_NEXT).SetKey(SDLK_2);
 				break;
 			case InputPreset::PresetGenericDPad:
 				// TODO: Don't have any SNES style controllers to test with so no idea what would work or make sense here.
@@ -369,7 +371,7 @@ namespace RTE {
 			return inputElement->GetPresetDescription();
 		}
 		if (m_ActiveDevice == InputDevice::DEVICE_KEYB_ONLY || (m_ActiveDevice == InputDevice::DEVICE_MOUSE_KEYB && (!(whichElement == InputElements::INPUT_AIM_UP || whichElement == InputElements::INPUT_AIM_DOWN || whichElement == InputElements::INPUT_AIM_LEFT || whichElement == InputElements::INPUT_AIM_RIGHT))) && inputElement->GetKey() != 0) {
-			std::string keyName = scancode_to_name(inputElement->GetKey());
+			std::string keyName = SDL_GetKeyName(inputElement->GetKey());
 			return (keyName != "(none)") ? keyName : "";
 		} else if (m_ActiveDevice == InputDevice::DEVICE_MOUSE_KEYB && inputElement->GetMouseButton() != MouseButtons::MOUSE_NONE) {
 			switch (inputElement->GetMouseButton()) {
@@ -385,8 +387,8 @@ namespace RTE {
 		} else if (m_ActiveDevice >= InputDevice::DEVICE_GAMEPAD_1) {
 			if (inputElement->GetJoyButton() != JoyButtons::JOY_NONE) {
 				if (g_UInputMan.GetJoystickCount() > 0) {
-					std::string buttonName = joy[g_UInputMan.GetJoystickIndex(m_ActiveDevice)].button[inputElement->GetJoyButton()].name;
-					return (buttonName != "unused") ? buttonName : "";
+					// std::string buttonName = joy[g_UInputMan.GetJoystickIndex(m_ActiveDevice)].button[inputElement->GetJoyButton()].name; // FIXME: SDL REMOVED
+					return ""; //(buttonName != "unused") ? buttonName : "";
 				} else {
 					// If no joysticks connected the joystick handler can't resolve names because it's not installed, so just return generics (which it does anyway).
 					return "Button " + std::to_string(inputElement->GetJoyButton() + 1);
@@ -401,47 +403,50 @@ namespace RTE {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	bool InputScheme::CaptureKeyMapping(int whichInput) {
-		if (keyboard_needs_poll()) { poll_keyboard(); }
 
-		for (int whichKey = KEY_A; whichKey < KEY_MAX; ++whichKey) {
-			// Don't allow mapping special keys used by UInputMan.
-			if (whichKey == KEY_ESC || whichKey == KEY_TILDE || whichKey == KEY_PRTSCR || whichKey == KEY_F1 || whichKey == KEY_F2 || whichKey == KEY_F3 || whichKey == KEY_F4 || whichKey == KEY_F5) {
-				continue;
-			}
-			if (g_UInputMan.KeyReleased(static_cast<char>(whichKey))) {
-				m_InputMappings.at(whichInput).Reset();
-				SetKeyMapping(whichInput, whichKey);
-				return true;
-			}
-		}
+		// TODO: SDL NO NO NO ABSOLUTELY NO! STOP
+		// if (keyboard_needs_poll()) { poll_keyboard(); }
+
+		// for (int whichKey = SDLK_a; whichKey < SDLK_MAX; ++whichKey) {
+		// 	// Don't allow mapping special keys used by UInputMan.
+		// 	if (whichKey == SDLK_ESC || whichKey == SDLK_TILDE || whichKey == SDLK_PRTSCR || whichKey == SDLK_F1 || whichKey == SDLK_F2 || whichKey == SDLK_F3 || whichKey == SDLK_F4 || whichKey == SDLK_F5) {
+		// 		continue;
+		// 	}
+		// 	if (g_UInputMan.KeyReleased(static_cast<char>(whichKey))) {
+		// 		m_InputMappings.at(whichInput).Reset();
+		// 		SetKeyMapping(whichInput, whichKey);
+		// 		return true;
+		// 	}
+		// }
 		return false;
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	bool InputScheme::CaptureJoystickMapping(int whichJoy, int whichInput) {
-		if (whichJoy < 0) {
-			return false;
-		}
-		int whichButton = g_UInputMan.WhichJoyButtonPressed(whichJoy);
-		if (whichButton != JoyButtons::JOY_NONE) {
-			m_InputMappings.at(whichInput).Reset();
-			SetJoyButtonMapping(whichInput, whichButton);
-			return true;
-		}
-		for (int stick = 0; stick < joy[whichJoy].num_sticks; ++stick) {
-			for (int axis = 0; axis < joy[whichJoy].stick[stick].num_axis; ++axis) {
-				if (g_UInputMan.JoyDirectionReleased(whichJoy, stick, axis, JoyDirections::JOYDIR_ONE)) {
-					m_InputMappings.at(whichInput).Reset();
-					m_InputMappings.at(whichInput).SetDirection(stick, axis, JoyDirections::JOYDIR_ONE);
-					return true;
-				} else if (g_UInputMan.JoyDirectionReleased(whichJoy, stick, axis, JoyDirections::JOYDIR_TWO)) {
-					m_InputMappings.at(whichInput).Reset();
-					m_InputMappings.at(whichInput).SetDirection(stick, axis, JoyDirections::JOYDIR_TWO);
-					return true;
-				}
-			}
-		}
+		// TODO: SDL FIX
+		// if (whichJoy < 0) {
+		// 	return false;
+		// }
+		// int whichButton = g_UInputMan.WhichJoyButtonPressed(whichJoy);
+		// if (whichButton != JoyButtons::JOY_NONE) {
+		// 	m_InputMappings.at(whichInput).Reset();
+		// 	SetJoyButtonMapping(whichInput, whichButton);
+		// 	return true;
+		// }
+		// for (int stick = 0; stick < joy[whichJoy].num_sticks; ++stick) {
+		// 	for (int axis = 0; axis < joy[whichJoy].stick[stick].num_axis; ++axis) {
+		// 		if (g_UInputMan.JoyDirectionReleased(whichJoy, stick, axis, JoyDirections::JOYDIR_ONE)) {
+		// 			m_InputMappings.at(whichInput).Reset();
+		// 			m_InputMappings.at(whichInput).SetDirection(stick, axis, JoyDirections::JOYDIR_ONE);
+		// 			return true;
+		// 		} else if (g_UInputMan.JoyDirectionReleased(whichJoy, stick, axis, JoyDirections::JOYDIR_TWO)) {
+		// 			m_InputMappings.at(whichInput).Reset();
+		// 			m_InputMappings.at(whichInput).SetDirection(stick, axis, JoyDirections::JOYDIR_TWO);
+		// 			return true;
+		// 		}
+		// 	}
+		// }
 		return false;
 	}
 }

@@ -196,7 +196,7 @@ namespace RTE {
 		/// </summary>
 		/// <param name="targetBitmap">A pointer to a BITMAP to draw on. Generally a screen BITMAP.</param>
 		/// <param name="targetPos">The absolute position of the target bitmap's upper left corner in the scene.</param>
-		void Draw(BITMAP *targetBitmap, const Vector &targetPos = Vector()) const;
+		void Draw(SDL_Renderer* renderer, const Vector &targetPos = Vector()) const;
 #pragma endregion
 
 	private:
@@ -221,7 +221,7 @@ namespace RTE {
 
 		//TODO replace this with proper presetman handling for pie slices, instead of adding them by name like this
 		static std::unordered_map<std::string, PieSlice> s_AllCustomLuaSlices; //!< All Slices ever added to this pie-menu, serves as directory of Slices available to add.
-		static BITMAP *s_CursorBitmap; //!< A static pointer to the bitmap to use as the cursor in any menu.
+		static SharedTexture s_CursorBitmap; //!< A static pointer to the bitmap to use as the cursor in any menu.
 
 		GUIFont *m_LargeFont; //!< A pointer to the large font from FrameMan. Not owned here.
 
@@ -268,7 +268,7 @@ namespace RTE {
 		int m_InnerRadius; //!< The current radius of the innermost circle of the pie menu, in pixels.
 		float m_CursorAngle; //!< Position of the cursor on the circle, in radians, counterclockwise from straight out to the right.
 
-		BITMAP *m_BGBitmap; //!< The intermediary bitmap used to first draw the menu background, which will be blitted to the final draw target surface.
+		SharedTexture m_BGTexture; //!< The intermediary bitmap used to first draw the menu background, which will be blitted to the final draw target surface.
 		bool m_BGBitmapNeedsRedrawing; //!< Whether the BG bitmap should be redrawn during the next Update call.
 
 #pragma region Update Breakdown
@@ -312,21 +312,21 @@ namespace RTE {
 		/// <param name="targetBitmap">A pointer to the BITMAP to draw on. Generally a screen BITMAP.</param>
 		/// <param name="targetPos">The absolute position of the target bitmap's upper left corner in the scene.</param>
 		/// <param name="drawPos">Out param, a Vector to be filled in with the position at which the menu should be drawn.</param>
-		void CalculateDrawPosition(const BITMAP *targetBitmap, const Vector &targetPos, Vector &drawPos) const;
+		void CalculateDrawPosition(SDL_Renderer *targetBitmap, const Vector &targetPos, Vector &drawPos) const;
 
 		/// <summary>
 		/// Handles drawing icons on pie menu slices.
 		/// </summary>
 		/// <param name="targetBitmap">A pointer to the BITMAP to draw on. Generally a screen BITMAP.</param>
 		/// <param name="drawPos">The seam corrected position at which the pie menu is being drawn.</param>
-		void DrawPieIcons(BITMAP *targetBitmap, const Vector &drawPos) const;
+		void DrawPieIcons(SDL_Renderer *targetBitmap, const Vector &drawPos) const;
 
 		/// <summary>
 		/// Handles drawing the cursor and description text for selected slices.
 		/// </summary>
 		/// <param name="targetBitmap">A pointer to the BITMAP to draw on. Generally a screen BITMAP.</param>
 		/// <param name="drawPos">The seam corrected position at which the pie menu is being drawn.</param>
-		void DrawPieCursorAndSliceDescriptions(BITMAP *targetBitmap, const Vector &drawPos) const;
+		void DrawPieCursorAndSliceDescriptions(SDL_Renderer *renderer, const Vector &drawPos) const;
 #pragma endregion
 
 		/// <summary>

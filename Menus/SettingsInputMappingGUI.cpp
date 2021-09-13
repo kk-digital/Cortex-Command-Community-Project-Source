@@ -2,7 +2,7 @@
 #include "UInputMan.h"
 
 #include "GUI.h"
-#include "AllegroBitmap.h"
+#include "SDLGUITexture.h"
 #include "GUICollectionBox.h"
 #include "GUIButton.h"
 #include "GUIScrollbar.h"
@@ -190,7 +190,7 @@ namespace RTE {
 
 	void SettingsInputMappingGUI::HandleManualConfigSequence() {
 		bool inputCaptured = false;
-		if (g_UInputMan.KeyReleased(KEY_DEL)) {
+		if (g_UInputMan.KeyReleased(SDLK_DELETE)) {
 			m_ConfiguringPlayerInputScheme->ClearMapping(m_InputElementCapturingInput);
 			inputCaptured = true;
 		}

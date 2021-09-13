@@ -3,8 +3,8 @@
 
 // Header file for abstract classes used by the GUI library.
 
-struct BITMAP;
-
+#include "System/SDLTexture.h"
+struct GUIRect;
 namespace RTE {
 
 #pragma region GUIBitmap
@@ -45,13 +45,13 @@ namespace RTE {
 		/// Gets the underlying BITMAP of this GUIBitmap.
 		/// </summary>
 		/// <returns>The underlying BITMAP of this GUIBitmap.</returns>
-		virtual BITMAP * GetBitmap() const = 0;
+		virtual SharedTexture GetTexture() const = 0;
 
 		/// <summary>
 		/// Sets the underlying BITMAP for this GUIBitmap.
 		/// </summary>
 		/// <param name="newBitmap">A pointer to the new BITMAP for this GUIBitmap.</param>
-		virtual void SetBitmap(BITMAP *newBitmap) = 0;
+		virtual void SetBitmap(SharedTexture newBitmap) = 0;
 
 		/// <summary>
 		/// Gets the width of the bitmap.

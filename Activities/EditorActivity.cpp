@@ -31,7 +31,6 @@
 #include "GUI/SDLInput.h"
 #include "GUI/SDLScreen.h"
 #include "GUI/SDLGUITexture.h"
-// #include "GUI/AllegroInput.h"
 #include "GUI/GUIControlManager.h"
 #include "GUI/GUICollectionBox.h"
 #include "GUI/GUITab.h"

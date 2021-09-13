@@ -2,8 +2,8 @@
 #include "FrameMan.h"
 
 #include "GUI.h"
-#include "AllegroScreen.h"
-#include "AllegroInput.h"
+#include "SDLScreen.h"
+#include "SDLInput.h"
 #include "GUICollectionBox.h"
 #include "GUIButton.h"
 #include "GUITab.h"
@@ -12,7 +12,7 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	SettingsGUI::SettingsGUI(AllegroScreen *guiScreen, AllegroInput *guiInput) {
+	SettingsGUI::SettingsGUI(SDLScreen *guiScreen, SDLInput *guiInput) {
 		m_GUIControlManager = std::make_unique<GUIControlManager>();
 		RTEAssert(m_GUIControlManager->Create(guiScreen, guiInput, "Base.rte/GUIs/Skins/Menus", "MainMenuSubMenuSkin.ini"), "Failed to create GUI Control Manager and load it from Base.rte/GUIs/Skins/Menus/MainMenuSubMenuSkin.ini");
 		m_GUIControlManager->Load("Base.rte/GUIs/SettingsGUI.ini");

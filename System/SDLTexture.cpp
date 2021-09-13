@@ -57,7 +57,7 @@ namespace RTE {
 		m_PixelsRO.clear();
 		m_PixelsRO.resize(width * height);
 		m_Texture = std::unique_ptr<SDL_Texture, sdl_texture_deleter>(SDL_CreateTexture(renderer, m_Format, access, width, height));
-		RTEAssert(m_Texture.get(), "Texture was not created");
+		RTEAssert(m_Texture.get(), "Texture was not created because: " + std::string(SDL_GetError()));
 		SDL_SetTextureBlendMode(m_Texture.get(), SDL_BLENDMODE_BLEND);
 	}
 

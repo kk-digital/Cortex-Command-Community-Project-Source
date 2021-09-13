@@ -12,13 +12,16 @@
 #include "Scene.h"
 
 #include "GUI.h"
-#include "AllegroBitmap.h"
-#include "AllegroScreen.h"
-#include "AllegroInput.h"
+#include "SDLGUITexture.h"
+#include "SDLScreen.h"
+#include "SDLInput.h"
 #include "GUICollectionBox.h"
 #include "GUIComboBox.h"
 #include "GUIButton.h"
 #include "GUILabel.h"
+
+#include "SDLHelper.h"
+#include "SDL2_gfxPrimitives.h"
 
 namespace RTE {
 
@@ -50,7 +53,7 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void ScenarioGUI::Create(AllegroScreen *guiScreen, AllegroInput *guiInput) {
+	void ScenarioGUI::Create(SDLScreen *guiScreen, SDLInput *guiInput) {
 		m_GUIControlManager = std::make_unique<GUIControlManager>();
 		RTEAssert(m_GUIControlManager->Create(guiScreen, guiInput, "Base.rte/GUIs/Skins/Menus", "MainMenuSubMenuSkin.ini"), "Failed to create GUI Control Manager and load it from Base.rte/GUIs/Skins/Menus/MainMenuSubMenuSkin.ini");
 		m_GUIControlManager->Load("Base.rte/GUIs/ScenarioGUI.ini");
@@ -100,8 +103,7 @@ namespace RTE {
 		m_DefaultScenePreview.SetSpriteAnimDuration(200);
 		m_DefaultScenePreview.SetPos(Vector(static_cast<float>(m_ScenePreviewImageBox->GetXPos() + (m_ScenePreviewImageBox->GetWidth() / 2)), static_cast<float>(m_ScenePreviewImageBox->GetYPos() + (m_ScenePreviewImageBox->GetHeight() / 2))));
 
-		m_ScenePreviewBitmap = std::make_unique<AllegroBitmap>();
-		m_ScenePreviewBitmap->Create(c_ScenePreviewWidth, c_ScenePreviewHeight, 32);
+		m_ScenePreviewBitmap = std::make_unique<SDLGUITexture>(c_ScenePreviewWidth, c_ScenePreviewHeight, true);
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -166,10 +168,13 @@ namespace RTE {
 		if (m_SelectedScene) {
 			m_SceneInfoBox->SetVisible(true);
 
-			if (BITMAP *preview = m_SelectedScene->GetPreviewBitmap()) {
-				clear_to_color(m_ScenePreviewBitmap->GetBitmap(), ColorKeys::g_MaskColor);
-				draw_sprite(m_ScenePreviewBitmap->GetBitmap(), preview, 0, 0);
-				m_ScenePreviewImageBox->SetDrawImage(new AllegroBitmap(m_ScenePreviewBitmap->GetBitmap()));
+			if (SharedTexture preview = m_SelectedScene->GetPreviewBitmap()) {
+				g_FrameMan.PushRenderTarget(m_ScenePreviewBitmap->GetTexture());
+				SDL_SetRenderDrawColor(g_FrameMan.GetRenderer(), 0, 0, 0, 0);
+				SDL_RenderClear(g_FrameMan.GetRenderer());
+				preview->render(g_FrameMan.GetRenderer(),0,0);
+				g_FrameMan.PopRenderTarget();
+				m_ScenePreviewImageBox->SetDrawImage(new SDLGUITexture(m_ScenePreviewBitmap->GetTexture()));
 				m_DrawDefaultScenePreview = false;
 			} else {
 				m_DrawDefaultScenePreview = true;
@@ -382,7 +387,7 @@ namespace RTE {
 		if (g_ConsoleMan.IsEnabled() && !g_ConsoleMan.IsReadOnly()) {
 			return m_UpdateResult;
 		}
-		if (g_UInputMan.KeyPressed(KEY_ESC)) {
+		if (g_UInputMan.KeyPressed(SDLK_ESCAPE)) {
 			g_GUISound.BackButtonPressSound()->Play();
 			if (m_ActivityConfigBox->IsEnabled()) {
 				m_ActivityConfigBox->SetEnabled(false);
@@ -506,13 +511,11 @@ namespace RTE {
 		}
 		if (!m_ActivityConfigBox->IsEnabled()) {
 			if (m_ActivityScenes) {
-				drawing_mode(DRAW_MODE_TRANS, nullptr, 0, 0);
-				DrawSitePoints(g_FrameMan.GetBackBuffer32());
-				if (m_SelectedScene && m_SceneInfoBox->GetVisible()) { DrawLinesToSitePoint(g_FrameMan.GetBackBuffer32()); }
-				drawing_mode(DRAW_MODE_SOLID, nullptr, 0, 0);
+				DrawSitePoints(g_FrameMan.GetRenderer());
+				if (m_SelectedScene && m_SceneInfoBox->GetVisible()) { DrawLinesToSitePoint(g_FrameMan.GetRenderer()); }
 			}
 			m_GUIControlManager->Draw();
-			if (m_DrawDefaultScenePreview && m_SceneInfoBox->GetVisible()) { m_DefaultScenePreview.Draw(g_FrameMan.GetBackBuffer32()); }
+			if (m_DrawDefaultScenePreview && m_SceneInfoBox->GetVisible()) { m_DefaultScenePreview.Draw(g_FrameMan.GetRenderer()); }
 		} else {
 			m_ActivityConfigBox->Draw();
 		}
@@ -521,10 +524,11 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void ScenarioGUI::DrawSitePoints(BITMAP *drawBitmap) const {
+	void ScenarioGUI::DrawSitePoints(SDL_Renderer *renderer) const {
 		int blendAmount = 0;
+		SDL_SetRenderDrawBlendMode(renderer, BLENDMODE_SCREEN);
 		for (const Scene *scenePointer : *m_ActivityScenes) {
-			int drawColor = 0;
+			uint32_t drawColor = 0;
 			if (scenePointer->GetModuleID() == g_PresetMan.GetModuleID("Base.rte")) {
 				drawColor = c_GUIColorYellow;
 			} else if (scenePointer->GetModuleID() == g_PresetMan.GetModuleID("Missions.rte")) {
@@ -537,21 +541,24 @@ namespace RTE {
 			int sitePosY = sitePos.GetFloorIntY();
 
 			blendAmount = 70 + RandomNum(0, 40);
-			set_screen_blender(blendAmount, blendAmount, blendAmount, blendAmount);
-			circlefill(drawBitmap, sitePosX, sitePosY, 4, drawColor);
-			circlefill(drawBitmap, sitePosX, sitePosY, 2, drawColor);
+			uint32_t blendColor = drawColor * (blendAmount / 255.0);
+			filledCircleColor(renderer, sitePosX, sitePosY, 4, blendColor);
+			filledCircleColor(renderer, sitePosX, sitePosY, 2, blendColor);
 
 			blendAmount = 145 + RandomNum(0, 110);
-			set_screen_blender(blendAmount, blendAmount, blendAmount, blendAmount);
-			circlefill(drawBitmap, sitePosX, sitePosY, 1, drawColor);
+			blendColor = drawColor * (blendAmount / 255.0);
+			filledCircleColor(renderer, sitePosX, sitePosY, 1, blendColor);
 		}
+		SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void ScenarioGUI::DrawLinesToSitePoint(BITMAP *drawBitmap) const {
+	void ScenarioGUI::DrawLinesToSitePoint(SDL_Renderer *renderer) const {
 		int blendAmount = 0;
-		int drawColor = c_GUIColorWhite;
+		uint32_t drawColor = c_GUIColorWhite;
+
+		SDL_SetRenderDrawBlendMode(renderer, BLENDMODE_SCREEN);
 
 		if (!m_LineToSitePoints.empty()) {
 			for (int i = 0; i < m_LineToSitePoints.size() - 1; i++) {
@@ -561,15 +568,19 @@ namespace RTE {
 				int lineEndY = m_LineToSitePoints.at(i + 1).GetFloorIntY();
 
 				blendAmount = 195 + RandomNum(0, 30);
-				set_screen_blender(blendAmount, blendAmount, blendAmount, blendAmount);
-				line(drawBitmap, lineStartX, lineStartY, lineEndX, lineEndY, drawColor);
+				uint32_t blendColor = drawColor * (blendAmount / 255.0);
+				blendColor |= 0xFF000000;
+
+				lineColor(renderer, lineStartX, lineStartY, lineEndX, lineEndY, blendColor);
 
 				blendAmount = 30 + RandomNum(0, 50);
-				set_screen_blender(blendAmount, blendAmount, blendAmount, blendAmount);
-				line(drawBitmap, lineStartX + 1, lineStartY, lineEndX + 1, lineEndY, drawColor);
-				line(drawBitmap, lineStartX - 1, lineStartY, lineEndX - 1, lineEndY, drawColor);
-				line(drawBitmap, lineStartX, lineStartY + 1, lineEndX, lineEndY + 1, drawColor);
-				line(drawBitmap, lineStartX, lineStartY - 1, lineEndX, lineEndY - 1, drawColor);
+
+				blendColor = drawColor * (blendAmount / 255.0);
+				blendColor |= 0xFF000000;
+				lineColor(renderer, lineStartX + 1, lineStartY, lineEndX + 1, lineEndY, blendColor);
+				lineColor(renderer, lineStartX - 1, lineStartY, lineEndX - 1, lineEndY, blendColor);
+				lineColor(renderer, lineStartX, lineStartY + 1, lineEndX, lineEndY + 1, blendColor);
+				lineColor(renderer, lineStartX, lineStartY - 1, lineEndX, lineEndY - 1, blendColor);
 			}
 		}
 		Vector sitePos = m_PlanetCenter + m_SelectedScene->GetLocation() + m_SelectedScene->GetLocationOffset();
@@ -578,11 +589,14 @@ namespace RTE {
 		int circleRadius = 8;
 
 		blendAmount = 195 + RandomNum(0, 30);
-		set_screen_blender(blendAmount, blendAmount, blendAmount, blendAmount);
-		circle(drawBitmap, sitePosX, sitePosY, circleRadius, drawColor);
+		uint32_t blendColor = drawColor * (blendAmount / 255.0);
+		blendColor |= 0xFF000000;
+		circleColor(renderer, sitePosX, sitePosY, circleRadius, blendColor);
 
 		blendAmount = 120 + RandomNum(0, 50);
-		set_screen_blender(blendAmount, blendAmount, blendAmount, blendAmount);
-		circle(drawBitmap, sitePosX, sitePosY, circleRadius - 1, drawColor);
+		blendColor = drawColor * (blendAmount / 255.0);
+		blendColor |= 0xFF000000;
+		circleColor(renderer, sitePosX, sitePosY, circleRadius - 1, blendColor);
+		SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 	}
 }

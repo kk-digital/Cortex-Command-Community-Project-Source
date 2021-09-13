@@ -7,8 +7,8 @@
 
 namespace RTE {
 
-	class AllegroScreen;
-	class AllegroInput;
+	class SDLScreen;
+	class SDLInput;
 	class Controller;
 	class TitleScreen;
 	class MainMenuGUI;
@@ -25,7 +25,7 @@ namespace RTE {
 		/// <summary>
 		/// Constructor method used to instantiate a MenuMan object in system memory. Initialize() should be called before using the object.
 		/// </summary>
-		MenuMan() = default;
+		MenuMan();
 
 		/// <summary>
 		/// Makes the MenuMan object ready for use.
@@ -74,8 +74,8 @@ namespace RTE {
 
 		ActiveMenu m_ActiveMenu; //!< The currently active menu screen that is being updated and drawn. See ActiveMenu enumeration.
 
-		std::unique_ptr<AllegroInput> m_GUIInput; //!< The GUIInput interface of this MenuMan.
-		std::unique_ptr<AllegroScreen> m_GUIScreen; //!< The GUIScreen interface of this MenuMan.
+		std::unique_ptr<SDLInput> m_GUIInput; //!< The GUIInput interface of this MenuMan.
+		std::unique_ptr<SDLScreen> m_GUIScreen; //!< The GUIScreen interface of this MenuMan.
 		std::unique_ptr<Controller> m_MenuController; //!< A Controller to handle player input in menu screens that require it.
 
 		std::unique_ptr<TitleScreen> m_TitleScreen; //!< The title screen.

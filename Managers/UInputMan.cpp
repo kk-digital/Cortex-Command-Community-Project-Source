@@ -10,12 +10,8 @@
 #include "GameActivity.h"
 
 #include "System/SDLHelper.h"
+#include "System/System.h"
 #include <SDL2/SDL_keyboard.h>
-
-extern volatile bool g_Quit;
-extern bool g_ResetActivity;
-extern bool g_InActivity;
-extern bool g_LaunchIntoEditor;
 
 namespace RTE {
 
@@ -79,15 +75,10 @@ namespace RTE {
 		}
 #endif
 
-		// Set up the default key mappings for each player
-		m_ControlScheme[Players::PlayerOne].SetDevice(InputDevice::DEVICE_MOUSE_KEYB);
-		m_ControlScheme[Players::PlayerOne].SetPreset(InputPreset::PRESET_P1DEFAULT);
-		m_ControlScheme[Players::PlayerTwo].SetDevice(InputDevice::DEVICE_KEYB_ONLY);
-		m_ControlScheme[Players::PlayerTwo].SetPreset(InputPreset::PRESET_P2DEFAULT);
-		m_ControlScheme[Players::PlayerThree].SetDevice(InputDevice::DEVICE_GAMEPAD_1);
-		m_ControlScheme[Players::PlayerThree].SetPreset(InputPreset::PRESET_P3DEFAULT);
-		m_ControlScheme[Players::PlayerFour].SetDevice(InputDevice::DEVICE_GAMEPAD_2);
-		m_ControlScheme[Players::PlayerFour].SetPreset(InputPreset::PRESET_P4DEFAULT);
+		for (int player = Players::PlayerOne; player < Players::MaxPlayerCount; ++player){
+			m_ControlScheme.at(player).Reset();
+			m_ControlScheme.at(player).ResetToPlayerDefaults(static_cast<Players>(player));
+		}
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -113,85 +104,6 @@ namespace RTE {
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void UInputMan::SetInputClass(GUIInput *inputClass) const { s_InputClass = inputClass; }
-
-	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-	std::string UInputMan::GetMappingName(int whichPlayer, int whichElement) {
-		if (whichPlayer < Players::PlayerOne || whichPlayer >= Players::MaxPlayerCount) {
-			return "";
-		}
-
-		InputPreset preset = m_ControlScheme[whichPlayer].GetPreset();
-		const InputMapping *element = &(m_ControlScheme[whichPlayer].GetInputMappings()[whichElement]);
-		if (preset != InputPreset::PRESET_NONE && !element->GetPresetDescription().empty()) {
-			return element->GetPresetDescription();
-		}
-
-		InputDevice device = m_ControlScheme[whichPlayer].GetDevice();
-		if (device >= InputDevice::DEVICE_GAMEPAD_1) {
-			int whichJoy = GetJoystickIndex(device);
-
-			// Check joystick button presses and axis directions
-			if (element->GetJoyButton() != JoyButtons::JOY_NONE) {
-				return "";
-			}
-			if (element->JoyDirMapped()) {
-				return "Joystick";
-			}
-		} else if (device == InputDevice::DEVICE_MOUSE_KEYB && element->GetMouseButton() != MouseButtons::MOUSE_NONE) {
-			int button = element->GetMouseButton();
-
-			switch (button) {
-				case MouseButtons::MOUSE_LEFT:
-					return "Left Mouse";
-				case MouseButtons::MOUSE_RIGHT:
-					return "Right Mouse";
-				case MouseButtons::MOUSE_MIDDLE:
-					return "Middle Mouse";
-				default:
-					return "";
-			}
-		} else if (device == InputDevice::DEVICE_KEYB_ONLY || ((device == InputDevice::DEVICE_MOUSE_KEYB && !(whichElement == InputElements::INPUT_AIM_UP || whichElement == InputElements::INPUT_AIM_DOWN)) && element->GetKey() != 0)) {
-			return std::string(SDL_GetKeyName(element->GetKey()));
-		}
-		return "";
-	}
-
-	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-	bool UInputMan::CaptureKeyMapping(int whichPlayer, int whichInput) {
-		if (whichPlayer < Players::PlayerOne || whichPlayer >= Players::MaxPlayerCount) {
-			return false;
-		}
-
-		for (auto key: m_KeyStates) {
-			if (KeyPressed(key.first)) {
-				m_ControlScheme[whichPlayer].GetInputMappings()[whichInput].Reset();
-				SetKeyMapping(whichPlayer, whichInput, key.first);
-				return true;
-			}
-		}
-
-		return false;
-	}
-
-	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-	bool UInputMan::CaptureButtonMapping(int whichPlayer, int whichJoy, int whichInput) {
-		return false;
-	}
-
-	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-	bool UInputMan::CaptureDirectionMapping(int whichPlayer, int whichJoy, int whichInput) {
-		return false;
-	}
-
-	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-	bool UInputMan::CaptureJoystickMapping(int whichPlayer, int whichJoy, int whichInput) {
-		return false;
-	}
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -341,7 +253,7 @@ namespace RTE {
 	void UInputMan::ForceMouseWithinBox(int x, int y, int width, int height, int whichPlayer) const {
 		// Only mess with the mouse if the original mouse position is not above the screen and may be grabbing the title bar of the game window
 		if (!m_DisableMouseMoving && !m_TrapMousePos && (whichPlayer == Players::NoPlayer || m_ControlScheme[whichPlayer].GetDevice() == InputDevice::DEVICE_MOUSE_KEYB)) {
-			SDL_WarpMouseInWindow(g_FrameMan.GetWindow(), Limit(m_MousePos.m_X, x + width * g_FrameMan.ResolutionMultiplier(), x), Limit(m_MousePos.m_Y, y + height * g_FrameMan.ResolutionMultiplier(), y));
+			SDL_WarpMouseInWindow(g_FrameMan.GetWindow(), Limit(m_MousePos.m_X, x + width * g_FrameMan.GetResMultiplier(), x), Limit(m_MousePos.m_Y, y + height * g_FrameMan.GetResMultiplier(), y));
 		}
 	}
 
@@ -440,7 +352,7 @@ namespace RTE {
 		}
 		bool elementState = false;
 		InputDevice device = m_ControlScheme[whichPlayer].GetDevice();
-		const InputMapping *element = &(m_ControlScheme[whichPlayer].GetInputMappings()[whichElement]);
+		const InputMapping *element = &(m_ControlScheme[whichPlayer].GetInputMappings()->at(whichElement));
 
 		if (!elementState && (device == InputDevice::DEVICE_KEYB_ONLY || (device == InputDevice::DEVICE_MOUSE_KEYB && !(whichElement == InputElements::INPUT_AIM_UP || whichElement == InputElements::INPUT_AIM_DOWN)))) {
 			elementState = GetKeyboardButtonState(element->GetKey(), whichState);
@@ -538,7 +450,7 @@ namespace RTE {
 		SDL_Event e;
 		while (SDL_PollEvent(&e)) {
 			if (e.type == SDL_QUIT)
-				g_Quit = true;
+				System::SetQuit();
 			else if (e.type == SDL_KEYDOWN) {
 				PressKey(e.key.keysym.sym);
 				m_ModState = e.key.keysym.mod;
@@ -599,22 +511,22 @@ namespace RTE {
 
 	void UInputMan::HandleSpecialInput() {
 		// If we launched into editor directly, skip the logic and quit quickly.
-		if (KeyPressed(SDLK_ESCAPE) && g_LaunchIntoEditor) {
-			g_Quit = true;
+		if (KeyPressed(SDLK_ESCAPE) && g_ActivityMan.IsSetToLaunchIntoEditor()) {
+			System::SetQuit();
 			return;
 		}
 
-		if (g_InActivity) {
+		if (g_ActivityMan.IsInActivity()) {
 			const GameActivity *gameActivity = dynamic_cast<GameActivity *>(g_ActivityMan.GetActivity());
 			if (AnyStartPress(false) && (!gameActivity || !gameActivity->IsBuyGUIVisible(-1))) {
 				g_ActivityMan.PauseActivity();
 				return;
 			}
 			// Ctrl+R or Back button for controllers to reset activity.
-			if (!g_ResetActivity) {
-				g_ResetActivity = (FlagCtrlState() && KeyPressed(SDLK_r)) || AnyBackPress();
+			if (!g_ActivityMan.ActivitySetToRestart()) {
+				g_ActivityMan.SetRestartActivity((FlagCtrlState() && KeyPressed(SDLK_r)) || AnyBackPress());
 			}
-			if (g_ResetActivity) {
+			if (g_ActivityMan.ActivitySetToRestart()) {
 				return;
 			}
 		}
@@ -734,7 +646,7 @@ namespace RTE {
 				if (m_TrapMousePos) {
 					// Trap the (invisible) mouse cursor in the middle of the screen, so it doesn't fly out in windowed mode and some other window gets clicked
 					SDL_WarpMouseInWindow(g_FrameMan.GetWindow(), g_FrameMan.GetResX() / 2, g_FrameMan.GetResY() / 2);
-				} else if (g_InActivity) {
+				} else if (g_ActivityMan.IsInActivity()) {
 					// The mouse cursor is visible and can move about the screen/window, but it should still be contained within the mouse player's part of the window
 					ForceMouseWithinPlayerScreen(mousePlayer);
 				}
@@ -742,13 +654,13 @@ namespace RTE {
 
 			// Enable the mouse cursor positioning again after having been disabled. Only do this when the mouse is within the drawing area so it
 			// won't cause the whole window to move if the user clicks the title bar and unintentionally drags it due to programmatic positioning.
-			int mousePosX = m_MousePos.m_X / g_FrameMan.ResolutionMultiplier();
-			int mousePosY = m_MousePos.m_Y / g_FrameMan.ResolutionMultiplier();
+			int mousePosX = m_MousePos.m_X / g_FrameMan.GetResMultiplier();
+			int mousePosY = m_MousePos.m_Y / g_FrameMan.GetResMultiplier();
 			if (m_DisableMouseMoving && m_PrepareToEnableMouseMoving && (mousePosX >= 0 && mousePosX < g_FrameMan.GetResX() && mousePosY >= 0 && mousePosY < g_FrameMan.GetResY())) {
 				m_DisableMouseMoving = m_PrepareToEnableMouseMoving = false;
 			}
 		}
-		if (mousePlayer != Players::NoPlayer || g_InActivity == false) {
+		if (mousePlayer != Players::NoPlayer || g_ActivityMan.IsInActivity() == false) {
 		}
 	}
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

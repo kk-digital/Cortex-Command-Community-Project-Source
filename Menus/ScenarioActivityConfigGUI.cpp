@@ -2,19 +2,23 @@
 
 #include "PresetMan.h"
 #include "UInputMan.h"
+#include "FrameMan.h"
 
 #include "DataModule.h"
 #include "GameActivity.h"
 #include "Scene.h"
 
 #include "GUI.h"
-#include "AllegroBitmap.h"
+#include "SDLGUITexture.h"
 #include "GUICollectionBox.h"
 #include "GUIComboBox.h"
 #include "GUICheckbox.h"
 #include "GUIButton.h"
 #include "GUILabel.h"
 #include "GUISlider.h"
+
+#include "SDLHelper.h"
+#include "SDL2_gfxPrimitives.h"
 
 namespace RTE {
 
@@ -144,7 +148,7 @@ namespace RTE {
 				m_PlayerBoxes.at(player).at(team)->SetDrawColor(c_GUIColorBlue);
 			}
 			if (player < Players::MaxPlayerCount) {
-				if (const Icon *playerDeviceIcon = g_UInputMan.GetSchemeIcon(player)) { m_PlayerBoxes.at(player).at(TeamRows::DisabledTeam)->SetDrawImage(new AllegroBitmap(playerDeviceIcon->GetBitmaps32()[0])); }
+				if (const Icon *playerDeviceIcon = g_UInputMan.GetSchemeIcon(player)) { m_PlayerBoxes.at(player).at(TeamRows::DisabledTeam)->SetDrawImage(new SDLGUITexture(playerDeviceIcon->GetTextures()[0])); }
 				m_PlayerBoxes.at(player).at(TeamRows::DisabledTeam)->SetDrawType(GUICollectionBox::Image);
 			} else {
 				int cpuInitialTeam = TeamRows::DisabledTeam;
@@ -157,7 +161,7 @@ namespace RTE {
 					m_CPULockLabel->SetVisible(false);
 				}
 				m_PlayerBoxes.at(player).at(cpuInitialTeam)->SetDrawType(GUICollectionBox::Image);
-				if (const Icon *cpuIcon = dynamic_cast<const Icon *>(g_PresetMan.GetEntityPreset("Icon", "Device CPU"))) { m_PlayerBoxes.at(PlayerColumns::PlayerCPU).at(cpuInitialTeam)->SetDrawImage(new AllegroBitmap(cpuIcon->GetBitmaps32()[0])); }
+				if (const Icon *cpuIcon = dynamic_cast<const Icon *>(g_PresetMan.GetEntityPreset("Icon", "Device CPU"))) { m_PlayerBoxes.at(PlayerColumns::PlayerCPU).at(cpuInitialTeam)->SetDrawImage(new SDLGUITexture(cpuIcon->GetTextures()[0])); }
 			}
 		}
 
@@ -174,13 +178,13 @@ namespace RTE {
 				teamIcon = dynamic_cast<const Icon *>(g_PresetMan.GetEntityPreset("Icon", "Locked Team"));
 				m_TeamNameLabels.at(team)->SetText("Unavailable");
 			}
-			if (teamIcon) { m_TeamIconBoxes.at(team)->SetDrawImage(new AllegroBitmap(teamIcon->GetBitmaps32()[0])); }
+			if (teamIcon) { m_TeamIconBoxes.at(team)->SetDrawImage(new SDLGUITexture(teamIcon->GetTextures()[0])); }
 
 			m_TeamTechComboBoxes.at(team)->SetVisible(m_SelectedActivity->TeamActive(team));
 			m_TeamAISkillSliders.at(team)->SetVisible(m_SelectedActivity->TeamActive(team));
 			m_TeamAISkillLabels.at(team)->SetVisible(m_SelectedActivity->TeamActive(team));
 		}
-		if (const Icon *disabledTeamIcon = dynamic_cast<const Icon *>(g_PresetMan.GetEntityPreset("Icon", "Disabled Team"))) { m_TeamIconBoxes.at(TeamRows::DisabledTeam)->SetDrawImage(new AllegroBitmap(disabledTeamIcon->GetBitmaps32()[0])); }
+		if (const Icon *disabledTeamIcon = dynamic_cast<const Icon *>(g_PresetMan.GetEntityPreset("Icon", "Disabled Team"))) { m_TeamIconBoxes.at(TeamRows::DisabledTeam)->SetDrawImage(new SDLGUITexture(disabledTeamIcon->GetTextures()[0])); }
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -331,7 +335,7 @@ namespace RTE {
 	void ScenarioActivityConfigGUI::HandleClickOnPlayerTeamSetupCell(int clickedPlayer, int clickedTeam) {
 		m_PlayerBoxes.at(clickedPlayer).at(clickedTeam)->SetDrawType(GUICollectionBox::Image);
 		const Icon *playerIcon = (clickedPlayer != PlayerColumns::PlayerCPU) ? g_UInputMan.GetSchemeIcon(clickedPlayer) : dynamic_cast<const Icon *>(g_PresetMan.GetEntityPreset("Icon", "Device CPU"));
-		if (playerIcon) { m_PlayerBoxes.at(clickedPlayer).at(clickedTeam)->SetDrawImage(new AllegroBitmap(playerIcon->GetBitmaps32()[0])); }
+		if (playerIcon) { m_PlayerBoxes.at(clickedPlayer).at(clickedTeam)->SetDrawImage(new SDLGUITexture(playerIcon->GetTextures()[0])); }
 
 		for (int nonHoveredTeam = Activity::Teams::TeamOne; nonHoveredTeam < TeamRows::TeamRowCount; ++nonHoveredTeam) {
 			if (nonHoveredTeam != clickedTeam) {
@@ -348,7 +352,7 @@ namespace RTE {
 					m_PlayerBoxes.at(humanPlayer).at(clickedTeam)->SetDrawColor(c_GUIColorBlue);
 					m_PlayerBoxes.at(humanPlayer).at(TeamRows::DisabledTeam)->SetDrawType(GUICollectionBox::Image);
 					playerIcon = g_UInputMan.GetSchemeIcon(humanPlayer);
-					if (playerIcon) { m_PlayerBoxes.at(humanPlayer).at(TeamRows::DisabledTeam)->SetDrawImage(new AllegroBitmap(playerIcon->GetBitmaps32()[0])); }
+					if (playerIcon) { m_PlayerBoxes.at(humanPlayer).at(TeamRows::DisabledTeam)->SetDrawImage(new SDLGUITexture(playerIcon->GetTextures()[0])); }
 				}
 			}
 		} else if (clickedPlayer != PlayerColumns::PlayerCPU && clickedTeam != TeamRows::DisabledTeam && m_PlayerBoxes.at(PlayerColumns::PlayerCPU).at(clickedTeam)->GetDrawType() == GUICollectionBox::Image) {
@@ -356,7 +360,7 @@ namespace RTE {
 			m_PlayerBoxes.at(PlayerColumns::PlayerCPU).at(clickedTeam)->SetDrawColor(c_GUIColorBlue);
 			m_PlayerBoxes.at(PlayerColumns::PlayerCPU).at(TeamRows::DisabledTeam)->SetDrawType(GUICollectionBox::Image);
 			playerIcon = dynamic_cast<const Icon *>(g_PresetMan.GetEntityPreset("Icon", "Device CPU"));
-			if (playerIcon) { m_PlayerBoxes.at(PlayerColumns::PlayerCPU).at(TeamRows::DisabledTeam)->SetDrawImage(new AllegroBitmap(playerIcon->GetBitmaps32()[0])); }
+			if (playerIcon) { m_PlayerBoxes.at(PlayerColumns::PlayerCPU).at(TeamRows::DisabledTeam)->SetDrawImage(new SDLGUITexture(playerIcon->GetTextures()[0])); }
 		}
 		g_GUISound.FocusChangeSound()->Play();
 	}
@@ -402,18 +406,20 @@ namespace RTE {
 		// Apply a colored overlay on top of team rows that are locked or disabled by the Activity and are not modifiable.
 		for (int team = Activity::Teams::TeamOne; team < Activity::Teams::MaxTeamCount; ++team) {
 			if (!m_SelectedActivity->TeamActive(team) || m_LockedCPUTeam == team) {
-				drawing_mode(DRAW_MODE_TRANS, nullptr, 0, 0);
+
+				SDL_SetRenderDrawBlendMode(g_FrameMan.GetRenderer(), BLENDMODE_SCREEN);
+
 				int blendAmount = 230;
-				set_screen_blender(blendAmount, blendAmount, blendAmount, blendAmount);
-				rectfill(g_FrameMan.GetBackBuffer32(), m_PlayersAndTeamsConfigBox->GetXPos() + 2, m_PlayersAndTeamsConfigBox->GetYPos() + rectPosY, m_PlayersAndTeamsConfigBox->GetXPos() + m_PlayersAndTeamsConfigBox->GetWidth() - 3, m_PlayersAndTeamsConfigBox->GetYPos() + rectPosY + 25, c_GUIColorDarkBlue);
-				drawing_mode(DRAW_MODE_SOLID, nullptr, 0, 0);
+				uint32_t blendColor = c_GUIColorDarkBlue * (blendAmount / 255.0);
+				boxColor(g_FrameMan.GetRenderer(), m_PlayersAndTeamsConfigBox->GetXPos() + 2, m_PlayersAndTeamsConfigBox->GetYPos() + rectPosY, m_PlayersAndTeamsConfigBox->GetXPos() + m_PlayersAndTeamsConfigBox->GetWidth() - 3, m_PlayersAndTeamsConfigBox->GetYPos() + rectPosY + 25, blendColor);
+				SDL_SetRenderDrawBlendMode(g_FrameMan.GetRenderer(), SDL_BLENDMODE_BLEND);
 			}
 			rectPosY += 25;
 		}
 
 		int linePosY = 25;
 		for (int i = 0; i < 6; ++i) {
-			hline(g_FrameMan.GetBackBuffer32(), m_PlayersAndTeamsConfigBox->GetXPos() + 2, m_PlayersAndTeamsConfigBox->GetYPos() + linePosY, m_PlayersAndTeamsConfigBox->GetXPos() + m_PlayersAndTeamsConfigBox->GetWidth() - 2, c_GUIColorLightBlue);
+			hlineColor(g_FrameMan.GetRenderer(), m_PlayersAndTeamsConfigBox->GetXPos() + 2, m_PlayersAndTeamsConfigBox->GetYPos() + linePosY, m_PlayersAndTeamsConfigBox->GetXPos() + m_PlayersAndTeamsConfigBox->GetWidth() - 2, c_GUIColorLightBlue);
 			linePosY += 25;
 		}
 

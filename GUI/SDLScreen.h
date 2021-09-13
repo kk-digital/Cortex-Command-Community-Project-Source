@@ -1,6 +1,6 @@
 #ifndef _SDLSCREEN_
 #define _SDLSCREEN_
-#include "GUI/Interface.h"
+#include "GUIInterface.h"
 
 namespace RTE {
 	class SDLGUITexture;
@@ -23,7 +23,7 @@ namespace RTE {
 		/// Creeates a bitmap from a file
 		/// </summary>
 		/// <param name="Filename"> Path to Bitmap file </param>
-		GUIBitmap *CreateBitmap(const std::string filename) override;
+		GUIBitmap *CreateBitmap(const std::string &filename) override;
 
 		/// <summary>
 		/// Creates an empty bitmap
@@ -41,7 +41,7 @@ namespace RTE {
 		/// <summary>
 		/// Gets the Surface representing the Screen
 		/// </summary>
-		GUIBitmap *GetBitmap() override;
+		GUIBitmap *GetBitmap() const override;
 
 
 		/// <summary>

@@ -8,7 +8,7 @@
 
 #include "GUI.h"
 #include "GUIFont.h"
-#include "AllegroBitmap.h"
+#include "SDLGUITexture.h"
 
 namespace RTE {
 

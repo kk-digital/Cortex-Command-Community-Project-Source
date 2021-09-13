@@ -2,7 +2,7 @@
 #include "FrameMan.h"
 #include "ActivityMan.h"
 
-#include "AllegroInput.h"
+#include "SDLInput.h"
 #include "GUI.h"
 #include "GUICollectionBox.h"
 #include "GUILabel.h"
@@ -12,12 +12,14 @@
 #include "GUIComboBox.h"
 #include "GUITextBox.h"
 
+#include "System/SDLHelper.h"
+
 namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	SettingsVideoGUI::SettingsVideoGUI(GUIControlManager *parentControlManager) : m_GUIControlManager(parentControlManager) {
-		m_NewGraphicsDriver = g_FrameMan.GetGraphicsDriver();
+		m_NewFullscreen = false; // g_FrameMan.GetGraphicsDriver(); //FIXME: SDL REMOVED
 		m_NewResX = g_FrameMan.GetResX();
 		m_NewResY = g_FrameMan.GetResY();
 		m_NewResUpscaled = g_FrameMan.GetResMultiplier() > 1;
@@ -49,15 +51,15 @@ namespace RTE {
 		CreatePresetResolutionBox();
 		CreateCustomResolutionBox();
 
-		if (m_PresetResolutionComboBox->GetSelectedIndex() < 0 || g_FrameMan.IsUsingDedicatedGraphicsDriver()) {
+		if (m_PresetResolutionComboBox->GetSelectedIndex() < 0 ){ //|| g_FrameMan.IsUsingDedicatedGraphicsDriver()) { //FIXME: SDL REMOVED
 			m_CustomResolutionRadioButton->SetCheck(true);
 			m_PresetResolutionBox->SetVisible(false);
 			m_CustomResolutionBox->SetVisible(true);
-			if (g_FrameMan.IsUsingDedicatedGraphicsDriver()) {
-				m_CustomResolutionDedicatedRadioButton->SetCheck(true);
-				m_CustomResolutionMessageLabel->SetText("WARNING: ATTEMPTING TO SET A RESOLUTION NOT SUPPORTED BY YOUR GRAPHICS CARD OR MONITOR WITH THE DEDICATED DRIVER MAY LEAD TO THE GAME OR SYSTEM HARD-LOCKING!");
-				m_CustomResolutionMessageLabel->SetVisible(true);
-			}
+			// if (g_FrameMan.IsUsingDedicatedGraphicsDriver()) {
+			// 	m_CustomResolutionDedicatedRadioButton->SetCheck(true);
+			// 	m_CustomResolutionMessageLabel->SetText("WARNING: ATTEMPTING TO SET A RESOLUTION NOT SUPPORTED BY YOUR GRAPHICS CARD OR MONITOR WITH THE DEDICATED DRIVER MAY LEAD TO THE GAME OR SYSTEM HARD-LOCKING!");
+			// 	m_CustomResolutionMessageLabel->SetVisible(true);
+			// } // FIXME: SDL REMOVED
 		}
 	}
 
@@ -141,9 +143,9 @@ namespace RTE {
 				return false;
 			}
 			// Disallow resolution width that isn't in multiples of 4 otherwise Allegro fails to initialize graphics, but only in windowed/borderless mode.
-			if (!g_FrameMan.IsUsingDedicatedGraphicsDriver() && (width % 4 != 0)) {
-				return false;
-			}
+			// if (!g_FrameMan.IsUsingDedicatedGraphicsDriver() && (width % 4 != 0)) {
+			// 	return false;
+			// } //FIXME: SDL REMOVED
 			return true;
 		}
 		return false;
@@ -155,27 +157,25 @@ namespace RTE {
 		m_PresetResolutions.clear();
 
 		// Get a list of modes from the fullscreen driver even though we're not necessarily using it. This is so we don't need to populate the list manually, and have all the reasonable resolutions.
-#ifdef _WIN32
-		GFX_MODE_LIST *resList = get_gfx_mode_list(GFX_DIRECTX_ACCEL);
-#elif __unix__
-		GFX_MODE_LIST *resList = get_gfx_mode_list(GFX_XWINDOWS_FULLSCREEN);
-#endif
+		int numResolutionModes = SDL_GetNumDisplayModes(0);
 
-		if (!resList) {
+		if (numResolutionModes == 0) {
 			m_PresetResolutionComboBox->SetVisible(false);
 			m_PresetResolutionApplyButton->SetVisible(false);
 
-			m_PresetResolutionMessageLabel->SetText("Failed to get the preset resolution list from the graphics driver!\nPlease use the custom resolution controls instead.");
+			m_PresetResolutionMessageLabel->SetText("Graphics driver didn't provide any resolution modes!\nPlease use the custom resolution controls instead.");
 			m_PresetResolutionMessageLabel->SetVisible(true);
 			m_PresetResolutionMessageLabel->CenterInParent(true, true);
 			return;
 		}
 
 		std::set<PresetResolutionRecord> resRecords;
-		for (int i = 0; i < resList->num_modes; ++i) {
-			if (resList->mode[i].bpp == 32) {
-				int width = resList->mode[i].width;
-				int height = resList->mode[i].height;
+		for (int i = 0; i < numResolutionModes; ++i) {
+			SDL_DisplayMode mode;
+			SDL_GetDisplayMode(0, i, &mode);
+			if (SDL_BITSPERPIXEL(mode.format) == 32) {
+				int width = mode.w;
+				int height = mode.h;
 				if (IsSupportedResolution(width, height)) { resRecords.emplace(width, height, false); }
 			}
 		}
@@ -197,7 +197,6 @@ namespace RTE {
 				m_PresetResolutionComboBox->SetSelectedIndex(i);
 			}
 		}
-		destroy_gfx_mode_list(resList);
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -209,8 +208,8 @@ namespace RTE {
 		} else {
 			m_ResolutionChangeDialogBox->SetVisible(false);
 			m_VideoSettingsBox->SetEnabled(true);
-			g_FrameMan.ChangeResolution(m_NewResX, m_NewResY, m_NewResUpscaled, m_NewGraphicsDriver);
-			dynamic_cast<AllegroInput *>(m_GUIControlManager->GetManager()->GetInputController())->AdjustMouseMovementSpeedToGraphicsDriver(m_NewGraphicsDriver);
+			g_FrameMan.ChangeResolution(m_NewResX, m_NewResY, m_NewResUpscaled, m_NewFullscreen);
+			// dynamic_cast<SDLInput *>(m_GUIControlManager->GetManager()->GetInputController())->AdjustMouseMovementSpeedToGraphicsDriver(m_NewGraphicsDriver); // FIXME: SDL REMOVED
 		}
 	}
 
@@ -219,21 +218,21 @@ namespace RTE {
 	void SettingsVideoGUI::ApplyQuickChangeResolution(ResolutionQuickChangeType resolutionChangeType) {
 		switch (resolutionChangeType) {
 			case ResolutionQuickChangeType::Windowed:
-				m_NewGraphicsDriver = GFX_AUTODETECT_WINDOWED;
+				m_NewFullscreen = false;
 				m_NewResUpscaled = false;
 				m_NewResX = g_FrameMan.GetMaxResX() / 2;
 				m_NewResY = g_FrameMan.GetMaxResY() / 2;
 				break;
 			case ResolutionQuickChangeType::Borderless:
 			case ResolutionQuickChangeType::Dedicated:
-				m_NewGraphicsDriver = (resolutionChangeType == ResolutionQuickChangeType::Borderless) ? GFX_DIRECTX_WIN_BORDERLESS : GFX_DIRECTX_ACCEL;
+				m_NewFullscreen = true;
 				m_NewResUpscaled = false;
 				m_NewResX = g_FrameMan.GetMaxResX();
 				m_NewResY = g_FrameMan.GetMaxResY();
 				break;
 			case ResolutionQuickChangeType::UpscaledBorderless:
 			case ResolutionQuickChangeType::UpscaledDedicated:
-				m_NewGraphicsDriver = (resolutionChangeType == ResolutionQuickChangeType::UpscaledBorderless) ? GFX_DIRECTX_WIN_BORDERLESS : GFX_DIRECTX_ACCEL;
+				m_NewFullscreen = true;
 				m_NewResUpscaled = true;
 				m_NewResX = g_FrameMan.GetMaxResX() / 2;
 				m_NewResY = g_FrameMan.GetMaxResY() / 2;
@@ -256,11 +255,7 @@ namespace RTE {
 			int newResMultiplier = m_NewResUpscaled ? 2 : 1;
 			m_NewResX = m_PresetResolutions.at(presetResListEntryID).Width / newResMultiplier;
 			m_NewResY = m_PresetResolutions.at(presetResListEntryID).Height / newResMultiplier;
-			m_NewGraphicsDriver = GFX_AUTODETECT_WINDOWED;
-
-#ifdef __unix__
-			m_NewGraphicsDriver = ((m_NewResX * newResMultiplier == g_FrameMan.GetMaxResX()) && (m_NewResY * newResMultiplier == g_FrameMan.GetMaxResY())) ? GFX_AUTODETECT_FULLSCREEN : GFX_AUTODETECT_WINDOWED;
-#endif
+			m_NewFullscreen = false;
 
 			g_GUISound.ButtonPressSound()->Play();
 			ApplyNewResolution();
@@ -276,7 +271,7 @@ namespace RTE {
 		int newMultiplier = m_NewResUpscaled ? 2 : 1;
 		m_NewResX = std::stoi(m_CustomResolutionWidthTextBox->GetText()) / newMultiplier;
 		m_NewResY = std::stoi(m_CustomResolutionHeightTextBox->GetText()) / newMultiplier;
-		m_NewGraphicsDriver = m_CustomResolutionBorderlessRadioButton->GetCheck() ? GFX_AUTODETECT_WINDOWED : GFX_DIRECTX_ACCEL;
+		m_NewFullscreen = m_CustomResolutionBorderlessRadioButton->GetCheck();
 
 		bool invalidResolution = false;
 

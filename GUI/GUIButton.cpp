@@ -1,6 +1,6 @@
 #include "GUI.h"
 #include "GUIButton.h"
-#include "AllegroBitmap.h"
+#include "SDLGUITexture.h"
 #include "GUILabel.h"
 
 using namespace RTE;
@@ -53,7 +53,7 @@ void GUIButton::Create(const std::string &Name, int X, int Y, int Width, int Hei
 		m_Text->SetEnabled(false);
 		GUIPanel::AddChild(m_Text.get());
 	}
-	if (!m_Icon) { m_Icon = std::make_unique<AllegroBitmap>(); }
+	if (!m_Icon) { m_Icon = std::make_unique<SDLGUITexture>(); }
 	if (!m_BorderSizes) { m_BorderSizes = std::make_unique<GUIRect>(); }
 }
 
@@ -86,7 +86,7 @@ void GUIButton::Create(GUIProperties *Props) {
 		m_Text->SetEnabled(false);
 		GUIPanel::AddChild(m_Text.get());
 	}
-	if (!m_Icon) { m_Icon = std::make_unique<AllegroBitmap>(); }
+	if (!m_Icon) { m_Icon = std::make_unique<SDLGUITexture>(); }
 	if (!m_BorderSizes) { m_BorderSizes = std::make_unique<GUIRect>(); }
 
 	// Load the values
@@ -152,17 +152,17 @@ void GUIButton::BuildBitmap() {
 	// Create the button image
 	GUIRect buttonBorders;
 	m_Skin->BuildStandardRect(m_DrawBitmap, "Button_Up", 0, 0, m_Width, m_Height, true, true, &buttonBorders);
-	SetRect(m_BorderSizes.get(), buttonBorders.left, buttonBorders.top, buttonBorders.right, buttonBorders.bottom);
+	SetRect(m_BorderSizes.get(), buttonBorders.x, buttonBorders.y, buttonBorders.w, buttonBorders.h);
 	m_Skin->BuildStandardRect(m_DrawBitmap, "Button_Over", 0, m_Height, m_Width, m_Height);
 	m_Skin->BuildStandardRect(m_DrawBitmap, "Button_Down", 0, m_Height * 2, m_Width, m_Height);
 
 	//TODO this should be 1 pixel ideally, to give space between content and the border. However, the green skin, which this is primarly used for, has padding built-in and doesn't work properly without it.
 	const int buttonContentPadding = 0;
-	const int contentMaxWidth = m_Width - m_BorderSizes->left - m_BorderSizes->right - (buttonContentPadding * 2) - 1;
-	const int contentMaxHeight = m_Height - m_BorderSizes->top - m_BorderSizes->bottom - (buttonContentPadding * 2) - 1;
+	const int contentMaxWidth = m_Width - m_BorderSizes->w - (buttonContentPadding * 2) - 1;
+	const int contentMaxHeight = m_Height - m_BorderSizes->h - (buttonContentPadding * 2) - 1;
 
 	int centerY = m_Height / 2;
-	bool hasIcon = m_Icon->GetBitmap();
+	bool hasIcon = m_Icon->GetTexture().get();
 	bool hasText = !m_Text->GetText().empty();
 
 	int iconYPos = 0;
@@ -209,7 +209,7 @@ void GUIButton::BuildBitmap() {
 		m_Text->SetFont(m_Font);
 		m_Text->SetSize(contentMaxWidth, contentMaxHeight);
 
-		int textXPos = m_BorderSizes->left + buttonContentPadding + 1;
+		int textXPos = m_BorderSizes->x + m_BorderSizes->w + buttonContentPadding + 1;
 		m_Text->SetPositionAbs(textXPos, textYPos);
 		m_Text->Draw(m_DrawBitmap, false);
 		m_Text->SetPositionAbs(textXPos, m_Height + textYPos);
@@ -231,7 +231,7 @@ void GUIButton::Draw(GUIScreen *Screen) {
 	}
 	SetRect(&Rect, 0, y, m_Width, y + m_Height);
 
-	if (m_Text->OverflowScrollIsActivated() && m_Font->CalculateWidth(m_Text->GetText()) > m_Width - m_BorderSizes->left - m_BorderSizes->right) { BuildBitmap(); }
+	if (m_Text->OverflowScrollIsActivated() && m_Font->CalculateWidth(m_Text->GetText()) > m_Width - m_BorderSizes->w) { BuildBitmap(); }
 
 	m_DrawBitmap->DrawTrans(Screen->GetBitmap(), m_X, m_Y, &Rect);
 
@@ -412,8 +412,8 @@ void GUIButton::SetVerticalOverflowScroll(bool newOverflowScroll) {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void GUIButton::SetIcon(BITMAP *newIcon, bool noBitmapRebuild) {
-	if (m_Icon && m_Icon->GetBitmap() != newIcon) {
+void GUIButton::SetIcon(SharedTexture newIcon, bool noBitmapRebuild) {
+	if (m_Icon && m_Icon->GetTexture() != newIcon) {
 		m_Icon->SetBitmap(newIcon);
 		if (!noBitmapRebuild) { BuildBitmap(); }
 	}
@@ -421,8 +421,8 @@ void GUIButton::SetIcon(BITMAP *newIcon, bool noBitmapRebuild) {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void GUIButton::SetIconAndText(BITMAP *newIcon, const std::string_view &newText) {
-	bool bitmapNeedsRebuild = (m_Icon && m_Icon->GetBitmap() != newIcon) || (m_Text && m_Text->GetText() != newText);
+void GUIButton::SetIconAndText(SharedTexture newIcon, const std::string_view &newText) {
+	bool bitmapNeedsRebuild = (m_Icon && m_Icon->GetTexture() != newIcon) || (m_Text && m_Text->GetText() != newText);
 	SetIcon(newIcon, true);
 	SetText(newText, true);
 	if (bitmapNeedsRebuild) { BuildBitmap(); }

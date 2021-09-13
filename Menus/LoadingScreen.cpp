@@ -4,11 +4,13 @@
 #include "Writer.h"
 
 #include "GUI.h"
-#include "AllegroScreen.h"
-#include "AllegroBitmap.h"
-#include "AllegroInput.h"
+#include "SDLScreen.h"
+#include "SDLGUITexture.h"
+#include "SDLInput.h"
 #include "GUICollectionBox.h"
 #include "GUIListBox.h"
+
+#include "System/System.h"
 
 namespace RTE {
 
@@ -23,7 +25,7 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void LoadingScreen::Create(AllegroScreen *guiScreen, AllegroInput *guiInput, bool progressReportDisabled) {
+	void LoadingScreen::Create(SDLScreen *guiScreen, SDLInput *guiInput, bool progressReportDisabled) {
 		GUIControlManager loadingScreenManager;
 		RTEAssert(loadingScreenManager.Create(guiScreen, guiInput, "Base.rte/GUIs/Skins/Menus", "LoadingScreenSkin.ini"), "Failed to create GUI Control Manager and load it from Base.rte/GUIs/Skins/Menus/LoadingScreenSkin.ini");
 		loadingScreenManager.Load("Base.rte/GUIs/LoadingGUI.ini");
@@ -34,14 +36,16 @@ namespace RTE {
 			loadingSplashOffset = m_ProgressListboxPosX / 4;
 		}
 		SceneLayer loadingSplash;
-		loadingSplash.Create(ContentFile("Base.rte/GUIs/Title/LoadingSplash.png").GetAsBitmap(COLORCONV_NONE, false), false, Vector(), true, false, Vector(1.0F, 0));
-		loadingSplash.SetOffset(Vector(static_cast<float>(((loadingSplash.GetBitmap()->w - g_FrameMan.GetResX()) / 2) + loadingSplashOffset), 0));
+		loadingSplash.Create(ContentFile("Base.rte/GUIs/Title/LoadingSplash.png"), false, Vector(), true, false, Vector(1.0F, 0));
+		loadingSplash.SetOffset(Vector(static_cast<float>(((loadingSplash.GetTexture()->getW() - g_FrameMan.GetResX()) / 2) + loadingSplashOffset), 0));
 
-		Box loadingSplashTargetBox(Vector(0, static_cast<float>((g_FrameMan.GetResY() - loadingSplash.GetBitmap()->h) / 2)), static_cast<float>(g_FrameMan.GetResX()), static_cast<float>(loadingSplash.GetBitmap()->h));
-		loadingSplash.Draw(g_FrameMan.GetBackBuffer32(), loadingSplashTargetBox);
+		Box loadingSplashTargetBox(Vector(0, static_cast<float>((g_FrameMan.GetResY() - loadingSplash.GetTexture()->getH()) / 2)), static_cast<float>(g_FrameMan.GetResX()), static_cast<float>(loadingSplash.GetTexture()->getH()));
+		loadingSplash.Draw(g_FrameMan.GetRenderer(), loadingSplashTargetBox);
 
-		if (!progressReportDisabled) { draw_sprite(g_FrameMan.GetBackBuffer32(), m_ProgressListboxBitmap, m_ProgressListboxPosX, m_ProgressListboxPosY); }
-		g_FrameMan.FlipFrameBuffers();
+#ifdef LOADINGUI
+		if (!progressReportDisabled) { m_ProgressListboxBitmap->render(g_FrameMan.GetRenderer(), m_ProgressListboxPosX, m_ProgressListboxPosY); }
+#endif
+		g_FrameMan.RenderPresent();
 
 		if (!m_LoadingLogWriter) {
 			m_LoadingLogWriter = std::make_unique<Writer>("LogLoading.txt");
@@ -55,6 +59,7 @@ namespace RTE {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void LoadingScreen::CreateProgressReportListbox(GUIControlManager *parentControlManager) {
+		#ifdef LOADINGGUI
 		dynamic_cast<GUICollectionBox *>(parentControlManager->GetControl("root"))->SetSize(g_FrameMan.GetResX(), g_FrameMan.GetResY());
 		GUIListBox *listBox = dynamic_cast<GUIListBox *>(parentControlManager->GetControl("ProgressBox"));
 
@@ -66,19 +71,19 @@ namespace RTE {
 
 		if (!m_ProgressListboxBitmap) {
 			listBox->SetVisible(false);
-			m_ProgressListboxBitmap = create_bitmap_ex(8, listBox->GetWidth(), listBox->GetHeight());
+			m_ProgressListboxBitmap = std::make_shared<Texture>(g_FrameMan.GetRenderer(), listBox->GetWidth(), listBox->GetHeight());
 			clear_to_color(m_ProgressListboxBitmap, 54);
 			rect(m_ProgressListboxBitmap, 0, 0, listBox->GetWidth() - 1, listBox->GetHeight() - 1, 33);
 			rect(m_ProgressListboxBitmap, 1, 1, listBox->GetWidth() - 2, listBox->GetHeight() - 2, 33);
 			m_ProgressListboxPosX = listBox->GetXPos();
 			m_ProgressListboxPosY = listBox->GetYPos();
 		}
+		#endif
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void LoadingScreen::Destroy() {
-		if (m_ProgressListboxBitmap) { destroy_bitmap(m_ProgressListboxBitmap); }
 		Clear();
 	}
 
@@ -87,6 +92,7 @@ namespace RTE {
 	void LoadingScreen::LoadingSplashProgressReport(const std::string &reportString, bool newItem) {
 		if (System::IsLoggingToCLI()) { System::PrintLoadingToCLI(reportString, newItem); }
 
+#ifdef LOADINGGUI
 		if (newItem) {
 			// Write out the last line to the log file before starting a new one and scroll the bitmap upwards.
 			if (g_LoadingScreen.m_LoadingLogWriter) { g_LoadingScreen.m_LoadingLogWriter->NewLineString(reportString, false); }
@@ -108,5 +114,6 @@ namespace RTE {
 
 			g_FrameMan.FlipFrameBuffers();
 		}
+#endif
 	}
 }

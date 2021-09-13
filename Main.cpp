@@ -20,9 +20,9 @@
 /// </summary>
 
 #include "GUI.h"
-#include "AllegroInput.h"
-#include "AllegroScreen.h"
-#include "AllegroBitmap.h"
+#include "SDLInput.h"
+#include "SDLScreen.h"
+#include "SDLGUITexture.h"
 
 #include "MainMenuGUI.h"
 #include "ScenarioGUI.h"
@@ -35,12 +35,13 @@
 #include "UInputMan.h"
 #include "PerformanceMan.h"
 #include "MetaMan.h"
+#include "FrameMan.h"
+#ifdef NETWORK_ENABLED
 #include "NetworkServer.h"
-#include <string>
-#include <algorithm>
-#include <cstdio>
-
 #endif
+
+#include "System/System.h"
+#include "System/SDLHelper.h"
 
 extern "C" { FILE __iob_func[3] = { *stdin,*stdout,*stderr }; }
 
@@ -58,8 +59,10 @@ namespace RTE {
 		g_SettingsMan.Initialize(settingsReader);
 
 		g_LuaMan.Initialize();
+#ifdef NETWORK_ENABLED
 		g_NetworkServer.Initialize();
 		g_NetworkClient.Initialize();
+#endif
 		g_TimerMan.Initialize();
 		g_PerformanceMan.Initialize();
 		g_FrameMan.Initialize();
@@ -77,7 +80,7 @@ namespace RTE {
 		// If Settings.ini already exists and is fully populated, this will deal with overwriting it to apply any overrides performed by the managers at boot (e.g resolution validation).
 		if (g_SettingsMan.SettingsNeedOverwrite()) { g_SettingsMan.UpdateSettingsFile(); }
 
-		g_FrameMan.PrintForcedGfxDriverMessage();
+		// g_FrameMan.PrintForcedGfxDriverMessage();
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -86,8 +89,10 @@ namespace RTE {
 	/// Destroys all the managers and frees all loaded data before termination.
 	/// </summary>
 	void DestroyManagers() {
+#ifdef NETWORK_ENABLED
 		g_NetworkClient.Destroy();
 		g_NetworkServer.Destroy();
+#endif
 		g_MetaMan.Destroy();
 		g_MovableMan.Destroy();
 		g_SceneMan.Destroy();
@@ -99,7 +104,7 @@ namespace RTE {
 		g_FrameMan.Destroy();
 		g_TimerMan.Destroy();
 		g_LuaMan.Destroy();
-		ContentFile::FreeAllLoaded();
+		// ContentFile::FreeAllLoaded();
 		g_ConsoleMan.Destroy();
 
 #ifdef DEBUG_BUILD
@@ -139,9 +144,11 @@ namespace RTE {
 			}
 			if (!launchModeSet) {
 				if (currentArg == "-server") {
+#ifdef NETWORK_ENABLED
 					g_NetworkServer.EnableServerMode();
 					g_NetworkServer.SetServerPort(!lastArg ? argValue[++i] : "8000");
 					launchModeSet = true;
+#endif
 				} else if (!lastArg && currentArg == "-editor") {
 					g_ActivityMan.SetEditorToLaunch(argValue[++i]);
 					launchModeSet = true;
@@ -172,7 +179,7 @@ namespace RTE {
 				g_MenuMan.Reinitialize();
 				g_ConsoleMan.Destroy();
 				g_ConsoleMan.Initialize();
-				g_FrameMan.DestroyTempBackBuffers();
+				// g_FrameMan.DestroyTempBackBuffers();
 			}
 
 			if (g_MenuMan.Update()) {
@@ -181,8 +188,8 @@ namespace RTE {
 			g_ConsoleMan.Update();
 
 			g_MenuMan.Draw();
-			g_ConsoleMan.Draw(g_FrameMan.GetBackBuffer32());
-			g_FrameMan.FlipFrameBuffers();
+			g_ConsoleMan.Draw(g_FrameMan.GetRenderer());
+			g_FrameMan.RenderPresent();
 		}
 	}
 
@@ -202,7 +209,7 @@ namespace RTE {
 
 		while (!System::IsSetToQuit()) {
 			// Need to clear this out; sometimes background layers don't cover the whole back.
-			g_FrameMan.ClearBackBuffer8();
+			g_FrameMan.RenderClear();
 
 			g_TimerMan.Update();
 
@@ -219,11 +226,13 @@ namespace RTE {
 
 				g_UInputMan.Update();
 
+#ifdef NETWORK_ENABLED
 				// It is vital that server is updated after input manager but before activity because input manager will clear received pressed and released events on next update.
 				if (g_NetworkServer.IsServerModeEnabled()) {
 					g_NetworkServer.Update(true);
 					serverUpdated = true;
 				}
+#endif
 				g_FrameMan.Update();
 				g_LuaMan.Update();
 				g_PerformanceMan.StartPerformanceMeasurement(PerformanceMan::ActivityUpdate);
@@ -261,6 +270,7 @@ namespace RTE {
 				}
 			}
 
+#ifdef NETWROK_ENABLED
 			if (g_NetworkServer.IsServerModeEnabled()) {
 				// Pause sim while we're waiting for scene transmission or scene will start changing before clients receive them and those changes will be lost.
 				g_TimerMan.PauseSim(!(g_NetworkServer.ReadyForSimulation() && g_ActivityMan.IsInActivity()));
@@ -276,8 +286,9 @@ namespace RTE {
 					}
 				}
 			}
+#endif
 			g_FrameMan.Draw();
-			g_FrameMan.FlipFrameBuffers();
+			g_FrameMan.RenderPresent();
 		}
 	}
 }
@@ -288,10 +299,9 @@ namespace RTE {
 /// Implementation of the main function.
 /// </summary>
 int main(int argc, char **argv) {
-	set_config_file("Base.rte/AllegroConfig.txt");
-	allegro_init();
-	loadpng_init();
-	set_close_button_callback(System::WindowCloseButtonHandler);
+	SDL_Init(SDL_INIT_VIDEO|SDL_INIT_EVENTS|SDL_INIT_GAMECONTROLLER|SDL_INIT_TIMER);
+
+	g_FrameMan.CreateWindowAndRenderer();
 
 	System::Initialize();
 	SeedRNG();

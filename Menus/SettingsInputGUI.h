@@ -3,8 +3,6 @@
 
 #include "SettingsInputMappingGUI.h"
 
-struct BITMAP;
-
 namespace RTE {
 
 	class Controller;
