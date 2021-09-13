@@ -6207,7 +6207,8 @@ void MetagameGUI::UpdateGameSizeLabels()
 // TODO: Hook these constants up to settings!!
 	// How many scenes are there total
 	const int totalCount = g_MetaMan.TotalScenePresets();
-	const int minCount = std::clamp((playerCount * 3 / 2), 3, totalCount);
+	int minCount = std::min((playerCount * 3 / 2), 3);
+	minCount = std::max(minCount, totalCount);
 	m_pSizeSlider->SetMinimum(minCount);
 	m_pSizeSlider->SetMaximum(std::max(totalCount * 7 / 10, minCount));
 	m_pSizeSlider->SetValueResolution(1);

@@ -36,10 +36,11 @@ namespace RTE {
 		m_Renderer = nullptr;
 
 		m_NumScreens = SDL_GetNumVideoDisplays();
-		m_ScreenRes = std::make_unique<SDL_Rect>(SDL_Rect{0,0,0,0});
+		m_ScreenRes = std::make_unique<SDL_Rect>(SDL_Rect{0, 0, 0, 0});
 		SDL_GetDisplayUsableBounds(0, m_ScreenRes.get());
 
-		m_MatPaletteFile.Reset();
+		m_PaletteFile = ContentFile("Base.rte/palette.bmp");
+		m_MatPaletteFile = ContentFile("Base.rte/palettemap.bmp");
 
 		m_ResX = 960;
 		m_ResY = 540;
@@ -310,7 +311,7 @@ namespace RTE {
 
 			DrawScreenFlash(playerScreen, m_Renderer);
 
-			if(screenCount>1)
+			if (screenCount > 1)
 				PopRenderTarget();
 			if (!IsInMultiplayerMode()) {
 				if (m_PlayerScreen)
@@ -525,11 +526,15 @@ namespace RTE {
 				int bufferOrScreenWidth = IsInMultiplayerMode() ? GetPlayerFrameBufferWidth(playerScreen) : GetPlayerScreenWidth();
 				int bufferOrScreenHeight = IsInMultiplayerMode() ? GetPlayerFrameBufferHeight(playerScreen) : GetPlayerScreenHeight();
 
-				if (m_TextCentered[playerScreen]) { textPosY = (bufferOrScreenHeight / 2) - 52; }
+				if (m_TextCentered[playerScreen]) {
+					textPosY = (bufferOrScreenHeight / 2) - 52;
+				}
 
 				int screenOcclusionOffsetX = g_SceneMan.GetScreenOcclusion(playerScreen).GetRoundIntX();
 				// If there's really no room to offset the text into, then don't
-				if (GetPlayerScreenWidth() <= GetResX() / 2) { screenOcclusionOffsetX = 0; }
+				if (GetPlayerScreenWidth() <= GetResX() / 2) {
+					screenOcclusionOffsetX = 0;
+				}
 
 				// Draw text and handle blinking by turning on and off extra surrounding characters. Text is always drawn to keep it readable.
 				if (m_TextBlinking[playerScreen] && m_TextBlinkTimer.AlternateReal(m_TextBlinking[playerScreen])) {
@@ -567,7 +572,7 @@ namespace RTE {
 
 	uint32_t FrameMan::GetColorFromIndex(uint32_t color) const {
 		// Special case for key color
-		if(color == 0)
+		if (color == 0)
 			return 0;
 		return m_Palette->getPixel(color);
 	}
