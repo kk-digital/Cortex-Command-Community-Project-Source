@@ -110,19 +110,19 @@ void GUITab::BuildBitmap() {
 
 	// Base checkbox
 	m_Skin->GetValue("Tab", "Base", Values, 4);
-	SetRect(&m_ImageRects[0], Values[0], Values[1], Values[0] + Values[2], Values[1] + Values[3]);
+	SetRect(&m_ImageRects[0], Values[0], Values[1], Values[2], Values[3]);
 
 	// Mouse over checkbox
 	m_Skin->GetValue("Tab", "MouseOver", Values, 4);
-	SetRect(&m_ImageRects[1], Values[0], Values[1], Values[0] + Values[2], Values[1] + Values[3]);
+	SetRect(&m_ImageRects[1], Values[0], Values[1], Values[2], Values[3]);
 
 	// Selected
 	m_Skin->GetValue("Tab", "Selected", Values, 4);
-	SetRect(&m_ImageRects[2], Values[0], Values[1], Values[0] + Values[2], Values[1] + Values[3]);
+	SetRect(&m_ImageRects[2], Values[0], Values[1], Values[2], Values[3]);
 
 	// Grayed out tab (for disabled mode)
 	m_Skin->GetValue("Tab", "Disabled", Values, 4);
-	SetRect(&m_ImageRects[3], Values[0], Values[1], Values[0] + Values[2], Values[1] + Values[3]);
+	SetRect(&m_ImageRects[3], Values[0], Values[1], Values[2], Values[3]);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

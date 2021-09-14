@@ -27,7 +27,7 @@ namespace RTE {
 
 		SDLGUITexture(const SDLGUITexture &reference);
 
-		SDLGUITexture(int width, int height, bool renderer = false);
+		SDLGUITexture(int width, int height, bool screen = false, int access = 1);
 
 		/// <summary>
 		/// Destructor method to clean up the SDLBitmap object
@@ -52,7 +52,7 @@ namespace RTE {
 		/// <returns> True if the texture was successfully created </returns>
 		bool Create(int width, int height, int) { Create(width, height, false); }
 
-		bool Create(int width, int height, bool renderer);
+		bool Create(int width, int height, bool screen = false, int access = 1);
 
 		/// <summary>
 		/// Destroys and resets the SDLTexture object.

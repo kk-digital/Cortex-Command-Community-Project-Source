@@ -214,13 +214,13 @@ namespace RTE {
 
 	protected:
 
-		long long m_StartTime; //!< The point in real time when the simulation (re)started.
-		long long m_TicksPerSecond; //!< The frequency of ticks each second, ie the resolution of the timer.	
-		long long m_RealTimeTicks; //!< The number of actual time ticks counted so far.
-		long long m_RealToSimCap; //!< The cap of number of ticks that the real time can add to the accumulator each update.
-		long long m_SimTimeTicks; //!< The number of simulation time ticks counted so far.
-		long long m_SimUpdateCount; //!< The number of whole simulation updates have been made since reset.
-		long long m_SimAccumulator; //!< Simulation time accumulator keeps track of how much actual time has passed and is chunked into whole DeltaTime:s upon UpdateSim.
+		unsigned long long m_StartTime; //!< The point in real time when the simulation (re)started.
+		unsigned long long m_TicksPerSecond; //!< The frequency of ticks each second, ie the resolution of the timer.
+		unsigned long long m_RealTimeTicks; //!< The number of actual time ticks counted so far.
+		unsigned long long m_RealToSimCap; //!< The cap of number of ticks that the real time can add to the accumulator each update.
+		unsigned long long m_SimTimeTicks; //!< The number of simulation time ticks counted so far.
+		unsigned long long m_SimUpdateCount; //!< The number of whole simulation updates have been made since reset.
+		unsigned long long m_SimAccumulator; //!< Simulation time accumulator keeps track of how much actual time has passed and is chunked into whole DeltaTime:s upon UpdateSim.
 
 		unsigned long long m_DeltaTime; //!< The fixed delta time chunk of the simulation update.
 		float m_DeltaTimeS; //!< The simulation update step size, in seconds.

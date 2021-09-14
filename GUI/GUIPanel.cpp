@@ -416,7 +416,7 @@ int GUIPanel::GetHeight() const {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 GUIRect * GUIPanel::GetRect() {
-	SetRect(&m_Rect, m_X, m_Y, m_X + m_Width, m_Y + m_Height);
+	SetRect(&m_Rect, m_X, m_Y, m_Width, m_Height);
 
 	return &m_Rect;
 }

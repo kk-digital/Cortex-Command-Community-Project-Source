@@ -229,7 +229,7 @@ void GUIButton::Draw(GUIScreen *Screen) {
 	} else if (m_Over || m_GotFocus) {
 		y = m_Height;
 	}
-	SetRect(&Rect, 0, y, m_Width, y + m_Height);
+	SetRect(&Rect, 0, y, m_Width, m_Height);
 
 	if (m_Text->OverflowScrollIsActivated() && m_Font->CalculateWidth(m_Text->GetText()) > m_Width - m_BorderSizes->w) { BuildBitmap(); }
 

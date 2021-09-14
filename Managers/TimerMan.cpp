@@ -34,6 +34,7 @@ namespace RTE {
 	int TimerMan::Initialize() {
 		// Get the frequency of ticks/s for this machine
 		m_TicksPerSecond = SDL_GetPerformanceFrequency();
+		std::cout << m_TicksPerSecond << std::endl;
 
 		// Reset the real time setting so that we can measure how much real time has passed till the next Update.
 		ResetTime();

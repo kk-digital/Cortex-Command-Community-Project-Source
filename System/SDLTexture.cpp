@@ -61,7 +61,8 @@ namespace RTE {
 		SDL_SetTextureBlendMode(m_Texture.get(), SDL_BLENDMODE_BLEND);
 	}
 
-	Texture::~Texture() = default;
+	Texture::~Texture() { Reset(); };
+
 	void Texture::Reset() {
 		m_Texture.reset();
 		w = 0;
@@ -183,7 +184,7 @@ namespace RTE {
 	                             double angle, const SDL_Point &center, int flip) {
 		InitializeSilhouette(renderer);
 
-		silhouetteTexture->setColorMod((color >> 16) & 0xFF, (color >> 8) & 0xFF, (color) & 0xFF);
+		silhouetteTexture->setColorMod((color >> 16) & 0xFF, (color >> 8) & 0xFF, (color)&0xFF);
 		silhouetteTexture->setAlphaMod(color & 0xFF000000);
 
 		// Render the texture area from the intermediate target to the screen
@@ -233,6 +234,7 @@ namespace RTE {
 	}
 
 	uint32_t Texture::getPixelLower(int x, int y) const {
+		assert(x >= 0 && y >= 0 && x < w && y < h);
 		return m_PixelsRO[y * w + x];
 	}
 
@@ -258,12 +260,12 @@ namespace RTE {
 
 	void Texture::setPixel(int x, int y, uint32_t color) {
 		if (m_PixelsWO && x >= 0 && y >= 0 && x < w && y < h) {
-			setPixelLower(x,y,color);
+			setPixelLower(x, y, color);
 		}
 	}
 
 	void Texture::setPixel(int x, int y, uint32_t r, uint32_t g, uint32_t b, uint32_t a) {
-		setPixel(x,y, (a<<24)|(r<<16)|(g<<8)|(b));
+		setPixel(x, y, (a << 24) | (r << 16) | (g << 8) | (b));
 	}
 
 	void Texture::setPixelLower(int x, int y, uint32_t color) {

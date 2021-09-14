@@ -12,7 +12,7 @@ namespace RTE {
 		/// Destructor method used to clean up a SDLScreen object before
 		/// deletion.
 		/// </summary>
-		virtual ~SDLScreen() override { Destroy(); }
+		virtual ~SDLScreen() override;
 
 		/// <summary>
 		/// Destroys and resets this SDLScreen object
@@ -59,7 +59,7 @@ namespace RTE {
 		                           int targetDepth = 0) override;
 
 	private:
-		std::shared_ptr<SDLGUITexture> m_GUIBitmap;
+		std::unique_ptr<SDLGUITexture> m_GUIBitmap;
 
 	};
 } // namespace RTE

@@ -1551,7 +1551,7 @@ void MovableMan::OverrideMaterialDoors(bool enable, int team)
         {
             // Update first so the door attachable piece is in the right position and doesn't take out a werid chunk of the terrain
             pDoor->Update();
-            pDoor->MaterialDrawOverride(enable);
+            // pDoor->MaterialDrawOverride(enable);
         }
     }
     // Also check all doors added this frame
@@ -1562,7 +1562,7 @@ void MovableMan::OverrideMaterialDoors(bool enable, int team)
         {
             // Update first so the door attachable piece is in the right position and doesn't take out a werid chunk of the terrain
             pDoor->Update();
-            pDoor->MaterialDrawOverride(enable);
+            // pDoor->MaterialDrawOverride(enable);
         }
     }
 }

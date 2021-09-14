@@ -142,7 +142,7 @@ void GUIFont::Draw(GUIBitmap *Bitmap, int X, int Y, const std::string &Text, uns
 		int CharWidth = m_Characters[c].m_Width;
 		int offX = m_Characters[c].m_Offset;
 		int offY = ((c - 32) / 16) * m_FontHeight;
-		SetRect(&Rect, offX, offY, offX + CharWidth, offY + m_FontHeight);
+		SetRect(&Rect, offX, offY, CharWidth, m_FontHeight);
 
 		// Draw the shadow
 		if (Shadow && FSC) { FSC->m_Bitmap->DrawTrans(Bitmap, X + 1, Y + 1, &Rect); }

@@ -682,6 +682,7 @@ int MovableObject::RunScriptedFunction(const std::string &scriptPath, const std:
 
     std::string presetAndFunctionName = m_ScriptPresetName + "." + functionName;
     std::string fullFunctionName = presetAndFunctionName + "[\"" + scriptPath + "\"]";
+	std::cout << "object: " << m_ScriptObjectName << " script: " << scriptPath << " preset: " << presetAndFunctionName << " function: " << fullFunctionName << std::endl;
 
     int status = g_LuaMan.RunScriptedFunction(fullFunctionName, m_ScriptObjectName, {presetAndFunctionName, m_ScriptObjectName, fullFunctionName}, functionEntityArguments, functionLiteralArguments);
     if (status < 0 && m_AllLoadedScripts.size() > 1) {

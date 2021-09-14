@@ -567,7 +567,7 @@ void GUIComboBoxButton::ChangeSkin(GUISkin *Skin) {
 	int Values[4];
 	GUIRect Rect;
 	Skin->GetValue("ComboBox_Arrow", "Rect", Values, 4);
-	SetRect(&Rect, Values[0], Values[1], Values[0] + Values[2], Values[1] + Values[3]);
+	SetRect(&Rect, Values[0], Values[1], Values[2], Values[3]);
 
 	Arrow->DrawTrans(m_DrawBitmap, (m_Width / 2) - (Values[2] / 2), (m_Height / 2) - (Values[3] / 2), &Rect);
 
@@ -578,7 +578,7 @@ void GUIComboBoxButton::ChangeSkin(GUISkin *Skin) {
 
 void GUIComboBoxButton::Draw(GUIScreen *Screen) {
 	GUIRect Rect;
-	SetRect(&Rect, 0, m_Pushed ? m_Height : 0, m_Width, m_Pushed ? m_Height * 2 : m_Height);
+	SetRect(&Rect, 0, m_Pushed ? m_Height : 0, m_Width, m_Height);
 
 	m_DrawBitmap->Draw(Screen->GetBitmap(), m_X, m_Y, &Rect);
 }

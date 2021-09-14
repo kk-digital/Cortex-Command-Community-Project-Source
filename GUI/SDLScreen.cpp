@@ -9,8 +9,9 @@
 namespace RTE{
 
 	SDLScreen::SDLScreen() {
-		m_GUIBitmap = std::make_shared<SDLGUITexture>(g_FrameMan.GetResX(), g_FrameMan.GetResY(), true);
+		m_GUIBitmap = std::make_unique<SDLGUITexture>(g_FrameMan.GetResX(), g_FrameMan.GetResY(), true);
 	};
+	SDLScreen::~SDLScreen() { Destroy(); }
 
 	void SDLScreen::Destroy() { }
 
@@ -28,7 +29,7 @@ namespace RTE{
 	}
 
 	GUIBitmap* SDLScreen::CreateBitmap(int width, int height) {
-		SDLGUITexture* pBitmap = new SDLGUITexture(width, height, false);
+		SDLGUITexture* pBitmap = new SDLGUITexture(width, height, false, SDL_TEXTUREACCESS_STREAMING);
 
 		if(!pBitmap)
 			return nullptr;

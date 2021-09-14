@@ -289,6 +289,7 @@ namespace RTE {
 #endif
 			g_FrameMan.Draw();
 			g_FrameMan.RenderPresent();
+
 		}
 	}
 }

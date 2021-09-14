@@ -212,7 +212,7 @@ void GUIScrollPanel::BuildButton(const std::string &ArrowName, int Y, int Width,
 
 	// Get the source rectangle
 	m_Skin->GetValue(ArrowName, "Rect", Values, 4);
-	SetRect(&Rect, Values[0], Values[1], Values[0] + Values[2], Values[1] + Values[3]);
+	SetRect(&Rect, Values[0], Values[1], Values[2], Values[3]);
 
 	Arrow->DrawTrans(m_DrawBitmap[ButtonStates], (Width / 2) - (Values[2] / 2), Y + (Height / 2) - (Values[3] / 2), &Rect);
 	Arrow->DrawTrans(m_DrawBitmap[ButtonStates], Width + (Width / 2) - (Values[2] / 2) + 1, Y + (Height / 2) - (Values[3] / 2) + 1, &Rect);
@@ -232,7 +232,7 @@ void GUIScrollPanel::BuildBackground() {
 	int Values[4];
 	GUIRect Rect;
 	m_Skin->GetValue("ScrollBackground", "Filler", Values, 4);
-	SetRect(&Rect, Values[0], Values[1], Values[0] + Values[2], Values[1] + Values[3]);
+	SetRect(&Rect, Values[0], Values[1], Values[2], Values[3]);
 
 	// Tile the filler
 	for (int y = 0; y < m_Height; y += Values[3]) {
@@ -334,12 +334,12 @@ void GUIScrollPanel::Draw(GUIScreen *Screen) {
 	if (m_Orientation == Vertical) {
 		// Top Button
 		int X = m_ButtonPushed[0] ? m_Width : 0;
-		SetRect(&Rect, X, 0, X + m_Width, m_ButtonSize);
+		SetRect(&Rect, X, 0, m_Width, m_ButtonSize);
 		m_DrawBitmap[ButtonStates]->Draw(Dest, m_X, m_Y, &Rect);
 
 		// Bottom Button
 		X = m_ButtonPushed[1] ? m_Width : 0;
-		SetRect(&Rect, X, m_ButtonSize, X + m_Width, m_ButtonSize * 2);
+		SetRect(&Rect, X, m_ButtonSize, m_Width, m_ButtonSize);
 		m_DrawBitmap[ButtonStates]->Draw(Dest, m_X, (m_Y + m_Height) - m_ButtonSize, &Rect);
 
 		// Knob
@@ -353,12 +353,12 @@ void GUIScrollPanel::Draw(GUIScreen *Screen) {
 	if (m_Orientation == Horizontal) {
 		// Left Button
 		int X = m_ButtonPushed[0] ? m_ButtonSize : 0;
-		SetRect(&Rect, X, 0, X + m_ButtonSize, m_Height);
+		SetRect(&Rect, X, 0, m_ButtonSize, m_Height);
 		m_DrawBitmap[ButtonStates]->Draw(Dest, m_X, m_Y, &Rect);
 
 		// Right Button
 		X = m_ButtonPushed[1] ? m_ButtonSize : 0;
-		SetRect(&Rect, X, m_Height, X + m_ButtonSize, m_Height * 2);
+		SetRect(&Rect, X, m_Height, m_ButtonSize, m_Height);
 		m_DrawBitmap[ButtonStates]->Draw(Dest, (m_X + m_Width) - m_ButtonSize, m_Y, &Rect);
 
 		// Knob

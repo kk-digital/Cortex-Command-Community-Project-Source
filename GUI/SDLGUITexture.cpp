@@ -13,7 +13,7 @@ namespace RTE {
 		m_Width = g_FrameMan.GetPlayerScreenWidth();
 		m_Height = g_FrameMan.GetPlayerScreenHeight();
 		m_Texture = nullptr;
-		m_ClipRect = nullptr;
+		m_ClipRect = std::unique_ptr<SDL_Rect>(new SDL_Rect{0, 0, m_Width, m_Height});
 		m_ColorKey = 0;
 	}
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -28,7 +28,7 @@ namespace RTE {
 			m_Height = 0;
 		}
 
-		m_ClipRect = nullptr;
+		m_ClipRect = std::unique_ptr<SDL_Rect>(new SDL_Rect{0,0,m_Width, m_Height});
 	}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -40,12 +40,12 @@ namespace RTE {
 		if (reference.m_ClipRect) {
 			m_ClipRect = std::make_unique<SDL_Rect>(*reference.m_ClipRect);
 		} else {
-			m_ClipRect = nullptr;
+			m_ClipRect = std::unique_ptr<SDL_Rect>(new SDL_Rect{0, 0, m_Width, m_Height});
 		}
 	}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	SDLGUITexture::SDLGUITexture(int width, int height, bool renderer) { Create(width, height, renderer); }
+	SDLGUITexture::SDLGUITexture(int width, int height, bool renderer, int access) { Create(width, height, renderer, access); }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	SDLGUITexture::~SDLGUITexture() = default; //{ Destroy(); }
@@ -57,22 +57,24 @@ namespace RTE {
 		m_Width = m_Texture->getW();
 		m_Height = m_Texture->getH();
 		m_Locked = false;
+		m_ClipRect = std::unique_ptr<SDL_Rect>(new SDL_Rect{0, 0, m_Width, m_Height});
 		return m_Texture.get();
 	}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	bool SDLGUITexture::Create(int width, int height, bool renderer) {
+	bool SDLGUITexture::Create(int width, int height, bool screen, int access) {
 		m_Width = width;
 		m_Height = height;
-		if (!renderer) {
-			m_Texture = std::make_shared<Texture>(g_FrameMan.GetRenderer(), width, height, SDL_TEXTUREACCESS_STREAMING);
+		m_Texture = nullptr;
+		m_Locked = false;
+		if (!screen) {
+			m_Texture = std::make_shared<Texture>(g_FrameMan.GetRenderer(), width, height, access);
 			Lock();
+			m_Locked = true;
 			m_Texture->clearAll();
-		} else {
-			m_Texture = std::make_shared<Texture>(g_FrameMan.GetRenderer(), width, height, SDL_TEXTUREACCESS_TARGET);
 		}
 
-		m_Locked = false;
+		m_ClipRect = std::unique_ptr<SDL_Rect>(new SDL_Rect{0, 0, m_Width, m_Height});
 		return 1;
 	}
 
@@ -143,7 +145,7 @@ namespace RTE {
 		SDLGUITexture *temp = dynamic_cast<SDLGUITexture *>(pDestBitmap);
 		RTEAssert(temp, "GUIBitmap passed to SDLGUITexture Draw");
 
-		if (!(temp->GetTexture().get() != 0)) {
+		if (!temp->m_Texture.get()) {
 			Render(x, y, pRect, trans, temp->m_ClipRect.get());
 			return;
 		}
@@ -241,18 +243,23 @@ namespace RTE {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	void SDLGUITexture::GetClipRect(GUIRect *rect) const {
-		if (m_ClipRect && rect) {
-			rect->x = m_ClipRect->x;
-			rect->y = m_ClipRect->y;
-			rect->w = m_ClipRect->w;
-			rect->h = m_ClipRect->h;
+		if(!rect){
 			return;
 		}
+		rect->x = m_ClipRect->x;
+		rect->y = m_ClipRect->y;
+		rect->w = m_ClipRect->w;
+		rect->h = m_ClipRect->h;
 	}
 
 	void SDLGUITexture::SetClipRect(GUIRect *rect) {
-		if (!rect)
+		if (!rect) {
+			m_ClipRect->x = 0;
+			m_ClipRect->y = 0;
+			m_ClipRect->h = m_Height;
+			m_ClipRect->w = m_Width;
 			return;
+		}
 
 		m_ClipRect->x = rect->x;
 		m_ClipRect->y = rect->y;
@@ -268,7 +275,7 @@ namespace RTE {
 		if (SDL_IntersectRect(m_ClipRect.get(), &tempRect, &intersectRect))
 			m_ClipRect = std::make_unique<SDL_Rect>(intersectRect);
 		else
-			m_ClipRect = std::make_unique<SDL_Rect>(SDL_Rect{0, 0, 0, 0});
+			m_ClipRect = std::unique_ptr<SDL_Rect>(new SDL_Rect{0, 0, 0, 0});
 	}
 
 } // namespace RTE

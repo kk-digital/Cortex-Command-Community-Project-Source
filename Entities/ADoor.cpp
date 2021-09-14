@@ -237,6 +237,7 @@ namespace RTE {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void ADoor::DrawDoorMaterial() {
+		#if 0
 		if (!m_Door || m_DoorMaterialTempErased || !g_SceneMan.GetTerrain() || !g_SceneMan.GetTerrain()->GetMaterialTexture()) {
 			return;
 		}
@@ -275,11 +276,13 @@ namespace RTE {
 		m_DoorMaterialDrawn = true;
 
 		g_SceneMan.GetTerrain()->AddUpdatedMaterialArea(m_Door->GetBoundingBox());
+		#endif
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	bool ADoor::EraseDoorMaterial(bool updateMaterialArea, bool keepMaterialDrawnFlag) {
+		#if 0
 		if (!keepMaterialDrawnFlag) { m_DoorMaterialDrawn = false; }
 
 		if (!g_SceneMan.GetTerrain() || !g_SceneMan.GetTerrain()->GetMaterialTexture()) {
@@ -294,6 +297,7 @@ namespace RTE {
 			if (updateMaterialArea) { g_SceneMan.GetTerrain()->AddUpdatedMaterialArea(m_Door->GetBoundingBox()); }
 			return true;
 		}
+		#endif
 		return false;
 	}
 

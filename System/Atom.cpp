@@ -971,6 +971,7 @@ namespace RTE {
 
 		// Draw the trail
 		if (g_TimerMan.DrawnSimUpdate() && m_TrailLength) {
+			g_FrameMan.PushRenderTarget(g_SceneMan.GetMOColorTexture());
 			int length = static_cast<int>(static_cast<float>(m_TrailLength) * RandomNum(1.0F - m_TrailLengthVariation, 1.0F));
 			for (int i = trailPoints.size() - std::min(length, static_cast<int>(trailPoints.size())); i < trailPoints.size(); ++i) {
 				pixelColor(g_FrameMan.GetRenderer(), trailPoints[i].first, trailPoints[i].second, m_TrailColor.GetRGBA());

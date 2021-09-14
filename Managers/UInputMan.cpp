@@ -461,7 +461,6 @@ namespace RTE {
 				m_MousePos = Vector(e.motion.xrel, e.motion.yrel);
 			} else if (e.type == SDL_MOUSEBUTTONDOWN) {
 				PressMouseButton(e.button.button);
-				std::cout << "Mouse button" << e.button.button << " pressed " << e.button.clicks << "times" << std::endl;
 			} else if (e.type == SDL_MOUSEBUTTONUP) {
 				ReleaseMouseButton(e.button.button);
 			}

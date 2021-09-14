@@ -166,7 +166,7 @@ void GUISlider::BuildBitmap() {
 	int Values[4];
 	GUIRect Rect;
 	m_Skin->GetValue(Section, Side, Values, 4);
-	SetRect(&Rect, Values[0], Values[1], Values[0] + Values[2], Values[1] + Values[3]);
+	SetRect(&Rect, Values[0], Values[1], Values[2], Values[3]);
 
 	// Create the indicator bitmap
 	m_KnobImage = m_Skin->CreateBitmap(Values[2], Values[3]);
@@ -198,7 +198,7 @@ void GUISlider::BuildLine(const std::string &Section, GUIBitmap *SrcImage) {
 
 	// Tile the line
 	m_Skin->GetValue(Section, "Middle", Values, 4);
-	SetRect(&Rect, Values[0], Values[1], Values[0] + Values[2], Values[1] + Values[3]);
+	SetRect(&Rect, Values[0], Values[1], Values[2], Values[3]);
 	if (m_Orientation == Horizontal) {
 		for (int i = 0; i < m_Width; i += Values[2]) {
 			SrcImage->Draw(m_DrawBitmap, i, 0, &Rect);
@@ -211,7 +211,7 @@ void GUISlider::BuildLine(const std::string &Section, GUIBitmap *SrcImage) {
 
 	// Draw the start
 	m_Skin->GetValue(Section, "Start", Values, 4);
-	SetRect(&Rect, Values[0], Values[1], Values[0] + Values[2], Values[1] + Values[3]);
+	SetRect(&Rect, Values[0], Values[1], Values[2], Values[3]);
 	SrcImage->Draw(m_DrawBitmap, 0, 0, &Rect);
 
 	m_EndThickness = m_Orientation == Horizontal ? Values[2] : Values[3];
@@ -220,7 +220,7 @@ void GUISlider::BuildLine(const std::string &Section, GUIBitmap *SrcImage) {
 	int X = 0;
 	int Y = 0;
 	m_Skin->GetValue(Section, "End", Values, 4);
-	SetRect(&Rect, Values[0], Values[1], Values[0] + Values[2], Values[1] + Values[3]);
+	SetRect(&Rect, Values[0], Values[1], Values[2], Values[3]);
 	if (m_Orientation == Horizontal) {
 		X = m_Width - Values[2];
 	} else {
