@@ -112,13 +112,13 @@ namespace RTE {
 		/// If this material transforms into something else when settling into the terrain, this will return that different material index. If not, it will just return the regular index of this material.
 		/// </summary>
 		/// <returns>The settling material index of this or the regular index.</returns>
-		unsigned char GetSettleMaterial() const { return (m_SettleMaterialIndex != 0) ? m_SettleMaterialIndex : m_Index; }
+		unsigned long GetSettleMaterial() const { return (m_SettleMaterialIndex != 0) ? m_SettleMaterialIndex : m_Index; }
 
 		/// <summary>
 		/// Gets the material index to spawn instead of this one for special effects.
 		/// </summary>
 		/// <returns>The material index to spawn instead of this one for special effects. 0 means to spawn the same material as this.</returns>
-		unsigned char GetSpawnMaterial() const { return m_SpawnMaterialIndex; }
+		unsigned long GetSpawnMaterial() const { return m_SpawnMaterialIndex; }
 
 		/// <summary>
 		/// Whether this material is scrap material made from gibs of things that have already been blown apart.
@@ -167,8 +167,8 @@ namespace RTE {
 		float m_GibImpulseLimitPerLiter; //!< How much impulse gib limit of an object increases per liter of this material.
 		float m_GibWoundLimitPerLiter; //!< How much wound gib limit of an object increases per liter of this material.
 
-		unsigned char m_SettleMaterialIndex; //!< The material to turn particles of this into when they settle on the terrain. 0 here means to spawn this material.
-		unsigned char m_SpawnMaterialIndex; //!< The material to spawn instead of this one for special effects, etc. 0 here means to spawn this material.
+		unsigned long m_SettleMaterialIndex; //!< The material to turn particles of this into when they settle on the terrain. 0 here means to spawn this material.
+		unsigned long m_SpawnMaterialIndex; //!< The material to spawn instead of this one for special effects, etc. 0 here means to spawn this material.
 		bool m_IsScrap; //!< Whether this material is scrap material made from gibs of things that have already been blown apart.
 
 		Color m_Color; //!< The natural color of this material.
