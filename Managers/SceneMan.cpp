@@ -3630,9 +3630,7 @@ void SceneMan::ClearMOColorLayer()
 	g_FrameMan.PopRenderTarget();
 
   if(m_pDebugLayer){
-	SDL_Rect lockRect{0, 0, m_pDebugLayer->GetTexture()->getW(),
-		              m_pDebugLayer->GetTexture()->getH()};
-	m_pDebugLayer->GetTexture()->lock(lockRect);
+	m_pDebugLayer->GetTexture()->lock();
 	m_pDebugLayer->GetTexture()->clearAll();
 	m_pDebugLayer->UnlockTexture();
   }

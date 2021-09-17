@@ -638,6 +638,8 @@ namespace RTE {
 		/// </returns>
 		int lock();
 
+		bool isLocked() {return m_PixelsWO != nullptr && m_Pitch != 0;}
+
 		/// <summary>
 		/// Safely Lock a region of the Texture. This is only available for
 		/// streaming Textures
@@ -646,7 +648,7 @@ namespace RTE {
 		/// An SDL_Rect designating the area to be locked. This will be clipped
 		/// should the region fall outside the texture
 		/// </param>
-		int lock(const SDL_Rect &region);
+		// int lock(const SDL_Rect &region);
 
 		/// <summary>
 		/// Unlock the Texture and update pixels in vram if neccessary.
@@ -793,6 +795,17 @@ namespace RTE {
 		/// The color to set in 0xAARRGGBB.
 		/// </param>
 		void setPixelLower(int x, int y, uint32_t color);
+
+		/// <summary>
+		/// Set a region of the texture from a vector of pixels.
+		/// </summary>
+		/// <param name="setRect">
+		/// The area to copy the pixels to.
+		/// </param>
+		/// <param name="pixels">
+		/// The pixels to set. Should have pixel pitch of setRect.w.
+		/// </param>
+		void setPixels(const SDL_Rect &setRect, const std::vector<uint32_t> &pixels);
 
 		/// <summary>
 		/// Replaces all pixels of oldColor by newColor.

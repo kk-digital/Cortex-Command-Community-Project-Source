@@ -193,30 +193,33 @@ namespace RTE {
 	int Texture::lock() {
 		if (m_PixelsWO)
 			return 0;
+		assert(m_Access == SDL_TEXTUREACCESS_STREAMING);
 		m_Updated = false;
-		return SDL_LockTexture(m_Texture.get(), nullptr, &m_PixelsWO, &m_Pitch);
+		int result = SDL_LockTexture(m_Texture.get(), nullptr, &m_PixelsWO, &m_Pitch);
+		assert(m_PixelsWO);
+		return result;
 	}
 
-	int Texture::lock(const SDL_Rect &region) {
-		if (lock())
-			return -1;
-		if (m_Access == SDL_TEXTUREACCESS_STREAMING) {
-			m_LockedRect = std::make_unique<SDL_Rect>(SDL_Rect{region.x, region.y, 0, 0});
+	// int Texture::lock(const SDL_Rect &region) {
+	// 	if (lock())
+	// 		return -1;
+	// 	if (m_Access == SDL_TEXTUREACCESS_STREAMING) {
+	// 		m_LockedRect = std::make_unique<SDL_Rect>(SDL_Rect{region.x, region.y, 0, 0});
 
-			if ((region.x + region.w) < w)
-				m_LockedRect->w = region.w;
-			else
-				m_LockedRect->w = w - region.x;
-			if ((region.y + region.h) < h)
-				m_LockedRect->h = region.h;
-			else
-				m_LockedRect->h = h - region.y;
+	// 		if ((region.x + region.w) < w)
+	// 			m_LockedRect->w = region.w;
+	// 		else
+	// 			m_LockedRect->w = w - region.x;
+	// 		if ((region.y + region.h) < h)
+	// 			m_LockedRect->h = region.h;
+	// 		else
+	// 			m_LockedRect->h = h - region.y;
 
-			m_Updated = true;
-			return 0;
-		}
-		return -1;
-	}
+	// 		m_Updated = true;
+	// 		return 0;
+	// 	}
+	// 	return -1;
+	// }
 
 	void Texture::unlock() {
 		if (m_PixelsWO) {
@@ -269,6 +272,19 @@ namespace RTE {
 	void Texture::setPixelLower(int x, int y, uint32_t color) {
 		m_PixelsRO[y * w + x] = color;
 		m_Updated = true;
+	}
+
+	void Texture::setPixels(const SDL_Rect &setRect, const std::vector<uint32_t> &pixels) {
+		assert(m_PixelsWO);
+		SDL_Rect clippedRect;
+		SDL_Rect dimensions{0, 0, w, h};
+		if (!SDL_IntersectRect(&dimensions, &setRect, &clippedRect))
+			return;
+		int xOffset = std::abs(setRect.x - clippedRect.x);
+		for (int y = 0; y < clippedRect.h; ++y) {
+			std::copy(pixels.begin() + ( setRect.w * y ) + xOffset, pixels.begin() + (setRect.w * y) + clippedRect.w - 1, m_PixelsRO.begin() + ((clippedRect.y + y) * w + clippedRect.x));
+			std::copy(pixels.begin() + ( setRect.w * y ) + xOffset, pixels.begin() + (setRect.w * y) + clippedRect.w - 1, reinterpret_cast<uint32_t *>(m_PixelsWO) + ((clippedRect.y + y) * w + clippedRect.x));
+		}
 	}
 
 	void Texture::remapColor(uint32_t oldColor, uint32_t newColor) {

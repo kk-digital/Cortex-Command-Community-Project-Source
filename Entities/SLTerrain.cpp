@@ -979,12 +979,7 @@ deque<MOPixel *> SLTerrain::EraseSilhouette(std::shared_ptr<Texture> pSprite,
                     sceneMat = g_SceneMan.GetMaterialFromID(matPixel);
                     spawnMat = sceneMat->GetSpawnMaterial() ? g_SceneMan.GetMaterialFromID(sceneMat->GetSpawnMaterial()) : sceneMat;
                     // Create the MOPixel based off the Terrain data.
-                    pPixel = new MOPixel(colorPixel,
-                                         spawnMat->GetPixelDensity(),
-                                         Vector(terrX, terrY),
-                                         Vector(),
-                                         new Atom(Vector(), spawnMat->GetIndex(), 0, colorPixel, 2),
-                                         0);
+                    pPixel = new MOPixel(colorPixel, spawnMat->GetPixelDensity(), Vector(terrX, terrY), Vector(), new Atom(Vector(), spawnMat->GetIndex(), 0, colorPixel, 2), 0);
 
                     pPixel->SetToHitMOs(false);
                     MOPDeque.push_back(pPixel);
@@ -1063,28 +1058,30 @@ void SLTerrain::ApplyMovableObject(MovableObject *pMObject)
 
 
 		// if neccessary resize the temporary render Target
-		if(!s_TempRenderTarget || spriteDiameter>s_TempRenderTarget->getW())
+		if(!s_TempRenderTarget || spriteDiameter > s_TempRenderTarget->getW())
 			s_TempRenderTarget = std::make_unique<Texture>(renderer, spriteDiameter, spriteDiameter, SDL_TEXTUREACCESS_TARGET);
 
         // The position of the upper left corner of the temporary bitmap in the scene
         Vector bitmapScroll = pMObject->GetPos().GetFloored() - Vector(pMObject->GetDiameter() / 2, pMObject->GetDiameter() / 2);
 
-		GetFGColorTexture()->lock(SDL_Rect{static_cast<int>(bitmapScroll.m_X),
-			                               static_cast<int>(bitmapScroll.m_Y),
-			                               spriteDiameter, spriteDiameter});
-
 		Box notUsed;
 
+		SDL_Rect readBox{0, 0, spriteDiameter, spriteDiameter};
 		g_FrameMan.PushRenderTarget(s_TempRenderTarget->getAsRenderTarget());
+		SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+		SDL_RenderClear(renderer);
+		SDL_RenderSetViewport(renderer, &readBox);
 
 		pMOSprite->Draw(renderer, bitmapScroll, g_DrawColor, true);
 
 		m_pFGColor->Draw(renderer, notUsed, bitmapScroll);
 
-		SDL_RenderReadPixels(renderer, nullptr,
-			                 GetFGColorTexture()->getFormat(),
-			                 GetFGColorTexture()->getPixels(),
-			                 GetFGColorTexture()->getW() * sizeof(uint32_t));
+		std::vector<uint32_t> readPixels(readBox.w * readBox.h, 0);
+		SDL_RenderReadPixels(renderer, &readBox, GetFGColorTexture()->getFormat(), readPixels.data(), readBox.w * sizeof(uint32_t));
+		readBox.x = bitmapScroll.m_X;
+		readBox.y = bitmapScroll.m_Y;
+		m_pFGColor->LockTexture();
+		GetFGColorTexture()->setPixels(readBox, readPixels);
 
 		// Register terrain change
 		g_SceneMan.RegisterTerrainChange(bitmapScroll.m_X, bitmapScroll.m_Y, spriteDiameter, spriteDiameter, g_MaskColor, false);
@@ -1095,25 +1092,34 @@ void SLTerrain::ApplyMovableObject(MovableObject *pMObject)
         if (g_SceneMan.SceneWrapsX())
         {
             if (bitmapScroll.m_X < 0){
-				GetFGColorTexture()->lock(SDL_Rect{static_cast<int>(bitmapScroll.m_X)+g_SceneMan.GetSceneWidth(), static_cast<int>(bitmapScroll.m_Y), spriteDiameter, spriteDiameter});
-			} else if (bitmapScroll.m_X + spriteDiameter >
-				       g_SceneMan.GetSceneWidth()) {
-				GetFGColorTexture()->lock(SDL_Rect{static_cast<int>(bitmapScroll.m_X)-g_SceneMan.GetSceneWidth(), static_cast<int>(bitmapScroll.m_Y), spriteDiameter, spriteDiameter});
+				readBox.x += g_SceneMan.GetSceneWidth();
+				readBox.w += bitmapScroll.GetFloorIntX();
+			} else if (bitmapScroll.m_X + spriteDiameter > g_SceneMan.GetSceneWidth()) {
+				readBox.x = 0;
+				readBox.w -= bitmapScroll.GetFloorIntX() - g_SceneMan.GetSceneWidth();
 			}
-			SDL_RenderReadPixels(renderer, nullptr, GetFGColorTexture()->getFormat(), GetFGColorTexture()->getPixels(), GetFGColorTexture()->getW()*sizeof(uint32_t));
+			// readPixels.resize(readBox.w * readBox.h);
+			// SDL_RenderReadPixels(renderer, &readBox, GetFGColorTexture()->getFormat(), readPixels.data(), readBox.w * sizeof(uint32_t));
+			GetFGColorTexture()->setPixels(readBox, readPixels);
+			readBox.x = bitmapScroll.GetFloorIntX();
+			readBox.w = spriteDiameter;
         }
         if (g_SceneMan.SceneWrapsY())
         {
             if (bitmapScroll.m_Y < 0){
-				GetFGColorTexture()->lock(SDL_Rect{static_cast<int>(bitmapScroll.m_X), static_cast<int>(bitmapScroll.m_Y) + g_SceneMan.GetSceneHeight(), spriteDiameter, spriteDiameter});
+				readBox.y += g_SceneMan.GetSceneHeight();
+				readBox.h += bitmapScroll.GetFloorIntY();
 			}
             else if (bitmapScroll.m_Y + spriteDiameter > g_SceneMan.GetSceneHeight()){
-				GetFGColorTexture()->lock(SDL_Rect{static_cast<int>(bitmapScroll.m_X), static_cast<int>(bitmapScroll.m_Y) - g_SceneMan.GetSceneHeight(), spriteDiameter, spriteDiameter});
+				GetFGColorTexture()->lock();
+				readBox.y = 0;
+				readBox.h -= bitmapScroll.GetFloorIntY() - g_SceneMan.GetSceneHeight();
 			}
-			SDL_RenderReadPixels(renderer, nullptr,
-				                 GetFGColorTexture()->getFormat(),
-				                 GetFGColorTexture()->getPixels(),
-				                 GetFGColorTexture()->getW() * sizeof(uint32_t));
+			// readPixels.resize(readBox.w * readBox.h);
+			// SDL_RenderReadPixels(renderer, &readBox, GetFGColorTexture()->getFormat(), readPixels.data(), readBox.w * sizeof(uint32_t));
+			GetFGColorTexture()->setPixels(readBox, readPixels);
+			readBox.y = bitmapScroll.GetFloorIntY();
+			readBox.h = spriteDiameter;
 		}
 
 		SDL_PixelFormat *globalFormat{SDL_AllocFormat(SDL_PIXELFORMAT_RGBA32)};
@@ -1128,12 +1134,14 @@ void SLTerrain::ApplyMovableObject(MovableObject *pMObject)
         pMOSprite->Draw(renderer, bitmapScroll, g_DrawMaterial, true);
         SceneLayer::Draw(renderer, notUsed, bitmapScroll);
 
-		GetMaterialTexture()->lock(SDL_Rect{static_cast<int>(bitmapScroll.m_X), static_cast<int>(bitmapScroll.m_Y), spriteDiameter, spriteDiameter});
+		GetMaterialTexture()->lock();
+		readBox.x = 0;
+		readBox.y = 0;
 
-		SDL_RenderReadPixels(renderer, nullptr,
-			                 GetMaterialTexture()->getFormat(),
-			                 GetMaterialTexture()->getPixels(),
-			                 GetMaterialTexture()->getW() * sizeof(uint32_t));
+		SDL_RenderReadPixels(renderer, &readBox, GetMaterialTexture()->getFormat(), readPixels.data(), readBox.w * sizeof(uint32_t));
+
+		readBox.x = bitmapScroll.m_X;
+		readBox.y = bitmapScroll.m_Y;
 
         // Add a box to the updated areas list to show there's been change to the materials layer
         m_UpdatedMateralAreas.push_back(Box(bitmapScroll, spriteDiameter, spriteDiameter));
@@ -1142,45 +1150,36 @@ void SLTerrain::ApplyMovableObject(MovableObject *pMObject)
         if (g_SceneMan.SceneWrapsX())
         {
             if (bitmapScroll.m_X < 0){
-				GetFGColorTexture()->lock(
-					SDL_Rect{static_cast<int>(bitmapScroll.m_X) +
-					             g_SceneMan.GetSceneWidth(),
-					         static_cast<int>(bitmapScroll.m_Y), spriteDiameter,
-					         spriteDiameter});
-			} else if (bitmapScroll.m_X + spriteDiameter >
-				       g_SceneMan.GetSceneWidth()) {
-				GetFGColorTexture()->lock(
-					SDL_Rect{static_cast<int>(bitmapScroll.m_X) -
-					             g_SceneMan.GetSceneWidth(),
-					         static_cast<int>(bitmapScroll.m_Y), spriteDiameter,
-					         spriteDiameter});
+				readBox.x += g_SceneMan.GetSceneWidth();
+				readBox.w += bitmapScroll.GetFloorIntX();
+			} else if (bitmapScroll.m_X + spriteDiameter > g_SceneMan.GetSceneWidth()) {
+				readBox.x = 0;
+				readBox.w -= bitmapScroll.GetFloorIntX() - g_SceneMan.GetSceneWidth();
 			}
-			SDL_RenderReadPixels(renderer, nullptr,
-				                 GetFGColorTexture()->getFormat(),
-				                 GetFGColorTexture()->getPixels(),
-				                 GetFGColorTexture()->getW() * sizeof(uint32_t));
-		}
-		if (g_SceneMan.SceneWrapsY())
+			// readPixels.resize(readBox.w * readBox.h);
+			// SDL_RenderReadPixels(renderer, &readBox, GetFGColorTexture()->getFormat(), readPixels.data(), readBox.w * sizeof(uint32_t));
+			GetMaterialTexture()->setPixels(readBox, readPixels);
+			readBox.x = bitmapScroll.GetFloorIntX();
+			readBox.w = spriteDiameter;
+        }
+        if (g_SceneMan.SceneWrapsY())
         {
-			if (bitmapScroll.m_Y < 0) {
-				GetFGColorTexture()->lock(
-					SDL_Rect{static_cast<int>(bitmapScroll.m_X),
-					         static_cast<int>(bitmapScroll.m_Y) +
-					             g_SceneMan.GetSceneHeight(),
-					         spriteDiameter, spriteDiameter});
-			} else if (bitmapScroll.m_Y + spriteDiameter >
-				       g_SceneMan.GetSceneHeight()) {
-				GetFGColorTexture()->lock(
-					SDL_Rect{static_cast<int>(bitmapScroll.m_X),
-					         static_cast<int>(bitmapScroll.m_Y) -
-					             g_SceneMan.GetSceneHeight(),
-					         spriteDiameter, spriteDiameter});
+            if (bitmapScroll.m_Y < 0) {
+				readBox.y += g_SceneMan.GetSceneHeight();
+				readBox.h += bitmapScroll.GetFloorIntY();
 			}
-			SDL_RenderReadPixels(renderer, nullptr,
-				                 GetFGColorTexture()->getFormat(),
-				                 GetFGColorTexture()->getPixels(),
-				                 GetFGColorTexture()->getW() * sizeof(uint32_t));
+            else if (bitmapScroll.m_Y + spriteDiameter > g_SceneMan.GetSceneHeight()){
+				readBox.y = 0;
+				readBox.h -= bitmapScroll.GetFloorIntY() - g_SceneMan.GetSceneHeight();
+			}
+			// readPixels.resize(readBox.w * readBox.h);
+			// SDL_RenderReadPixels(renderer, &readBox, GetFGColorTexture()->getFormat(), readPixels.data(), readBox.w * sizeof(uint32_t));
+			GetMaterialTexture()->setPixels(readBox, readPixels);
+			readBox.y = bitmapScroll.GetFloorIntY();
+			readBox.h = spriteDiameter;
 		}
+
+		SDL_RenderSetViewport(renderer, nullptr);
 
 		g_FrameMan.PopRenderTarget();
     }
@@ -1191,15 +1190,10 @@ void SLTerrain::ApplyMovableObject(MovableObject *pMObject)
 		if (pPixel) {
 			Color c{pPixel->GetColor()};
 			GetFGColorTexture()->lock();
-			GetFGColorTexture()->setPixel(pPixel->GetPos().GetFloorIntX(),
-				                          pPixel->GetPos().GetFloorIntY(),
-				                          c.GetR(), c.GetG(), c.GetB(), 255);
-			// Register terrain change
-			g_SceneMan.RegisterTerrainChange(pPixel->GetPos().m_X,
-				                             pPixel->GetPos().m_Y, 1, 1,
-				                             g_DrawColor, false);
+			GetFGColorTexture()->setPixel(pPixel->GetPos().GetFloorIntX(), pPixel->GetPos().GetFloorIntY(), c.GetR(), c.GetG(), c.GetB(), 255); // Register terrain change
+			g_SceneMan.RegisterTerrainChange(pPixel->GetPos().m_X, pPixel->GetPos().m_Y, 1, 1, g_DrawColor, false);
 
-			uint32_t mat = pPixel->GetAtom()->GetMaterial()->GetSettleMaterial();
+			uint32_t mat = g_FrameMan.GetMIDFromIndex(pPixel->GetAtom()->GetMaterial()->GetSettleMaterial());
 			GetMaterialTexture()->lock();
 			GetMaterialTexture()->setPixel(pPixel->GetPos().GetFloorIntX(),pPixel->GetPos().GetFloorIntY(), mat);
 		}
