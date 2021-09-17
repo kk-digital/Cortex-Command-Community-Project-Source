@@ -1,0 +1,233 @@
+@spritesheet Null
+{
+   src: Null.tga;
+
+    /* Mouse_Text */
+
+    /* Mouse_HSize */
+
+    /* ProgressBar_Base */
+    ProgressBar-Base-topleft: 0px 0px 1px 1px;
+    ProgressBar-Base-top: 0px 0px 1px 1px;
+    ProgressBar-Base-topright: 0px 0px 1px 1px;
+    ProgressBar-Base-left: 0px 0px 1px 1px;
+    ProgressBar-Base-bottomleft: 0px 0px 1px 1px;
+    ProgressBar-Base-bottom: 0px 0px 1px 1px;
+    ProgressBar-Base-bottomright: 0px 0px 1px 1px;
+    ProgressBar-Base-right: 0px 0px 1px 1px;
+    ProgressBar-Base-filler: 0px 0px 1px 1px;
+
+    /* ProgressBar_Indicator */
+    ProgressBar-Indicator-top: 0px 0px 1px 1px;
+    ProgressBar-Indicator-centre: 0px 0px 1px 1px;
+    ProgressBar-Indicator-bottom: 0px 0px 1px 1px;
+    ProgressBar-Indicator-spacing: 0px 0px 1px 1px;
+
+}
+
+@spritesheet SkinGray
+{
+   src: SkinGray.tga;
+
+    /* CollectionBox_Panel */
+    CollectionBox-Panel-topleft: 0px 24px 2px 2px;
+    CollectionBox-Panel-top: 3px 24px 1px 2px;
+    CollectionBox-Panel-topright: 7px 24px 2px 2px;
+    CollectionBox-Panel-left: 0px 27px 2px 1px;
+    CollectionBox-Panel-bottomleft: 0px 31px 2px 2px;
+    CollectionBox-Panel-bottom: 3px 30px 1px 3px;
+    CollectionBox-Panel-bottomright: 7px 31px 2px 2px;
+    CollectionBox-Panel-right: 6px 27px 3px 1px;
+    CollectionBox-Panel-filler: 12px 24px 8px 8px;
+
+}
+
+@spritesheet SkinGreen
+{
+   src: SkinGreen.tga;
+
+    /* Button_Up */
+    Button-Up-topleft: 0px 36px 2px 2px;
+    Button-Up-top: 3px 36px 3px 2px;
+    Button-Up-topright: 7px 36px 3px 2px;
+    Button-Up-left: 0px 39px 2px 3px;
+    Button-Up-bottomleft: 0px 43px 2px 3px;
+    Button-Up-bottom: 3px 43px 3px 3px;
+    Button-Up-bottomright: 7px 43px 3px 3px;
+    Button-Up-right: 7px 39px 3px 3px;
+    Button-Up-filler: 0px 48px 8px 8px;
+
+    /* Button_Over */
+    Button-Over-topleft: 12px 36px 2px 2px;
+    Button-Over-top: 15px 36px 3px 2px;
+    Button-Over-topright: 19px 36px 3px 2px;
+    Button-Over-left: 12px 39px 2px 3px;
+    Button-Over-bottomleft: 12px 43px 2px 3px;
+    Button-Over-bottom: 15px 43px 3px 3px;
+    Button-Over-bottomright: 19px 43px 3px 3px;
+    Button-Over-right: 19px 39px 3px 3px;
+    Button-Over-filler: 12px 48px 8px 8px;
+
+    /* Button_Down */
+    Button-Down-topleft: 24px 36px 2px 2px;
+    Button-Down-top: 27px 36px 3px 2px;
+    Button-Down-topright: 31px 36px 3px 2px;
+    Button-Down-left: 24px 39px 2px 3px;
+    Button-Down-bottomleft: 24px 43px 2px 3px;
+    Button-Down-bottom: 27px 43px 3px 3px;
+    Button-Down-bottomright: 31px 43px 3px 3px;
+    Button-Down-right: 31px 39px 3px 3px;
+    Button-Down-filler: 24px 48px 8px 8px;
+
+    /* Listbox */
+    Listbox-topleft: 112px 11px 2px 2px;
+    Listbox-top: 115px 11px 3px 2px;
+    Listbox-topright: 119px 11px 2px 2px;
+    Listbox-left: 112px 14px 2px 3px;
+    Listbox-bottomleft: 112px 18px 2px 2px;
+    Listbox-bottom: 115px 18px 3px 2px;
+    Listbox-bottomright: 119px 18px 2px 2px;
+    Listbox-right: 119px 14px 2px 3px;
+    Listbox-filler: 64px 12px 8px 8px;
+
+    /* ScrollButton_Up */
+    ScrollButton-Up-topleft: 112px 68px 2px 2px;
+    ScrollButton-Up-top: 114px 68px 3px 2px;
+    ScrollButton-Up-topright: 117px 68px 2px 2px;
+    ScrollButton-Up-left: 112px 70px 2px 3px;
+    ScrollButton-Up-bottomleft: 112px 73px 2px 2px;
+    ScrollButton-Up-bottom: 114px 73px 3px 2px;
+    ScrollButton-Up-bottomright: 117px 73px 2px 2px;
+    ScrollButton-Up-right: 117px 70px 2px 3px;
+    ScrollButton-Up-filler: 114px 70px 3px 3px;
+
+    /* ScrollButton_Down */
+    ScrollButton-Down-topleft: 120px 68px 2px 2px;
+    ScrollButton-Down-top: 122px 68px 3px 2px;
+    ScrollButton-Down-topright: 125px 68px 2px 2px;
+    ScrollButton-Down-left: 120px 70px 2px 3px;
+    ScrollButton-Down-bottomleft: 120px 73px 2px 2px;
+    ScrollButton-Down-bottom: 122px 73px 3px 2px;
+    ScrollButton-Down-bottomright: 125px 73px 2px 2px;
+    ScrollButton-Down-right: 125px 70px 2px 3px;
+    ScrollButton-Down-filler: 122px 70px 3px 3px;
+
+    /* ScrollKnob_Up */
+    ScrollKnob-Up-topleft: 112px 78px 3px 3px;
+    ScrollKnob-Up-top: 114px 78px 3px 3px;
+    ScrollKnob-Up-topright: 116px 78px 3px 3px;
+    ScrollKnob-Up-left: 112px 81px 2px 3px;
+    ScrollKnob-Up-bottomleft: 112px 84px 3px 3px;
+    ScrollKnob-Up-bottom: 114px 84px 3px 3px;
+    ScrollKnob-Up-bottomright: 116px 84px 3px 3px;
+    ScrollKnob-Up-right: 117px 81px 2px 3px;
+    ScrollKnob-Up-filler: 114px 81px 3px 3px;
+
+    /* ScrollKnob_Down */
+    ScrollKnob-Down-topleft: 120px 78px 3px 3px;
+    ScrollKnob-Down-top: 122px 78px 3px 3px;
+    ScrollKnob-Down-topright: 124px 78px 3px 3px;
+    ScrollKnob-Down-left: 120px 81px 2px 3px;
+    ScrollKnob-Down-bottomleft: 120px 84px 3px 3px;
+    ScrollKnob-Down-bottom: 122px 84px 3px 3px;
+    ScrollKnob-Down-bottomright: 124px 84px 3px 3px;
+    ScrollKnob-Down-right: 125px 81px 2px 3px;
+    ScrollKnob-Down-filler: 122px 81px 3px 3px;
+
+    /* ScrollTopArrow */
+    ScrollTopArrow-rect: 114px 64px 3px 3px;
+
+    /* ScrollBottomArrow */
+    ScrollBottomArrow-rect: 122px 64px 3px 3px;
+
+    /* ScrollLeftArrow */
+    ScrollLeftArrow-rect: 85px 40px 3px 3px;
+
+    /* ScrollRightArrow */
+    ScrollRightArrow-rect: 85px 32px 3px 3px;
+
+    /* ScrollBackground */
+    ScrollBackground-filler: 112px 87px 7px 7px;
+
+    /* Checkbox */
+    Checkbox-base: 16px 60px 7px 7px;
+    Checkbox-mouseover: 24px 60px 7px 7px;
+    Checkbox-check: 16px 67px 7px 7px;
+    Checkbox-greycheck: 23px 67px 7px 7px;
+
+    /* Slider_Horz */
+    Slider-Horz-start: 0px 76px 2px 9px;
+    Slider-Horz-middle: 3px 76px 4px 9px;
+    Slider-Horz-end: 8px 76px 2px 9px;
+    Slider-Horz-topleftslider: 16px 76px 9px 3px;
+    Slider-Horz-bottomrightslider: 12px 76px 3px 9px;
+
+    /* Slider_Vert */
+    Slider-Vert-start: 0px 3px 2px 2px;
+    Slider-Vert-middle: 0px 6px 2px 3px;
+    Slider-Vert-end: 0px 10px 2px 2px;
+    Slider-Vert-topleftslider: 23px 9px 14px 8px;
+    Slider-Vert-bottomrightslider: 23px 0px 14px 8px;
+
+    /* TextBox */
+    TextBox-topleft: 112px 11px 2px 2px;
+    TextBox-top: 115px 11px 3px 2px;
+    TextBox-topright: 119px 11px 2px 2px;
+    TextBox-left: 112px 14px 2px 3px;
+    TextBox-bottomleft: 112px 18px 2px 2px;
+    TextBox-bottom: 115px 18px 3px 2px;
+    TextBox-bottomright: 119px 18px 2px 2px;
+    TextBox-right: 119px 14px 2px 3px;
+    TextBox-filler: 64px 12px 8px 8px;
+
+    /* ComboBox_Arrow */
+    ComboBox-Arrow-rect: 76px 70px 7px 5px;
+
+    /* ComboBox_ButtonUp */
+    ComboBox-ButtonUp-topleft: 112px 11px 2px 2px;
+    ComboBox-ButtonUp-top: 115px 11px 3px 2px;
+    ComboBox-ButtonUp-topright: 119px 11px 2px 2px;
+    ComboBox-ButtonUp-left: 112px 14px 2px 3px;
+    ComboBox-ButtonUp-bottomleft: 112px 18px 2px 2px;
+    ComboBox-ButtonUp-bottom: 115px 18px 3px 2px;
+    ComboBox-ButtonUp-bottomright: 119px 18px 2px 2px;
+    ComboBox-ButtonUp-right: 119px 14px 2px 3px;
+    ComboBox-ButtonUp-filler: 64px 12px 8px 8px;
+
+    /* ComboBox_ButtonDown */
+    ComboBox-ButtonDown-topleft: 112px 20px 2px 2px;
+    ComboBox-ButtonDown-top: 115px 20px 3px 2px;
+    ComboBox-ButtonDown-topright: 119px 20px 2px 2px;
+    ComboBox-ButtonDown-left: 112px 23px 2px 3px;
+    ComboBox-ButtonDown-bottomleft: 112px 27px 2px 2px;
+    ComboBox-ButtonDown-bottom: 115px 27px 3px 2px;
+    ComboBox-ButtonDown-bottomright: 119px 27px 2px 2px;
+    ComboBox-ButtonDown-right: 119px 23px 2px 3px;
+    ComboBox-ButtonDown-filler: 64px 12px 8px 8px;
+
+}
+
+@spritesheet SkinBrown
+{
+   src: SkinBrown.tga;
+
+    /* RadioButton */
+    RadioButton-base: 0px 60px 7px 7px;
+    RadioButton-mouseover: 8px 60px 7px 7px;
+    RadioButton-check: 0px 67px 7px 7px;
+    RadioButton-greycheck: 8px 67px 7px 7px;
+
+}
+
+@spritesheet TabGreen
+{
+   src: TabGreen.tga;
+
+    /* Tab */
+    Tab-base: 0px 0px 57px 17px;
+    Tab-mouseover: 0px 19px 57px 17px;
+    Tab-selected: 0px 38px 57px 17px;
+    Tab-disabled: 0px 57px 57px 17px;
+
+}
+
