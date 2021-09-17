@@ -833,7 +833,7 @@ int Scene::LoadData(bool placeObjects, bool initPathfinding, bool placeUnits)
                                 scaled.w = std::ceil(pTO->GetFGColorTexture()->getW() * scale.m_X);
                                 scaled.h = std::ceil(pTO->GetFGColorTexture()->getH() * scale.m_Y);
                                 // FILL the box with key color for the owner ownerTeam, revealing the area that this thing is on
-                                m_apUnseenLayer[ownerTeam]->GetTexture()->fillRect(scaled, g_MaskColor);
+                                m_apUnseenLayer[ownerTeam]->GetTexture()->fillRect(scaled, 0);
 								m_apUnseenLayer[ownerTeam]->UnlockTexture();
                                 // Expand the box a little so the whole placed object is going to be hidden
                                 scaled.x -= 1;

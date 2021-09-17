@@ -1810,6 +1810,7 @@ enum MOType
 
 	void SetProvidesPieMenuContext(bool value) { m_ProvidesPieMenuContext = value; }
 
+	bool m_TempDisableGettingHit;
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Protected member variable and method declarations

@@ -112,6 +112,8 @@ void MovableObject::Clear()
 	m_ParticleUniqueIDHit = 0;
 
 	m_ProvidesPieMenuContext = false;
+
+	m_TempDisableGettingHit = false;
 }
 
 
@@ -682,7 +684,6 @@ int MovableObject::RunScriptedFunction(const std::string &scriptPath, const std:
 
     std::string presetAndFunctionName = m_ScriptPresetName + "." + functionName;
     std::string fullFunctionName = presetAndFunctionName + "[\"" + scriptPath + "\"]";
-	std::cout << "object: " << m_ScriptObjectName << " script: " << scriptPath << " preset: " << presetAndFunctionName << " function: " << fullFunctionName << std::endl;
 
     int status = g_LuaMan.RunScriptedFunction(fullFunctionName, m_ScriptObjectName, {presetAndFunctionName, m_ScriptObjectName, fullFunctionName}, functionEntityArguments, functionLiteralArguments);
     if (status < 0 && m_AllLoadedScripts.size() > 1) {
@@ -903,9 +904,10 @@ void MovableObject::PreTravel()
 {
 	// Temporarily remove the representation of this from the scene MO layers
 	if (m_GetsHitByMOs) {
-		g_FrameMan.PushRenderTarget(g_SceneMan.GetMOIDTexture()->getAsRenderTarget());
-		Draw(g_FrameMan.GetRenderer(), Vector(), g_DrawNoMOID, true);
-		g_FrameMan.PopRenderTarget();
+		// g_FrameMan.PushRenderTarget(g_SceneMan.GetMOIDTexture()->getAsRenderTarget());
+		// Draw(g_FrameMan.GetRenderer(), Vector(), g_DrawNoMOID, true);
+		// g_FrameMan.PopRenderTarget();
+		m_TempDisableGettingHit = true;
 	}
 
     // Save previous position and velocities before moving
@@ -942,11 +944,13 @@ void MovableObject::PostTravel()
         m_IgnoresAtomGroupHits = m_Vel.GetLargest() < m_IgnoresAGHitsWhenSlowerThan;
 
 	if (m_GetsHitByMOs) {
+		if (!GetParent()) {
+			m_TempDisableGettingHit = false;
+		}
 		// Replace updated MOID representation to scene after Update
-		g_FrameMan.PushRenderTarget(g_SceneMan.GetMOIDTexture());
-		Draw(g_FrameMan.GetRenderer(), Vector(), g_DrawMOID, true);
-		g_FrameMan.PopRenderTarget();
+		// Draw(g_FrameMan.GetRenderer(), Vector(), g_DrawMOID, true);
 		m_AlreadyHitBy.clear();
+
 	}
 	m_IsUpdated = true;
 

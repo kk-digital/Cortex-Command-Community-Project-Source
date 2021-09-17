@@ -975,11 +975,9 @@ bool AHuman::EquipDeviceInGroup(string group, bool doEquip)
                     MovableObject *previouslyHeldItem = m_pFGArm->ReleaseHeldMO();
                     // Note - This is a fix to deal with an edge case bug when this method is called by a global script.
                     // Because the global script runs before everything has finished traveling, the removed item needs to undraw itself from the MO layer, otherwise it can result in ghost collisions and crashes.
-                    if (previouslyHeldItem->GetsHitByMOs()) {
-						g_FrameMan.PushRenderTarget(g_SceneMan.GetMOIDTexture());
-						previouslyHeldItem->Draw(g_FrameMan.GetRenderer(), Vector(), g_DrawNoMOID, true);
-						g_FrameMan.PopRenderTarget();
-					}
+                    // if (previouslyHeldItem->GetsHitByMOs()) {
+					// 	previouslyHeldItem->Draw(g_FrameMan.GetRenderer(), Vector(), g_DrawNoMOID, true);
+					// }
                     m_Inventory.emplace_back(previouslyHeldItem);
                 }
 

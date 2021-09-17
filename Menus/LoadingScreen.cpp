@@ -26,13 +26,13 @@ namespace RTE {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void LoadingScreen::Create(SDLScreen *guiScreen, SDLInput *guiInput, bool progressReportDisabled) {
-		GUIControlManager loadingScreenManager;
-		RTEAssert(loadingScreenManager.Create(guiScreen, guiInput, "Base.rte/GUIs/Skins/Menus", "LoadingScreenSkin.ini"), "Failed to create GUI Control Manager and load it from Base.rte/GUIs/Skins/Menus/LoadingScreenSkin.ini");
-		loadingScreenManager.Load("Base.rte/GUIs/LoadingGUI.ini");
+		// GUIControlManager loadingScreenManager;
+		// RTEAssert(loadingScreenManager.Create(guiScreen, guiInput, "Base.rte/GUIs/Skins/Menus", "LoadingScreenSkin.ini"), "Failed to create GUI Control Manager and load it from Base.rte/GUIs/Skins/Menus/LoadingScreenSkin.ini");
+		// loadingScreenManager.Load("Base.rte/GUIs/LoadingGUI.ini");
 
 		int loadingSplashOffset = 0;
 		if (!progressReportDisabled) {
-			CreateProgressReportListbox(&loadingScreenManager);
+			// CreateProgressReportListbox(&loadingScreenManager);
 			loadingSplashOffset = m_ProgressListboxPosX / 4;
 		}
 		SceneLayer loadingSplash;

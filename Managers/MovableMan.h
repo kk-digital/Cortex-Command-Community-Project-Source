@@ -150,6 +150,9 @@ public:
 
     int GetMOIDCount() { return m_MOIDIndex.size(); }
 
+	bool HitTestMOIDAtPixel(MOID moid, int pixelX, int pixelY);
+
+	MOID GetMOIDPixel(int pixelX, int pixelY);
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          GetTeamMOIDCount

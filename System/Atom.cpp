@@ -197,7 +197,7 @@ namespace RTE {
 			checkPixel = sprite->getPixel(atomPos.m_X + s_NormalChecks[check][X], atomPos.m_Y + s_NormalChecks[check][Y]);
 
 			// If the pixel was outside of the bitmap, or on the key color, then that's a valid direction for normal, add it to the accumulated normal
-			if (checkPixel < 0 || checkPixel == g_MaskColor) {
+			if (checkPixel < 0 || checkPixel == g_AlphaZero) {
 				m_Normal.m_X += s_NormalChecks[check][X];
 				m_Normal.m_Y += s_NormalChecks[check][Y];
 			}
@@ -649,7 +649,6 @@ namespace RTE {
 		// Lock all bitmaps involved outside the loop.
 		if (!scenePreLocked) {
 			g_SceneMan.LockScene();
-			g_FrameMan.PushRenderTarget(g_SceneMan.GetMOIDTexture());
 		}
 
 		// Loop for all the different straight segments (between bounces etc) that have to be traveled during the timeLeft.
@@ -983,7 +982,6 @@ namespace RTE {
 		//if (m_TrailLength) { trailBitmap->UnLock(); }
 		if (!scenePreLocked) {
 			g_SceneMan.UnlockScene();
-			g_FrameMan.PopRenderTarget();
 		}
 
 		// Extract Atom offset.

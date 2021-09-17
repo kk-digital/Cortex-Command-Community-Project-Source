@@ -331,9 +331,6 @@ namespace RTE {
 		// Lock all bitmaps involved outside the loop - only relevant for video bitmaps so disabled at the moment.
 		//if (!scenePreLocked) { g_SceneMan.LockScene(); }
 
-		// set render target to the MOID render layer, so we can read MOIDs
-		g_FrameMan.PushRenderTarget(g_SceneMan.GetMOIDTexture());
-
 		// Loop for all the different straight segments (between bounces etc) that have to be traveled during the travelTime.
 		do {
 			// First see what Atoms are inside either the terrain or another MO, and cause collisions responses before even starting the segment
@@ -719,7 +716,6 @@ namespace RTE {
 		}
 
 		// Reset the render target
-		g_FrameMan.PopRenderTarget();
 		// Travel along the remaining trajectory if we didn't hit anything on the last segment and weren't told to halt.
 		if (!hitStep && !halted) {
 			/*
@@ -784,7 +780,6 @@ namespace RTE {
 
 		// Before the very first step of the first leg of this travel, we find that we're already intersecting with another MO, then we completely ignore collisions with that MO for this entire travel.
 		// This is to prevent MO's from getting stuck in each other.
-		g_FrameMan.PushRenderTarget(g_SceneMan.GetMOIDTexture());
 		if (hitMOs) {
 			intPos[X] = position.GetFloorIntX();
 			intPos[Y] = position.GetFloorIntY();
@@ -1188,7 +1183,6 @@ namespace RTE {
 			++legCount;
 		} while ((hit[X] || hit[Y]) && timeLeft > 0.0F && /*!trajectory.GetFloored().IsZero() &&*/ !halted && hitCount < 3);
 
-		g_FrameMan.PopRenderTarget();
 
 		if (!scenePreLocked) { g_SceneMan.UnlockScene(); }
 
@@ -1402,7 +1396,6 @@ namespace RTE {
 
 		// First go through all Atoms to find the first intersection and get the intersected MO
 
-		g_FrameMan.PushRenderTarget(g_SceneMan.GetMOIDTexture());
 		for (Atom *atom : m_Atoms) {
 			atomOffset = m_OwnerMOSR->RotateOffset(atom->GetOffset());
 			atom->SetupPos(position + atomOffset);
@@ -1421,12 +1414,11 @@ namespace RTE {
 				if (tempMO->GetsHitByMOs()) {
 					// Make that MO draw itself again in the MOID layer so we can find its true edges
 					intersectedMO = tempMO;
-					intersectedMO->Draw(g_FrameMan.GetRenderer(), Vector(), g_DrawMOID, true);
+					// intersectedMO->Draw(g_FrameMan.GetRenderer(), Vector(), g_DrawMOID, true);
 					break;
 				}
 			}
 		}
-		g_FrameMan.PopRenderTarget();
 		if (!intersectedMO) {
 			return false;
 		}
@@ -1438,7 +1430,6 @@ namespace RTE {
 		}
 
 		std::list<Atom *> intersectingAtoms;
-		g_FrameMan.PushRenderTarget(g_SceneMan.GetMOIDTexture());
 
 		// Restart and go through all Atoms to find all intersecting the specific intersected MO
 		for (Atom *atom : m_Atoms) {
@@ -1460,7 +1451,6 @@ namespace RTE {
 
 		// TODO: Maybe use previous position to create an exit direction instead of quitting.
 		if (exitDirection.IsZero()) {
-			g_FrameMan.PopRenderTarget();
 			return false;
 		}
 
@@ -1482,7 +1472,6 @@ namespace RTE {
 				}
 			}
 		}
-		g_FrameMan.PopRenderTarget();
 
 		Vector thisExit;
 		Vector intersectedExit;
