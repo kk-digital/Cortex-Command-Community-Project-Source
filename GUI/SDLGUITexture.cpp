@@ -149,7 +149,6 @@ namespace RTE {
 			Render(x, y, pRect, trans, temp->m_ClipRect.get());
 			return;
 		}
-		Lock();
 		temp->Lock();
 		SDL_Rect src;
 		if (pRect) {
@@ -179,7 +178,6 @@ namespace RTE {
 		if (!temp->GetTexture())
 			RenderScaled(x, y, width, height, trans);
 
-		Lock();
 		temp->Lock();
 
 		SDL_Rect dest{x, y, width, height};
