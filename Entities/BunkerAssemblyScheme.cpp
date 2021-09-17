@@ -103,7 +103,7 @@ int BunkerAssemblyScheme::ReadProperty(const std::string_view &propName, Reader 
         reader >> m_BitmapFile;
         m_pBitmap = m_BitmapFile.GetAsTexture();
 
-		m_pPresentationBitmap = std::make_shared<Texture>(g_FrameMan.GetRenderer(), m_pBitmap->getW() * ScaleX, m_pBitmap->getH() * ScaleY);
+		m_pPresentationBitmap = std::make_shared<Texture>(g_FrameMan.GetRenderer(), m_pBitmap->getW() * ScaleX, m_pBitmap->getH() * ScaleY, SDL_TEXTUREACCESS_STREAMING);
 		Texture tempPresentation(g_FrameMan.GetRenderer(), m_pBitmap->getW(), m_pBitmap->getH());
 		g_FrameMan.PushRenderTarget(tempPresentation.getAsRenderTarget());
 		// Create internal presentation bitmap which will be drawn by editor
@@ -216,7 +216,7 @@ int BunkerAssemblyScheme::ReadProperty(const std::string_view &propName, Reader 
 
 		float scale = (float)ICON_WIDTH / (float)m_pPresentationBitmap->getW();
 
-		m_pIconBitmap = std::make_shared<Texture>(g_FrameMan.GetRenderer(), m_pPresentationBitmap->getW() * scale, m_pPresentationBitmap->getH() * scale, SDL_TEXTUREACCESS_STATIC);
+		m_pIconBitmap = std::make_shared<Texture>(g_FrameMan.GetRenderer(), m_pPresentationBitmap->getW() * scale, m_pPresentationBitmap->getH() * scale, SDL_TEXTUREACCESS_STREAMING);
 		m_pIconBitmap->lock();
 
         for (int x = 0; x < m_pBitmap->getW() ; ++x)

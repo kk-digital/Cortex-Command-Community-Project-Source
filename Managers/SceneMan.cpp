@@ -591,6 +591,7 @@ MOID SceneMan::GetMOIDPixel(int pixelX, int pixelY)
 	WrapPosition(pixelX, pixelY);
 
   if (m_pDebugLayer && m_DrawPixelCheckVisualizations) { m_pDebugLayer->SetPixel(pixelX, pixelY, 5); }
+  return g_MovableMan.GetMOIDPixel(pixelX, pixelY);
 	// Out of Bounds
 	if (pixelX < 0 ||
 	   pixelX >= m_pMOIDLayer->GetTexture()->getW() ||
@@ -631,10 +632,15 @@ Material const *SceneMan::GetMaterialFromID(uint32_t screen) const {
 	if(m_MaterialCount == 0)
 		return nullptr;
 
-	if(m_apMatPalette.find(screen) == m_apMatPalette.end()){
+	MID mat = screen;
+
+	if(screen && screen <= 255)
+		mat = g_FrameMan.GetMIDFromIndex(screen);
+
+	if(m_apMatPalette.find(mat) == m_apMatPalette.end()){
 		return m_apMatPalette.at(g_MaterialAir);
 	} else {
-		return m_apMatPalette.at(screen);
+		return m_apMatPalette.at(mat);
 	}
 }
 
@@ -1078,7 +1084,7 @@ int SceneMan::RemoveOrphans(int posX, int posY,
 			spawnColor.SetRGBAFromColor(m_pCurrentScene->GetTerrain()->GetFGColorPixel(posX, posY));
 
 		// No point generating a key-colored MOPixel
-		if (spawnColor.GetRGBA() != g_MaskColor)
+		if (spawnColor.GetRGBA() != 0)
 		{
 			// TEST COLOR
 			// spawnColor = 5;
@@ -1100,7 +1106,7 @@ int SceneMan::RemoveOrphans(int posX, int posY,
 			g_MovableMan.AddParticle(pixelMO);
 			pixelMO = 0;
 		}
-		m_pCurrentScene->GetTerrain()->SetFGColorPixel(posX, posY, g_MaskColor);
+		m_pCurrentScene->GetTerrain()->SetFGColorPixel(posX, posY, g_AlphaZero);
 		RegisterTerrainChange(posX, posY, 1, 1, g_MaskColor, false);
 
 		m_pCurrentScene->GetTerrain()->SetMaterialPixel(posX, posY, g_MaterialAir);
@@ -1278,7 +1284,7 @@ bool SceneMan::TryPenetrate(const int posX,
 				spawnColor.SetRGBAFromColor(m_pCurrentScene->GetTerrain()->GetFGColorPixel(posX, posY));
 
 			// No point generating a key-colored MOPixel
-			if (spawnColor.GetRGBA() != g_MaskColor)
+			if (spawnColor.GetRGBA() != g_AlphaZero)
 			{
 				// Get the new pixel from the pre-allocated pool, should be faster than dynamic allocation
 				// Density is used as the mass for the new MOPixel
@@ -1311,7 +1317,7 @@ bool SceneMan::TryPenetrate(const int posX,
 				g_MovableMan.AddParticle(pixelMO);
 				pixelMO = 0;
 			}
-			m_pCurrentScene->GetTerrain()->SetFGColorPixel(posX, posY, g_MaskColor);
+			m_pCurrentScene->GetTerrain()->SetFGColorPixel(posX, posY, 0);
 			RegisterTerrainChange(posX, posY, 1, 1, g_MaskColor, false);
 
 			m_pCurrentScene->GetTerrain()->SetMaterialPixel(posX, posY, g_MaterialAir);
@@ -1319,7 +1325,7 @@ bool SceneMan::TryPenetrate(const int posX,
 // TODO: Improve / tweak randomized pushing away of terrain")
 		else if (RandomNum() <= airRatio)
 		{
-			m_pCurrentScene->GetTerrain()->SetFGColorPixel(posX, posY, g_MaskColor);
+			m_pCurrentScene->GetTerrain()->SetFGColorPixel(posX, posY, 0);
 			RegisterTerrainChange(posX, posY, 1, 1, g_MaskColor, false);
 
 			m_pCurrentScene->GetTerrain()->SetMaterialPixel(posX, posY, g_MaterialAir);
@@ -1330,7 +1336,7 @@ bool SceneMan::TryPenetrate(const int posX,
 		retardation = -(sceneMat->GetIntegrity() / impMag);
 
 		// If this is a scrap pixel, or there is no background pixel 'supporting' the knocked-loose pixel, make the column above also turn into particles
-		if (sceneMat->IsScrap() || m_pCurrentScene->GetTerrain()->GetBGColorTexture()->getPixel(posX, posY) == g_MaskColor)
+		if (sceneMat->IsScrap() || m_pCurrentScene->GetTerrain()->GetBGColorTexture()->getPixel(posX, posY) == 0)
 		{
 			// Get quicker direct access to bitmaps
 			std::shared_ptr<Texture> pFGColor = m_pCurrentScene->GetTerrain()->GetFGColorTexture();
@@ -1355,7 +1361,7 @@ bool SceneMan::TryPenetrate(const int posX,
 					sceneMat = GetMaterialFromID(testMaterialID);
 
 					// No support in the background layer, or is scrap material, so make particle of some of them
-					if (sceneMat->IsScrap() || pBGColor->getPixel(posX, testY) == g_MaskColor)
+					if (sceneMat->IsScrap() || pBGColor->getPixel(posX, testY) == 0)
 					{
 						//  Only generate  particles of some of 'em
 						if (RandomNum() > 0.75F)
@@ -1368,7 +1374,7 @@ bool SceneMan::TryPenetrate(const int posX,
 								spawnColor.SetRGBAFromColor(m_pCurrentScene->GetTerrain()->GetFGColorPixel(posX, testY));
 
 							// No point generating a key-colored MOPixel
-							if (spawnColor.GetRGBA() != g_MaskColor)
+							if (spawnColor.GetRGBA() != 0)
 							{
 								// Figure out the randomized velocity the spray should have upward
 								sprayVel.SetXY(sprayMag* RandomNormalNum() * 0.5F, (-sprayMag * 0.5F) + (-sprayMag * RandomNum(0.0F, 0.5F)));
@@ -1389,7 +1395,7 @@ bool SceneMan::TryPenetrate(const int posX,
 
 						// Clear the terrain pixel now when the particle has been generated from it
 						RegisterTerrainChange(posX, testY, 1, 1, g_MaskColor, false);
-						pFGColor->setPixel(posX, testY, g_MaskColor);
+						pFGColor->setPixel(posX, testY, 0);
 						pMaterial->setPixel(posX, testY, g_MaterialAir);
 					}
 					// There is support, so stop checking
@@ -1516,7 +1522,7 @@ bool SceneMan::IsUnseen(const int posX, const int posY, const int team)
 		Vector scale = pUnseenLayer->GetScaleInverse();
 		int scaledX = posX * scale.m_X;
 		int scaledY = posY * scale.m_Y;
-		return pUnseenLayer->GetTexture()->getPixel(scaledX, scaledY) != g_MaskColor;
+		return pUnseenLayer->GetTexture()->getPixel(scaledX, scaledY) != 0;
 	}
 
 	return false;

@@ -1233,7 +1233,7 @@ void MOSRotating::PreTravel() {
 	MOSprite::PreTravel();
 
 	// If this is going slow enough, check for and redraw the MOID representations of any other MOSRotatings that may be overlapping this
-	if (m_GetsHitByMOs && m_HitsMOs && m_Vel.GetX() < 2.0F && m_Vel.GetY() < 2.0F) { g_MovableMan.RedrawOverlappingMOIDs(this); }
+	// if (m_GetsHitByMOs && m_HitsMOs && m_Vel.GetX() < 2.0F && m_Vel.GetY() < 2.0F) { g_MovableMan.RedrawOverlappingMOIDs(this); }
 }
 
 
@@ -1400,9 +1400,7 @@ bool MOSRotating::DrawMOIDIfOverlapping(MovableObject *pOverlapMO)
         if (g_SceneMan.ShortestDistance(m_Pos, otherPos, g_SceneMan.SceneWrapsX()).GetMagnitude() < combinedRadii)
         {
             // They may be overlapping, so draw the MOID rep of this to the MOID layer
-			g_FrameMan.PushRenderTarget(g_SceneMan.GetMOIDTexture());
-            Draw(g_FrameMan.GetRenderer(), Vector(), g_DrawMOID, true);
-			g_FrameMan.PopRenderTarget();
+            // Draw(g_FrameMan.GetRenderer(), Vector(), g_DrawMOID, true);
             return true;
         }
     }

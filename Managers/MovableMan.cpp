@@ -170,8 +170,45 @@ MovableObject * MovableMan::GetMOFromID(MOID whichID) {
 	}
 	return nullptr;
 }
+bool MovableMan::HitTestMOIDAtPixel(MOID moid, int pixelX, int pixelY) {
+    MOSprite* mo = dynamic_cast<MOSprite*>(GetMOFromID(moid));
 
+    if (mo && mo->GetsHitByMOs())
+    {
+        // Check if the pixel is nearer than the "maximum sprite radius"
+        Vector sampleToMO = g_SceneMan.ShortestDistance(mo->GetPos(), Vector(pixelX, pixelY));
+        if (sampleToMO.GetMagnitude() < mo->GetRadius())
+        {
+            // Check the scene position in the current local space of the MO
+            // Account for Position, Sprite Offset, Angle and HFlipped (and Scale eventually maybe)
+            Matrix rotation = mo->GetRotMatrix(); // <- Copy to non-const variable so / operator overload works
+            Vector entryPos = (sampleToMO / rotation).GetXFlipped(mo->IsHFlipped()) - mo->GetSpriteOffset();
+            int localX = std::floor(entryPos.m_X),
+                localY = std::floor(entryPos.m_Y);
 
+			// Return the MOID if we hit the Sprite
+			return (mo->GetSpriteFrame(mo->GetFrame())->getPixel(localX, localY) & c_AlphaMask) != 0;
+        }
+    }
+
+    return false;
+}
+
+MOID MovableMan::GetMOIDPixel(int pixelX, int pixelY) {
+	// Loop through the MOs
+	for (vector<MovableObject *>::iterator itr = m_MOIDIndex.begin(); itr != m_MOIDIndex.end(); ++itr) {
+		// Check if it's a MOSprite or above, if GetsHitByMOs is Enabled, and if its root is not travelling
+		MOSprite *mo = dynamic_cast<MOSprite *>((*itr));
+		if (mo && mo->GetsHitByMOs() && !mo->GetRootParent()->m_TempDisableGettingHit) {
+			MOID curMOID = mo->GetID();
+			if (HitTestMOIDAtPixel(curMOID, pixelX, pixelY))
+				return curMOID;
+		}
+	}
+
+	// If no MO's were found at this location, return g_NoMOID
+	return g_NoMOID;
+}
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          RegisterObject
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -1667,7 +1704,6 @@ void MovableMan::Update()
     ////////////////////////////////////////////////////////////////////////////
     // First Pass
 
-	g_FrameMan.PushRenderTarget(g_SceneMan.GetMOIDTexture());
     {
         // Travel Actors
 		g_PerformanceMan.StartPerformanceMeasurement(PerformanceMan::ActorsTravel);
@@ -1786,9 +1822,6 @@ void MovableMan::Update()
     ///////////////////////////////////////////////////
     // Clear the MOID layer before starting to delete stuff which may be in the MOIDIndex
 
-    g_SceneMan.ClearAllMOIDDrawings();
-	g_FrameMan.PopRenderTarget();
-//    g_SceneMan.MOIDClearCheck();
 
     ///////////////////////////////////////////////////
     // Determine whether we should go into a brief period of slo-mo for when the sim gets hit heavily all of a sudden
@@ -1989,7 +2022,7 @@ void MovableMan::Update()
 
 // Not anymore, we're using ClearAllMOIDDrawings instead.. much more efficient
 //    g_SceneMan.ClearMOIDLayer();
-    UpdateDrawMOIDs(g_FrameMan.GetRenderer(), g_SceneMan.GetMOIDTexture());
+    // UpdateDrawMOIDs(g_FrameMan.GetRenderer(), g_SceneMan.GetMOIDTexture());
 
 	// COUNT MOID USAGE PER TEAM  //////////////////////////////////////////////////
 	{
@@ -2104,8 +2137,6 @@ void MovableMan::UpdateDrawMOIDs(SDL_Renderer* renderer, std::shared_ptr<Texture
     // - Update: This isnt' true anymore, but still keep 0 free just to be safe
     m_MOIDIndex.push_back(0);
 
-	// Set the render target to the target texture
-	g_FrameMan.PushRenderTarget(pTargetTexture);
 
     MOID currentMOID = 1;
     int i = 0;
@@ -2115,7 +2146,7 @@ void MovableMan::UpdateDrawMOIDs(SDL_Renderer* renderer, std::shared_ptr<Texture
         {
 			Vector notUsed;
             m_Actors[i]->UpdateMOID(m_MOIDIndex);
-            m_Actors[i]->Draw(renderer, notUsed, g_DrawMOID, true);
+            // m_Actors[i]->Draw(renderer, notUsed, g_DrawMOID, true);
             currentMOID = m_MOIDIndex.size();
         }
         else
@@ -2126,7 +2157,7 @@ void MovableMan::UpdateDrawMOIDs(SDL_Renderer* renderer, std::shared_ptr<Texture
         if (m_Items[i]->GetsHitByMOs() && !m_Items[i]->IsSetToDelete())
         {
             m_Items[i]->UpdateMOID(m_MOIDIndex);
-            m_Items[i]->Draw(renderer, Vector(), g_DrawMOID, true);
+            // m_Items[i]->Draw(renderer, Vector(), g_DrawMOID, true);
             currentMOID = m_MOIDIndex.size();
         }
         else
@@ -2137,15 +2168,13 @@ void MovableMan::UpdateDrawMOIDs(SDL_Renderer* renderer, std::shared_ptr<Texture
         if (m_Particles[i]->GetsHitByMOs() && !m_Particles[i]->IsSetToDelete())
         {
             m_Particles[i]->UpdateMOID(m_MOIDIndex);
-            m_Particles[i]->Draw(renderer, Vector(), g_DrawMOID, true);
+            // m_Particles[i]->Draw(renderer, Vector(), g_DrawMOID, true);
             currentMOID = m_MOIDIndex.size();
         }
         else
             m_Particles[i]->SetAsNoID();
     }
 
-	// Reset the render target
-	g_FrameMan.PopRenderTarget();
 }
 
 

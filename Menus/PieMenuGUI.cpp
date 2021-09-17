@@ -539,6 +539,7 @@ namespace RTE {
 		}
 
 		filledCircleColor(g_FrameMan.GetRenderer(), centerX, centerY, m_InnerRadius, 0);
+		g_FrameMan.PopRenderTarget();
 
 		m_BGBitmapNeedsRedrawing = false;
 	}

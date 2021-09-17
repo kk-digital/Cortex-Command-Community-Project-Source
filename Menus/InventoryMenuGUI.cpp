@@ -1336,6 +1336,7 @@ namespace RTE {
 			g_FrameMan.PopRenderTarget();
 		}
 
+		g_FrameMan.PopRenderTarget();
 		bool hasDrawnAtLeastOnce = false;
 		std::list<IntRect> wrappedRectangles;
 		g_SceneMan.WrapRect(IntRect(drawPos.GetFloorIntX(), drawPos.GetFloorIntY(), drawPos.GetFloorIntX() + m_CarouselBitmap->getW(), drawPos.GetFloorIntY() + m_CarouselBitmap->getH()), wrappedRectangles);
