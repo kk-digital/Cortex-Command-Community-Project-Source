@@ -1037,7 +1037,7 @@ void AssemblyEditorGUI::Draw(SDL_Renderer* renderer, const Vector &targetPos) co
     // If the held object will be placed at the end of the list, draw it last to the scene, transperent blinking
 	else if (m_pCurrentObject && (m_ObjectListOrder < 0 || (pSceneObjectList && m_ObjectListOrder == pSceneObjectList->size())))
     {
-		int alphaMod{m_BlinkTimer.AlternateReal(333) || m_EditorGUIMode == PLACINGOBJECT ? LessTrans : HalfTrans};
+		int alphaMod = m_BlinkTimer.AlternateReal(333) || m_EditorGUIMode == PLACINGOBJECT ? LessTrans : HalfTrans;
 		m_pCurrentObject->Draw(renderer, targetPos, g_DrawTrans, false, alphaMod);
         Actor *pActor = dynamic_cast<Actor *>(m_pCurrentObject);
         if (pActor)
