@@ -61,7 +61,7 @@ namespace RTE {
 		if (propName == "Index") {
 			// TODO: Check for index collisions here
 			reader >> m_Index;
-			m_Index = g_FrameMan.GetMIDFromIndex(m_Index); // TODO: Convert all indices to colors (lets hope the terrains all use the same palette heh)
+			m_Index = g_FrameMan.GetMIDFromIndex(m_Index); // TODO: Convert all indices to colors (lets hope the terrains all use the same palette heh) XXX: well fug
 		} else if (propName == "Priority") {
 			reader >> m_Priority;
 		} else if (propName == "Integrity" || propName == "StructuralIntegrity") {
@@ -86,8 +86,10 @@ namespace RTE {
 			reader >> m_GibWoundLimitPerLiter;
 		} else if (propName == "SettleMaterial") {
 			reader >> m_SettleMaterialIndex;
+			m_SettleMaterialIndex = g_FrameMan.GetMIDFromIndex(m_SettleMaterialIndex);
 		} else if (propName == "SpawnMaterial" || propName == "TransformsInto") {
 			reader >> m_SpawnMaterialIndex;
+			m_SpawnMaterialIndex = g_FrameMan.GetMIDFromIndex(m_SpawnMaterialIndex);
 		} else if (propName == "IsScrap") {
 			reader >> m_IsScrap;
 		} else if (propName == "Color") {
