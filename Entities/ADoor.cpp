@@ -328,7 +328,7 @@ namespace RTE {
 						32, m_Door->GetDiameter() * sizeof(uint32_t), tempMatRender->getFormat())};
 
 				SDL_Rect lock{ m_Door->GetPos().GetFloorIntX(), m_Door->GetPos().GetFloorIntY(), tempMatSurface->w, tempMatSurface->h};
-				g_SceneMan.GetTerrain()->GetMaterialTexture()->lock(lock);
+				g_SceneMan.GetTerrain()->GetMaterialTexture()->lock();
 				SDL_Surface *tempMatTex{SDL_CreateRGBSurfaceWithFormatFrom(
 					g_SceneMan.GetTerrain()->GetMaterialTexture()->getPixels(),
 					tempMatSurface->w, tempMatSurface->h, 32,
