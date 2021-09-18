@@ -90,6 +90,7 @@ namespace RTE {
 		/// SDL_GetError.
 		/// </returns>
 		int render(SDL_Renderer *pRenderer, int x, int y);
+
 		/// <summary>
 		/// Render the texture to the screen.
 		/// </summary>

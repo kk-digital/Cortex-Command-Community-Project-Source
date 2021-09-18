@@ -344,7 +344,7 @@ ClassInfoGetters
 // Arguments:       None.
 // Return value:    None.
 
-	void LockTexture() override { SceneLayer::LockTexture(); m_pMainTexture->lock();}
+	void LockTexture() override { SceneLayer::LockTexture(); m_pMainTexture->lock(); m_pFGColor->LockTexture(); m_pBGColor->LockTexture();}
 
 
 //////////////////////////////////////////////////////////////////////////////////////////

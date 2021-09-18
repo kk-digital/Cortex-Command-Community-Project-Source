@@ -928,8 +928,7 @@ deque<MOPixel *> SLTerrain::EraseSilhouette(std::shared_ptr<Texture> pSprite,
     int halfHeight = rotozoomedSprite->h / 2;
     uint32_t testPixel = 0, matPixel = 0, colorPixel = 0;
 
-	m_pMainTexture->lock();
-	m_pFGColor->LockTexture();
+	LockTexture();
 
     for (testY = 0; testY < rotozoomedSprite->h; ++testY)
     {
@@ -1198,6 +1197,7 @@ void SLTerrain::ApplyMovableObject(MovableObject *pMObject)
 			GetMaterialTexture()->setPixel(pPixel->GetPos().GetFloorIntX(),pPixel->GetPos().GetFloorIntY(), mat);
 		}
 	}
+	LockTexture();
 }
 
 

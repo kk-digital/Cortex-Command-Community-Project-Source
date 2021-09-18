@@ -262,18 +262,21 @@ namespace RTE {
 	}
 
 	void Texture::setPixel(int x, int y, uint32_t color) {
+		assert(m_PixelsWO);
 		if (m_PixelsWO && x >= 0 && y >= 0 && x < w && y < h) {
 			setPixelLower(x, y, color);
 		}
 	}
 
 	void Texture::setPixel(int x, int y, uint32_t r, uint32_t g, uint32_t b, uint32_t a) {
+		assert(m_PixelsWO);
 		setPixel(x, y, (a << 24) | (r << 16) | (g << 8) | (b));
 	}
 
 	void Texture::setPixelLower(int x, int y, uint32_t color) {
+		assert(m_PixelsWO);
 		m_PixelsRO[y * w + x] = color;
-		m_Updated = true;
+		static_cast<uint32_t*>(m_PixelsWO)[y * w + x] = color;
 	}
 
 	void Texture::setPixels(const SDL_Rect &setRect, const std::vector<uint32_t> &pixels) {
@@ -285,7 +288,7 @@ namespace RTE {
 		int xOffset = std::abs(setRect.x - clippedRect.x);
 		for (int y = 0; y < clippedRect.h; ++y) {
 			std::copy(pixels.begin() + ( setRect.w * y ) + xOffset, pixels.begin() + (setRect.w * y) + clippedRect.w - 1, m_PixelsRO.begin() + ((clippedRect.y + y) * w + clippedRect.x));
-			std::copy(pixels.begin() + ( setRect.w * y ) + xOffset, pixels.begin() + (setRect.w * y) + clippedRect.w - 1, reinterpret_cast<uint32_t *>(m_PixelsWO) + ((clippedRect.y + y) * w + clippedRect.x));
+			std::copy(pixels.begin() + ( setRect.w * y ) + xOffset, pixels.begin() + (setRect.w * y) + clippedRect.w - 1, static_cast<uint32_t *>(m_PixelsWO) + ((clippedRect.y + y) * w + clippedRect.x));
 		}
 	}
 
@@ -319,6 +322,7 @@ namespace RTE {
 	}
 
 	void Texture::fillRect(const SDL_Rect &rect, uint32_t color) {
+		assert(m_PixelsWO);
 		if (!m_LockedRect && m_PixelsWO) {
 			std::unique_ptr<SDL_Surface, sdl_deleter> temp{
 			    SDL_CreateRGBSurfaceWithFormatFrom(getPixels(), w, h, 32,
@@ -331,6 +335,7 @@ namespace RTE {
 	}
 
 	void Texture::rect(const SDL_Rect &rect, uint32_t color) {
+		assert(m_PixelsWO);
 		if (m_PixelsWO) {
 			std::unique_ptr<SDL_Surface, sdl_deleter> temp{getPixelsAsSurface()};
 			SDL_Rect topEdge{rect.x, rect.y, rect.w, 1};
@@ -412,6 +417,7 @@ namespace RTE {
 	}
 
 	uint32_t Texture::getNativeAlphaFormat(SDL_Renderer *renderer) {
+		// I am generally assuming little endian byteorder, since there is (afaik) no system this would or could run on that is big endian (unless we do a DOS port)
 		return SDL_PIXELFORMAT_ARGB8888;
 	}
 

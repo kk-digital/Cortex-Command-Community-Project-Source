@@ -1669,10 +1669,12 @@ void MovableMan::Update()
 	m_SimUpdateFrameNumber++;
 
     // Clear the MO color layer only if this is a drawn update
-    if (g_TimerMan.DrawnSimUpdate())
-        g_SceneMan.ClearMOColorLayer();
+	if (g_TimerMan.DrawnSimUpdate()) {
+		g_FrameMan.PushRenderTarget(g_SceneMan.GetMOColorTexture());
+		g_SceneMan.ClearMOColorLayer();
+	}
 
-    // If this is the first sim update since a drawn one, then clear the post effects
+	// If this is the first sim update since a drawn one, then clear the post effects
     if (g_TimerMan.SimUpdatesSinceDrawn() == 0)
 		g_PostProcessMan.ClearScenePostEffects();
 
@@ -2022,7 +2024,7 @@ void MovableMan::Update()
 
 // Not anymore, we're using ClearAllMOIDDrawings instead.. much more efficient
 //    g_SceneMan.ClearMOIDLayer();
-    // UpdateDrawMOIDs(g_FrameMan.GetRenderer(), g_SceneMan.GetMOIDTexture());
+    UpdateMOIDs();
 
 	// COUNT MOID USAGE PER TEAM  //////////////////////////////////////////////////
 	{
@@ -2048,7 +2050,6 @@ void MovableMan::Update()
     // Draw the MO colors ONLY if this is a drawn update!
 
 	if (g_TimerMan.DrawnSimUpdate()) {
-		g_FrameMan.PushRenderTarget(g_SceneMan.GetMOColorTexture());
 		Draw(g_FrameMan.GetRenderer());
 		g_FrameMan.PopRenderTarget();
 	}
@@ -2124,7 +2125,7 @@ void MovableMan::VerifyMOIDIndex()
 // Description:     Updates the MOIDs of all current MOs and draws their ID's to a BITMAP
 //                  of choice.
 
-void MovableMan::UpdateDrawMOIDs(SDL_Renderer* renderer, std::shared_ptr<Texture> pTargetTexture)
+void MovableMan::UpdateMOIDs()
 {
     int aCount = m_Actors.size();
     int iCount = m_Items.size();

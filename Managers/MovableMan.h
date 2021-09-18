@@ -815,7 +815,7 @@ public:
 // Arguments:       A pointer to a BITMAP to draw on.
 // Return value:    None.
 
-	void UpdateDrawMOIDs(SDL_Renderer* renderer, std::shared_ptr<Texture> pRenderTarget);
+	void UpdateMOIDs();
 
 
 //////////////////////////////////////////////////////////////////////////////////////////

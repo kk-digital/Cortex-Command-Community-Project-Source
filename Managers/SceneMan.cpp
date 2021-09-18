@@ -229,7 +229,7 @@ int SceneMan::LoadScene(Scene *pNewScene, bool placeObjects, bool placeUnits) {
   }
 
 	// Finally draw the ID:s of the MO:s to the MOID layers for the first time
-	g_MovableMan.UpdateDrawMOIDs(g_FrameMan.GetRenderer(), m_pMOIDLayer->GetTexture());
+	g_MovableMan.UpdateMOIDs();
 
 #ifdef NETWORK_ENABLE
 	g_NetworkServer.LockScene(false);
@@ -1253,6 +1253,7 @@ bool SceneMan::TryPenetrate(const int posX,
 							const int removeOrphansMaxArea,
 							const float removeOrphansRate)
 {
+	// FIXME: This is possibly the worst slowdown in all of this
 	RTEAssert(m_pCurrentScene, "Trying to access scene before there is one!");
 
 	if (!m_pCurrentScene->GetTerrain()->IsWithinBounds(posX, posY))
@@ -1311,12 +1312,13 @@ bool SceneMan::TryPenetrate(const int posX,
 											   new Atom(Vector(), spawnMat->GetIndex(), 0, spawnColor, 2),
 											   0);
 
-// TODO: Make material IDs more robust!")
+				// TODO: Make material IDs more robust!")
 				pixelMO->SetToHitMOs(spawnMat->GetIndex() == c_GoldMaterialID);
 				pixelMO->SetToGetHitByMOs(false);
 				g_MovableMan.AddParticle(pixelMO);
 				pixelMO = 0;
 			}
+
 			m_pCurrentScene->GetTerrain()->SetFGColorPixel(posX, posY, 0);
 			RegisterTerrainChange(posX, posY, 1, 1, g_MaskColor, false);
 
@@ -1342,9 +1344,6 @@ bool SceneMan::TryPenetrate(const int posX,
 			std::shared_ptr<Texture> pFGColor = m_pCurrentScene->GetTerrain()->GetFGColorTexture();
 			std::shared_ptr<Texture> pBGColor = m_pCurrentScene->GetTerrain()->GetBGColorTexture();
 			std::shared_ptr<Texture> pMaterial = m_pCurrentScene->GetTerrain()->GetMaterialTexture();
-
-			pFGColor->lock();
-			pMaterial->lock();
 
 			int testMaterialID = g_MaterialAir;
 			MOPixel *pixelMO = 0;
@@ -1403,9 +1402,6 @@ bool SceneMan::TryPenetrate(const int posX,
 						break;
 				}
 			}
-
-			pFGColor->unlock();
-			pMaterial->unlock();
 		}
 
 		// Remove orphaned regions if told to by parent MO who travelled an atom which tries to penetrate terrain
@@ -2604,7 +2600,7 @@ bool SceneMan::CastFindMORay(const Vector &start, const Vector &ray, MOID target
     int hitCount = 0, error, dom, sub, domSteps, skipped = skip;
     int intPos[2], delta[2], delta2[2], increment[2];
     MOID hitMOID = g_NoMOID;
-    unsigned char hitTerrain = 0;
+    MID hitTerrain = 0;
 
     intPos[X] = std::floor(start.m_X);
     intPos[Y] = std::floor(start.m_Y);
@@ -3630,18 +3626,13 @@ void SceneMan::Draw(SDL_Renderer* renderer, std::shared_ptr<Texture> pGUITexture
 
 void SceneMan::ClearMOColorLayer()
 {
-	g_FrameMan.PushRenderTarget(m_pMOColorLayer->GetTexture());
 	SDL_SetRenderDrawColor(g_FrameMan.GetRenderer(), 0, 0, 0, 0);
 	SDL_RenderClear(g_FrameMan.GetRenderer());
-	g_FrameMan.PopRenderTarget();
-
-  if(m_pDebugLayer){
-	m_pDebugLayer->GetTexture()->lock();
-	m_pDebugLayer->GetTexture()->clearAll();
-	m_pDebugLayer->UnlockTexture();
-  }
+	if (m_pDebugLayer) {
+		m_pDebugLayer->GetTexture()->lock();
+		m_pDebugLayer->GetTexture()->clearAll();
+	}
 }
-
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          ClearMOIDLayer

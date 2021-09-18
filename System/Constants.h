@@ -50,7 +50,7 @@ namespace RTE {
 		g_NoMOID = 0xff
 	};
 
-	constexpr uint32_t c_AlphaMask = 0xFF000000;
+	constexpr uint32_t c_AlphaMask = 0xFF000000; //!< Mask value of the alpha channel. Assuming ARGB32 colorformat.
 
 	enum DotGlowColor { NoDot = 0, YellowDot, RedDot, BlueDot };
 	enum TransparencyPreset : uint32_t { LessTrans = 192, HalfTrans = 128, MoreTrans = 64 };
