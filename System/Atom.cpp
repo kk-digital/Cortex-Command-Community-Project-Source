@@ -974,7 +974,6 @@ namespace RTE {
 			for (int i = trailPoints.size() - std::min(length, static_cast<int>(trailPoints.size())); i < trailPoints.size(); ++i) {
 				pixelColor(g_FrameMan.GetRenderer(), trailPoints[i].first, trailPoints[i].second, m_TrailColor.GetRGBA());
 			}
-			g_FrameMan.PopRenderTarget();
 		}
 
 		// Unlock all bitmaps involved.
