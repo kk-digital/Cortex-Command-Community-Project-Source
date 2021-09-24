@@ -33,5 +33,9 @@ sources += files(
 'GUIWriter.cpp',
 'SDLScreen.cpp',
 'SDLInput.cpp',
-'SDLGUITexture.cpp'
+'SDLGUITexture.cpp',
+'BitmapFont.cpp',
+'SystemInterface.cpp',
+'RendererInterface.cpp',
+'FontEngineInterface.cpp'
 )
