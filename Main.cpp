@@ -29,6 +29,7 @@
 #include "TitleScreen.h"
 
 #include "MenuMan.h"
+#include "RmlUIMan.h"
 #include "ConsoleMan.h"
 #include "SettingsMan.h"
 #include "PresetMan.h"
@@ -74,6 +75,7 @@ namespace RTE {
 		g_ConsoleMan.Initialize();
 		g_MovableMan.Initialize();
 		g_MetaMan.Initialize();
+		g_RmlUIMan.Initialize();
 		g_MenuMan.Initialize();
 
 		// Overwrite Settings.ini after all the managers are created to fully populate the file. Up until this moment Settings.ini is populated only with minimal required properties to run.
