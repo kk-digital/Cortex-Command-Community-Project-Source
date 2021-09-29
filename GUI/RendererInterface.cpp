@@ -10,7 +10,10 @@
 namespace RTE {
 
 	RenderInterface::RenderInterface(SDL_Renderer *renderer, SDL_Window *window) :
-	    m_Renderer{renderer}, m_Window{window} {}
+	    m_Renderer{renderer}, m_Window{window} {
+		m_LoadedTextures.clear();
+		m_LoadedTextures.emplace_back(nullptr);
+	}
 
 	RenderInterface::~RenderInterface() = default;
 

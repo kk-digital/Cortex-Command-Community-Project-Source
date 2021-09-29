@@ -3,7 +3,6 @@
 #include "RmlUi/Core/FontEngineInterface.h"
 
 #include "BitmapFont.h"
-
 namespace RTE {
 	class RenderInterface;
 	class FontEngineInterface: public Rml::FontEngineInterface {
