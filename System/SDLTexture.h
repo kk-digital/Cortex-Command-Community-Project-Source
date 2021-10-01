@@ -71,6 +71,20 @@ namespace RTE {
 		/// </param>
 		Texture(SDL_Renderer *renderer, const Texture &texture);
 
+		/// <summary>
+		/// Create an empty Texture with dimensions width x height.
+		/// </summary>
+		/// <param name="width">
+		/// Width of the new Texture.
+		/// </param>
+		/// <param name="height">
+		/// Height of the new Texture.
+		/// </param>
+		/// <param name="access">
+		/// TextureAccess of the Texture defaults to render target.
+		/// </param>
+		Texture(SDL_Renderer *renderer, int width, int height, uint32_t sourceFmt, int sourcePitch, const void* source, int access);
+
 		virtual ~Texture();
 
 		/// <summary>
@@ -947,6 +961,28 @@ namespace RTE {
 		/// </param>
 		int setColorMod(uint8_t rgb = 255) {return setColorMod(rgb, rgb, rgb);}
 
+		/// <summary>
+		/// Bind this texture to the SDL OpenGL context.
+		/// </summary>
+		/// <param name="texW">
+		/// Float to be filled with the actual width in GL texture coordinates.
+		/// </param>
+		/// <param name="texH">
+		/// Float to be filled with the actual height in GL texture coordinates.
+		/// </param>
+		/// <returns>
+		/// 0 on success. Otherwise there was an error that can be read by SDL_GetError().
+		/// </returns>
+		int glBind(float &texW, float &texH);
+
+		/// <summary>
+		/// Unbind this texture to the SDL OpenGL context.
+		/// </summary>
+		/// <returns>
+		/// 0 on success. Otherwise there was an error that can be read by SDL_GetError().
+		/// </returns>
+		int glUnbind();
+
 	private:
 		//! Internal SDL_Texture
 		std::unique_ptr<SDL_Texture, sdl_texture_deleter> m_Texture;
@@ -962,9 +998,9 @@ namespace RTE {
 		//! Pixel Format specifier
 		uint32_t m_Format;
 
-		//! READ ONLY pixel array
+		//! Vector of pixels stored for access.
 		std::vector<uint32_t> m_PixelsRO;
-		//! WRITE ONLY pixel array. Only accessible while Texture is locked
+		//! WRITE ONLY pixel array. Only accessible while Texture is locked.
 		void *m_PixelsWO;
 
 		bool m_Updated; //!< Wether the texture needs to be updated on unlock
@@ -997,7 +1033,7 @@ namespace RTE {
 		Texture &operator=(Texture &&texture);
 
 		//! True if the Texture exists
-		operator bool() const { return m_Texture.get(); }
+		operator bool() const { return static_cast<bool>(m_Texture); }
 	};
 
 	typedef std::shared_ptr<Texture> SharedTexture;
