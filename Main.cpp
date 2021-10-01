@@ -30,6 +30,7 @@
 
 #include "MenuMan.h"
 #include "RmlUIMan.h"
+#include "RmlMenuMan.h"
 #include "ConsoleMan.h"
 #include "SettingsMan.h"
 #include "PresetMan.h"
@@ -43,6 +44,8 @@
 
 #include "System/System.h"
 #include "System/SDLHelper.h"
+
+#include "RmlUi/Core.h"
 
 extern "C" { FILE __iob_func[3] = { *stdin,*stdout,*stderr }; }
 
@@ -76,7 +79,8 @@ namespace RTE {
 		g_MovableMan.Initialize();
 		g_MetaMan.Initialize();
 		g_RmlUIMan.Initialize();
-		g_MenuMan.Initialize();
+		// g_RmlMenuMan.Initialize();
+		// g_MenuMan.Initialize();
 
 		// Overwrite Settings.ini after all the managers are created to fully populate the file. Up until this moment Settings.ini is populated only with minimal required properties to run.
 		// If Settings.ini already exists and is fully populated, this will deal with overwriting it to apply any overrides performed by the managers at boot (e.g resolution validation).
@@ -172,26 +176,29 @@ namespace RTE {
 		g_AudioMan.StopAll();
 
 		while (!System::IsSetToQuit()) {
+			SDL_RenderClear(g_FrameMan.GetRenderer());
+			g_RmlUIMan.GetContext()->Render();
+			// g_ConsoleMan.Draw(g_FrameMan.GetRenderer());
+			SDL_RenderPresent(g_FrameMan.GetRenderer());
+
 			g_UInputMan.Update();
-			g_TimerMan.Update();
-			g_TimerMan.UpdateSim();
-			g_AudioMan.Update();
+			// g_TimerMan.Update();
+			// g_TimerMan.UpdateSim();
+			// g_AudioMan.Update();
 
-			if (g_FrameMan.ResolutionChanged()) {
-				g_MenuMan.Reinitialize();
-				g_ConsoleMan.Destroy();
-				g_ConsoleMan.Initialize();
-				// g_FrameMan.DestroyTempBackBuffers();
-			}
+			// if (g_FrameMan.ResolutionChanged()) {
+			// 	g_MenuMan.Reinitialize();
+			// 	g_ConsoleMan.Destroy();
+			// 	g_ConsoleMan.Initialize();
+			// 	// g_FrameMan.DestroyTempBackBuffers();
+			// }
 
-			if (g_MenuMan.Update()) {
-				break;
-			}
-			g_ConsoleMan.Update();
+			// if (g_RmlMenuMan.Update()) {
+			// 	break;
+			// }
+			g_RmlUIMan.Update();
+			// g_ConsoleMan.Update();
 
-			g_MenuMan.Draw();
-			g_ConsoleMan.Draw(g_FrameMan.GetRenderer());
-			g_FrameMan.RenderPresent();
 		}
 	}
 
@@ -313,9 +320,9 @@ int main(int argc, char **argv) {
 
 	HandleMainArgs(argc, argv);
 
-	g_PresetMan.LoadAllDataModules();
+	// g_PresetMan.LoadAllDataModules();
 	// Load the different input device icons. This can't be done during UInputMan::Create() because the icon presets don't exist so we need to do this after modules are loaded.
-	g_UInputMan.LoadDeviceIcons();
+	// g_UInputMan.LoadDeviceIcons();
 
 	if (g_ConsoleMan.LoadWarningsExist()) {
 		g_ConsoleMan.PrintString("WARNING: References to files that could not be located or failed to load detected during module loading!\nSee \"LogLoadingWarning.txt\" for a list of bad references.");
