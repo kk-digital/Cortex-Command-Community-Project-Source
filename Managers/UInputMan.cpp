@@ -253,7 +253,7 @@ namespace RTE {
 	void UInputMan::ForceMouseWithinBox(int x, int y, int width, int height, int whichPlayer) const {
 		// Only mess with the mouse if the original mouse position is not above the screen and may be grabbing the title bar of the game window
 		if (!m_DisableMouseMoving && !m_TrapMousePos && (whichPlayer == Players::NoPlayer || m_ControlScheme[whichPlayer].GetDevice() == InputDevice::DEVICE_MOUSE_KEYB)) {
-			SDL_WarpMouseInWindow(g_FrameMan.GetWindow(), Limit(m_MousePos.m_X, x + width * g_FrameMan.GetResMultiplier(), x), Limit(m_MousePos.m_Y, y + height * g_FrameMan.GetResMultiplier(), y));
+			SDL_WarpMouseInWindow(g_FrameMan.GetWindow(), Limit(m_MouseMovement.m_X, x + width * g_FrameMan.GetResMultiplier(), x), Limit(m_MouseMovement.m_Y, y + height * g_FrameMan.GetResMultiplier(), y));
 		}
 	}
 
@@ -458,7 +458,10 @@ namespace RTE {
 				ReleaseKey(e.key.keysym.sym);
 				m_ModState = e.key.keysym.mod;
 			} else if (e.type == SDL_MOUSEMOTION){
-				m_MousePos = Vector(e.motion.xrel, e.motion.yrel);
+				m_MouseMovement.m_X  = e.motion.xrel;
+				m_MouseMovement.m_Y = e.motion.yrel;
+				m_MousePos.m_X = e.motion.x;
+				m_MousePos.m_Y = e.motion.y;
 			} else if (e.type == SDL_MOUSEBUTTONDOWN) {
 				PressMouseButton(e.button.button);
 			} else if (e.type == SDL_MOUSEBUTTONUP) {
@@ -637,7 +640,7 @@ namespace RTE {
 		int mousePlayer = MouseUsedByPlayer();
 		if (mousePlayer != Players::NoPlayer) {
 			// TODO: Figure out why we're multiplying by 3 here. Possibly related to mouse sensitivity.
-			m_AnalogMouseData = m_MousePos;
+			m_AnalogMouseData = m_MouseMovement;
 			m_AnalogMouseData.CapMagnitude(m_MouseTrapRadius);
 
 			// Only mess with the mouse pos if the original mouse position is not above the screen and may be grabbing the title bar of the game window
@@ -653,8 +656,8 @@ namespace RTE {
 
 			// Enable the mouse cursor positioning again after having been disabled. Only do this when the mouse is within the drawing area so it
 			// won't cause the whole window to move if the user clicks the title bar and unintentionally drags it due to programmatic positioning.
-			int mousePosX = m_MousePos.m_X / g_FrameMan.GetResMultiplier();
-			int mousePosY = m_MousePos.m_Y / g_FrameMan.GetResMultiplier();
+			int mousePosX = m_MouseMovement.m_X / g_FrameMan.GetResMultiplier();
+			int mousePosY = m_MouseMovement.m_Y / g_FrameMan.GetResMultiplier();
 			if (m_DisableMouseMoving && m_PrepareToEnableMouseMoving && (mousePosX >= 0 && mousePosX < g_FrameMan.GetResX() && mousePosY >= 0 && mousePosY < g_FrameMan.GetResY())) {
 				m_DisableMouseMoving = m_PrepareToEnableMouseMoving = false;
 			}

@@ -366,6 +366,8 @@ namespace RTE {
 		/// <returns>The relative mouse movements, in both axes.</returns>
 		Vector GetMouseMovement(int whichPlayer = -1) const;
 
+		Vector GetMousePosition() const  {return m_MousePos;}
+
 		/// <summary>
 		/// Set the mouse's analog emulation output to be of a specific normalized magnitude.
 		/// </summary>
@@ -713,6 +715,7 @@ namespace RTE {
 
 		robin_hood::unordered_map<unsigned short, std::map<unsigned short, bool>> m_ControllerButtonState;
 
+		Vector m_MouseMovement;
 		Vector m_MousePos;
 
 		uint16_t m_ModState;
