@@ -339,7 +339,7 @@ public:
 // Arguments:       None.
 // Return value:    A const reference to the material palette array.
 
-	const robin_hood::unordered_map<MID, Material *>& GetMaterialPalette() { return m_apMatPalette; }
+	const robin_hood::unordered_flat_map<MID, Material *>& GetMaterialPalette() { return m_apMatPalette; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -1715,7 +1715,7 @@ public:
     // Material palette stuff
     std::map<std::string, MID> m_MatNameMap;
     // This gets filled with holes, not contigous from 0 onward, but whatever the ini specifies. The Material objects are owned here
-	robin_hood::unordered_map<MID, Material *> m_apMatPalette;
+	robin_hood::unordered_flat_map<MID, Material *> m_apMatPalette;
     // The total number of added materials so far
     int m_MaterialCount;
 

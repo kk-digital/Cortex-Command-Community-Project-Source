@@ -513,7 +513,7 @@ std::shared_ptr<Texture> SceneMan::GetDebugTexture() const { return m_pDebugLaye
 // Description:     Gets the bitmap of the SceneLayer that all MovableObject:s draw their
 //                  current (for the frame only!) MOID's onto.
 
-std::shared_ptr<Texture> SceneMan::GetMOIDTexture() const { return m_pMOIDLayer->GetTexture(); }
+std::shared_ptr<Texture> SceneMan::GetMOIDTexture() const {RTEAbort("trying to get removed moid layer"); return m_pMOIDLayer->GetTexture(); }
 
 // TEMP!
 //////////////////////////////////////////////////////////////////////////////////////////
