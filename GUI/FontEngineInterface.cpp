@@ -10,6 +10,7 @@ namespace RTE{
 	FontEngineInterface::~FontEngineInterface() = default;
 
 	bool FontEngineInterface::LoadFontFace(const std::string &fileName, bool) {
+		Rml::Log::Message(Rml::Log::LT_INFO, "Loaded font %s", fileName.c_str());
 		std::string fontFamily = std::filesystem::path(fileName).stem();
 		m_Fonts.emplace(fontFamily, BitmapFont(fileName, m_RenderInterface));
 		return true;
@@ -27,7 +28,7 @@ namespace RTE{
 	}
 
 	bool FontEngineInterface::LoadFontFace(const Rml::byte *, int, const std::string &family, Rml::Style::FontStyle, Rml::Style::FontWeight, bool) {
-		if (family.compare("rmlui-debugger-font"))
+		if (family == "rmlui-debugger-font")
 			return true;
 		return false;
 	}
