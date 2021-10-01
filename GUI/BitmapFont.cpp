@@ -40,6 +40,9 @@ namespace RTE {
 
 			int charOffsetY = ((character - 32) / 16) * m_FontHeight;
 
+			vertices.resize(vertices.size() + 4);
+			indices.resize(indices.size() + 6);
+
 			Rml::Vector2f UVTopLeft(glyph.m_Offset, charOffsetY);
 			Rml::Vector2f UVBottomRight(glyph.m_Offset + glyph.m_Width, charOffsetY + m_FontHeight);
 
