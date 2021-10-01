@@ -25,6 +25,8 @@
 #include "System/SDLHelper.h"
 #include "SDL2_gfxPrimitives.h"
 
+#include "GL/glew.h"
+
 namespace RTE {
 
 	FrameMan::FrameMan() { Clear(); }
@@ -74,7 +76,10 @@ namespace RTE {
 
 		RTEAssert(m_Window != NULL, "Could not create Window because: " + std::string(SDL_GetError()));
 
-		m_Renderer = SDL_CreateRenderer(m_Window, -1, SDL_RENDERER_ACCELERATED);
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+
+		m_Renderer = SDL_CreateRenderer(m_Window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 
 		RTEAssert(m_Renderer != NULL, "Could not create Renderer because: " + std::string(SDL_GetError()));
 
@@ -109,6 +114,18 @@ namespace RTE {
 		m_MatPalette = m_MatPaletteFile.GetAsTexture();
 		RTEAssert(m_MatPalette.get(), "Failed to load material palette because: " + std::string(SDL_GetError()));
 
+		m_GLContext = SDL_GL_CreateContext(m_Window);
+
+		GLenum glewStatus = glewInit();
+		if (glewStatus != GLEW_OK) {
+			RTEAbort("ERROR: " + std::string(reinterpret_cast<const char *>(glewGetErrorString(glewStatus))));
+		}
+
+		// SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+		glMatrixMode(GL_PROJECTION | GL_MODELVIEW);
+		glLoadIdentity();
+		glOrtho(0, m_ResX, m_ResY, 0, 0, 1);
+
 		return 0;
 	}
 
@@ -117,6 +134,9 @@ namespace RTE {
 			SDL_DestroyRenderer(m_Renderer);
 		if (m_Window)
 			SDL_DestroyWindow(m_Window);
+
+		if (m_GLContext)
+			SDL_GL_DeleteContext(m_GLContext);
 
 		Clear();
 	}

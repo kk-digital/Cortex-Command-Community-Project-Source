@@ -12,9 +12,11 @@
 
 #define g_FrameMan FrameMan::Instance()
 
+extern "C" {
 struct SDL_Renderer;
 struct SDL_Window;
-
+typedef void* SDL_GLContext;
+}
 namespace RTE {
 	class SDLScreen;
 	class SDLGUITexture;
@@ -104,7 +106,7 @@ namespace RTE {
 
 		bool GetTwoPlayerVSplit() const { return m_TwoPlayerVSplit; }
 
-		void SetTwoPlayerVSplit(bool twoPlayerVSplit) {m_TwoPlayerVSplit = twoPlayerVSplit;}
+		void SetTwoPlayerVSplit(bool twoPlayerVSplit) { m_TwoPlayerVSplit = twoPlayerVSplit; }
 
 		/// <summary>
 		/// Sets new values for the split screen configuration
@@ -288,7 +290,10 @@ namespace RTE {
 		/// </param>
 		void SetNewResY(unsigned short newResY) { m_NewResY = newResY; }
 
-		void ChangeResolution(int newResX, int newResY, bool newResUpscaled, bool newFullscreen) {m_NewResX = newResX; m_NewResY = newResY;}
+		void ChangeResolution(int newResX, int newResY, bool newResUpscaled, bool newFullscreen) {
+			m_NewResX = newResX;
+			m_NewResY = newResY;
+		}
 
 		/// <summary>
 		/// Indicates wether a new resolution has been set for the next time
@@ -486,7 +491,7 @@ namespace RTE {
 		/// <returns>
 		/// Current message shown to player.
 		/// </returns>
-		std::string GetScreenText(int whichScreen = 0) const {return (whichScreen >= 0 && whichScreen < c_MaxScreenCount) ? m_ScreenText[whichScreen] : "";}
+		std::string GetScreenText(int whichScreen = 0) const { return (whichScreen >= 0 && whichScreen < c_MaxScreenCount) ? m_ScreenText[whichScreen] : ""; }
 
 		/// <summary>
 		/// Sets the message to be displayed on top of each player's screen
@@ -529,13 +534,13 @@ namespace RTE {
 		void FlashScreen(int screen, uint32_t color, float periodMS = 0);
 
 		int DrawLine(const Vector &start, const Vector &end, uint32_t color, int altColor = 0, int skip = 0, int skipStart = 0, bool shortestWrap = false) const { return 0; }
-		int DrawDotLine(SDL_Renderer *renderer, const Vector &start, const Vector &end, SharedTexture dot, int skip = 0, int skipStart = 0, bool shortestWrap = false) const {return 0;}
+		int DrawDotLine(SDL_Renderer *renderer, const Vector &start, const Vector &end, SharedTexture dot, int skip = 0, int skipStart = 0, bool shortestWrap = false) const { return 0; }
 
-		int SaveScreenToPNG(std::string nameBase){return 0;};
+		int SaveScreenToPNG(std::string nameBase) { return 0; };
 
-		int SaveWorldToPNG(std::string nameBase){return 0;};
+		int SaveWorldToPNG(std::string nameBase) { return 0; };
 
-		int SaveTextureToPNG(std::shared_ptr<Texture> tex, std::string nameBase){return 0;};
+		int SaveTextureToPNG(std::shared_ptr<Texture> tex, std::string nameBase) { return 0; };
 
 		bool IsInMultiplayerMode() const { return false; }
 
@@ -545,7 +550,6 @@ namespace RTE {
 
 		// Private members
 	private:
-
 		// FIXME: Add html/hex color handling to Reader and get rid of these
 		ContentFile m_MatPaletteFile;
 		SharedTexture m_MatPalette;
@@ -555,6 +559,8 @@ namespace RTE {
 		SDL_Window *m_Window;
 		//!< The renderer instance needed for drawing
 		SDL_Renderer *m_Renderer;
+
+		SDL_GLContext m_GLContext;
 
 		std::shared_ptr<SDLScreen> m_GUIScreen;
 		std::shared_ptr<GUIFont> m_SmallFont;
