@@ -1239,6 +1239,7 @@ void SLTerrain::ApplyTerrainObject(TerrainObject *pTObject)
 	if (pTObject->HasBGColor())
 		TOBGSurface = pTObject->GetBGColorTexture()->getPixelsAsSurface();
 
+	// TODO: SDL add texture update region.
 	std::unique_ptr<SDL_Surface, sdl_deleter> MatSurface = m_pMainTexture->getPixelsAsSurface();
 	std::unique_ptr<SDL_Surface, sdl_deleter> FGSurface = m_pFGColor->GetTexture()->getPixelsAsSurface();
 
