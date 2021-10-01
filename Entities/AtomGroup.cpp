@@ -1434,7 +1434,8 @@ namespace RTE {
 		// Restart and go through all Atoms to find all intersecting the specific intersected MO
 		for (Atom *atom : m_Atoms) {
 			atomPos = atom->GetCurrentPos();
-			if (g_SceneMan.GetMOIDPixel(atomPos.GetFloorIntX(), atomPos.GetFloorIntY()) == currentMOID) {
+			g_SceneMan.WrapPosition(atomPos);
+			if (g_MovableMan.HitTestMOIDAtPixel(currentMOID, atomPos.GetFloorIntX(), atomPos.GetFloorIntY())) {
 				// Add atom to list of intersecting ones
 				intersectingAtoms.push_back(atom);
 			}
