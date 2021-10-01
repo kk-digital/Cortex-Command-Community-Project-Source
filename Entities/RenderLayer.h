@@ -10,15 +10,14 @@ namespace RTE{
 	/// <summary>
 	/// A SceneLayer that contains a render Texture
 	/// </summary>
-	class RenderLayer: public SceneLayer{
+	class RenderLayer : public SceneLayer {
 	public:
 		RenderLayer();
 		~RenderLayer();
 
-		int Create(ContentFile bitmapFile, bool drawTrans, Vector offset,
-		           bool wrapX, bool wrapY, Vector scrollInfo) = delete;
+		int Create(ContentFile bitmapFile, bool drawTrans, Vector offset, bool wrapX, bool wrapY, Vector scrollInfo) {return -1;}
 
-		int Create(Texture &pTexture, bool drawTrans, Vector offset, bool wrapX,
+	    int Create(Texture &pTexture, bool drawTrans, Vector offset, bool wrapX,
 		           bool wrapY, Vector scrollInfo) = delete;
 
 		int Create(const SceneLayer &reference) = delete;
