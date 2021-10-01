@@ -33,7 +33,7 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	int ContentFile::Create(const char *filePath) {
+	int ContentFile::Create(const std::string& filePath) {
 		SetDataPath(filePath);
 		SetFormattedReaderPosition(GetFormattedReaderPosition());
 
@@ -223,10 +223,7 @@ namespace RTE {
 			    SDL_TEXTUREACCESS_STREAMING, tempSurface->w, tempSurface->h));
 		}
 
-		RTEAssert(returnTexture->m_Texture.get(),
-		          "Failed to create Texture from " +
-		              m_DataPathAndReaderPosition +
-		              "\n SDL Error: " + SDL_GetError());
+		RTEAssert(returnTexture->m_Texture.get(), "Failed to create Texture from " + m_DataPathAndReaderPosition + "\n SDL Error: " + SDL_GetError());
 		int access;
 		Uint32 format;
 		int w, h;

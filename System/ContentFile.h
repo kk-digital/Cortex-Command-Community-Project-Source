@@ -41,7 +41,7 @@ namespace RTE {
 		/// </summary>
 		/// <param name="filePath">A string defining the path to where the content file itself is located.</param>
 		/// <returns>An error return value signaling success or any particular failure. Anything below 0 is an error signal.</returns>
-		int Create(const char *filePath);
+		int Create(const std::string& filePath);
 
 		/// <summary>
 		/// Creates a ContentFile to be identical to another, by deep copy.
