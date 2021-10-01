@@ -23,4 +23,8 @@ sources += files(
 'SettingsMiscGUI.cpp',
 'SettingsVideoGUI.cpp',
 'TitleScreen.cpp',
+'rmlModManager.cpp',
+'rmlSettingsMenu.cpp',
+'EventHandlerSettings.cpp',
+'EventHandlerScenario.cpp'
 )

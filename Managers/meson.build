@@ -19,4 +19,5 @@ sources += files(
 'TimerMan.cpp',
 'UInputMan.cpp',
 'RmlUIMan.cpp',
+'RmlMenuMan.cpp',
 )
