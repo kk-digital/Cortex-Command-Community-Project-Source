@@ -116,13 +116,15 @@ subdir('Resources')
 #### External Libraries ####
 external_objects = []
 external_libs = []
+external_inc_dirs_common = []
+external_inc_dirs_platform = []
 subdir('external')
 
 main = 'Main.cpp'
 
 #### Target Definitions ####
 executable(
-  elfname, [main, sources], include_directories:[source_inc_dirs, external_inc_dirs], cpp_pch:pch, # Sources options
+  elfname, [main, sources], include_directories:[source_inc_dirs, external_inc_dirs_common, external_inc_dirs_platform], cpp_pch:pch, # Sources options
   link_with:external_libs, objects:[external_objects], dependencies:[deps],                                # Link options
   cpp_args:[extra_args, preprocessor_flags], link_args:link_args, build_rpath:build_rpath,               # Compiler setup
   name_suffix:suffix,   # Executable name options
