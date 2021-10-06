@@ -9,15 +9,15 @@
 
 namespace RTE {
 
-	RenderInterface::RenderInterface(SDL_Renderer *renderer, SDL_Window *window) :
+	RmlRenderInterface::RmlRenderInterface(SDL_Renderer *renderer, SDL_Window *window) :
 	    m_Renderer{renderer}, m_Window{window} {
 		m_LoadedTextures.clear();
 		m_LoadedTextures.emplace_back(nullptr);
 	}
 
-	RenderInterface::~RenderInterface() = default;
+	RmlRenderInterface::~RmlRenderInterface() = default;
 
-	void RenderInterface::RenderGeometry(Rml::Vertex *vertices, int num_vertices, int *indices, int num_indices, Rml::TextureHandle texture, const Rml::Vector2f &translation) {
+	void RmlRenderInterface::RenderGeometry(Rml::Vertex *vertices, int num_vertices, int *indices, int num_indices, Rml::TextureHandle texture, const Rml::Vector2f &translation) {
 		// Disable SDL shaders
 		glUseProgramObjectARB(0);
 		glPushMatrix();
@@ -73,20 +73,20 @@ namespace RTE {
 		SDL_RenderDrawPoint(m_Renderer, -1, -1);
 	}
 
-	void RenderInterface::EnableScissorRegion(bool enable) {
+	void RmlRenderInterface::EnableScissorRegion(bool enable) {
 		if (enable)
 			glEnable(GL_SCISSOR_TEST);
 		else
 			glDisable(GL_SCISSOR_TEST);
 	}
 
-	void RenderInterface::SetScissorRegion(int x, int y, int width, int height) {
+	void RmlRenderInterface::SetScissorRegion(int x, int y, int width, int height) {
 		int windowWidth, windowHeight;
 		SDL_GetWindowSize(m_Window, &windowWidth, &windowHeight);
 		glScissor(x, windowHeight - (y + height), width, height);
 	}
 
-	bool RenderInterface::LoadTexture(Rml::TextureHandle &texture_handle, Rml::Vector2i &texture_dimensions, const std::string &source) {
+	bool RmlRenderInterface::LoadTexture(Rml::TextureHandle &texture_handle, Rml::Vector2i &texture_dimensions, const std::string &source) {
 
 		m_LoadedTextures.emplace_back(ContentFile(source.c_str()).GetAsTexture());
 
@@ -101,7 +101,7 @@ namespace RTE {
 		return true;
 	}
 
-	bool RenderInterface::GenerateTexture(Rml::TextureHandle &texture_handle, const Rml::byte *source, const Rml::Vector2i &source_dimensions) {
+	bool RmlRenderInterface::GenerateTexture(Rml::TextureHandle &texture_handle, const Rml::byte *source, const Rml::Vector2i &source_dimensions) {
 		texture_handle = reinterpret_cast<Rml::TextureHandle>(m_LoadedTextures.size());
 
 		m_LoadedTextures.emplace_back(std::make_shared<Texture>(m_Renderer, source_dimensions.x, source_dimensions.y, SDL_PIXELFORMAT_RGBA32, source_dimensions.x * 4, source, SDL_TEXTUREACCESS_STATIC));
@@ -109,5 +109,5 @@ namespace RTE {
 		return true;
 	}
 
-	void RenderInterface::ReleaseTexture(Rml::TextureHandle) {}
+	void RmlRenderInterface::ReleaseTexture(Rml::TextureHandle) {}
 } // namespace RTE

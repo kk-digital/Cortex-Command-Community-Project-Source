@@ -9,8 +9,8 @@ namespace Rml {
 } // namespace Rml
 
 namespace RTE {
-	class RenderInterface;
-	class FontEngineInterface;
+	class RmlRenderInterface;
+	class RmlFontEngineInterface;
 	class SystemInterface;
 	class EventHandler;
 	class RmlUIMan : public Singleton<RmlUIMan> {
@@ -37,8 +37,8 @@ namespace RTE {
 		Rml::Context *GetContext() { return m_RmlContext; }
 
 	private:
-		std::unique_ptr<RenderInterface> m_RenderInterface;
-		std::unique_ptr<FontEngineInterface> m_FontEngineInterface;
+		std::unique_ptr<RmlRenderInterface> m_RenderInterface;
+		std::unique_ptr<RmlFontEngineInterface> m_FontEngineInterface;
 		std::unique_ptr<SystemInterface> m_SystemInterface;
 
 		EventHandler *m_CurrentEventHandler;

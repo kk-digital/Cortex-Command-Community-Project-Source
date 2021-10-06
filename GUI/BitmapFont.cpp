@@ -3,7 +3,7 @@
 #include "RendererInterface.h"
 
 namespace RTE {
-	BitmapFont::BitmapFont(const std::string &filename, RenderInterface *renderInterface) {
+	BitmapFont::BitmapFont(const std::string &filename, RmlRenderInterface *renderInterface) {
 		m_FontHeight = 0;
 		m_Characters.fill(Character());
 		m_Kerning.fill(0);
@@ -76,7 +76,7 @@ namespace RTE {
 		return width;
 	}
 
-	void BitmapFont::GenerateFont(RenderInterface *renderInterface) {
+	void BitmapFont::GenerateFont(RmlRenderInterface *renderInterface) {
 
 		SharedTexture fontTexture = renderInterface->GetTextureFromHandle(m_FontTexture.GetHandle(renderInterface));
 

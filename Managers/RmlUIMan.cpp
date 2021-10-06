@@ -19,9 +19,9 @@ namespace RTE {
 	RmlUIMan::~RmlUIMan() {}
 
 	int RmlUIMan::Initialize() {
-		m_RenderInterface = std::make_unique<RenderInterface>(g_FrameMan.GetRenderer(), g_FrameMan.GetWindow());
+		m_RenderInterface = std::make_unique<RmlRenderInterface>(g_FrameMan.GetRenderer(), g_FrameMan.GetWindow());
 		m_SystemInterface = std::make_unique<SystemInterface>();
-		m_FontEngineInterface = std::make_unique<FontEngineInterface>(m_RenderInterface.get());
+		m_FontEngineInterface = std::make_unique<RmlFontEngineInterface>(m_RenderInterface.get());
 
 		Rml::SetRenderInterface(m_RenderInterface.get());
 		Rml::SetSystemInterface(m_SystemInterface.get());

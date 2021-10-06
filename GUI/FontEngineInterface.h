@@ -4,11 +4,11 @@
 
 #include "BitmapFont.h"
 namespace RTE {
-	class RenderInterface;
-	class FontEngineInterface: public Rml::FontEngineInterface {
+	class RmlRenderInterface;
+	class RmlFontEngineInterface: public Rml::FontEngineInterface {
 	public:
-		FontEngineInterface(RenderInterface *renderInterface);
-		~FontEngineInterface() override;
+		RmlFontEngineInterface(RmlRenderInterface *renderInterface);
+		~RmlFontEngineInterface() override;
 
 		/// <summary> Called by RmlUi when it wants to load a font face from file. </summary>
 		/// <param name="file_name"> The file to load the face from. </param>
@@ -59,7 +59,7 @@ namespace RTE {
 		/// <return> The width, in pixels, of the string geometry. </return>
 		int GenerateString(Rml::FontFaceHandle faceHandle, Rml::FontEffectsHandle fontEffectsHandle, const std::string& string, const Rml::Vector2f& position, const Rml::Colourb& colour, Rml::GeometryList& geometry) override;
 	private:
-		RenderInterface *m_RenderInterface; //!< The render interface stored for loading textures. Not owned.
+		RmlRenderInterface *m_RenderInterface; //!< The render interface stored for loading textures. Not owned.
 		robin_hood::unordered_map<std::string, BitmapFont> m_Fonts; //!< Map of stored fonts.
 	};
 }

@@ -6,10 +6,10 @@
 #include <RmlUi/Core/Texture.h>
 
 namespace RTE {
-	class RenderInterface;
+	class RmlRenderInterface;
 	class BitmapFont {
 	public:
-		BitmapFont(const std::string &filename, RenderInterface *renderInterface);
+		BitmapFont(const std::string &filename, RmlRenderInterface *renderInterface);
 		~BitmapFont();
 		int GenerateString(const std::string &string, const Rml::Vector2f &stringPosition, const Rml::Colourb &colour, Rml::GeometryList &geometryList);
 		int GetSize();
@@ -33,7 +33,7 @@ namespace RTE {
 		std::array<int, 256> m_Kerning; //!< The kerning for each character. //<- TODO
 
 	private:
-		void GenerateFont(RenderInterface *renderInterface);
+		void GenerateFont(RmlRenderInterface *renderInterface);
 	};
 } // namespace RTE
 #endif

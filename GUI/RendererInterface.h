@@ -10,10 +10,10 @@ struct SDL_Window;
 }
 
 namespace RTE {
-	class RenderInterface : public Rml::RenderInterface {
+	class RmlRenderInterface : public Rml::RenderInterface {
 	public:
-		RenderInterface(SDL_Renderer *renderer, SDL_Window *window);
-		~RenderInterface() override;
+		RmlRenderInterface(SDL_Renderer *renderer, SDL_Window *window);
+		~RmlRenderInterface() override;
 
 		/// <summary>
 		/// Called by RmlUi when it wants to render geometry that the application does not wish to optimise. Note that
