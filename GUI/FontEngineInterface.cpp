@@ -4,7 +4,7 @@
 #include "RmlUi/Core.h"
 
 namespace RTE{
-	RmlFontEngineInterface::RmlFontEngineInteRmlRenderInterfaceerface *renderInterface) {
+	RmlFontEngineInterface::RmlFontEngineInterface(RmlRenderInterface *renderInterface) {
 		m_RenderInterface = renderInterface;
 	}
 	RmlFontEngineInterface::~RmlFontEngineInterface() = default;
