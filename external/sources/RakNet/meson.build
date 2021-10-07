@@ -109,8 +109,8 @@ raknet_src = files('Base64Encoder.cpp',
 '_FindFirst.cpp',
 'gettimeofday.cpp')
 
-raknet = static_library('raknet', raknet_src, cpp_args:extra_args + ['-w'], dependencies: deps, include_directories:external_inc_dirs, override_options:['debug=false', 'optimization=3', 'cpp_std=c++03'])
-raknet_debug = static_library('raknet_debug', raknet_src, cpp_args:extra_args + ['-w'], dependencies: deps, include_directories:external_inc_dirs, override_options:['debug=true', 'optimization=g', 'cpp_std=c++03'])
+raknet = static_library('raknet', raknet_src, cpp_args:extra_args + ['-w'], dependencies: deps, include_directories:external_inc_dirs_common, override_options:['debug=false', 'optimization=3', 'cpp_std=c++03'])
+raknet_debug = static_library('raknet_debug', raknet_src, cpp_args:extra_args + ['-w'], dependencies: deps, include_directories:external_inc_dirs_common, override_options:['debug=true', 'optimization=g', 'cpp_std=c++03'])
 
 if get_option('debug')
   external_libs += [raknet_debug]

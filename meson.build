@@ -110,6 +110,7 @@ subdir('GUI')
 subdir('Lua')
 subdir('Managers')
 subdir('Menus')
+subdir('Renderer')
 subdir('System')
 subdir('Resources')
 
