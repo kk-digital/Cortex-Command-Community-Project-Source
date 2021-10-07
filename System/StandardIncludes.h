@@ -49,6 +49,7 @@
 #include <cstddef>
 #include <chrono>
 #include <functional>
+#include <optional>
 #include <thread>
 #include <mutex>
 #include <cctype>
@@ -81,6 +82,9 @@
 #include <utility>
 
 #include "robin_hood.h" //TODO: this should ideally replace unordered_map/set
+
+#define GLM_SWIZZLE
+#include "glm/glm.hpp"
 
 // TODO: Get rid of these once alias qualifiers are added.
 using std::string;
