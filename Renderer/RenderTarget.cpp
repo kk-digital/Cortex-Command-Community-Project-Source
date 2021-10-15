@@ -10,11 +10,17 @@
 namespace RTE {
 	RenderTarget::RenderTarget() {
 		std::vector<Vertex> quad {
+			{0.0f, 1.0f, 0.0f, 1.0f},
+			{1.0f, 1.0f, 1.0f, 1.0f},
 			{0.0f, 0.0f, 0.0f, 0.0f},
+			{1.0f, 0.0f, 1.0f, 0.0f}
 		};
+		m_DefaultQuad = VertexArray(quad);
 	}
 
 	RenderTarget::~RenderTarget() {}
+
+
 
 	void RenderTarget::draw(RenderState &&state) {
 		RTEAssert(state.m_Shader.get(), "Trying to render without a shader.");
