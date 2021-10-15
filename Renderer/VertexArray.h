@@ -18,9 +18,9 @@ namespace RTE {
 
 	private:
 		friend class RenderTarget;
-		unsigned long m_VAO;
-		unsigned long m_VBO;
-		unsigned long m_EBO;
+		unsigned int m_VAO;
+		unsigned int m_VBO;
+		unsigned int m_EBO;
 		std::vector<Vertex> m_vertices;
 	};
 }
