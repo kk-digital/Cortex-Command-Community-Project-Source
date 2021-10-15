@@ -29,9 +29,6 @@ namespace RTE {
 		GLTexture();
 		virtual ~GLTexture();
 
-		void Clear();
-
-		bool Create();
 
 		void render(RenderTarget *renderer, float x, float y);
 
@@ -44,6 +41,8 @@ namespace RTE {
 		void render(RenderTarget *renderer, glm::vec2 pos, glm::vec2 scale);
 
 		void render(RenderTarget *renderer, glm::vec2 pos, float angle, glm::vec2 scale);
+
+		void render(RenderTarget *renderer, glm::vec2 pos, float angle, glm::vec2 center, glm::vec2 scale);
 
 		void setShading(Shading shader) { m_Shading = shader; }
 
@@ -70,12 +69,10 @@ namespace RTE {
 
 		void Bind();
 
-		unsigned long GetTextureID() {return m_TextureID;}
+		unsigned int GetTextureID() {return m_TextureID;}
 
 	private:
-		unsigned long m_TextureID; //!< The OpenGL texture handle associated with this texture.
-		int m_BPP; //!< the bitdepth of this Texture TODO: Limit to enum.
-		uint32_t m_Format; //!< The pixelformat of this Texture.
+		unsigned int m_TextureID; //!< The OpenGL texture handle associated with this texture.
 
 		glm::vec4 m_ColorMod; //!< Color multiplied in the shader stage, used for fill color as well.
 		BlendMode m_BlendMode; //!< The blendmode used for drawing this texture.
@@ -92,6 +89,8 @@ namespace RTE {
 		/// Shared pointer to a shader object used for rendering.
 		/// </returns>
 		std::shared_ptr<Shader> GetCurrentShader();
+	private:
+		void Clear();
 	};
 	typedef std::shared_ptr<GLTexture> SharedTexture;
 } // namespace RTE
