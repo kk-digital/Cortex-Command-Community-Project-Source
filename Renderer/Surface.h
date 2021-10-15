@@ -36,7 +36,7 @@ namespace RTE {
 		/// <returns>
 		/// True if successful.
 		/// </returns>
-		bool Create(int width, int height, uint32_t format);
+		virtual bool Create(int width, int height, uint32_t format);
 
 		/// <summary>
 		/// Returns the stored SDL_Surface. Ownership is not transferred.
@@ -63,6 +63,8 @@ namespace RTE {
 		int getH() const { return m_Height; }
 
 		glm::vec2 GetSize() { return glm::vec2(m_Width, m_Height);}
+
+		uint32_t GetPixel(int x, int y);
 
 		void blit(Surface& target, int x, int y, double angle=0, float scaleX=1.0f, float scaleY=1.0f) const;
 
