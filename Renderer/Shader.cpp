@@ -32,6 +32,10 @@ namespace RTE {
 
 	void Shader::Use() { glUseProgram(m_ProgramID); }
 
+
+	GLint Shader::GetUniformLocation(const std::string &name) { return glGetUniformLocation(m_ProgramID, name.c_str()); }
+
+
 	void Shader::SetBool(const std::string &name, bool value) { glUniform1i(glGetUniformLocation(m_ProgramID, name.c_str()), static_cast<int>(value)); }
 
 	void Shader::SetInt(const std::string &name, int value) { glUniform1i(glGetUniformLocation(m_ProgramID, name.c_str()), value); }
@@ -45,6 +49,22 @@ namespace RTE {
 	void Shader::SetVector3f(const std::string &name, const glm::vec3 &value) { glUniform3fv(glGetUniformLocation(m_ProgramID, name.c_str()), 1, glm::value_ptr(value)); }
 
 	void Shader::SetVector4f(const std::string &name, const glm::vec4 &value) { glUniform4fv(glGetUniformLocation(m_ProgramID, name.c_str()), 1, glm::value_ptr(value)); }
+
+
+	void Shader::SetBool(int32_t uniformLoc, bool value) { glUniform1i(uniformLoc, value); }
+
+	void Shader::SetInt(int32_t uniformLoc, int value) { glUniform1i(uniformLoc, value); }
+
+	void Shader::SetFloat(int32_t uniformLoc, float value) { glUniform1f(uniformLoc, value); }
+
+	void Shader::SetMatrix4f(int32_t uniformLoc, const glm::mat4 &value) { glUniformMatrix4fv(uniformLoc, 1, GL_FALSE, glm::value_ptr(value)); }
+
+	void Shader::SetVector2f(int32_t uniformLoc, const glm::vec2 &value) { glUniform2fv(uniformLoc, 1, glm::value_ptr(value)); }
+
+	void Shader::SetVector3f(int32_t uniformLoc, const glm::vec3 &value) { glUniform3fv(uniformLoc, 1, glm::value_ptr(value)); }
+
+	void Shader::SetVector4f(int32_t uniformLoc, const glm::vec4 &value) { glUniform4fv(uniformLoc, 1, glm::value_ptr(value)); }
+
 
 	bool Shader::compileShader(GLuint shaderID, const std::string &filename, std::string &error) {
 		std::ifstream file(filename);
