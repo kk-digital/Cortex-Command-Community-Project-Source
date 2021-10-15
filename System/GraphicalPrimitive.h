@@ -2,10 +2,13 @@
 #define _RTEPRIMITIVE_
 
 #include "Vector.h"
-
-#include "SDLTexture.h"
+#include "Renderer/GLPrimitives.h"
+#include "Renderer/VertexArray.h"
+#include "Renderer/GLTexture.h"
+#include "Renderer/RenderState.h"
 
 namespace RTE {
+	class RenderTarget;
 
 #pragma region Graphical Primitive
 	/// <summary>
@@ -15,9 +18,10 @@ namespace RTE {
 	class GraphicalPrimitive {
 
 	public:
-
 		Vector m_StartPos; //!< Start position of the primitive.
 		Vector m_EndPos; //!< End position of the primitive.
+		std::shared_ptr<VertexArray> m_Vertices;
+		PrimitiveType m_DrawType;
 		unsigned char m_Color; //!< Color to draw this primitive with.
 		int m_Player; //!< Player screen to draw this primitive on.
 
@@ -48,7 +52,7 @@ namespace RTE {
 		/// </summary>
 		/// <param name="drawScreen">Bitmap to draw on.</param>
 		/// <param name="targetPos">Position of graphical primitive.</param>
-		virtual void Draw(SDL_Renderer* renderer, const Vector &targetPos) = 0;
+		virtual void Draw(RenderTarget *renderer, const Vector &targetPos, std::optional<RenderState> renderState = std::nullopt);
 	};
 #pragma endregion
 
@@ -59,7 +63,6 @@ namespace RTE {
 	class LinePrimitive : public GraphicalPrimitive {
 
 	public:
-
 		/// <summary>
 		/// Constructor method for LinePrimitive object.
 		/// </summary>
@@ -67,19 +70,13 @@ namespace RTE {
 		/// <param name="startPos">Start position of the primitive.</param>
 		/// <param name="end">End position of the primitive.</param>
 		/// <param name="color">Color to draw this primitive with.</param>
-		LinePrimitive(int player, const Vector &startPos, const Vector &endPos, unsigned char color) {
+		LinePrimitive(int player, const Vector &startPos, const Vector &endPos, unsigned char color); /* {
+			m_DrawType = PrimitiveType::Line;
 			m_StartPos = startPos;
 			m_EndPos = endPos;
 			m_Color = color;
 			m_Player = player;
-		}
-
-		/// <summary>
-		/// Draws this primitive on provided bitmap.
-		/// </summary>
-		/// <param name="drawScreen">Bitmap to draw on.</param>
-		/// <param name="targetPos">Position of graphical primitive.</param>
-		void Draw(SDL_Renderer* renderer, const Vector &targetPos) override;
+			}*/
 	};
 #pragma endregion
 
@@ -90,12 +87,6 @@ namespace RTE {
 	class ArcPrimitive : public GraphicalPrimitive {
 
 	public:
-
-		float m_StartAngle; //!< The angle from which the arc begins.
-		float m_EndAngle; //!< The angle at which the arc ends.
-		int m_Radius; //!< Radius of the arc primitive.
-		int m_Thickness; //!< Thickness of the arc primitive in pixels.
-
 		/// <summary>
 		/// Constructor method for ArcPrimitive object.
 		/// </summary>
@@ -105,20 +96,12 @@ namespace RTE {
 		/// <param name="endAngle">The angle at which the arc drawing ends.</param>
 		/// <param name="radius">Radius of the arc primitive.</param>
 		/// <param name="color">Color to draw this primitive with.</param>
-		ArcPrimitive(int player, const Vector &centerPos, float startAngle, float endAngle, int radius, int thickness, unsigned char color) :
-			m_StartAngle(startAngle), m_EndAngle(endAngle), m_Radius(radius), m_Thickness(thickness) {
-
-			m_StartPos = centerPos;
-			m_Color = color;
-			m_Player = player;
-		}
-
-		/// <summary>
-		/// Draws this primitive on provided bitmap.
-		/// </summary>
-		/// <param name="drawScreen">Bitmap to draw on.</param>
-		/// <param name="targetPos">Position of graphical primitive.</param>
-		void Draw(SDL_Renderer* renderer, const Vector &targetPos) override;
+		ArcPrimitive(int player, const Vector &centerPos, float startAngle, float endAngle, int radius, int thickness, unsigned char color);
+		// 	{
+		// 	m_StartPos = centerPos;
+		// 	m_Color = color;
+		// 	m_Player = player;
+		// }
 	};
 #pragma endregion
 
@@ -129,7 +112,6 @@ namespace RTE {
 	class SplinePrimitive : public GraphicalPrimitive {
 
 	public:
-
 		Vector m_GuidePointAPos; //!< A guide point that controls the curve of the spline.
 		Vector m_GuidePointBPos; //!< A guide point that controls the curve of the spline.
 
@@ -142,21 +124,13 @@ namespace RTE {
 		/// <param name="guideB">The second guide point that controls the curve of the spline. The spline won't necessarily pass through this point, but it will affect it's shape.</param>
 		/// <param name="endPos">End position of the primitive.</param>
 		/// <param name="color">Color to draw this primitive with.</param>
-		SplinePrimitive(int player, const Vector &startPos, const Vector &guideA, const Vector &guideB, const Vector &endPos, unsigned char color) :
-			m_GuidePointAPos(guideA), m_GuidePointBPos(guideB) {
-
-			m_StartPos = startPos;
-			m_EndPos = endPos;
-			m_Color = color;
-			m_Player = player;
-		}
-
-		/// <summary>
-		/// Draws this primitive on provided bitmap.
-		/// </summary>
-		/// <param name="drawScreen">Bitmap to draw on.</param>
-		/// <param name="targetPos">Position of graphical primitive.</param>
-		void Draw(SDL_Renderer* renderer, const Vector &targetPos) override;
+		SplinePrimitive(int player, const Vector &startPos, const Vector &guideA, const Vector &guideB, const Vector &endPos, unsigned char color);
+		// 	m_GuidePointAPos(guideA), m_GuidePointBPos(guideB) {
+		// 	m_StartPos = startPos;
+		// 	m_EndPos = endPos;
+		// 	m_Color = color;
+		// 	m_Player = player;
+		// }
 	};
 #pragma endregion
 
@@ -167,7 +141,6 @@ namespace RTE {
 	class BoxPrimitive : public GraphicalPrimitive {
 
 	public:
-
 		/// <summary>
 		/// Constructor method for BoxPrimitive object.
 		/// </summary>
@@ -175,19 +148,7 @@ namespace RTE {
 		/// <param name="topLeftPos">Start position of the primitive. Top left corner.</param>
 		/// <param name="bottomRightPos">End position of the primitive. Bottom right corner.</param>
 		/// <param name="color">Color to draw this primitive with.</param>
-		BoxPrimitive(int player, const Vector &topLeftPos, const Vector &bottomRightPos, unsigned char color) {
-			m_StartPos = topLeftPos;
-			m_EndPos = bottomRightPos;
-			m_Color = color;
-			m_Player = player;
-		}
-
-		/// <summary>
-		/// Draws this primitive on provided bitmap.
-		/// </summary>
-		/// <param name="drawScreen">Bitmap to draw on.</param>
-		/// <param name="targetPos">Position of graphical primitive.</param>
-		void Draw(SDL_Renderer* renderer, const Vector &targetPos) override;
+		BoxPrimitive(int player, const Vector &topLeftPos, const Vector &bottomRightPos, unsigned char color);
 	};
 #pragma endregion
 
@@ -198,7 +159,6 @@ namespace RTE {
 	class BoxFillPrimitive : public GraphicalPrimitive {
 
 	public:
-
 		/// <summary>
 		/// Constructor method for BoxFillPrimitive object.
 		/// </summary>
@@ -206,19 +166,7 @@ namespace RTE {
 		/// <param name="topLeftPos">Start position of the primitive. Top left corner.</param>
 		/// <param name="bottomRightPos">End position of the primitive. Bottom right corner.</param>
 		/// <param name="color">Color to draw this primitive with.</param>
-		BoxFillPrimitive(int player, const Vector &topLeftPos, const Vector &bottomRightPos, unsigned char color) {
-			m_StartPos = topLeftPos;
-			m_EndPos = bottomRightPos;
-			m_Color = color;
-			m_Player = player;
-		}
-
-		/// <summary>
-		/// Draws this primitive on provided bitmap.
-		/// </summary>
-		/// <param name="drawScreen">Bitmap to draw on.</param>
-		/// <param name="targetPos">Position of graphical primitive.</param>
-		void Draw(SDL_Renderer* renderer, const Vector &targetPos) override;
+		BoxFillPrimitive(int player, const Vector &topLeftPos, const Vector &bottomRightPos, unsigned char color);
 	};
 #pragma endregion
 
@@ -229,7 +177,6 @@ namespace RTE {
 	class RoundedBoxPrimitive : public GraphicalPrimitive {
 
 	public:
-
 		int m_CornerRadius; //!< The radius of the corners of the box.
 
 		/// <summary>
@@ -240,21 +187,7 @@ namespace RTE {
 		/// <param name="bottomRightPos">End position of the primitive. Bottom right corner.</param>
 		/// <param name="cornerRadius">The radius of the corners of the box. Smaller radius equals sharper corners.</param>
 		/// <param name="color">Color to draw this primitive with.</param>
-		RoundedBoxPrimitive(int player, const Vector &topLeftPos, const Vector &bottomRightPos, int cornerRadius, unsigned char color) :
-			m_CornerRadius(cornerRadius) {
-
-			m_StartPos = topLeftPos;
-			m_EndPos = bottomRightPos;
-			m_Color = color;
-			m_Player = player;
-		}
-
-		/// <summary>
-		/// Draws this primitive on provided bitmap.
-		/// </summary>
-		/// <param name="drawScreen">Bitmap to draw on.</param>
-		/// <param name="targetPos">Position of graphical primitive.</param>
-		void Draw(SDL_Renderer* renderer, const Vector &targetPos) override;
+		RoundedBoxPrimitive(int player, const Vector &topLeftPos, const Vector &bottomRightPos, int cornerRadius, unsigned char color);
 	};
 #pragma endregion
 
@@ -265,9 +198,6 @@ namespace RTE {
 	class RoundedBoxFillPrimitive : public GraphicalPrimitive {
 
 	public:
-
-		int m_CornerRadius; //!< The radius of the corners of the box.
-
 		/// <summary>
 		/// Constructor method for RoundedBoxFillPrimitive object.
 		/// </summary>
@@ -276,21 +206,7 @@ namespace RTE {
 		/// <param name="bottomRightPos">End position of the primitive. Bottom right corner.</param>
 		/// <param name="cornerRadius">The radius of the corners of the box. Smaller radius equals sharper corners.</param>
 		/// <param name="color">Color to draw this primitive with.</param>
-		RoundedBoxFillPrimitive(int player, const Vector &topLeftPos, const Vector &bottomRightPos, int cornerRadius, unsigned char color) :
-			m_CornerRadius(cornerRadius) {
-
-			m_StartPos = topLeftPos;
-			m_EndPos = bottomRightPos;
-			m_Color = color;
-			m_Player = player;
-		}
-
-		/// <summary>
-		/// Draws this primitive on provided bitmap.
-		/// </summary>
-		/// <param name="drawScreen">Bitmap to draw on.</param>
-		/// <param name="targetPos">Position of graphical primitive.</param>
-		void Draw(SDL_Renderer* renderer, const Vector &targetPos) override;
+		RoundedBoxFillPrimitive(int player, const Vector &topLeftPos, const Vector &bottomRightPos, int cornerRadius, unsigned char color);
 	};
 #pragma endregion
 
@@ -301,9 +217,6 @@ namespace RTE {
 	class CirclePrimitive : public GraphicalPrimitive {
 
 	public:
-
-		int m_Radius; //!< Radius of the circle primitive.
-
 		/// <summary>
 		/// Constructor method for CirclePrimitive object.
 		/// </summary>
@@ -311,20 +224,7 @@ namespace RTE {
 		/// <param name="centerPos">Position of this primitive's center.</param>
 		/// <param name="radius">Radius of the circle primitive.</param>
 		/// <param name="color">Color to draw this primitive with.</param>
-		CirclePrimitive(int player, const Vector &centerPos, int radius, unsigned char color) :
-			m_Radius(radius) {
-
-			m_StartPos = centerPos;
-			m_Color = color;
-			m_Player = player;
-		}
-
-		/// <summary>
-		/// Draws this primitive on provided bitmap.
-		/// </summary>
-		/// <param name="drawScreen">Bitmap to draw on.</param>
-		/// <param name="targetPos">Position of graphical primitive.</param>
-		void Draw(SDL_Renderer* renderer, const Vector &targetPos) override;
+		CirclePrimitive(int player, const Vector &centerPos, int radius, unsigned char color);
 	};
 #pragma endregion
 
@@ -335,9 +235,6 @@ namespace RTE {
 	class CircleFillPrimitive : public GraphicalPrimitive {
 
 	public:
-
-		int m_Radius; //!< Radius of the circle primitive.
-
 		/// <summary>
 		/// Constructor method for CircleFillPrimitive object.
 		/// </summary>
@@ -345,20 +242,7 @@ namespace RTE {
 		/// <param name="centerPos">Position of this primitive's center.</param>
 		/// <param name="radius">Radius of the circle primitive.</param>
 		/// <param name="color">Color to draw this primitive with.</param>
-		CircleFillPrimitive(int player, const Vector &centerPos, int radius, unsigned char color) :
-			m_Radius(radius) {
-
-			m_StartPos = centerPos;
-			m_Color = color;
-			m_Player = player;
-		}
-
-		/// <summary>
-		/// Draws this primitive on provided bitmap.
-		/// </summary>
-		/// <param name="drawScreen">Bitmap to draw on.</param>
-		/// <param name="targetPos">Position of graphical primitive.</param>
-		void Draw(SDL_Renderer* renderer, const Vector &targetPos) override;
+		CircleFillPrimitive(int player, const Vector &centerPos, int radius, unsigned char color);
 	};
 #pragma endregion
 
@@ -369,10 +253,6 @@ namespace RTE {
 	class EllipsePrimitive : public GraphicalPrimitive {
 
 	public:
-
-		int m_HorizRadius; //!< The horizontal radius of the ellipse primitive.
-		int m_VertRadius; //!< The vertical radius of the ellipse primitive.
-
 		/// <summary>
 		/// Constructor method for EllipsePrimitive object.
 		/// </summary>
@@ -381,20 +261,7 @@ namespace RTE {
 		/// <param name="horizRadius">Horizontal radius of the ellipse primitive.</param>
 		/// <param name="vertRadius">Vertical radius of the ellipse primitive.</param>
 		/// <param name="color">Color to draw this primitive with.</param>
-		EllipsePrimitive(int player, const Vector &centerPos, int horizRadius, int vertRadius, unsigned char color) :
-			m_HorizRadius(horizRadius), m_VertRadius(vertRadius) {
-
-			m_StartPos = centerPos;
-			m_Color = color;
-			m_Player = player;
-		}
-
-		/// <summary>
-		/// Draws this primitive on provided bitmap.
-		/// </summary>
-		/// <param name="drawScreen">Bitmap to draw on.</param>
-		/// <param name="targetPos">Position of graphical primitive.</param>
-		void Draw(SDL_Renderer* renderer, const Vector &targetPos) override;
+		EllipsePrimitive(int player, const Vector &centerPos, int horizRadius, int vertRadius, unsigned char color);
 	};
 #pragma endregion
 
@@ -405,10 +272,6 @@ namespace RTE {
 	class EllipseFillPrimitive : public GraphicalPrimitive {
 
 	public:
-
-		int m_HorizRadius; //!< The horizontal radius of the ellipse primitive.
-		int m_VertRadius; //!< The vertical radius of the ellipse primitive.
-
 		/// <summary>
 		/// Constructor method for EllipseFillPrimitive object.
 		/// </summary>
@@ -416,20 +279,7 @@ namespace RTE {
 		/// <param name="centerPos">Position of this primitive's center.</param>
 		/// <param name="radius">Radius of the circle primitive.</param>
 		/// <param name="color">Color to draw this primitive with.</param>
-		EllipseFillPrimitive(int player, const Vector &centerPos, int horizRadius, int vertRadius, unsigned char color) :
-			m_HorizRadius(horizRadius), m_VertRadius(vertRadius) {
-
-			m_StartPos = centerPos;
-			m_Color = color;
-			m_Player = player;
-		}
-
-		/// <summary>
-		/// Draws this primitive on provided bitmap.
-		/// </summary>
-		/// <param name="drawScreen">Bitmap to draw on.</param>
-		/// <param name="targetPos">Position of graphical primitive.</param>
-		void Draw(SDL_Renderer* renderer, const Vector &targetPos) override;
+		EllipseFillPrimitive(int player, const Vector &centerPos, int horizRadius, int vertRadius, unsigned char color);
 	};
 #pragma endregion
 
@@ -440,11 +290,6 @@ namespace RTE {
 	class TrianglePrimitive : public GraphicalPrimitive {
 
 	public:
-
-		Vector m_PointAPos; //!< First point of the triangle.
-		Vector m_PointBPos; //!< Second point of the triangle.
-		Vector m_PointCPos; //!< Third point of the triangle.
-
 		/// <summary>
 		/// Constructor method for TrianglePrimitive object.
 		/// </summary>
@@ -453,19 +298,7 @@ namespace RTE {
 		/// <param name="pointB">Position of the second point of the triangle</param>
 		/// <param name="pointC">Position of the third point of the triangle</param>
 		/// <param name="color">Color to draw this primitive with.</param>
-		TrianglePrimitive(int player, const Vector &pointA, const Vector &pointB, const Vector &pointC, unsigned char color) :
-			m_PointAPos(pointA), m_PointBPos(pointB), m_PointCPos(pointC) {
-
-			m_Color = color;
-			m_Player = player;
-		}
-
-		/// <summary>
-		/// Draws this primitive on provided bitmap.
-		/// </summary>
-		/// <param name="drawScreen">Bitmap to draw on.</param>
-		/// <param name="targetPos">Position of graphical primitive.</param>
-		void Draw(SDL_Renderer* renderer, const Vector &targetPos) override;
+		TrianglePrimitive(int player, const Vector &pointA, const Vector &pointB, const Vector &pointC, unsigned char color);
 	};
 #pragma endregion
 
@@ -476,11 +309,6 @@ namespace RTE {
 	class TriangleFillPrimitive : public GraphicalPrimitive {
 
 	public:
-
-		Vector m_PointAPos; //!< First point of the triangle.
-		Vector m_PointBPos; //!< Second point of the triangle.
-		Vector m_PointCPos; //!< Third point of the triangle.
-
 		/// <summary>
 		/// Constructor method for TriangleFillPrimitive object.
 		/// </summary>
@@ -489,19 +317,7 @@ namespace RTE {
 		/// <param name="pointB">Position of the second point of the triangle</param>
 		/// <param name="pointC">Position of the third point of the triangle</param>
 		/// <param name="color">Color to draw this primitive with.</param>
-		TriangleFillPrimitive(int player, const Vector &pointA, const Vector &pointB, const Vector &pointC, unsigned char color) :
-			m_PointAPos(pointA), m_PointBPos(pointB), m_PointCPos(pointC) {
-
-			m_Color = color;
-			m_Player = player;
-		}
-
-		/// <summary>
-		/// Draws this primitive on provided bitmap.
-		/// </summary>
-		/// <param name="drawScreen">Bitmap to draw on.</param>
-		/// <param name="targetPos">Position of graphical primitive.</param>
-		void Draw(SDL_Renderer* renderer, const Vector &targetPos) override;
+		TriangleFillPrimitive(int player, const Vector &pointA, const Vector &pointB, const Vector &pointC, unsigned char color);
 	};
 #pragma endregion
 
@@ -512,7 +328,6 @@ namespace RTE {
 	class TextPrimitive : public GraphicalPrimitive {
 
 	public:
-
 		std::string m_Text; //!< String containing text to draw.
 		bool m_IsSmall; //!< Use small or large font. True for small font.
 		int m_Alignment; //!< Alignment of text.
@@ -526,7 +341,7 @@ namespace RTE {
 		/// <param name="isSmall">Use small or large font. True for small font.</param>
 		/// <param name="alignment">Alignment of text.</param>
 		TextPrimitive(int player, const Vector &pos, const std::string &text, bool isSmall, int alignment) :
-			m_Text(text), m_IsSmall(isSmall), m_Alignment(alignment) {
+		    m_Text(text), m_IsSmall(isSmall), m_Alignment(alignment) {
 
 			m_StartPos = pos;
 			m_Player = player;
@@ -537,7 +352,7 @@ namespace RTE {
 		/// </summary>
 		/// <param name="drawScreen">Bitmap to draw on.</param>
 		/// <param name="targetPos">Position of graphical primitive.</param>
-		void Draw(SDL_Renderer* renderer, const Vector &targetPos) override;
+		void Draw(RenderTarget *renderer, const Vector &targetPos, std::optional<RenderState> renderState = std::nullopt) override;
 	};
 #pragma endregion
 
@@ -548,8 +363,7 @@ namespace RTE {
 	class BitmapPrimitive : public GraphicalPrimitive {
 
 	public:
-
-		std::shared_ptr<Texture> m_Texture; //!< Bitmap to draw.
+		std::shared_ptr<GLTexture> m_Texture; //!< Bitmap to draw.
 		float m_RotAngle; //!< Angle to rotate bitmap in radians.
 		bool m_HFlipped; //!< Whether the Bitmap to draw should be horizontally flipped.
 		bool m_VFlipped; //!< Whether the Bitmap to draw should be vertically flipped.
@@ -563,8 +377,8 @@ namespace RTE {
 		/// <param name="rotAngle">Angle to rotate bitmap in radians.</param>
 		/// <param name="hFlipped">Whether the bitmap to draw should be horizontally flipped.</param>
 		/// <param name="vFlipped">Whether the bitmap to draw should be vertically flipped.</param>
-		BitmapPrimitive(int player, const Vector &centerPos, std::shared_ptr<Texture> bitmap, float rotAngle, bool hFlipped, bool vFlipped) :
-			m_Texture(bitmap), m_RotAngle(rotAngle), m_HFlipped(hFlipped), m_VFlipped(vFlipped) {
+		BitmapPrimitive(int player, const Vector &centerPos, std::shared_ptr<GLTexture> bitmap, float rotAngle, bool hFlipped, bool vFlipped) :
+		    m_Texture(bitmap), m_RotAngle(rotAngle), m_HFlipped(hFlipped), m_VFlipped(vFlipped) {
 
 			m_StartPos = centerPos;
 			m_Player = player;
@@ -575,8 +389,8 @@ namespace RTE {
 		/// </summary>
 		/// <param name="drawScreen">Bitmap to draw on.</param>
 		/// <param name="targetPos">Position of graphical primitive.</param>
-		void Draw(SDL_Renderer* renderer, const Vector &targetPos) override;
+		void Draw(RenderTarget *renderer, const Vector &targetPos, std::optional<RenderState> renderState = std::nullopt) override;
 	};
 #pragma endregion
-}
+} // namespace RTE
 #endif
