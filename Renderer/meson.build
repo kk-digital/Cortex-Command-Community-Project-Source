@@ -4,6 +4,7 @@ sources += files(
 'GLTexture.cpp',
 'RenderState.cpp',
 'RenderTarget.cpp',
+'RenderTexture.cpp',
 'Shape.cpp',
 'Surface.cpp',
 'Vertex.cpp',
