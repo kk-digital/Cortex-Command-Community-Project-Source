@@ -1,6 +1,8 @@
 #ifndef _RTE_GLTEXTURE_
 #define _RTE_GLTEXTURE_
-#include "GL/gl.h"
+
+#include "BlendMode.h"
+#include "Surface.h"
 
 extern "C" {
 struct SDL_Surface;
@@ -14,40 +16,45 @@ namespace RTE {
 		Custom
 	};
 
-	class sdl_surface_deleter {
-		void operator()(SDL_Surface *p);
+	enum class TextureAccess {
+		Static,
+		Straming
 	};
 
-	class GLTexture {
+	class RenderTarget;
+	class GLTexture : public Surface {
+		friend class ContentFile;
+
 	public:
 		GLTexture();
-		~GLTexture();
+		virtual ~GLTexture();
 
 		void Clear();
 
-		int getW() const { return m_Width; }
-		int getH() const { return m_Height; }
+		bool Create();
 
-		void render(void *, float x, float y);
+		void render(RenderTarget *renderer, float x, float y);
 
-		void render(void *, glm::vec2 pos);
+		void render(RenderTarget *renderer, glm::vec2 pos);
 
-		void render(void *, float x, float y, double angle);
+		void render(RenderTarget *renderer, float x, float y, float angle);
 
-		void render(void *, glm::vec2 pos, double angle);
+		void render(RenderTarget *renderer, glm::vec2 pos, float angle);
 
-		void render(void *, glm::vec2 pos, glm::vec2 scale);
+		void render(RenderTarget *renderer, glm::vec2 pos, glm::vec2 scale);
 
-		void render(void *, glm::vec2 pos, double angle, glm::vec2 scale);
+		void render(RenderTarget *renderer, glm::vec2 pos, float angle, glm::vec2 scale);
 
 		void setShading(Shading shader) { m_Shading = shader; }
 
 		Shading getShading() const { return m_Shading; }
 
-		void setBlendMode(uint32_t blendMode) { m_BlendMode = blendMode; }
-		uint32_t getBlendMode() const { return m_BlendMode; }
+		void setBlendMode(BlendMode blendMode) { m_BlendMode = blendMode; }
+		BlendMode getBlendMode() const { return m_BlendMode; }
 
 		void setColorMod(const glm::vec3 &colorMod) { m_ColorMod = glm::vec4(colorMod, m_ColorMod.a); }
+
+		void setColorMod(int r, int g, int b) { m_ColorMod = glm::vec4(r / 255.0, g / 255.0, b / 255.0, m_ColorMod.a); }
 
 		glm::vec3 getColorMod() const { return m_ColorMod.rgb(); }
 
@@ -61,28 +68,31 @@ namespace RTE {
 
 		void clearAll(uint32_t color = 0);
 
+		void Bind();
+
+		unsigned long GetTextureID() {return m_TextureID;}
+
 	private:
-		GLuint m_VBO;
-		GLuint m_TextureID;
-		int m_BPP;
+		unsigned long m_TextureID; //!< The OpenGL texture handle associated with this texture.
+		int m_BPP; //!< the bitdepth of this Texture TODO: Limit to enum.
+		uint32_t m_Format; //!< The pixelformat of this Texture.
 
-		int m_Width;
-		int m_Height;
+		glm::vec4 m_ColorMod; //!< Color multiplied in the shader stage, used for fill color as well.
+		BlendMode m_BlendMode; //!< The blendmode used for drawing this texture.
 
-		glm::vec4 m_ColorMod;
+		Shading m_Shading; //!< Which shader to use while drawing.
+		std::shared_ptr<Shader> m_ShaderBase; //!< Base shader appropriate for the bitdepth, also used as fallback in case other shaders are unset. MUST BE SET BEFORE DRAWING.
+		std::shared_ptr<Shader> m_ShaderFill; //!< Fill shader, used for drawing silhouettes, color is determined by color mod.
+		std::shared_ptr<Shader> m_ShaderCustom; //!< Custom shader, TODO: user defineable?.
 
-		uint32_t m_Format;
-		uint32_t m_BlendMode;
-
-		Shading m_Shading;
-		Shader *m_ShaderBase;
-		Shader *m_ShaderFill;
-		glm::vec4 m_FillColor;
-		Shader *m_ShaderCustom;
-
-		std::unique_ptr<SDL_Surface, sdl_surface_deleter> m_Pixels;
-
-		Shader* GetCurrentShader();
+		/// <summary>
+		/// Returns the appropriate shader for the current shading.
+		/// </summary>
+		/// <returns>
+		/// Shared pointer to a shader object used for rendering.
+		/// </returns>
+		std::shared_ptr<Shader> GetCurrentShader();
 	};
+	typedef std::shared_ptr<GLTexture> SharedTexture;
 } // namespace RTE
 #endif
