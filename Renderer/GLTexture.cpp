@@ -23,6 +23,17 @@ namespace RTE {
 		}
 	}
 
+	bool GLTexture::Create(int width, int height, uint32_t format) {
+		(void)format;
+
+		glBindTexture(GL_TEXTURE_2D, m_TextureID);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_INT, nullptr);
+		return true;
+	}
+
 	void GLTexture::Clear() {
 		m_TextureID = 0;
 

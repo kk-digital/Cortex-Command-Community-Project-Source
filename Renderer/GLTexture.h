@@ -29,6 +29,8 @@ namespace RTE {
 		GLTexture();
 		virtual ~GLTexture();
 
+		virtual bool Create(int width, int height, uint32_t format= 0) override;
+
 		void render(RenderTarget *renderer, float x, float y);
 
 		void render(RenderTarget *renderer, glm::vec2 pos);
