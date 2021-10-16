@@ -56,6 +56,10 @@ namespace RTE {
 			state.m_Shader->SetVector4f(colorUniform, state.m_Color);
 		}
 
-		glDrawArrays(static_cast<GLenum>(state.m_PrimitiveType), 0, state.m_Vertices->m_vertices.size());
+		glDrawArrays(static_cast<GLenum>(state.m_PrimitiveType), 0, state.m_Vertices->GetVertexCount());
     }
+
+	void RenderTarget::Clear() {
+		glClear(GL_COLOR_BUFFER_BIT);
+	}
 }

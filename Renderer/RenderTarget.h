@@ -11,7 +11,9 @@ namespace RTE {
 
 		virtual void Create(int x, int y, int width, int height);
 
-		void Draw(RenderState& state);
+		virtual void Draw(RenderState& state);
+
+		virtual void DrawClear();
 
 	private:
 		VertexArray m_DefaultQuad; //!< The default unit rectangle, used for drawing sprites without primitive attachments.
