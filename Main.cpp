@@ -42,6 +42,7 @@
 
 #include "System/System.h"
 #include "System/SDLHelper.h"
+#include <SDL2/SDL_image.h>
 
 extern "C" { FILE __iob_func[3] = { *stdin,*stdout,*stderr }; }
 
@@ -300,6 +301,7 @@ namespace RTE {
 /// </summary>
 int main(int argc, char **argv) {
 	SDL_Init(SDL_INIT_VIDEO|SDL_INIT_EVENTS|SDL_INIT_GAMECONTROLLER|SDL_INIT_TIMER);
+	IMG_Init(IMG_INIT_PNG);
 
 	g_FrameMan.CreateWindowAndRenderer();
 
