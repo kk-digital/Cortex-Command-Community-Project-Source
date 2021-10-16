@@ -10,18 +10,19 @@ namespace RTE {
 		VertexArray();
 		~VertexArray();
 
-		VertexArray(const std::vector<Vertex>& vertices, std::optional<std::reference_wrapper<const std::vector<int>>> indices = std::nullopt);
+		VertexArray(const std::vector<Vertex>& vertices);
 
 		void Bind();
 
 		unsigned long GetVAO() { return m_VAO; }
 
+		size_t GetVertexCount() { return m_Vertices.size();}
+
 	private:
 		friend class RenderTarget;
 		unsigned int m_VAO;
 		unsigned int m_VBO;
-		unsigned int m_EBO;
-		std::vector<Vertex> m_vertices;
+		std::vector<Vertex> m_Vertices;
 	};
 }
 #endif
