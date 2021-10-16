@@ -29,7 +29,6 @@ namespace RTE {
 		GLTexture();
 		virtual ~GLTexture();
 
-
 		void render(RenderTarget *renderer, float x, float y);
 
 		void render(RenderTarget *renderer, glm::vec2 pos);
@@ -61,11 +60,7 @@ namespace RTE {
 
 		float getAlphaMod() const { return m_ColorMod.a; }
 
-		uint32_t getPixel(int x, int y) const;
-
-		void setPixel(int x, int y, uint32_t color);
-
-		void clearAll(uint32_t color = 0);
+		void clearAll(uint32_t color = 0)  {}
 
 		void Bind();
 
