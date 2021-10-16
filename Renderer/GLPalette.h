@@ -1,15 +1,25 @@
-#include "GL/glew.h"
+#ifndef _RTEPALETTE_
+#define _RTEPALETTE_
+struct SDL_Palette;
 namespace RTE {
-	constexpr int BYTESPERINDEX = 4;
-	constexpr int PALETTESIZE = 256;
 	class Palette {
 	public:
-		Palette(const std::array<GLubyte, PALETTESIZE * BYTESPERINDEX> &data, uint32_t format);
-		~Palette();
-	private:
-		GLuint m_Texture;
+		static constexpr int PALETTESIZE = 256;
 
-		std::array<GLubyte, PALETTESIZE * BYTESPERINDEX> m_Palette;
-		uint32_t m_Format;
+		Palette(const std::array<glm::u8vec4, PALETTESIZE> &data);
+		~Palette();
+
+		SDL_Palette *GetAsPalette();
+
+	private:
+		unsigned int m_Texture;
+
+		std::array<glm::u8vec4, PALETTESIZE> m_Palette;
+
+		struct sdl_palette_deleter {
+			void operator()(SDL_Palette *p);
+		};
+		std::unique_ptr<SDL_Palette, sdl_palette_deleter> m_SDLPalette;
 	};
-}
+} // namespace RTE
+#endif
