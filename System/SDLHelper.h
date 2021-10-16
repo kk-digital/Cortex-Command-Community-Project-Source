@@ -6,7 +6,7 @@
 /// </summary>
 
 #include <SDL2/SDL.h>
-#include "SDLTexture.h"
+// #include "SDLTexture.h"
 
 /// <summary>
 /// Shift the Position of an SDL_Rect by an SDL_Point
