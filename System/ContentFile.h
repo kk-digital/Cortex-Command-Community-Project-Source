@@ -2,11 +2,18 @@
 #define _RTECONTENTFILE_
 
 #include "Serializable.h"
-#include "Renderer/GLTexture.h"
-
 namespace FMOD { class Sound; }
 
 namespace RTE {
+
+	enum class ColorConvert {
+		Preserve, //!< Preserves 8bpp indexed images but converts everything else to the common 32bpp argb8888 format
+		Indexed8, //!< Explicitly convert to 8bpp indexed.
+		ARGB32 //!< Explicitly convert to 32bpp argb8888.
+	};
+
+	class GLTexture;
+	class Palette;
 
 	/// <summary>
 	/// A representation of a content file that is stored directly on disk.
@@ -122,9 +129,9 @@ namespace RTE {
 		/// </param>
 		/// <returns>Pointer to the SDL_Texture loaded
 		/// from disk.</returns>
-		std::shared_ptr<GLTexture> GetAsTexture(bool storeBitmap = true,
-		                     const std::string &dataPathToSpecificFrame = "",
-		                     bool streamingAccess = false);
+		std::shared_ptr<GLTexture> GetAsTexture(ColorConvert conversionMode = ColorConvert::Preserve, bool storeBitmap = true, const std::string &dataPathToSpecificFrame = "");
+
+		std::shared_ptr<Palette> GetAsPalette();
 
 		/// <summary>
 		/// Gets the data represented by this ContentFile object as an array of SDL_Textures, each representing a frame in the animation.
@@ -132,7 +139,7 @@ namespace RTE {
 		/// </summary>
 		/// <param name="frameCount">The number of frames to attempt to load, more than 1 frame will mean 00# is appended to datapath to handle naming conventions.</param>
 		/// <returns>Pointer to the beginning of the array of SDL_Texture pointers loaded from the disk, the length of which is specified with the FrameCount argument.</returns>
-		std::vector<std::shared_ptr<GLTexture>> GetAsAnimation(int frameCount = 1);
+		std::vector<std::shared_ptr<GLTexture>> GetAsAnimation(int frameCount = 1, ColorConvert conversionMode = ColorConvert::Preserve);
 
 		/// <summary>
 		/// Gets the data represented by this ContentFile object as an array of SDL_Textures, each representing a frame in the animation.
@@ -140,7 +147,7 @@ namespace RTE {
 		/// </summary>
 		/// <param name="frameCount">The number of frames to attempt to load, more than 1 frame will mean 00# is appended to datapath to handle naming conventions.</param>
 		/// <returns>Pointer to the beginning of the array of SDL_Texture pointers loaded from the disk, the length of which is specified with the FrameCount argument.</returns>
-		void GetAsAnimation(std::vector<std::shared_ptr<GLTexture>> & vectorToFill, int frameCount = 1) {vectorToFill = GetAsAnimation(frameCount);};
+		void GetAsAnimation(std::vector<std::shared_ptr<GLTexture>> & vectorToFill, int frameCount = 1, ColorConvert conversionMode = ColorConvert::Preserve) {vectorToFill = GetAsAnimation(frameCount, conversionMode);};
 
 		/// <summary>
 		/// Gets the data represented by this ContentFile object as an FMOD FSOUND_SAMPLE, loading it into the static maps if it's not already loaded. Ownership of the FSOUND_SAMPLE is NOT transferred!
@@ -179,8 +186,7 @@ namespace RTE {
 		/// </summary>
 		/// <param name="dataPathToSpecificFrame">Path to a specific frame when loading an animation to avoid overwriting the original preset DataPath when loading each frame.</param>
 		/// <returns>Pointer to the SDL_Texture loaded from disk.</returns>
-		SharedTexture LoadAndReleaseImage(const std::string &dataPathToSpecificFrame,
-		                            bool streamingAccess);
+		std::shared_ptr<GLTexture> LoadAndReleaseImage(const std::string &dataPathToSpecificFrame, ColorConvert conversionMode);
 
 		/// <summary>
 		/// Loads and transfers the data represented by this ContentFile

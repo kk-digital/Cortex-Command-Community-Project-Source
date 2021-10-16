@@ -9,6 +9,7 @@
 #include "SDLHelper.h"
 #include <SDL2/SDL_image.h>
 #include "Renderer/GLTexture.h"
+#include "Renderer/GLPalette.h"
 #include "GL/glew.h"
 
 #include "fmod/fmod.hpp"
@@ -53,7 +54,6 @@ namespace RTE {
 		return 0;
 	}
 
-
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	int ContentFile::ReadProperty(const std::string_view &propName, Reader &reader) {
@@ -70,7 +70,9 @@ namespace RTE {
 	int ContentFile::Save(Writer &writer) const {
 		Serializable::Save(writer);
 
-		if (!m_DataPath.empty()) { writer.NewPropertyWithValue("FilePath", m_DataPath); }
+		if (!m_DataPath.empty()) {
+			writer.NewPropertyWithValue("FilePath", m_DataPath);
+		}
 
 		return 0;
 	}
@@ -101,9 +103,7 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	std::shared_ptr<GLTexture> ContentFile::GetAsTexture(bool storeTexture,
-	                               const std::string &dataPathToSpecificFrame,
-								   bool streamingAccess) {
+	std::shared_ptr<GLTexture> ContentFile::GetAsTexture(ColorConvert conversionMode, bool storeTexture, const std::string &dataPathToSpecificFrame) {
 		if (m_DataPath.empty()) {
 			return nullptr;
 		}
@@ -111,7 +111,7 @@ namespace RTE {
 		                                 ? m_DataPath
 		                                 : dataPathToSpecificFrame;
 		SetFormattedReaderPosition(GetFormattedReaderPosition());
-		std::shared_ptr<Texture> returnTexture;
+		std::shared_ptr<GLTexture> returnTexture;
 
 		// Check if the file has already been read and loaded from the disk and,
 		// if so, use that data.
@@ -133,13 +133,12 @@ namespace RTE {
 				}
 			}
 			// NOTE: This takes ownership of the texture file
-			returnTexture = LoadAndReleaseImage(dataPathToLoad, streamingAccess);
+			returnTexture = LoadAndReleaseImage(dataPathToLoad, conversionMode);
 
 			// Insert the texture into the map, PASSING OVER OWNERSHIP OF THE
 			// LOADED DATAFILE
 			if (storeTexture) {
-				s_LoadedTextures.insert(
-				    {dataPathToLoad, returnTexture});
+				s_LoadedTextures.insert({dataPathToLoad, returnTexture});
 			}
 		}
 
@@ -148,7 +147,34 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	std::vector<std::shared_ptr<GLTexture>>  ContentFile::GetAsAnimation(int frameCount) {
+	std::shared_ptr<Palette> ContentFile::GetAsPalette() {
+		std::unique_ptr<SDL_Surface, sdl_deleter> paletteLoader{IMG_Load(m_DataPath.c_str())};
+		RTEAssert(paletteLoader.get(), "Failed to load palette from: " + m_DataPath + " because: " + IMG_GetError());
+		if (!paletteLoader->format->palette && paletteLoader->w * paletteLoader->h != Palette::PALETTESIZE) {
+			RTEAbort("Attempted to load incorrectly sized palette from: " + m_DataPath);
+		}
+		std::array<glm::u8vec4, Palette::PALETTESIZE> colors;
+		if (paletteLoader->format->palette) {
+			for (int i = 0; i < paletteLoader->format->palette->ncolors && i < Palette::PALETTESIZE; ++i) {
+				SDL_Color color = paletteLoader->format->palette->colors[i];
+				colors[i] = {color.r, color.g, color.b, color.a};
+			}
+		} else {
+			if (paletteLoader->format->BitsPerPixel < 32) {
+				// Convert to known format
+				SDL_Surface *knownFormat = SDL_ConvertSurfaceFormat(paletteLoader.get(), SDL_PIXELFORMAT_RGBA32, 0);
+				paletteLoader.reset(knownFormat);
+			}
+			for (int i = 0; i < paletteLoader->w * paletteLoader->h; ++i) {
+				SDL_GetRGBA(static_cast<uint32_t *>(paletteLoader->pixels)[i], paletteLoader->format, &colors[i].r, &colors[i].g, &colors[i].b, &colors[i].a);
+			}
+		}
+		return std::make_shared<Palette>(colors);
+	}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	std::vector<std::shared_ptr<GLTexture>> ContentFile::GetAsAnimation(int frameCount, ColorConvert conversionMode) {
 		if (m_DataPath.empty()) {
 			std::vector<std::shared_ptr<GLTexture>> empty;
 			return empty;
@@ -169,21 +195,20 @@ namespace RTE {
 					SetDataPath(m_DataPathWithoutExtension + "000" + altFileExtension);
 				}
 			}
-			returnTextures.push_back(GetAsTexture());
+			returnTextures.push_back(GetAsTexture(conversionMode));
 			return returnTextures;
 		}
 		char framePath[1024];
 		for (int frameNum = 0; frameNum < frameCount; frameNum++) {
 			std::snprintf(framePath, sizeof(framePath), "%s%03i%s", m_DataPathWithoutExtension.c_str(), frameNum, m_DataPathExtension.c_str());
-			returnTextures.push_back(GetAsTexture(true, framePath));
+			returnTextures.push_back(GetAsTexture(conversionMode, true, framePath));
 		}
-
 		return returnTextures;
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	SharedTexture ContentFile::LoadAndReleaseImage(const std::string &dataPathToSpecificFrame, bool streamingAccess) {
+	SharedTexture ContentFile::LoadAndReleaseImage(const std::string &dataPathToSpecificFrame, ColorConvert colorConversion) {
 
 		const std::string dataPathToLoad = dataPathToSpecificFrame.empty()
 		                                       ? m_DataPath
@@ -191,9 +216,7 @@ namespace RTE {
 		SetFormattedReaderPosition(GetFormattedReaderPosition());
 
 		// TODO: Use stbi for this instead of SDL_img (SDL_img may cause problems; stbi is generally the goto for this)
-		std::unique_ptr<SDL_Surface, sdl_surface_deleter> tempSurfacePreKey{ IMG_Load(dataPathToLoad.c_str()) };
-
-
+		std::unique_ptr<SDL_Surface, sdl_surface_deleter> tempSurfacePreKey{IMG_Load(dataPathToLoad.c_str())};
 
 		RTEAssert(
 		    tempSurfacePreKey.get(),
@@ -209,30 +232,42 @@ namespace RTE {
 		SharedTexture returnTexture = std::make_shared<GLTexture>();
 
 		returnTexture->m_BlendMode = BlendModes::Blend;
-		if(tempSurfacePreKey->format->BitsPerPixel>8){
-			SDL_Surface* actualSurface = SDL_ConvertSurfaceFormat(tempSurfacePreKey.get(), SDL_PIXELFORMAT_ARGB8888, 0);
-			returnTexture->m_Width = actualSurface->w;
-			returnTexture->m_Height = actualSurface->h;
+		if (colorConversion == ColorConvert::ARGB32 || (colorConversion == ColorConvert::Preserve && tempSurfacePreKey->format->BitsPerPixel > 8)) {
+			SDL_Surface *actualSurface = SDL_ConvertSurfaceFormat(tempSurfacePreKey.get(), SDL_PIXELFORMAT_ARGB8888, 0);
 			returnTexture->m_Pixels = std::unique_ptr<SDL_Surface, sdl_surface_deleter>(actualSurface);
 			returnTexture->m_BPP = 32;
 			returnTexture->m_ShaderBase = g_FrameMan.GetTextureShader(BitDepth::BPP32);
 			returnTexture->m_ShaderFill = g_FrameMan.GetTextureShaderFill(BitDepth::BPP32);
 		} else {
-			returnTexture->m_Pixels = std::move(tempSurfacePreKey);
-			returnTexture->m_Width = returnTexture->m_Pixels->w;
-			returnTexture->m_Height = returnTexture->m_Pixels->h;
+			if (colorConversion == ColorConvert::Preserve){
+				returnTexture->m_Pixels = std::move(tempSurfacePreKey);
+				SDL_SetSurfacePalette(returnTexture->m_Pixels.get(), nullptr);
+			} else {
+				SDL_PixelFormat *globalFmt = SDL_AllocFormat(SDL_PIXELFORMAT_INDEX8);
+				SDL_PixelFormat pf = *globalFmt;
+				SDL_SetPixelFormatPalette(&pf, g_FrameMan.GetDefaultPalette()->GetAsPalette());
+				SDL_Surface *actualSurface = SDL_ConvertSurface(tempSurfacePreKey.get(), &pf, 0);
+				returnTexture->m_Pixels = std::unique_ptr<SDL_Surface, sdl_surface_deleter>(actualSurface);
+				SDL_FreeFormat(globalFmt);
+			}
 			returnTexture->m_BPP = 8;
 			returnTexture->m_ShaderBase = g_FrameMan.GetTextureShader(BitDepth::Indexed8);
-			returnTexture->m_ShaderFill = g_FrameMan.GetTextureShaderFill(BitDepth::BPP32);
+			returnTexture->m_ShaderFill = g_FrameMan.GetTextureShaderFill(BitDepth::Indexed8);
 		}
 
+		returnTexture->m_Width = returnTexture->m_Pixels->w;
+		returnTexture->m_Height = returnTexture->m_Pixels->h;
+		glBindTexture(GL_TEXTURE_2D, returnTexture->m_TextureID);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexImage2D(GL_TEXTURE_2D, 0, returnTexture->m_BPP == 8 ? GL_R8 : GL_RGBA, returnTexture->m_Width, returnTexture->m_Height, 0, returnTexture->m_BPP == 8 ? GL_RED : GL_RGBA, GL_UNSIGNED_BYTE, returnTexture->m_Pixels->pixels);
 
 		return returnTexture;
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	FMOD::Sound * ContentFile::GetAsSound(bool abortGameForInvalidSound, bool asyncLoading) {
+	FMOD::Sound *ContentFile::GetAsSound(bool abortGameForInvalidSound, bool asyncLoading) {
 		if (m_DataPath.empty() || !g_AudioMan.IsAudioEnabled()) {
 			return nullptr;
 		}
@@ -252,14 +287,14 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	FMOD::Sound * ContentFile::LoadAndReleaseSound(bool abortGameForInvalidSound, bool asyncLoading) {
+	FMOD::Sound *ContentFile::LoadAndReleaseSound(bool abortGameForInvalidSound, bool asyncLoading) {
 		if (m_DataPath.empty() || !g_AudioMan.IsAudioEnabled()) {
 			return nullptr;
 		}
 
 		if (!System::PathExistsCaseSensitive(m_DataPath)) {
 			bool foundAltExtension = false;
-			for (const std::string &altFileExtension : c_SupportedAudioFormats) {
+			for (const std::string &altFileExtension: c_SupportedAudioFormats) {
 				if (System::PathExistsCaseSensitive(m_DataPathWithoutExtension + altFileExtension)) {
 					g_ConsoleMan.AddLoadWarningLogEntry(m_DataPath, m_FormattedReaderPosition, altFileExtension);
 					SetDataPath(m_DataPathWithoutExtension + altFileExtension);
@@ -293,4 +328,4 @@ namespace RTE {
 		}
 		return returnSample;
 	}
-}
+} // namespace RTE
