@@ -8,6 +8,8 @@
 
 #include "SDLHelper.h"
 #include <SDL2/SDL_image.h>
+#include "Renderer/GLTexture.h"
+#include "GL/glew.h"
 
 #include "fmod/fmod.hpp"
 #include "fmod/fmod_errors.h"
@@ -16,7 +18,7 @@ namespace RTE {
 
 	const std::string ContentFile::c_ClassName = "ContentFile";
 
-	std::unordered_map<std::string, std::shared_ptr<Texture>> ContentFile::s_LoadedTextures;
+	std::unordered_map<std::string, std::shared_ptr<GLTexture>> ContentFile::s_LoadedTextures;
 	std::unordered_map<std::string, FMOD::Sound *> ContentFile::s_LoadedSamples;
 	std::unordered_map<size_t, std::string> ContentFile::s_PathHashes;
 
@@ -99,7 +101,7 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	std::shared_ptr<Texture> ContentFile::GetAsTexture(bool storeTexture,
+	std::shared_ptr<GLTexture> ContentFile::GetAsTexture(bool storeTexture,
 	                               const std::string &dataPathToSpecificFrame,
 								   bool streamingAccess) {
 		if (m_DataPath.empty()) {
@@ -146,13 +148,13 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	std::vector<std::shared_ptr<Texture>>  ContentFile::GetAsAnimation(int frameCount) {
+	std::vector<std::shared_ptr<GLTexture>>  ContentFile::GetAsAnimation(int frameCount) {
 		if (m_DataPath.empty()) {
-			std::vector<std::shared_ptr<Texture>> empty;
+			std::vector<std::shared_ptr<GLTexture>> empty;
 			return empty;
 		}
 		// Create the array of as many BITMAP pointers as requested frames
-		std::vector<std::shared_ptr<Texture>> returnTextures;
+		std::vector<std::shared_ptr<GLTexture>> returnTextures;
 		SetFormattedReaderPosition(GetFormattedReaderPosition());
 
 		if (frameCount == 1) {
@@ -189,7 +191,7 @@ namespace RTE {
 		SetFormattedReaderPosition(GetFormattedReaderPosition());
 
 		// TODO: Use stbi for this instead of SDL_img (SDL_img may cause problems; stbi is generally the goto for this)
-		std::unique_ptr<SDL_Surface, sdl_deleter> tempSurfacePreKey{ IMG_Load(dataPathToLoad.c_str()) };
+		std::unique_ptr<SDL_Surface, sdl_surface_deleter> tempSurfacePreKey{ IMG_Load(dataPathToLoad.c_str()) };
 
 
 
@@ -204,75 +206,27 @@ namespace RTE {
 		Uint32 colorKey{SDL_MapRGB(tempSurfacePreKey->format, 255, 0, 255)};
 		SDL_SetColorKey(tempSurfacePreKey.get(), SDL_TRUE, colorKey);
 
-		std::unique_ptr<SDL_Surface, sdl_deleter> tempSurface{ SDL_ConvertSurfaceFormat(tempSurfacePreKey.get(), Texture::getNativeAlphaFormat(g_FrameMan.GetRenderer()), 0)};
+		SharedTexture returnTexture = std::make_shared<GLTexture>();
 
-		// Copy the pixels from the surface for accessing pixel colors
-		SharedTexture returnTexture = std::make_shared<Texture>();
-		if (!streamingAccess) {
-			// Create a Texture from the loaded Image with STATIC ACCESS (!)
-			// that lives in vram
-			returnTexture->m_Texture = std::unique_ptr<SDL_Texture, sdl_texture_deleter>(SDL_CreateTexture(
-			    g_FrameMan.GetRenderer(),
-			    Texture::getNativeAlphaFormat(g_FrameMan.GetRenderer()),
-			    SDL_TEXTUREACCESS_STATIC, tempSurface->w, tempSurface->h));
+		returnTexture->m_BlendMode = BlendModes::Blend;
+		if(tempSurfacePreKey->format->BitsPerPixel>8){
+			SDL_Surface* actualSurface = SDL_ConvertSurfaceFormat(tempSurfacePreKey.get(), SDL_PIXELFORMAT_ARGB8888, 0);
+			returnTexture->m_Width = actualSurface->w;
+			returnTexture->m_Height = actualSurface->h;
+			returnTexture->m_Pixels = std::unique_ptr<SDL_Surface, sdl_surface_deleter>(actualSurface);
+			returnTexture->m_BPP = 32;
+			returnTexture->m_ShaderBase = g_FrameMan.GetTextureShader(BitDepth::BPP32);
+			returnTexture->m_ShaderFill = g_FrameMan.GetTextureShaderFill(BitDepth::BPP32);
 		} else {
-			// Create a Texture with STREAMING ACCESS that lives in vram
-			returnTexture->m_Texture = std::unique_ptr<SDL_Texture, sdl_texture_deleter>(SDL_CreateTexture(
-			    g_FrameMan.GetRenderer(),
-			    Texture::getNativeAlphaFormat(g_FrameMan.GetRenderer()),
-			    SDL_TEXTUREACCESS_STREAMING, tempSurface->w, tempSurface->h));
+			returnTexture->m_Pixels = std::move(tempSurfacePreKey);
+			returnTexture->m_Width = returnTexture->m_Pixels->w;
+			returnTexture->m_Height = returnTexture->m_Pixels->h;
+			returnTexture->m_BPP = 8;
+			returnTexture->m_ShaderBase = g_FrameMan.GetTextureShader(BitDepth::Indexed8);
+			returnTexture->m_ShaderFill = g_FrameMan.GetTextureShaderFill(BitDepth::BPP32);
 		}
 
-		RTEAssert(returnTexture->m_Texture.get(),
-		          "Failed to create Texture from " +
-		              m_DataPathAndReaderPosition +
-		              "\n SDL Error: " + SDL_GetError());
-		int access;
-		Uint32 format;
-		int w, h;
 
-		// Get the format, access, width and height of the created Texture, to
-		// fill in the member Variables
-		SDL_QueryTexture(returnTexture->m_Texture.get(), &format, &access, &w,
-		                 &h);
-
-		returnTexture->m_Access=access;
-		returnTexture->m_Format=format;
-		returnTexture->w = w;
-		returnTexture->h = h;
-
-		// Resize the pixels vector so we don't write out of bounds
-		returnTexture->m_PixelsRO.resize(w * h);
-
-		// Make a copy of the pixeldata to retain it for read access
-		SDL_LockSurface(tempSurface.get());
-		SDL_ConvertPixels(w, h, tempSurface->format->format,
-		                  tempSurface->pixels, tempSurface->pitch, format,
-		                  returnTexture->m_PixelsRO.data(),
-		                  w * sizeof(uint32_t));
-		SDL_UnlockSurface(tempSurface.get());
-
-		// Remove any color component from transparent pixels
-		std::replace_if(returnTexture->m_PixelsRO.begin(), returnTexture->m_PixelsRO.end(), [](auto x){return !(x&0xFF000000);}, 0);
-
-		// In case a streaming texture was requested copy the pixels over now
-		if (streamingAccess) {
-			returnTexture->lock();
-
-			// Copy the pixels from the read access array to the texture
-			// Do not modify the following line unless you know exactly what
-			// you're doing
-			SDL_ConvertPixels(w, h, returnTexture->m_Format,
-			                  returnTexture->m_PixelsRO.data(),
-			                  w * sizeof(uint32_t), returnTexture->m_Format,
-			                  returnTexture->m_PixelsWO, returnTexture->m_Pitch);
-
-			returnTexture->unlock();
-		} else {
-			SDL_UpdateTexture(returnTexture->m_Texture.get(), nullptr, returnTexture->m_PixelsRO.data(), returnTexture->w * sizeof(uint32_t));
-		}
-		// Set the blend mode to blend so that alpha is actually used
-		returnTexture->setBlendMode(SDL_BLENDMODE_BLEND);
 		return returnTexture;
 	}
 
