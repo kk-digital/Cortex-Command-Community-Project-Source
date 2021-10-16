@@ -11,7 +11,8 @@ namespace RTE {
 
 		virtual void Create(int x, int y, int width, int height);
 
-		void draw(RenderState& state);
+		void Draw(RenderState& state);
+
 	private:
 		VertexArray m_DefaultQuad; //!< The default unit rectangle, used for drawing sprites without primitive attachments.
 		glm::mat4 m_Projection; //!< Orthographic projection matrix to transform screen coords to normalized screen coordinates.

@@ -42,7 +42,7 @@ namespace RTE {
 
 		RenderState render{this, translation, GetCurrentShader(), m_BlendMode, m_ColorMod};
 
-		renderer->draw(render);
+		renderer->Draw(render);
 	}
 	void GLTexture::render(RenderTarget *renderer, float x, float y, float angle) {
 		render(renderer, {x, y}, angle);
@@ -54,7 +54,7 @@ namespace RTE {
 		modelTransform = glm::translate(modelTransform, {-0.5f * size, 0.0f});
 		modelTransform = glm::scale(modelTransform, {size, 1.0f});
 		RenderState render(this, modelTransform, GetCurrentShader(), m_BlendMode, m_ColorMod);
-		renderer->draw(render);
+		renderer->Draw(render);
 	}
 	void GLTexture::render(RenderTarget *renderer, glm::vec2 pos, glm::vec2 scale) {
 		glm::vec2 size = GetSize();
@@ -69,7 +69,7 @@ namespace RTE {
 		modelTransform = glm::translate(modelTransform, {-0.5f * size, 0.0f});
 		modelTransform = glm::scale(modelTransform, {scale * size, 1.0f});
 		RenderState render(this, modelTransform, GetCurrentShader(), m_BlendMode, m_ColorMod);
-		renderer->draw(render);
+		renderer->Draw(render);
 	}
 
 	void GLTexture::render(RenderTarget *renderer, glm::vec2 pos, float angle, glm::vec2 center, glm::vec2 scale) {
@@ -78,7 +78,11 @@ namespace RTE {
 		modelTransform = glm::translate(modelTransform, {center, 0.0f});
 		modelTransform = glm::scale(modelTransform, {scale * GetSize(), 1.0f});
 		RenderState render(this, modelTransform, GetCurrentShader(), m_BlendMode, m_ColorMod);
-		renderer->draw(render);
+		renderer->Draw(render);
+	}
+
+	void GLTexture::Bind() {
+		glBindTexture(GL_TEXTURE0, m_TextureID);
 	}
 
 	std::shared_ptr<Shader> GLTexture::GetCurrentShader() {
