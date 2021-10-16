@@ -9,6 +9,7 @@
 #include <SDL2/SDL_rect.h>
 
 #include "Renderer/GLTexture.h"
+#include "Renderer/GLPalette.h"
 
 #define g_FrameMan FrameMan::Instance()
 
@@ -20,12 +21,13 @@ namespace RTE {
 	class SDLGUITexture;
 	class GUIFont;
 	class RenderTarget;
+	class RenderTexture;
 
-	struct sdl_window_deleter{
-		void operator()(SDL_Window* p);
+	struct sdl_window_deleter {
+		void operator()(SDL_Window *p);
 	};
 	struct sdl_context_deleter {
-		void operator()(void* p);
+		void operator()(void *p);
 	};
 
 	/// <summary>
@@ -112,7 +114,7 @@ namespace RTE {
 
 		bool GetTwoPlayerVSplit() const { return m_TwoPlayerVSplit; }
 
-		void SetTwoPlayerVSplit(bool twoPlayerVSplit) {m_TwoPlayerVSplit = twoPlayerVSplit;}
+		void SetTwoPlayerVSplit(bool twoPlayerVSplit) { m_TwoPlayerVSplit = twoPlayerVSplit; }
 
 		/// <summary>
 		/// Sets new values for the split screen configuration
@@ -238,6 +240,13 @@ namespace RTE {
 		/// </returns>
 		std::shared_ptr<Shader> GetColorShader();
 
+		RenderTexture* GetPostProcessFramebuffer();
+		RenderTexture* GetGUIFramebuffer();
+
+		void FadeInPalette();
+
+		std::shared_ptr<Palette> GetDefaultPalette() {return m_DefaultPalette;}
+
 		/*********************
 		 * Window Management *
 		 *********************/
@@ -317,7 +326,10 @@ namespace RTE {
 		/// </param>
 		void SetNewResY(unsigned short newResY) { m_NewResY = newResY; }
 
-		void ChangeResolution(int newResX, int newResY, bool newResUpscaled, bool newFullscreen) {m_NewResX = newResX; m_NewResY = newResY;}
+		void ChangeResolution(int newResX, int newResY, bool newResUpscaled, bool newFullscreen) {
+			m_NewResX = newResX;
+			m_NewResY = newResY;
+		}
 
 		/// <summary>
 		/// Indicates wether a new resolution has been set for the next time
@@ -515,7 +527,7 @@ namespace RTE {
 		/// <returns>
 		/// Current message shown to player.
 		/// </returns>
-		std::string GetScreenText(int whichScreen = 0) const {return (whichScreen >= 0 && whichScreen < c_MaxScreenCount) ? m_ScreenText[whichScreen] : "";}
+		std::string GetScreenText(int whichScreen = 0) const { return (whichScreen >= 0 && whichScreen < c_MaxScreenCount) ? m_ScreenText[whichScreen] : ""; }
 
 		/// <summary>
 		/// Sets the message to be displayed on top of each player's screen
@@ -558,13 +570,13 @@ namespace RTE {
 		void FlashScreen(int screen, uint32_t color, float periodMS = 0);
 
 		int DrawLine(const Vector &start, const Vector &end, uint32_t color, int altColor = 0, int skip = 0, int skipStart = 0, bool shortestWrap = false) const { return 0; }
-		int DrawDotLine(SDL_Renderer *renderer, const Vector &start, const Vector &end, SharedTexture dot, int skip = 0, int skipStart = 0, bool shortestWrap = false) const {return 0;}
+		int DrawDotLine(SDL_Renderer *renderer, const Vector &start, const Vector &end, SharedTexture dot, int skip = 0, int skipStart = 0, bool shortestWrap = false) const { return 0; }
 
-		int SaveScreenToPNG(std::string nameBase){return 0;};
+		int SaveScreenToPNG(std::string nameBase) { return 0; };
 
-		int SaveWorldToPNG(std::string nameBase){return 0;};
+		int SaveWorldToPNG(std::string nameBase) { return 0; };
 
-		int SaveTextureToPNG(std::shared_ptr<Texture> tex, std::string nameBase){return 0;};
+		int SaveTextureToPNG(std::shared_ptr<Texture> tex, std::string nameBase) { return 0; };
 
 		bool IsInMultiplayerMode() const { return false; }
 
@@ -574,7 +586,6 @@ namespace RTE {
 
 		// Private members
 	private:
-
 		// FIXME: Add html/hex color handling to Reader and get rid of these
 		ContentFile m_MatPaletteFile;
 		SharedTexture m_MatPalette;
@@ -584,6 +595,11 @@ namespace RTE {
 		std::unique_ptr<SDL_Window, sdl_window_deleter> m_Window;
 		//!< The default render target
 		std::unique_ptr<RenderTarget> m_Renderer;
+
+		bool m_PaletteUpdated;
+		std::shared_ptr<Palette> m_NewPalette; //!< The new palette to fade in.
+		std::shared_ptr<Palette> m_CurrentPalette; //!< The current palette.
+		std::shared_ptr<Palette> m_DefaultPalette; //!< The default palette.
 
 		std::unique_ptr<void, sdl_context_deleter> m_Context;
 
@@ -634,10 +650,13 @@ namespace RTE {
 		//!< Wether in upscaled fullscreen mode or not
 		bool m_UpscaledFullscreen;
 
-		std::unique_ptr<Texture> m_PlayerScreen;
+		std::unique_ptr<RenderTexture> m_PlayerScreen;
+
+		std::unique_ptr<RenderTexture> m_PostProcessFramebuffer;
+		std::unique_ptr<RenderTexture> m_GUIFramebuffer;
 
 		//!< A stack of the current render targets
-		std::stack<SDL_Texture *> m_TargetStack;
+		std::stack<RenderTarget *> m_TargetStack;
 
 		ContentFile m_PaletteFile;
 		SharedTexture m_Palette;
@@ -697,6 +716,8 @@ namespace RTE {
 		/// <param name="playerScreen">The player screen to update offset for.</param>
 		/// <param name="screenOffset">Vector representing the screen offset.</param>
 		void UpdateScreenOffsetForSplitScreen(int playerScreen, Vector &screenOffset) const;
+
+		void UpdateFramebuffers();
 
 		// Disallow the use of some implicit methods.
 		FrameMan(const FrameMan &reference) = delete;

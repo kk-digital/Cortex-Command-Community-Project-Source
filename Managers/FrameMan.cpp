@@ -108,14 +108,10 @@ namespace RTE {
 
 		m_Renderer->Create(0,0,m_ResX, m_ResY);
 
-		// SDL_RenderSetScale(m_Renderer, m_ResMultiplier, m_ResMultiplier);
+		m_Renderer->Clear();
 
-		SDL_SetRenderDrawColor(m_Renderer, 0, 0, 0, 255);
-		SDL_SetRenderDrawBlendMode(m_Renderer, SDL_BLENDMODE_BLEND);
-		SDL_RenderClear(m_Renderer);
 
-		m_Palette = m_PaletteFile.GetAsTexture();
-		RTEAssert(m_Palette.get(), "Failed loading palette because: " + std::string(SDL_GetError()));
+		m_CurrentPalette = m_DefaultPalette = m_PaletteFile.GetAsPalette();
 
 		m_MatPaletteFile.Create("Base.rte/palettemat.bmp");
 		m_MatPalette = m_MatPaletteFile.GetAsTexture();
@@ -125,11 +121,6 @@ namespace RTE {
 	}
 
 	void FrameMan::Destroy() {
-		if (m_Renderer)
-			SDL_DestroyRenderer(m_Renderer);
-		if (m_Window)
-			SDL_DestroyWindow(m_Window);
-
 		Clear();
 	}
 
