@@ -2,6 +2,8 @@
 #include <GL/glew.h>
 #include "glm/gtc/type_ptr.hpp"
 
+#include "Managers/ConsoleMan.h"
+
 namespace RTE {
 
 	Shader::Shader() :
@@ -20,11 +22,24 @@ namespace RTE {
 
 		std::string error;
 		result = compileShader(vertexShader, vertexPath, error) && compileShader(fragmentShader, fragPath, error);
-		if (result)
-			Link(vertexShader, fragmentShader);
-		else {
+		if (result){
+			glBindAttribLocation(m_ProgramID, 0, "rteVertexPosition");
+			glBindAttribLocation(m_ProgramID, 1, "rteVertexTexUV");
+			glBindAttribLocation(m_ProgramID, 2, "rteVertexColor");
+			if(Link(vertexShader, fragmentShader)){
+				m_TextureUniform = GetUniformLocation("rteTexture");
+				m_ColorUniform = GetUniformLocation("rteColor");
+				m_TransformUniform = GetUniformLocation("rteTransform");
+				m_ProjectionUniform = GetUniformLocation("rteProjection");
+			} else {
+
+			}
+		} else {
 			glDeleteShader(vertexShader);
 			glDeleteShader(fragmentShader);
+
+			g_ConsoleMan.PrintString("ERROR: Failed to compile shaders:\n" + error);
+			return false;
 		}
 
 		return true;
