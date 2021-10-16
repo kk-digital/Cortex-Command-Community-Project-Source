@@ -12,6 +12,9 @@
 #include "SettingsMan.h"
 #include "UInputMan.h"
 
+#include "Renderer/RenderTarget.h"
+#include "Renderer/Shader.h"
+
 #include "Entities/SLTerrain.h"
 #include "Entities/Scene.h"
 
@@ -25,18 +28,24 @@
 #include "System/SDLHelper.h"
 #include "SDL2_gfxPrimitives.h"
 
+#include "GL/glew.h"
+
 namespace RTE {
+
+	void sdl_window_deleter::operator()(SDL_Window *p) { SDL_DestroyWindow(p); }
+	void sdl_context_deleter::operator()(void *p) { SDL_GL_DeleteContext(p); }
 
 	FrameMan::FrameMan() { Clear(); }
 
-	FrameMan::~FrameMan() = default;
+	FrameMan::~FrameMan() { Destroy(); }
 
 	void FrameMan::Clear() {
 		m_Window = nullptr;
 		m_Renderer = nullptr;
+		m_Context = nullptr;
 
 		m_NumScreens = SDL_GetNumVideoDisplays();
-		m_ScreenRes = std::make_unique<SDL_Rect>(SDL_Rect{0,0,0,0});
+		m_ScreenRes = std::make_unique<SDL_Rect>(SDL_Rect{0, 0, 0, 0});
 		SDL_GetDisplayUsableBounds(0, m_ScreenRes.get());
 
 		m_MatPaletteFile.Reset();
@@ -55,8 +64,9 @@ namespace RTE {
 		m_VSplit = false;
 		m_TwoPlayerVSplit = false;
 
-		for (; !m_TargetStack.empty(); m_TargetStack.pop())
-			;
+		while (!m_TargetStack.empty())
+			m_TargetStack.pop();
+
 		m_TargetStack.push(nullptr);
 	}
 
@@ -65,35 +75,38 @@ namespace RTE {
 	}
 
 	int FrameMan::CreateWindowAndRenderer() {
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+		SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 
-		m_Window = SDL_CreateWindow(c_WindowTitle, SDL_WINDOWPOS_CENTERED,
-		                            SDL_WINDOWPOS_CENTERED, m_ResX, m_ResY,
-		                            SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL |
-		                                SDL_WINDOW_INPUT_FOCUS);
+		m_Window = std::unique_ptr<SDL_Window, sdl_window_deleter>(SDL_CreateWindow(c_WindowTitle,
+		    SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, m_ResX, m_ResY,
+		    SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL | SDL_WINDOW_INPUT_FOCUS));
 
 		RTEAssert(m_Window != NULL, "Could not create Window because: " + std::string(SDL_GetError()));
+		m_Context = std::unique_ptr<void, sdl_context_deleter>(SDL_GL_CreateContext(m_Window.get()));
 
-		m_Renderer = SDL_CreateRenderer(m_Window, -1, SDL_RENDERER_ACCELERATED);
+		m_Renderer = std::make_unique<RenderTarget>();
 
 		RTEAssert(m_Renderer != NULL, "Could not create Renderer because: " + std::string(SDL_GetError()));
 
-		return m_Window && m_Renderer;
+		return static_cast<bool>(m_Window && m_Renderer);
 	}
 
 	int FrameMan::Initialize() {
 
-		SDL_SetWindowSize(m_Window, m_ResX * m_ResMultiplier, m_ResY * m_ResMultiplier);
+		SDL_SetWindowSize(m_Window.get(), m_ResX * m_ResMultiplier, m_ResY * m_ResMultiplier);
 
-		SDL_GetWindowSize(m_Window, &m_ResX, &m_ResY);
+		SDL_GetWindowSize(m_Window.get(), &m_ResX, &m_ResY);
 		m_ResX /= m_ResMultiplier;
 		m_ResY /= m_ResMultiplier;
 
+		glViewport(0,0,m_ResX, m_ResY);
+
 		SetFullscreen(m_Fullscreen);
 
-		// Set integer scaling so we don't get artifacts by rendering subpixels.
-		SDL_RenderSetIntegerScale(m_Renderer, SDL_TRUE);
-
-		SDL_RenderSetLogicalSize(m_Renderer, m_ResX, m_ResY);
+		m_Renderer->Create(0,0,m_ResX, m_ResY);
 
 		// SDL_RenderSetScale(m_Renderer, m_ResMultiplier, m_ResMultiplier);
 
@@ -156,7 +169,7 @@ namespace RTE {
 			int access;
 			SDL_QueryTexture(target, nullptr, &access, nullptr, nullptr);
 			RTEAssert(access == SDL_TEXTUREACCESS_TARGET,
-			          "Trying to set a render target to non target texture");
+			    "Trying to set a render target to non target texture");
 		}
 		m_TargetStack.push(target);
 		SDL_SetRenderTarget(m_Renderer, target);
@@ -284,7 +297,7 @@ namespace RTE {
 			// player's screen
 			if (pActivity) {
 				g_PostProcessMan.GetPostScreenEffectsWrapped(targetPos, renderSize.w, renderSize.h,
-				                                             screenRelativeEffects, pActivity->GetTeamOfPlayer(pActivity->PlayerOfScreen(playerScreen)));
+				    screenRelativeEffects, pActivity->GetTeamOfPlayer(pActivity->PlayerOfScreen(playerScreen)));
 
 				g_PostProcessMan.GetGlowAreasWrapped(targetPos, renderSize.w, renderSize.h, screenRelativeGlowBoxes);
 
@@ -310,7 +323,7 @@ namespace RTE {
 
 			DrawScreenFlash(playerScreen, m_Renderer);
 
-			if(screenCount>1)
+			if (screenCount > 1)
 				PopRenderTarget();
 			if (!IsInMultiplayerMode()) {
 				if (m_PlayerScreen)
@@ -344,8 +357,8 @@ namespace RTE {
 				m_NetworkBitmapLock[0].lock();
 
 				blit(m_NetworkBackBufferFinal8[m_NetworkFrameReady][0],
-				     m_BackBuffer8, 0, 0, 0, 0, m_BackBuffer8->w,
-				     m_BackBuffer8->h);
+				    m_BackBuffer8, 0, 0, 0, 0, m_BackBuffer8->w,
+				    m_BackBuffer8->h);
 				masked_blit(
 				    m_NetworkBackBufferFinalGUI8[m_NetworkFrameReady][0],
 				    m_BackBuffer8, 0, 0, 0, 0, m_BackBuffer8->w,
@@ -382,6 +395,35 @@ namespace RTE {
 		// Reset the frame timer so we can measure how much it takes until next
 		// frame being drawn
 		g_PerformanceMan.ResetFrameTimer();
+	}
+
+	std::shared_ptr<Shader> FrameMan::GetTextureShader(BitDepth depth) {
+		switch (depth) {
+			case BitDepth::BPP32: {
+				return m_ShaderBase32;
+			} break;
+			case BitDepth::Indexed8: {
+				return m_ShaderBase8;
+			}
+			default:
+				return m_ShaderBase8;
+		}
+	}
+
+	std::shared_ptr<Shader> FrameMan::GetTextureShaderFill(BitDepth depth) {
+		switch (depth) {
+			case BitDepth::BPP32:
+				return m_ShaderFill32;
+				break;
+			case BitDepth::Indexed8:
+				return m_ShaderFill8;
+			ddefault:
+				return m_ShaderFill8;
+		}
+	}
+
+	std::shared_ptr<Shader> FrameMan::GetColorShader() {
+		return m_ColorShader;
 	}
 
 	uint32_t FrameMan::GetPixelFormat() const {
@@ -525,11 +567,15 @@ namespace RTE {
 				int bufferOrScreenWidth = IsInMultiplayerMode() ? GetPlayerFrameBufferWidth(playerScreen) : GetPlayerScreenWidth();
 				int bufferOrScreenHeight = IsInMultiplayerMode() ? GetPlayerFrameBufferHeight(playerScreen) : GetPlayerScreenHeight();
 
-				if (m_TextCentered[playerScreen]) { textPosY = (bufferOrScreenHeight / 2) - 52; }
+				if (m_TextCentered[playerScreen]) {
+					textPosY = (bufferOrScreenHeight / 2) - 52;
+				}
 
 				int screenOcclusionOffsetX = g_SceneMan.GetScreenOcclusion(playerScreen).GetRoundIntX();
 				// If there's really no room to offset the text into, then don't
-				if (GetPlayerScreenWidth() <= GetResX() / 2) { screenOcclusionOffsetX = 0; }
+				if (GetPlayerScreenWidth() <= GetResX() / 2) {
+					screenOcclusionOffsetX = 0;
+				}
 
 				// Draw text and handle blinking by turning on and off extra surrounding characters. Text is always drawn to keep it readable.
 				if (m_TextBlinking[playerScreen] && m_TextBlinkTimer.AlternateReal(m_TextBlinking[playerScreen])) {
@@ -567,7 +613,7 @@ namespace RTE {
 
 	uint32_t FrameMan::GetColorFromIndex(uint32_t color) const {
 		// Special case for key color
-		if(color == 0)
+		if (color == 0)
 			return 0;
 		return m_Palette->getPixel(color);
 	}

@@ -8,7 +8,7 @@
 
 #include <SDL2/SDL_rect.h>
 
-#include "System/SDLTexture.h"
+#include "Renderer/GLTexture.h"
 
 #define g_FrameMan FrameMan::Instance()
 
@@ -19,6 +19,14 @@ namespace RTE {
 	class SDLScreen;
 	class SDLGUITexture;
 	class GUIFont;
+	class RenderTarget;
+
+	struct sdl_window_deleter{
+		void operator()(SDL_Window* p);
+	};
+	struct sdl_context_deleter {
+		void operator()(void* p);
+	};
 
 	/// <summary>
 	/// The Singleton manager over the composition and display of frames.
@@ -168,29 +176,20 @@ namespace RTE {
 		 ***********************/
 
 		/// <summary>
-		/// Get the current SDL_Renderer
+		/// Get the current render target.
 		/// </summary>
 		/// <returns>
-		/// A Pointer to the current SDL_Renderer
+		/// A Pointer to the current RenderTarget, non owning.
 		/// </returns>
-		SDL_Renderer *GetRenderer() { return m_Renderer; }
+		RenderTarget *GetRenderer() { return m_Renderer.get(); }
 
 		/// <summary>
-		/// Set a new render target from an SDL_Texture,
-		/// storing the current target. Can be nullptr
+		/// Set a new render target. May be nullptr which sets the default render target.
 		/// </summary>
 		/// <param name="target">
 		/// The new target.
 		/// </param>
-		void PushRenderTarget(SDL_Texture *target);
-
-		/// <summary>
-		/// Set a new render target from a RTE::Texture, storing the current target.
-		/// </summary>
-		/// <param name="target">
-		/// The new target
-		/// </param>
-		void PushRenderTarget(std::shared_ptr<Texture> target);
+		void PushRenderTarget(RenderTarget *target);
 
 		/// <summary>
 		/// Reset the render target to the previous target.
@@ -209,6 +208,36 @@ namespace RTE {
 		/// </summary>
 		void Draw();
 
+		/// <summary>
+		/// Get the default shader for textured vertices at the given bitdepth.
+		/// </summary>
+		/// <param name="depth">
+		/// The requested bit depth.
+		/// </param>
+		/// <returns>
+		/// A shared pointer to the requested shader.
+		/// </returns>
+		std::shared_ptr<Shader> GetTextureShader(BitDepth depth);
+
+		/// <summary>
+		/// Get the fill shader for textured vertices at the given bitdepth.
+		/// </summary>
+		/// <param name="depth">
+		/// The requested bit depth.
+		/// </param>
+		/// <returns>
+		/// A shared pointer to the requested shader.
+		/// </returns>
+		std::shared_ptr<Shader> GetTextureShaderFill(BitDepth depth);
+
+		/// <summary>
+		/// Get the fill shader for colored vertices.
+		/// </summary>
+		/// <returns>
+		/// A shared pointer to the requested shader.
+		/// </returns>
+		std::shared_ptr<Shader> GetColorShader();
+
 		/*********************
 		 * Window Management *
 		 *********************/
@@ -219,7 +248,7 @@ namespace RTE {
 		/// <returns>
 		/// A pointer to the current SDL_Window
 		/// </returns>
-		SDL_Window *GetWindow() { return m_Window; }
+		SDL_Window *GetWindow() { return m_Window.get(); }
 
 		/// <summary>
 		/// Get the pixelformat of the currently used window
@@ -552,9 +581,11 @@ namespace RTE {
 		// FIXME: Seriously, these must not stay
 
 		//!< The game window
-		SDL_Window *m_Window;
-		//!< The renderer instance needed for drawing
-		SDL_Renderer *m_Renderer;
+		std::unique_ptr<SDL_Window, sdl_window_deleter> m_Window;
+		//!< The default render target
+		std::unique_ptr<RenderTarget> m_Renderer;
+
+		std::unique_ptr<void, sdl_context_deleter> m_Context;
 
 		std::shared_ptr<SDLScreen> m_GUIScreen;
 		std::shared_ptr<GUIFont> m_SmallFont;
@@ -566,6 +597,13 @@ namespace RTE {
 
 		//!< Color Depth (bits per pixel)
 		static constexpr unsigned short m_BPP = 32;
+
+		std::shared_ptr<Shader> m_ShaderBase32; //!< Base Shader for 32bpp textures.
+		std::shared_ptr<Shader> m_ShaderBase8; //!< Base shader for indexed 8bpp textures.
+		std::shared_ptr<Shader> m_ShaderFill32; //!< Fill shader for 32bpp textures. (TODO: May just need one for  both)
+		std::shared_ptr<Shader> m_ShaderFill8; //!< Fill shader for indexed textures.
+
+		std::shared_ptr<Shader> m_ColorShader; //!< Shader for untextured vertex arrays. (i.e primitives and other shapes)
 
 		//!< Number of physical displays
 		int m_NumScreens;
