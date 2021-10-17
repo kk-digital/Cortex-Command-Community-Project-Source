@@ -239,7 +239,7 @@ public:
 //                  The absolute position of the target bitmap's upper left corner in the scene.
 // Return value:    None.
 
-	void Draw(SDL_Renderer* renderer, const Vector &targetPos = Vector()) const;
+	void Draw(RenderTarget* renderer, const Vector &targetPos = Vector()) const;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////

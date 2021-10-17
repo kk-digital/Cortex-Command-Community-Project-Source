@@ -365,7 +365,7 @@ string SceneObject::GetGoldValueString(int nativeModule, float foreignMult, floa
 // Virtual method:  DrawTeamMark
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Draws team sign this terrain object belongs to.
-void SceneObject::DrawTeamMark(SDL_Renderer* renderer, const Vector &targetPos) const
+void SceneObject::DrawTeamMark(RenderTarget* renderer, const Vector &targetPos) const
 {
     // Only do HUD if on a team
     if (m_Team < 0)

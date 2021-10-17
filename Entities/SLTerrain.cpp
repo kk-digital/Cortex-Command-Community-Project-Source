@@ -1053,7 +1053,7 @@ void SLTerrain::ApplyMovableObject(MovableObject *pMObject)
 
 		int spriteDiameter{static_cast<int>(pMObject->GetDiameter())};
 
-		SDL_Renderer *renderer = g_FrameMan.GetRenderer();
+		RenderTarget *renderer = g_FrameMan.GetRenderer();
 
 
 		// if neccessary resize the temporary render Target
@@ -1458,7 +1458,7 @@ void SLTerrain::Update()
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Draws this SLTerrain's current scrolled position to a bitmap.
 
-void SLTerrain::DrawBackground(SDL_Renderer *renderer, Box &targetBox, const Vector &scrollOverride)
+void SLTerrain::DrawBackground(RenderTarget *renderer, Box &targetBox, const Vector &scrollOverride)
 {
     m_pBGColor->Draw(renderer, targetBox, scrollOverride);
 }
@@ -1469,7 +1469,7 @@ void SLTerrain::DrawBackground(SDL_Renderer *renderer, Box &targetBox, const Vec
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Draws this SLTerrain's current scrolled position to a bitmap.
 
-void SLTerrain::Draw(SDL_Renderer *renderer, Box &targetBox, const Vector &scrollOverride) const
+void SLTerrain::Draw(RenderTarget *renderer, Box &targetBox, const Vector &scrollOverride) const
 {
     if (m_DrawMaterial)
     {

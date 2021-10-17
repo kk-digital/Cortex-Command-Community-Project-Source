@@ -13,6 +13,9 @@
 #include "UInputMan.h"
 
 #include "Renderer/RenderTarget.h"
+#include "Renderer/RenderTexture.h"
+#include "Renderer/GLTexture.h"
+#include "Renderer/GLPalette.h"
 #include "Renderer/Shader.h"
 
 #include "Entities/SLTerrain.h"
@@ -103,12 +106,14 @@ namespace RTE {
 		m_ResY /= m_ResMultiplier;
 
 		glViewport(0,0,m_ResX, m_ResY);
+		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT);
 
 		SetFullscreen(m_Fullscreen);
 
 		m_Renderer->Create(0,0,m_ResX, m_ResY);
 
-		m_Renderer->Clear();
+		m_Renderer->DrawClear();
 
 
 		m_CurrentPalette = m_DefaultPalette = m_PaletteFile.GetAsPalette();
@@ -116,6 +121,22 @@ namespace RTE {
 		m_MatPaletteFile.Create("Base.rte/palettemat.bmp");
 		m_MatPalette = m_MatPaletteFile.GetAsTexture();
 		RTEAssert(m_MatPalette.get(), "Failed to load material palette because: " + std::string(SDL_GetError()));
+
+		m_ShaderBase8 = std::make_shared<Shader>("Base.rte/Shaders/Base.vert", "Base.rte/Shaders/Indexed8Base.frag");
+		m_ShaderFill8 = std::make_shared<Shader>("Base.rte/Shaders/Base.vert", "Base.rte/Shaders/Indexed8Fill.frag");
+
+		m_ShaderBase8->Use();
+		m_ShaderBase8->SetInt("rtePalette", 1);
+		m_ShaderFill8->Use();
+		m_ShaderBase8->SetInt("rtePalette", 1);
+
+		glUseProgram(0);
+
+		m_ShaderBase32 = std::make_shared<Shader>("Base.rte/Shaders/Base.vert", "Base.rte/Shaders/Rgba32Base.frag");
+		m_ShaderFill32 = std::make_shared<Shader>("Base.rte/Shaders/Base.vert", "Base.rte/Shaders/Rgba32Fill.frag");
+
+		m_ColorShader = std::make_shared<Shader>("Base.rte/Shaders/VertexColor.vert", "Base.rte/Shaders/Rgba32VertexColor.frag");
+		m_ColorShader->Use();
 
 		return 0;
 	}
@@ -137,61 +158,33 @@ namespace RTE {
 			int resX = vSplit ? m_ResX / 2 : m_ResX;
 			int resY = hSplit ? m_ResY / 2 : m_ResY;
 
-			m_PlayerScreen = std::make_unique<Texture>(m_Renderer, resX, resY);
+			m_PlayerScreen = std::make_unique<RenderTexture>();
+			m_PlayerScreen->Create(resX, resY);
 		}
 	}
 
 	int FrameMan::GetPlayerFrameBufferWidth(short) const {
 		if (m_PlayerScreen)
-			return m_PlayerScreen->getW();
+			return m_PlayerScreen->GetW();
 
 		return m_ResX;
 	}
 
 	int FrameMan::GetPlayerFrameBufferHeight(short) const {
 		if (m_PlayerScreen)
-			return m_PlayerScreen->getH();
+			return m_PlayerScreen->GetH();
 
 		return m_ResY;
 	}
 
-	void FrameMan::PushRenderTarget(SDL_Texture *target) {
-		if (target) {
-			int access;
-			SDL_QueryTexture(target, nullptr, &access, nullptr, nullptr);
-			RTEAssert(access == SDL_TEXTUREACCESS_TARGET,
-			    "Trying to set a render target to non target texture");
-		}
-		m_TargetStack.push(target);
-		SDL_SetRenderTarget(m_Renderer, target);
-	}
-
-	void FrameMan::PushRenderTarget(std::shared_ptr<Texture> target) {
-		if (!target) {
-			PushRenderTarget(nullptr);
-			return;
-		}
-		RTEAssert(target->getAccess() == SDL_TEXTUREACCESS_TARGET, "Trying to set a render target to non target texture");
-
-		m_TargetStack.push(target->getAsRenderTarget());
-		SDL_SetRenderTarget(m_Renderer, m_TargetStack.top());
-	}
-
-	void FrameMan::PopRenderTarget() {
-		RTEAssert(m_TargetStack.size() > 1, "Attempted removing the main renderer");
-		m_TargetStack.pop();
-		SDL_SetRenderTarget(m_Renderer, m_TargetStack.top());
-	}
 
 	void FrameMan::RenderClear() {
-		RTEAssert(m_TargetStack.size() == 1, "A render target has not been reset! " + std::to_string(m_TargetStack.size()) + " Elements remaining!");
-		SDL_RenderClear(m_Renderer);
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		m_Renderer->DrawClear();
 	}
 
 	void FrameMan::RenderPresent() {
-		RTEAssert(m_TargetStack.size() == 1, "A render target has not been reset! " + std::to_string(m_TargetStack.size()) + " Elements remaining!");
-		SDL_SetRenderDrawColor(m_Renderer, 0x0, 0x0, 0x0, 0xFF);
-		SDL_RenderPresent(m_Renderer);
+		SDL_GL_SwapWindow(m_Window.get());
 	}
 
 	void FrameMan::UpdateScreenOffsetForSplitScreen(int playerScreen, Vector &screenOffset) const {
@@ -220,7 +213,7 @@ namespace RTE {
 		}
 	}
 
-	void FrameMan::DrawScreenFlash(int playerScreen, SDL_Renderer *renderer) {
+	void FrameMan::DrawScreenFlash(int playerScreen, RenderTarget *renderer) {
 	}
 
 	void FrameMan::Draw() {
@@ -240,11 +233,9 @@ namespace RTE {
 		const Activity *pActivity = g_ActivityMan.GetActivity();
 
 		for (int playerScreen = 0; playerScreen < screenCount; ++playerScreen) {
-			if (screenCount > 1)
-				PushRenderTarget(m_PlayerScreen->getAsRenderTarget());
+			RenderTarget* renderer = (screenCount == 1) ? m_Renderer.get() : m_PlayerScreen.get();
 
-			SDL_Rect renderSize;
-			SDL_RenderGetLogicalSize(m_Renderer, &renderSize.w, &renderSize.h);
+			glm::vec2 renderSize = renderer->GetSize();
 
 			SDLGUITexture playerGUIBitmap;
 			screenRelativeEffects.clear();
@@ -260,11 +251,11 @@ namespace RTE {
 			// target screen is larger than the scene in non-wrapping dimension.
 			// Scene needs to be displayed centered on the target bitmap then,
 			// and that has to be adjusted for when drawing to the screen
-			if (!g_SceneMan.SceneWrapsX() && renderSize.w > g_SceneMan.GetSceneWidth()) {
-				targetPos.m_X += (renderSize.w - g_SceneMan.GetSceneWidth()) / 2;
+			if (!g_SceneMan.SceneWrapsX() && renderSize.x > g_SceneMan.GetSceneWidth()) {
+				targetPos.m_X += (renderSize.x - g_SceneMan.GetSceneWidth()) / 2;
 			}
-			if (!g_SceneMan.SceneWrapsY() && renderSize.h > g_SceneMan.GetSceneHeight()) {
-				targetPos.m_Y += (renderSize.h - g_SceneMan.GetSceneHeight()) / 2;
+			if (!g_SceneMan.SceneWrapsY() && renderSize.y > g_SceneMan.GetSceneHeight()) {
+				targetPos.m_Y += (renderSize.y - g_SceneMan.GetSceneHeight()) / 2;
 			}
 
 #ifdef NETWORK_ENABLED
@@ -275,7 +266,7 @@ namespace RTE {
 
 			// Draw the scene
 			if (!IsInMultiplayerMode()) {
-				g_SceneMan.Draw(m_Renderer, nullptr, targetPos);
+				g_SceneMan.Draw(renderer, nullptr, targetPos);
 			} else {
 #ifdef NETWORK_ENABLED
 				clear_to_color(drawScreen, g_MaskColor);

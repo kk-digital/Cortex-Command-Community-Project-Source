@@ -524,7 +524,7 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void ScenarioGUI::DrawSitePoints(SDL_Renderer *renderer) const {
+	void ScenarioGUI::DrawSitePoints(RenderTarget *renderer) const {
 		int blendAmount = 0;
 		SDL_SetRenderDrawBlendMode(renderer, BLENDMODE_SCREEN);
 		for (const Scene *scenePointer : *m_ActivityScenes) {
@@ -554,7 +554,7 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void ScenarioGUI::DrawLinesToSitePoint(SDL_Renderer *renderer) const {
+	void ScenarioGUI::DrawLinesToSitePoint(RenderTarget *renderer) const {
 		int blendAmount = 0;
 		uint32_t drawColor = c_GUIColorWhite;
 

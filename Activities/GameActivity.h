@@ -577,7 +577,7 @@ public:
 //                  Which screen's GUI to draw onto the bitmap.
 // Return value:    None.
 
-	void DrawGUI(SDL_Renderer* renderer, const Vector &targetPos = Vector(), int which = 0) override;
+	void DrawGUI(RenderTarget* renderer, const Vector &targetPos = Vector(), int which = 0) override;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -589,7 +589,7 @@ public:
 //                  The absolute position of the target bitmap's upper left corner in the scene.
 // Return value:    None.
 
-	void Draw(SDL_Renderer* renderer, const Vector &targetPos = Vector()) override;
+	void Draw(RenderTarget* renderer, const Vector &targetPos = Vector()) override;
 
 
 
@@ -945,7 +945,7 @@ protected:
         //                  Which orientation to draw the arrow in, relative to the point.
         // Return value:    None.
 
-        void Draw(SDL_Renderer* renderer, std::shared_ptr<Texture> pArrowTexture, const Vector &arrowPoint, ObjectiveArrowDir arrowDir = ARROWDOWN);
+        void Draw(RenderTarget* renderer, std::shared_ptr<Texture> pArrowTexture, const Vector &arrowPoint, ObjectiveArrowDir arrowDir = ARROWDOWN);
 
 
         // The description of this objective point
@@ -1152,7 +1152,7 @@ private:
 	/// <param name="renderer">
 	/// The rendering context to draw to
 	/// </param>
-	void DrawDeliveryCursors(SDL_Renderer* renderer, Vector targetPos, int frame);
+	void DrawDeliveryCursors(RenderTarget* renderer, Vector targetPos, int frame);
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          Clear

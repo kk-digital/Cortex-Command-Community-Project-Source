@@ -226,7 +226,7 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void MOPixel::Draw(SDL_Renderer* renderer, const Vector &targetPos, DrawMode mode, bool onlyPhysical, int alphaMod) const {
+	void MOPixel::Draw(RenderTarget* renderer, const Vector &targetPos, DrawMode mode, bool onlyPhysical, int alphaMod) const {
 		// Don't draw color if this isn't a drawing frame
 		if (!g_TimerMan.DrawnSimUpdate() && mode == g_DrawColor) {
 			return;

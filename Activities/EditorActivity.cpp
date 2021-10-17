@@ -615,7 +615,7 @@ void EditorActivity::Update()
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Draws the currently active GUI of a screen to a BITMAP of choice.
 
-void EditorActivity::DrawGUI(SDL_Renderer* renderer, const Vector &targetPos, int which)
+void EditorActivity::DrawGUI(RenderTarget* renderer, const Vector &targetPos, int which)
 {
     SDLScreen drawScreen;
     m_pGUIController->Draw(&drawScreen);
@@ -630,7 +630,7 @@ void EditorActivity::DrawGUI(SDL_Renderer* renderer, const Vector &targetPos, in
 // Description:     Draws this EditorActivity's current graphical representation to a
 //                  BITMAP of choice. This includes all game-related graphics.
 
-void EditorActivity::Draw(SDL_Renderer* renderer, const Vector &targetPos)
+void EditorActivity::Draw(RenderTarget* renderer, const Vector &targetPos)
 {
 
 }

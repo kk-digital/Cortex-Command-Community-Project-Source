@@ -308,7 +308,7 @@ void Magazine::Update()
 // Description:     Draws this Magazine's current graphical representation to a
 //                  BITMAP of choice.
 
-void Magazine::Draw(SDL_Renderer* renderer,
+void Magazine::Draw(RenderTarget* renderer,
 					const Vector &targetPos,
 					DrawMode mode,
 					bool onlyPhysical,

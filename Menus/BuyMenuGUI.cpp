@@ -1751,7 +1751,7 @@ void BuyMenuGUI::Update()
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Draws the menu
 
-void BuyMenuGUI::Draw(SDL_Renderer* renderer) const
+void BuyMenuGUI::Draw(RenderTarget* renderer) const
 {
     SDLScreen drawScreen;
     m_pGUIController->Draw(&drawScreen);

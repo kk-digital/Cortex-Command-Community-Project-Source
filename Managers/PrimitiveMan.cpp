@@ -16,7 +16,7 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void PrimitiveMan::DrawPrimitives(int player, SDL_Renderer* renderer, const Vector &targetPos) const {
+	void PrimitiveMan::DrawPrimitives(int player, RenderTarget* renderer, const Vector &targetPos) const {
 		for (const std::unique_ptr<GraphicalPrimitive> &primitive : m_ScheduledPrimitives) {
 			if (primitive->m_Player == player || primitive->m_Player == -1) { primitive->Draw(renderer, targetPos); }
 		}

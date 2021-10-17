@@ -408,7 +408,7 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void ConsoleMan::Draw(SDL_Renderer* renderer) const {
+	void ConsoleMan::Draw(RenderTarget* renderer) const {
 		if (m_ConsoleState != ConsoleState::Disabled) {
 			SDLScreen drawScreen;
 			m_GUIControlManager->Draw(&drawScreen);

@@ -1522,7 +1522,7 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void AtomGroup::Draw(SDL_Renderer* renderer, const Vector &targetPos, bool useLimbPos, uint32_t color) const {
+	void AtomGroup::Draw(RenderTarget* renderer, const Vector &targetPos, bool useLimbPos, uint32_t color) const {
 		Vector atomPos;
 		Vector normal;
 

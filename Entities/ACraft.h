@@ -17,7 +17,7 @@
 #include "Actor.h"
 #include "LimbPath.h"
 
-struct SDL_Renderer;
+struct RenderTarget;
 
 namespace RTE
 {
@@ -524,7 +524,7 @@ enum
 //                  get drawn etc.
 // Return value:    None.
 
-    void DrawHUD(SDL_Renderer* renderer, const Vector &targetPos = Vector(), int whichScreen = 0, bool playerControlled = false) override;
+    void DrawHUD(RenderTarget* renderer, const Vector &targetPos = Vector(), int whichScreen = 0, bool playerControlled = false) override;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////

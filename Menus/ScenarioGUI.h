@@ -195,13 +195,13 @@ namespace RTE {
 		/// Draws the site points on top of the planet.
 		/// </summary>
 		/// <param name="drawBitmap">The bitmap to draw on.</param>
-		void DrawSitePoints(SDL_Renderer *renderer) const;
+		void DrawSitePoints(RenderTarget *renderer) const;
 
 		/// <summary>
 		/// Draws fancy thick flickering lines from the Scene info box to the selected scene point on the planet.
 		/// </summary>
 		/// <param name="drawBitmap">The bitmap to draw to.</param>
-		void DrawLinesToSitePoint(SDL_Renderer *renderer) const;
+		void DrawLinesToSitePoint(RenderTarget *renderer) const;
 #pragma endregion
 
 		/// <summary>

@@ -574,7 +574,7 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void ObjectPickerGUI::Draw(SDL_Renderer *renderer) const {
+	void ObjectPickerGUI::Draw(RenderTarget *renderer) const {
 		SDLScreen drawScreen;
 		m_GUIControlManager->Draw(&drawScreen);
 		if (IsEnabled() && m_Controller->IsMouseControlled()) {

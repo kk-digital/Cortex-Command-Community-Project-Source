@@ -272,7 +272,7 @@ public:
 // Arguments:       The target bitmap to draw to.
 // Return value:    None.
 
-    void Draw(SDL_Renderer* renderer);
+    void Draw(RenderTarget* renderer);
 
 
 //////////////////////////////////////////////////////////////////////////////////////////

@@ -6,7 +6,7 @@
 
 #define g_PrimitiveMan PrimitiveMan::Instance()
 
-struct SDL_Renderer;
+struct RenderTarget;
 
 namespace RTE {
 
@@ -40,7 +40,7 @@ namespace RTE {
 		/// <param name="player">Player to draw for.</param>
 		/// <param name="targetBitmap">Bitmap to draw on.</param>
 		/// <param name="targetPos">Position to draw.</param>
-		void DrawPrimitives(int player, SDL_Renderer* renderer, const Vector &targetPos) const;
+		void DrawPrimitives(int player, RenderTarget* renderer, const Vector &targetPos) const;
 
 		/// <summary>
 		/// Schedule to draw a line primitive.

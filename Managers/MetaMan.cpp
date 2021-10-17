@@ -1501,7 +1501,7 @@ void MetaMan::Update()
 // Description:     Draws this MetaMan's current graphical representation to a
 //                  BITMAP of choice. This includes all game-related graphics.
 
-void MetaMan::Draw(SDL_Renderer *renderer, const Vector &targetPos)
+void MetaMan::Draw(RenderTarget *renderer, const Vector &targetPos)
 {
 /*
     GUIFont *pLargeFont = g_FrameMan.GetLargeFont();

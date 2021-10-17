@@ -668,7 +668,7 @@ ClassInfoGetters
 //                  is overridder with it. It becomes the new source coordinates.
 // Return value:    None.
 
-	void DrawBackground(SDL_Renderer* renderer, Box& targetBox, const Vector &scrollOverride = Vector(-1, -1));
+	void DrawBackground(RenderTarget* renderer, Box& targetBox, const Vector &scrollOverride = Vector(-1, -1));
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -682,7 +682,7 @@ ClassInfoGetters
 //                  is overridder with it. It becomes the new source coordinates.
 // Return value:    None.
 
-	void Draw(SDL_Renderer* renderer, Box& targetBox, const Vector &scrollOverride = Vector(-1, -1)) const override;
+	void Draw(RenderTarget* renderer, Box& targetBox, const Vector &scrollOverride = Vector(-1, -1)) const override;
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Protected member variable and method declarations

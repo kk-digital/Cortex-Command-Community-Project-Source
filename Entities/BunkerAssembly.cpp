@@ -493,7 +493,7 @@ void BunkerAssembly::SetTeam(int team)
 // Description:     Draws this TerrainObject's current graphical representation to a
 //                  BITMAP of choice.
 
-void BunkerAssembly::Draw(SDL_Renderer *renderer, const Vector &targetPos, DrawMode mode, bool onlyPhysical, int alphaMod) const
+void BunkerAssembly::Draw(RenderTarget *renderer, const Vector &targetPos, DrawMode mode, bool onlyPhysical, int alphaMod) const
 {
     if (!m_pFGColor)
         RTEAbort("TerrainObject's bitmaps are null when drawing!");

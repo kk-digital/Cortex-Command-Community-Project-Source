@@ -675,7 +675,7 @@ void GibEditor::Update()
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Draws the currently active GUI of a screen to a BITMAP of choice.
 
-void GibEditor::DrawGUI(SDL_Renderer* renderer, const Vector &targetPos, int which)
+void GibEditor::DrawGUI(RenderTarget* renderer, const Vector &targetPos, int which)
 {
     // Testing mode
     if (m_EditorMode == EditorActivity::TESTINGOBJECT)
@@ -705,7 +705,7 @@ void GibEditor::DrawGUI(SDL_Renderer* renderer, const Vector &targetPos, int whi
 // Description:     Draws this GibEditor's current graphical representation to a
 //                  BITMAP of choice. This includes all game-related graphics.
 
-void GibEditor::Draw(SDL_Renderer* renderer, const Vector &targetPos)
+void GibEditor::Draw(RenderTarget* renderer, const Vector &targetPos)
 {
     EditorActivity::Draw(renderer, targetPos);
 }

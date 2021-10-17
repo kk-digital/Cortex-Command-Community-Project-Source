@@ -167,7 +167,7 @@ public:
         // Arguments:       The bitmap to draw to.
         // Return value:    None.
 
-            void Draw(SDL_Renderer* renderer) const;
+            void Draw(RenderTarget* renderer) const;
 
 
     };
@@ -425,7 +425,7 @@ public:
 // Arguments:       The bitmap to draw on.
 // Return value:    None.
 
-	void Draw(SDL_Renderer* renderer);
+	void Draw(RenderTarget* renderer);
 
 
 
@@ -872,7 +872,7 @@ protected:
 //                  The color to draw the line in. Use makecol(r, g, b) to create the color
 // Return value:    None.
 
-    static void DrawGlowLine(SDL_Renderer* renderer, const Vector &start, const Vector &end, uint32_t color);
+    static void DrawGlowLine(RenderTarget* renderer, const Vector &start, const Vector &end, uint32_t color);
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -891,7 +891,7 @@ protected:
 //                  What size factor from 'normal' should the circle's diameter be drawn.
 // Return value:    Whether all segments of the line were drawn with the segment params.
 
-    bool DrawScreenLineToSitePoint(SDL_Renderer* renderer,
+    bool DrawScreenLineToSitePoint(RenderTarget* renderer,
                                    const Vector &screenPoint,
                                    const Vector &planetPoint,
                                    uint32_t color,
@@ -922,7 +922,7 @@ protected:
 //                  Whether to draw the meter (FirstSegment == 1) no matter what
 // Return value:    Whether all segments of the line were drawn with the segment params.
 
-    bool DrawPlayerLineToSitePoint(SDL_Renderer* renderer,
+    bool DrawPlayerLineToSitePoint(RenderTarget* renderer,
                                    int player,
                                    float startMeterAt,
                                    float meterAmount,
@@ -947,7 +947,7 @@ protected:
 // Return value:    Whether all segments of the line were drawn with the segment params.
 
 	//TODO: move to cpp
-    bool DrawPlayerLineToSitePoint(SDL_Renderer* renderer, const SiteLine &sl, bool drawMeterOverride = false) const { return DrawPlayerLineToSitePoint(renderer, sl.m_Player, sl.m_StartMeterAt, sl.m_MeterAmount, sl.m_PlanetPoint.GetFloored(), sl.m_Color, sl.m_OnlyFirstSegments, sl.m_OnlyLastSegments, sl.m_ChannelHeight, sl.m_CircleSize, sl.m_Square, drawMeterOverride); }
+    bool DrawPlayerLineToSitePoint(RenderTarget* renderer, const SiteLine &sl, bool drawMeterOverride = false) const { return DrawPlayerLineToSitePoint(renderer, sl.m_Player, sl.m_StartMeterAt, sl.m_MeterAmount, sl.m_PlanetPoint.GetFloored(), sl.m_Color, sl.m_OnlyFirstSegments, sl.m_OnlyLastSegments, sl.m_ChannelHeight, sl.m_CircleSize, sl.m_Square, drawMeterOverride); }
 
 
 

@@ -4361,7 +4361,7 @@ void AHuman::Update()
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Draws an aiming aid in front of this HeldDevice for throwing.
 
-void AHuman::DrawThrowingReticule(SDL_Renderer* renderer, const Vector &targetPos, double amount) const
+void AHuman::DrawThrowingReticule(RenderTarget* renderer, const Vector &targetPos, double amount) const
 {
     const int pointCount = 9;
     Vector points[pointCount];
@@ -4406,7 +4406,7 @@ void AHuman::DrawThrowingReticule(SDL_Renderer* renderer, const Vector &targetPo
 // Description:     Draws this AHuman's current graphical representation to a
 //                  BITMAP of choice.
 
-void AHuman::Draw(SDL_Renderer* renderer, const Vector &targetPos, DrawMode mode, bool onlyPhysical, int alphaMod) const {
+void AHuman::Draw(RenderTarget* renderer, const Vector &targetPos, DrawMode mode, bool onlyPhysical, int alphaMod) const {
     Actor::Draw(renderer, targetPos, mode, onlyPhysical, alphaMod);
 
     DrawMode realMode = (mode == g_DrawColor && m_FlashWhiteMS) ? g_DrawWhite : mode;
@@ -4442,7 +4442,7 @@ void AHuman::Draw(SDL_Renderer* renderer, const Vector &targetPos, DrawMode mode
 // Description:     Draws this Actor's current graphical HUD overlay representation to a
 //                  BITMAP of choice.
 
-void AHuman::DrawHUD(SDL_Renderer* renderer, const Vector &targetPos, int whichScreen, bool playerControlled) {
+void AHuman::DrawHUD(RenderTarget* renderer, const Vector &targetPos, int whichScreen, bool playerControlled) {
 	m_HUDStack = -m_CharHeight / 2;
 
     if (!m_HUDVisible)

@@ -149,7 +149,7 @@ namespace RTE {
 		/// Draws the ObjectPickerGUI to the specified BITMAP.
 		/// </summary>
 		/// <param name="drawBitmap">The BITMAP to draw on.</param>
-		void Draw(SDL_Renderer* renderer) const;
+		void Draw(RenderTarget* renderer) const;
 #pragma endregion
 
 	private:

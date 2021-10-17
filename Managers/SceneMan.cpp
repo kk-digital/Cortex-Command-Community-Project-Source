@@ -3536,7 +3536,7 @@ void SceneMan::Update(int screen)
 // Description:     Draws this SceneMan's current graphical representation to a
 //                  BITMAP of choice.
 
-void SceneMan::Draw(SDL_Renderer* renderer, std::shared_ptr<Texture> pGUITexture, const Vector &targetPos, bool skipSkybox, bool skipTerrain)
+void SceneMan::Draw(RenderTarget* renderer, std::shared_ptr<Texture> pGUITexture, const Vector &targetPos, bool skipSkybox, bool skipTerrain)
 {
     if (m_pCurrentScene == nullptr) {
         return;

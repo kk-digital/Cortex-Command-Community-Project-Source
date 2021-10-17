@@ -561,7 +561,7 @@ void AreaPickerGUI::Update()
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Draws the menu
 
-void AreaPickerGUI::Draw(SDL_Renderer* renderer) const
+void AreaPickerGUI::Draw(RenderTarget* renderer) const
 {
     SDLScreen drawScreen;
     m_pGUIController->Draw(&drawScreen);

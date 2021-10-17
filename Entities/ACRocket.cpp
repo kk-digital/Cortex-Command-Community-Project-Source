@@ -981,7 +981,7 @@ void ACRocket::ResetEmissionTimers()
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void ACRocket::Draw(SDL_Renderer* renderer, const Vector &targetPos, DrawMode mode, bool onlyPhysical, int alphaMod) const {
+void ACRocket::Draw(RenderTarget* renderer, const Vector &targetPos, DrawMode mode, bool onlyPhysical, int alphaMod) const {
     ACraft::Draw(renderer, targetPos, mode, onlyPhysical, alphaMod);
 
     if (mode == g_DrawColor && !onlyPhysical && g_SettingsMan.DrawHandAndFootGroupVisualizations()) {

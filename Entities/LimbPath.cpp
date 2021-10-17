@@ -659,7 +659,7 @@ bool LimbPath::RestartFree(Vector &limbPos, MOID MOIDToIgnore, int ignoreTeam)
 // Description:     Draws this LimbPath's current graphical debug representation to a
 //                  BITMAP of choice.
 
-void LimbPath::Draw(SDL_Renderer* renderer,
+void LimbPath::Draw(RenderTarget* renderer,
                     const Vector &targetPos,
                     uint32_t color) const
 {

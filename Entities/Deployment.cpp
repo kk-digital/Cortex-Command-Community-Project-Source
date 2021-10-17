@@ -677,7 +677,7 @@ bool Deployment::IsOnScenePoint(Vector &scenePoint) const
 // Description:     Draws this Deployment's current graphical representation to a
 //                  BITMAP of choice.
 
-void Deployment::Draw(SDL_Renderer* renderer, const Vector &targetPos, DrawMode mode, bool onlyPhysical, int alphaMod) const
+void Deployment::Draw(RenderTarget* renderer, const Vector &targetPos, DrawMode mode, bool onlyPhysical, int alphaMod) const
 {
     if (m_Icon.GetTextures().empty() || !(m_Icon.GetTextures()[0]))
         RTEAbort("Deployment's Icon bitmaps are null when drawing!");

@@ -2074,7 +2074,7 @@ void MovableMan::Update()
 // Description:     Draws this MovableMan's all MO's current material representations to a
 //                  BITMAP of choice.
 
-void MovableMan::DrawMatter(SDL_Renderer* renderer, Vector &targetPos)
+void MovableMan::DrawMatter(RenderTarget* renderer, Vector &targetPos)
 {
     // Draw objects to accumulation bitmap
     for (deque<Actor *>::iterator aIt = --m_Actors.end(); aIt != --m_Actors.begin(); --aIt)
@@ -2185,7 +2185,7 @@ void MovableMan::UpdateMOIDs()
 // Description:     Draws this MovableMan's current graphical representation to a
 //                  BITMAP of choice.
 
-void MovableMan::Draw(SDL_Renderer *renderer, const Vector &targetPos)
+void MovableMan::Draw(RenderTarget *renderer, const Vector &targetPos)
 {
 	// Draw objects to accumulation bitmap, in reverse order so actors appear on top.
 	for (deque<MovableObject *>::iterator parIt = m_Particles.begin(); parIt != m_Particles.end(); ++parIt)
@@ -2205,7 +2205,7 @@ void MovableMan::Draw(SDL_Renderer *renderer, const Vector &targetPos)
 // Description:     Draws this MovableMan's current graphical representation to a
 //                  BITMAP of choice.
 
-void MovableMan::DrawHUD(SDL_Renderer *renderer, const Vector &targetPos, int which, bool playerControlled)
+void MovableMan::DrawHUD(RenderTarget *renderer, const Vector &targetPos, int which, bool playerControlled)
 {
 	// Draw HUD elements
 	for (deque<MovableObject *>::reverse_iterator itmIt = m_Items.rbegin(); itmIt != m_Items.rend(); ++itmIt)

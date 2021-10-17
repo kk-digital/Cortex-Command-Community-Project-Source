@@ -1609,7 +1609,7 @@ public:
 //                  is located.
 // Return value:    None.
 
-    void Draw(SDL_Renderer* renderer, std::shared_ptr<Texture> pGUITexture,  const Vector &targetPos = Vector(), bool skipSkybox = false, bool skipTerrain = false);
+    void Draw(RenderTarget* renderer, std::shared_ptr<Texture> pGUITexture,  const Vector &targetPos = Vector(), bool skipSkybox = false, bool skipTerrain = false);
 
 
 //////////////////////////////////////////////////////////////////////////////////////////

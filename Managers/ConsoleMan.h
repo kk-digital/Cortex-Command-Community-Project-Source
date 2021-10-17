@@ -5,7 +5,7 @@
 
 #define g_ConsoleMan ConsoleMan::Instance()
 
-struct SDL_Renderer;
+struct RenderTarget;
 
 namespace RTE {
 
@@ -153,7 +153,7 @@ namespace RTE {
 		/// Draws this ConsoleMan's current graphical representation to a BITMAP of choice.
 		/// </summary>
 		/// <param name="targetBitmap">A pointer to a BITMAP to draw on.</param>
-		void Draw(SDL_Renderer* renderer) const;
+		void Draw(RenderTarget* renderer) const;
 #pragma endregion
 
 	protected:

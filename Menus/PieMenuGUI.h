@@ -196,7 +196,7 @@ namespace RTE {
 		/// </summary>
 		/// <param name="targetBitmap">A pointer to a BITMAP to draw on. Generally a screen BITMAP.</param>
 		/// <param name="targetPos">The absolute position of the target bitmap's upper left corner in the scene.</param>
-		void Draw(SDL_Renderer* renderer, const Vector &targetPos = Vector()) const;
+		void Draw(RenderTarget* renderer, const Vector &targetPos = Vector()) const;
 #pragma endregion
 
 	private:
@@ -312,21 +312,21 @@ namespace RTE {
 		/// <param name="targetBitmap">A pointer to the BITMAP to draw on. Generally a screen BITMAP.</param>
 		/// <param name="targetPos">The absolute position of the target bitmap's upper left corner in the scene.</param>
 		/// <param name="drawPos">Out param, a Vector to be filled in with the position at which the menu should be drawn.</param>
-		void CalculateDrawPosition(SDL_Renderer *targetBitmap, const Vector &targetPos, Vector &drawPos) const;
+		void CalculateDrawPosition(RenderTarget *targetBitmap, const Vector &targetPos, Vector &drawPos) const;
 
 		/// <summary>
 		/// Handles drawing icons on pie menu slices.
 		/// </summary>
 		/// <param name="targetBitmap">A pointer to the BITMAP to draw on. Generally a screen BITMAP.</param>
 		/// <param name="drawPos">The seam corrected position at which the pie menu is being drawn.</param>
-		void DrawPieIcons(SDL_Renderer *targetBitmap, const Vector &drawPos) const;
+		void DrawPieIcons(RenderTarget *targetBitmap, const Vector &drawPos) const;
 
 		/// <summary>
 		/// Handles drawing the cursor and description text for selected slices.
 		/// </summary>
 		/// <param name="targetBitmap">A pointer to the BITMAP to draw on. Generally a screen BITMAP.</param>
 		/// <param name="drawPos">The seam corrected position at which the pie menu is being drawn.</param>
-		void DrawPieCursorAndSliceDescriptions(SDL_Renderer *renderer, const Vector &drawPos) const;
+		void DrawPieCursorAndSliceDescriptions(RenderTarget *renderer, const Vector &drawPos) const;
 #pragma endregion
 
 		/// <summary>

@@ -510,7 +510,7 @@ void MOSprite::Update() {
 // Description:     Draws this MOSprite's current graphical representation to a
 //                  BITMAP of choice.
 
-void MOSprite::Draw(SDL_Renderer *renderer, const Vector &targetPos, DrawMode mode, bool onlyPhysical, int alphaMod) const {
+void MOSprite::Draw(RenderTarget *renderer, const Vector &targetPos, DrawMode mode, bool onlyPhysical, int alphaMod) const {
 	if (!m_aSprite[m_Frame])
 		RTEAbort("Sprite frame pointer is null when drawing MOSprite!");
 

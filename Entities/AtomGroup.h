@@ -348,7 +348,7 @@ namespace RTE {
 		/// <param name="targetPos">The absolute position of the target bitmap's upper left corner in the Scene.</param>
 		/// <param name="useLimbPos">Whether to use the limb position of this AtomGroup, or the owner's position.</param>
 		/// <param name="color">The color to draw the Atoms' pixels as.</param>
-		void Draw(SDL_Renderer *renderer, const Vector &targetPos, bool useLimbPos = false, uint32_t color = 0x984F31FF) const;
+		void Draw(RenderTarget *renderer, const Vector &targetPos, bool useLimbPos = false, uint32_t color = 0x984F31FF) const;
 #pragma endregion
 
 	protected:

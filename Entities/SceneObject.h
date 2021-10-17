@@ -525,7 +525,7 @@ public:
 	/// <param name="alphaMod">
 	/// The alpha value that should be multiplied onto drawing operations for DrawTrans.
 	/// </param>
-	virtual void Draw(SDL_Renderer* renderer, const Vector &targetPos = Vector(), DrawMode mode = g_DrawColor, bool onlyPhysical = false, int alphaMod = 255) const = 0;
+	virtual void Draw(RenderTarget* renderer, const Vector &targetPos = Vector(), DrawMode mode = g_DrawColor, bool onlyPhysical = false, int alphaMod = 255) const = 0;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -536,7 +536,7 @@ public:
 //                  The absolute position of the target bitmap's upper left corner in the Scene.
 // Return value:    None.
 
-	void DrawTeamMark(SDL_Renderer* renderer, const Vector &targetPos = Vector()) const;
+	void DrawTeamMark(RenderTarget* renderer, const Vector &targetPos = Vector()) const;
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Protected member variable and method declarations

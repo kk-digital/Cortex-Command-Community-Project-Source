@@ -825,7 +825,7 @@ void GATutorial::Update()
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Draws the currently active GUI of a screen to a BITMAP of choice.
 
-void GATutorial::DrawGUI(SDL_Renderer* renderer, const Vector &targetPos, int which)
+void GATutorial::DrawGUI(RenderTarget* renderer, const Vector &targetPos, int which)
 {
     GameActivity::DrawGUI(renderer, targetPos, which);
 
@@ -859,7 +859,7 @@ void GATutorial::DrawGUI(SDL_Renderer* renderer, const Vector &targetPos, int wh
 // Description:     Draws this GATutorial's current graphical representation to a
 //                  BITMAP of choice. This includes all game-related graphics.
 
-void GATutorial::Draw(SDL_Renderer, const Vector &targetPos)
+void GATutorial::Draw(RenderTarget, const Vector &targetPos)
 {
     GameActivity::Draw(pTargetBitmap, targetPos);
 }

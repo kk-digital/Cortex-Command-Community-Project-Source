@@ -316,7 +316,7 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void PieMenuGUI::Draw(SDL_Renderer *renderer, const Vector &targetPos) const {
+	void PieMenuGUI::Draw(RenderTarget *renderer, const Vector &targetPos) const {
 		Vector drawPos;
 		CalculateDrawPosition(renderer, targetPos, drawPos);
 
@@ -547,7 +547,7 @@ namespace RTE {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	//TODO Need to investigate this stuff, I don't fully understand what it does and maybe it's mostly undesirable since we'll want to be able to draw pie menus partly off the screen
-	void PieMenuGUI::CalculateDrawPosition(SDL_Renderer *renderer, const Vector &targetPos, Vector &drawPos) const {
+	void PieMenuGUI::CalculateDrawPosition(RenderTarget *renderer, const Vector &targetPos, Vector &drawPos) const {
 		drawPos = m_CenterPos - targetPos;
 		SDL_Rect viewport;
 		SDL_RenderGetViewport(g_FrameMan.GetRenderer(), &viewport);
@@ -598,7 +598,7 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void PieMenuGUI::DrawPieIcons(SDL_Renderer *renderer, const Vector &drawPos) const {
+	void PieMenuGUI::DrawPieIcons(RenderTarget *renderer, const Vector &drawPos) const {
 		SharedTexture sliceIcon;
 		Vector sliceIconOffset;
 
@@ -614,7 +614,7 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void PieMenuGUI::DrawPieCursorAndSliceDescriptions(SDL_Renderer *renderer, const Vector &drawPos) const {
+	void PieMenuGUI::DrawPieCursorAndSliceDescriptions(RenderTarget *renderer, const Vector &drawPos) const {
 		Vector cursorPos = Vector(static_cast<float>(m_InnerRadius)/* - s_CursorBitmap->w*/, 0.0F).RadRotate(m_CursorAngle);
 		s_CursorBitmap->render(renderer, drawPos.GetFloorIntX() + cursorPos.GetFloorIntX(), drawPos.GetFloorIntY() + cursorPos.GetFloorIntY(), (m_CursorAngle / c_PI));
 

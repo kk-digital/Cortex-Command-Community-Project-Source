@@ -4,7 +4,7 @@
 #include "Icon.h"
 #include "Controller.h"
 
-struct SDL_Renderer;
+struct RenderTarget;
 namespace RTE {
 
 	class Scene;
@@ -231,14 +231,14 @@ namespace RTE {
 		/// <param name="renderer">A pointer to the current renderer.</param>
 		/// <param name="targetPos">The absolute position of the target bitmap's upper left corner in the scene.</param>
 		/// <param name="whichScreen">Which screen's GUI to draw onto the bitmap.</param>
-		virtual void DrawGUI(SDL_Renderer* renderer, const Vector &targetPos = Vector(), int whichScreen = 0) {}
+		virtual void DrawGUI(RenderTarget* renderer, const Vector &targetPos = Vector(), int whichScreen = 0) {}
 
 		/// <summary>
 		/// Draws this Activity's current graphical representation to the current render target. This includes all game-related graphics.
 		/// </summary>
 		/// <param name="targetBitmap">A pointer to the renderer.</param>
 		/// <param name="targetPos">The absolute position of the target bitmap's upper left corner in the scene.</param>
-		virtual void Draw(SDL_Renderer* renderer, const Vector &targetPos = Vector()) {}
+		virtual void Draw(RenderTarget* renderer, const Vector &targetPos = Vector()) {}
 #pragma endregion
 
 #pragma region Player Handling

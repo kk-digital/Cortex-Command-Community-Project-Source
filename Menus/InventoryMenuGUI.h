@@ -158,7 +158,7 @@ namespace RTE {
 		/// </summary>
 		/// <param name="targetBitmap">A pointer to a BITMAP to draw on. Generally a screen BITMAP.</param>
 		/// <param name="targetPos">The absolute position of the target bitmap's upper left corner in the scene.</param>
-		void Draw(SDL_Renderer *renderer, const Vector &targetPos = Vector()) const;
+		void Draw(RenderTarget *renderer, const Vector &targetPos = Vector()) const;
 #pragma endregion
 
 	private:
@@ -460,14 +460,14 @@ namespace RTE {
 		/// </summary>
 		/// <param name="targetBitmap">A pointer to a BITMAP to draw on. Generally a screen BITMAP.</param>
 		/// <param name="drawPos">The position at which to draw the carousel.</param>
-		void DrawCarouselMode(SDL_Renderer *renderer, const Vector &drawPos) const;
+		void DrawCarouselMode(RenderTarget *renderer, const Vector &drawPos) const;
 
 		/// <summary>
 		/// Draws the InventoryMenuGUI when it's in Full MenuMode.
 		/// </summary>
 		/// <param name="targetBitmap">A pointer to a BITMAP to draw on. Generally a screen BITMAP.</param>
 		/// <param name="drawPos">The position at which to draw the GUI.</param>
-		void DrawFullMode(SDL_Renderer *renderer, const Vector &drawPos) const;
+		void DrawFullMode(RenderTarget *renderer, const Vector &drawPos) const;
 
 		/// <summary>
 		/// Draws the specified CarouselItemBox's background to the carousel background Bitmap.

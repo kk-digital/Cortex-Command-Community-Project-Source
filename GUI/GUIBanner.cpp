@@ -414,7 +414,7 @@ void GUIBanner::Update()
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Draws text to a bitmap.
 
-void GUIBanner::Draw(SDL_Renderer *renderer)
+void GUIBanner::Draw(RenderTarget *renderer)
 {
     // Only bother drawing if things are visible at all
     if (m_AnimState < SHOWING || m_AnimState > HIDING)

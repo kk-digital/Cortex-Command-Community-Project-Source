@@ -144,7 +144,7 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void MOSParticle::Draw(SDL_Renderer* renderer, const Vector &targetPos, DrawMode mode, bool onlyPhysical, int alphaMod) const {
+	void MOSParticle::Draw(RenderTarget* renderer, const Vector &targetPos, DrawMode mode, bool onlyPhysical, int alphaMod) const {
 		Vector spritePos(m_Pos + m_SpriteOffset - targetPos);
 
 		int spriteX = 0;

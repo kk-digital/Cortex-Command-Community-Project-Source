@@ -371,7 +371,7 @@ void TerrainObject::SetTeam(int team)
 // Description:     Draws this TerrainObject's current graphical representation to a
 //                  BITMAP of choice.
 
-void TerrainObject::Draw(SDL_Renderer* renderer, const Vector &targetPos, DrawMode mode, bool onlyPhysical, int alphaMod) const
+void TerrainObject::Draw(RenderTarget* renderer, const Vector &targetPos, DrawMode mode, bool onlyPhysical, int alphaMod) const
 {
     if (!m_pFGColor)
         RTEAbort("TerrainObject's bitmaps are null when drawing!");

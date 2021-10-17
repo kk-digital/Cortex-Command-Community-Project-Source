@@ -358,7 +358,7 @@ void BunkerAssemblyScheme::SetTeam(int team)
 // Description:     Draws this BunkerAssemblyScheme's current graphical representation to a
 //                  BITMAP of choice.
 
-void BunkerAssemblyScheme::Draw(SDL_Renderer *renderer, const Vector &targetPos, DrawMode mode, bool onlyPhysical, int alphaMod) const
+void BunkerAssemblyScheme::Draw(RenderTarget *renderer, const Vector &targetPos, DrawMode mode, bool onlyPhysical, int alphaMod) const
 {
     if (!m_pPresentationBitmap)
         RTEAbort("BunkerAssemblyScheme's bitmaps are null when drawing!");

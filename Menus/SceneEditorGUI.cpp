@@ -1383,7 +1383,7 @@ void SceneEditorGUI::Update()
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Draws the menu
 
-void SceneEditorGUI::Draw(SDL_Renderer *renderer, const Vector &targetPos) const
+void SceneEditorGUI::Draw(RenderTarget *renderer, const Vector &targetPos) const
 {
     // Done, so don't draw the UI
     if (m_EditorGUIMode == DONEEDITING)

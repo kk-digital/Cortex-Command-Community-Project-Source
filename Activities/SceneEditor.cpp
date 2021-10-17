@@ -630,7 +630,7 @@ void SceneEditor::Update()
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Draws the currently active GUI of a screen to a BITMAP of choice.
 
-void SceneEditor::DrawGUI(SDL_Renderer* renderer, const Vector &targetPos, int which)
+void SceneEditor::DrawGUI(RenderTarget* renderer, const Vector &targetPos, int which)
 {
     m_pEditorGUI->Draw(renderer, targetPos);
 
@@ -644,7 +644,7 @@ void SceneEditor::DrawGUI(SDL_Renderer* renderer, const Vector &targetPos, int w
 // Description:     Draws this SceneEditor's current graphical representation to a
 //                  BITMAP of choice. This includes all game-related graphics.
 
-void SceneEditor::Draw(SDL_Renderer* renderer, const Vector &targetPos)
+void SceneEditor::Draw(RenderTarget* renderer, const Vector &targetPos)
 {
     EditorActivity::Draw(renderer, targetPos);
 }

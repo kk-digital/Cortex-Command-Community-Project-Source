@@ -532,7 +532,7 @@ namespace RTE {
 	// Description:     Draws this PEmitter's current graphical representation to a
 	//                  BITMAP of choice.
 
-	void PEmitter::Draw(SDL_Renderer* renderer,
+	void PEmitter::Draw(RenderTarget* renderer,
 		const Vector &targetPos,
 		DrawMode mode,
 		bool onlyPhysical,

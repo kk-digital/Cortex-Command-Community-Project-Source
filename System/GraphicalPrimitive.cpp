@@ -35,7 +35,7 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void LinePrimitive::Draw(SDL_Renderer* renderer, const Vector &targetPos) {
+	void LinePrimitive::Draw(RenderTarget* renderer, const Vector &targetPos) {
 		if (!g_SceneMan.SceneWrapsX() && !g_SceneMan.SceneWrapsY()) {
 			Vector drawStart = m_StartPos - targetPos;
 			Vector drawEnd = m_EndPos - targetPos;
@@ -62,7 +62,7 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void ArcPrimitive::Draw(SDL_Renderer* renderer, const Vector &targetPos) {
+	void ArcPrimitive::Draw(RenderTarget* renderer, const Vector &targetPos) {
 		if (!g_SceneMan.SceneWrapsX() && !g_SceneMan.SceneWrapsY()) {
 			Vector drawStart = m_StartPos - targetPos;
 			if (m_Thickness > 1) {
@@ -108,7 +108,7 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void SplinePrimitive::Draw(SDL_Renderer* renderer, const Vector &targetPos) {
+	void SplinePrimitive::Draw(RenderTarget* renderer, const Vector &targetPos) {
 		if (!g_SceneMan.SceneWrapsX() && !g_SceneMan.SceneWrapsY()) {
 			Vector drawStart = m_StartPos - targetPos;
 			Vector drawGuideA = m_GuidePointAPos - targetPos;
@@ -169,7 +169,7 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void BoxPrimitive::Draw(SDL_Renderer* renderer, const Vector &targetPos) {
+	void BoxPrimitive::Draw(RenderTarget* renderer, const Vector &targetPos) {
 		if (!g_SceneMan.SceneWrapsX() && !g_SceneMan.SceneWrapsY()) {
 			Vector drawStart = m_StartPos - targetPos;
 			Vector drawEnd = m_EndPos - targetPos;
@@ -190,7 +190,7 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void BoxFillPrimitive::Draw(SDL_Renderer* renderer, const Vector &targetPos) {
+	void BoxFillPrimitive::Draw(RenderTarget* renderer, const Vector &targetPos) {
 		if (!g_SceneMan.SceneWrapsX() && !g_SceneMan.SceneWrapsY()) {
 			Vector drawStart = m_StartPos - targetPos;
 			Vector drawEnd = m_EndPos - targetPos;
@@ -211,7 +211,7 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void RoundedBoxPrimitive::Draw(SDL_Renderer* renderer, const Vector &targetPos) {
+	void RoundedBoxPrimitive::Draw(RenderTarget* renderer, const Vector &targetPos) {
 		if (m_StartPos.m_X > m_EndPos.m_X) { std::swap(m_StartPos.m_X, m_EndPos.m_X); }
 		if (m_StartPos.m_Y > m_EndPos.m_Y) { std::swap(m_StartPos.m_Y, m_EndPos.m_Y); }
 
@@ -243,7 +243,7 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void RoundedBoxFillPrimitive::Draw(SDL_Renderer* renderer, const Vector &targetPos) {
+	void RoundedBoxFillPrimitive::Draw(RenderTarget* renderer, const Vector &targetPos) {
 		if (m_StartPos.m_X > m_EndPos.m_X) { std::swap(m_StartPos.m_X, m_EndPos.m_X); }
 		if (m_StartPos.m_Y > m_EndPos.m_Y) { std::swap(m_StartPos.m_Y, m_EndPos.m_Y); }
 
@@ -278,7 +278,7 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void CirclePrimitive::Draw(SDL_Renderer* renderer, const Vector &targetPos) {
+	void CirclePrimitive::Draw(RenderTarget* renderer, const Vector &targetPos) {
 		if (!g_SceneMan.SceneWrapsX() && !g_SceneMan.SceneWrapsY()) {
 			Vector drawStart = m_StartPos - targetPos;
 			circleColor(renderer, drawStart.GetFloorIntX(), drawStart.GetFloorIntY(), m_Radius, m_Color);
@@ -295,7 +295,7 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void CircleFillPrimitive::Draw(SDL_Renderer* renderer, const Vector &targetPos) {
+	void CircleFillPrimitive::Draw(RenderTarget* renderer, const Vector &targetPos) {
 		if (!g_SceneMan.SceneWrapsX() && !g_SceneMan.SceneWrapsY()) {
 			Vector drawStart = m_StartPos - targetPos;
 			filledCircleColor(renderer, drawStart.GetFloorIntX(), drawStart.GetFloorIntY(), m_Radius, m_Color);
@@ -312,7 +312,7 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void EllipsePrimitive::Draw(SDL_Renderer* renderer, const Vector &targetPos) {
+	void EllipsePrimitive::Draw(RenderTarget* renderer, const Vector &targetPos) {
 		if (!g_SceneMan.SceneWrapsX() && !g_SceneMan.SceneWrapsY()) {
 			Vector drawStart = m_StartPos - targetPos;
 			ellipseColor(renderer, drawStart.GetFloorIntX(), drawStart.GetFloorIntY(), m_HorizRadius, m_VertRadius, m_Color);
@@ -329,7 +329,7 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void EllipseFillPrimitive::Draw(SDL_Renderer* renderer, const Vector &targetPos) {
+	void EllipseFillPrimitive::Draw(RenderTarget* renderer, const Vector &targetPos) {
 		if (!g_SceneMan.SceneWrapsX() && !g_SceneMan.SceneWrapsY()) {
 			Vector drawStart = m_StartPos - targetPos;
 			filledEllipseColor(renderer, drawStart.GetFloorIntX(), drawStart.GetFloorIntY(), m_HorizRadius, m_VertRadius, m_Color);
@@ -346,7 +346,7 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void TrianglePrimitive::Draw(SDL_Renderer* renderer, const Vector &targetPos) {
+	void TrianglePrimitive::Draw(RenderTarget* renderer, const Vector &targetPos) {
 		if (!g_SceneMan.SceneWrapsX() && !g_SceneMan.SceneWrapsY()) {
 			Vector drawPointA = m_PointAPos - targetPos;
 			Vector drawPointB = m_PointBPos - targetPos;
@@ -383,7 +383,7 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void TriangleFillPrimitive::Draw(SDL_Renderer* renderer, const Vector &targetPos) {
+	void TriangleFillPrimitive::Draw(RenderTarget* renderer, const Vector &targetPos) {
 		if (!g_SceneMan.SceneWrapsX() && !g_SceneMan.SceneWrapsY()) {
 			Vector drawPointA = m_PointAPos - targetPos;
 			Vector drawPointB = m_PointBPos - targetPos;
@@ -408,7 +408,7 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void TextPrimitive::Draw(SDL_Renderer* renderer, const Vector &targetPos) {
+	void TextPrimitive::Draw(RenderTarget* renderer, const Vector &targetPos) {
 		if (!g_SceneMan.SceneWrapsX() && !g_SceneMan.SceneWrapsY()) {
 			Vector drawStart = m_StartPos - targetPos;
 			SDLGUITexture playerGUIBitmap;
@@ -437,7 +437,7 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void BitmapPrimitive::Draw(SDL_Renderer* renderer, const Vector &targetPos) {
+	void BitmapPrimitive::Draw(RenderTarget* renderer, const Vector &targetPos) {
 		if (!m_Texture) {
 			return;
 		}

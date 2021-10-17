@@ -79,7 +79,7 @@ const string MetagameGUI::c_ClassName = "MetagameGUI";
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Draws a neat animation over a site to show it changing team ownership.
 
-void MetagameGUI::SiteTarget::Draw(SDL_Renderer *renderer) const
+void MetagameGUI::SiteTarget::Draw(RenderTarget *renderer) const
 {
     if (!renderer)
         return;
@@ -1941,7 +1941,7 @@ void MetagameGUI::Update()
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Draws the menu
 
-void MetagameGUI::Draw(SDL_Renderer *renderer)
+void MetagameGUI::Draw(RenderTarget *renderer)
 {
     // Don't draw site lines and dots if we're in the menus
     if (!g_MetaMan.IsSuspended())
@@ -6646,7 +6646,7 @@ void MetagameGUI::UpdatePlayerLineRatios(vector<SiteLine> &lineList, int metaPla
 // Description:     Draws a fancy thick flickering line to point out scene points on the
 //                  planet.
 
-void MetagameGUI::DrawGlowLine(SDL_Renderer *renderer, const Vector &start, const Vector &end, uint32_t color)
+void MetagameGUI::DrawGlowLine(RenderTarget *renderer, const Vector &start, const Vector &end, uint32_t color)
 {
 	int blendAmount = 210 + RandomNum(-15, 15);
 	SDL_SetRenderDrawBlendMode(renderer, BLENDMODE_SCREEN);
@@ -6682,7 +6682,7 @@ void MetagameGUI::DrawGlowLine(SDL_Renderer *renderer, const Vector &start, cons
 // Description:     Draws a fancy thick flickering lines to point out scene points on the
 //                  planet, FROM an arbitrary screen point.
 
-bool MetagameGUI::DrawScreenLineToSitePoint(SDL_Renderer *renderer,
+bool MetagameGUI::DrawScreenLineToSitePoint(RenderTarget *renderer,
                                             const Vector &screenPoint,
                                             const Vector &planetPoint,
                                             uint32_t color,
@@ -6816,7 +6816,7 @@ bool MetagameGUI::DrawScreenLineToSitePoint(SDL_Renderer *renderer,
 // Description:     Draws a fancy thick flickering lines to point out scene points on the
 //                  planet, FROM a floating player bar, showing a certain ratio.
 
-bool MetagameGUI::DrawPlayerLineToSitePoint(SDL_Renderer *renderer,
+bool MetagameGUI::DrawPlayerLineToSitePoint(RenderTarget *renderer,
                                           int metaPlayer,
                                           float startMeterAt,
                                           float meterAmount,

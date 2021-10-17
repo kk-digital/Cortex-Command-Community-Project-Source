@@ -595,7 +595,7 @@ void AreaEditorGUI::Update()
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Draws the menu
 
-void AreaEditorGUI::Draw(SDL_Renderer* renderer, const Vector &targetPos) const
+void AreaEditorGUI::Draw(RenderTarget* renderer, const Vector &targetPos) const
 {
     // Done or can't, so don't draw the UI
     if (!m_pCurrentArea || m_EditorGUIMode == DONEEDITING)

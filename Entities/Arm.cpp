@@ -436,7 +436,7 @@ void Arm::UpdateArmFrame() {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Arm::Draw(SDL_Renderer* renderer, const Vector &targetPos, DrawMode mode, bool onlyPhysical, int alphaMod) const {
+void Arm::Draw(RenderTarget* renderer, const Vector &targetPos, DrawMode mode, bool onlyPhysical, int alphaMod) const {
     Attachable::Draw(renderer, targetPos, mode, onlyPhysical, alphaMod);
 
     if (!onlyPhysical && (mode == g_DrawColor || mode == g_DrawWhite || mode == g_DrawTrans) && (!m_Parent || m_pHeldMO || (!m_pHeldMO && !m_DidReach))) {
@@ -447,7 +447,7 @@ void Arm::Draw(SDL_Renderer* renderer, const Vector &targetPos, DrawMode mode, b
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Arm::DrawHand(SDL_Renderer* renderer, const Vector &targetPos, DrawMode mode) const {
+void Arm::DrawHand(RenderTarget* renderer, const Vector &targetPos, DrawMode mode) const {
     Vector handPos(m_JointPos + m_HandOffset + (m_Recoiled ? m_RecoilOffset : Vector()) - targetPos);
     handPos.m_X -= static_cast<float>((m_pHand->getW() / 2) + 1);
     handPos.m_Y -= static_cast<float>((m_pHand->getH() / 2) + 1);

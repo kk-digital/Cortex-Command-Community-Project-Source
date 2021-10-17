@@ -1069,7 +1069,7 @@ int Scene::SavePreview(const std::string &bitmapPath) {
 	Texture previewBuffer(g_FrameMan.GetRenderer(), sceneWidth, sceneHeight);
 	SDL_Rect previewDimensions{0, 0, sceneHeight, sceneWidth};
 
-	SDL_Renderer* renderer = g_FrameMan.GetRenderer();
+	RenderTarget* renderer = g_FrameMan.GetRenderer();
 
 	g_FrameMan.PushRenderTarget(previewBuffer.getAsRenderTarget());
 	previewGradient->render(renderer, previewDimensions);

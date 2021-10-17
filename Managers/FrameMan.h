@@ -13,7 +13,7 @@
 
 #define g_FrameMan FrameMan::Instance()
 
-struct SDL_Renderer;
+struct RenderTarget;
 struct SDL_Window;
 
 namespace RTE {
@@ -570,13 +570,13 @@ namespace RTE {
 		void FlashScreen(int screen, uint32_t color, float periodMS = 0);
 
 		int DrawLine(const Vector &start, const Vector &end, uint32_t color, int altColor = 0, int skip = 0, int skipStart = 0, bool shortestWrap = false) const { return 0; }
-		int DrawDotLine(SDL_Renderer *renderer, const Vector &start, const Vector &end, SharedTexture dot, int skip = 0, int skipStart = 0, bool shortestWrap = false) const { return 0; }
+		int DrawDotLine(RenderTarget *renderer, const Vector &start, const Vector &end, SharedTexture dot, int skip = 0, int skipStart = 0, bool shortestWrap = false) const { return 0; }
 
 		int SaveScreenToPNG(std::string nameBase) { return 0; };
 
 		int SaveWorldToPNG(std::string nameBase) { return 0; };
 
-		int SaveTextureToPNG(std::shared_ptr<Texture> tex, std::string nameBase) { return 0; };
+		int SaveTextureToPNG(std::shared_ptr<GLTexture> tex, std::string nameBase) { return 0; };
 
 		bool IsInMultiplayerMode() const { return false; }
 
@@ -708,7 +708,7 @@ namespace RTE {
 		/// </summary>
 		void Clear();
 
-		void DrawScreenFlash(int playerScreen, SDL_Renderer *renderer);
+		void DrawScreenFlash(int playerScreen, RenderTarget *renderer);
 
 		/// <summary>
 		/// Updates the drawing position of each player screen on the backbuffer when split screen is active. This is called during Draw().

@@ -995,7 +995,7 @@ void ACraft::Update()
 // Description:     Draws this Actor's current graphical HUD overlay representation to a
 //                  BITMAP of choice.
 
-void ACraft::DrawHUD(SDL_Renderer* renderer, const Vector &targetPos, int whichScreen, bool playerControlled)
+void ACraft::DrawHUD(RenderTarget* renderer, const Vector &targetPos, int whichScreen, bool playerControlled)
 {
 	m_HUDStack = -m_CharHeight / 2;
     if (!m_HUDVisible)

@@ -262,6 +262,7 @@ namespace RTE {
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		glTexImage2D(GL_TEXTURE_2D, 0, returnTexture->m_BPP == 8 ? GL_R8 : GL_RGBA, returnTexture->m_Width, returnTexture->m_Height, 0, returnTexture->m_BPP == 8 ? GL_RED : GL_RGBA, GL_UNSIGNED_BYTE, returnTexture->m_Pixels->pixels);
 
+		glBindTexture(GL_TEXTURE_2D, 0);
 		return returnTexture;
 	}
 

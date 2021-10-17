@@ -496,7 +496,7 @@ void HeldDevice::Update()
 // Description:     Draws this HeldDevice's current graphical representation to a
 //                  BITMAP of choice.
 
-void HeldDevice::Draw(SDL_Renderer* renderer,
+void HeldDevice::Draw(RenderTarget* renderer,
 						const Vector &targetPos,
 						DrawMode mode,
 						bool onlyPhysical,
@@ -536,7 +536,7 @@ void HeldDevice::Draw(SDL_Renderer* renderer,
 // Description:     Draws this Actor's current graphical HUD overlay representation to a
 //                  BITMAP of choice.
 
-void HeldDevice::DrawHUD(SDL_Renderer* renderer, const Vector &targetPos, int whichScreen, bool playerControlled)
+void HeldDevice::DrawHUD(RenderTarget* renderer, const Vector &targetPos, int whichScreen, bool playerControlled)
 {
     if (!m_HUDVisible)
         return;

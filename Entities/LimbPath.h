@@ -19,7 +19,7 @@
 #include "ActivityMan.h"
 #include "Atom.h"
 
-struct SDL_Renderer;
+struct RenderTarget;
 
 namespace RTE
 {
@@ -611,7 +611,7 @@ ClassInfoGetters;
 //                  The color to draw the path's pixels as.
 // Return value:    None.
 
-	void Draw(SDL_Renderer* renderer, const Vector &targetPos = Vector(), uint32_t color = 0x984F31FF) const;
+	void Draw(RenderTarget* renderer, const Vector &targetPos = Vector(), uint32_t color = 0x984F31FF) const;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////

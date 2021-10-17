@@ -4,7 +4,7 @@
 #include "Actor.h"
 #include "ADSensor.h"
 
-struct SDL_Renderer;
+struct RenderTarget;
 
 namespace RTE {
 
@@ -192,7 +192,7 @@ namespace RTE {
 		/// <param name="targetPos">The absolute position of the target bitmap's upper left corner in the Scene.</param>
 		/// <param name="whichScreen">Which player's screen this is being drawn to. May affect what HUD elements get drawn etc.</param>
 		/// <param name="playerControlled">Whether or not this MovableObject is currently player controlled (not applicable for ADoor)</param>
-		void DrawHUD(SDL_Renderer* renderer, const Vector &targetPos = Vector(), int whichScreen = 0, bool playerControlled = false) override;
+		void DrawHUD(RenderTarget* renderer, const Vector &targetPos = Vector(), int whichScreen = 0, bool playerControlled = false) override;
 #pragma endregion
 
 	protected:

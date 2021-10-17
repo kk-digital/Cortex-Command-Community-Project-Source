@@ -2167,7 +2167,7 @@ void GameActivity::Update()
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Draws the currently active GUI of a screen to a BITMAP of choice.
 
-void GameActivity::DrawGUI(SDL_Renderer* renderer, const Vector &targetPos, int which)
+void GameActivity::DrawGUI(RenderTarget* renderer, const Vector &targetPos, int which)
 {
 	if (which < 0 || which >= c_MaxScreenCount)
 		return;
@@ -2568,14 +2568,14 @@ void GameActivity::DrawGUI(SDL_Renderer* renderer, const Vector &targetPos, int 
 // Description:     Draws this GameActivity's current graphical representation to a
 //                  BITMAP of choice. This includes all game-related graphics.
 
-void GameActivity::Draw(SDL_Renderer* renderer, const Vector &targetPos)
+void GameActivity::Draw(RenderTarget* renderer, const Vector &targetPos)
 {
     int frame = ((int)m_CursorTimer.GetElapsedSimTimeMS() % 1000) / 250;
 
 	DrawDeliveryCursors(renderer, targetPos, frame);
 }
 
-void GameActivity::DrawDeliveryCursors(SDL_Renderer *renderer,
+void GameActivity::DrawDeliveryCursors(RenderTarget *renderer,
 	                                   Vector targetPos, int frame) {
 
 
@@ -2920,7 +2920,7 @@ void GameActivity::DisableAIs(bool disable, int whichTeam)
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Simply draws this' arrow relative to a point on a bitmap.
 
-void GameActivity::ObjectivePoint::Draw(SDL_Renderer* renderer, std::shared_ptr<Texture> pArrowTexture, const Vector &arrowPoint, ObjectiveArrowDir arrowDir)
+void GameActivity::ObjectivePoint::Draw(RenderTarget* renderer, std::shared_ptr<Texture> pArrowTexture, const Vector &arrowPoint, ObjectiveArrowDir arrowDir)
 {
     if (!renderer || !pArrowTexture)
         return;

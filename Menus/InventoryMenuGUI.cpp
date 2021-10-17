@@ -380,7 +380,7 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void InventoryMenuGUI::Draw(SDL_Renderer *renderer, const Vector &targetPos) const {
+	void InventoryMenuGUI::Draw(RenderTarget *renderer, const Vector &targetPos) const {
 		Vector drawPos = m_CenterPos - targetPos;
 
 		switch (m_MenuMode) {
@@ -1296,7 +1296,7 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void InventoryMenuGUI::DrawCarouselMode(SDL_Renderer *renderer, const Vector &drawPos) const {
+	void InventoryMenuGUI::DrawCarouselMode(RenderTarget *renderer, const Vector &drawPos) const {
 		// TODO: Use shaders here
 		g_FrameMan.PushRenderTarget(m_CarouselBitmap);
 		SDL_RenderClear(g_FrameMan.GetRenderer());
@@ -1357,7 +1357,7 @@ namespace RTE {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void InventoryMenuGUI::DrawCarouselItemBoxBackground(const CarouselItemBox &itemBoxToDraw) const {
-		auto DrawBox = [](SDL_Renderer *renderer, const Vector &boxTopLeftCorner, const Vector &boxBottomRightCorner, int color, bool roundedLeftSide, bool roundedRightSide) {
+		auto DrawBox = [](RenderTarget *renderer, const Vector &boxTopLeftCorner, const Vector &boxBottomRightCorner, int color, bool roundedLeftSide, bool roundedRightSide) {
 			if (roundedLeftSide) {
 				filledCircleColor(renderer, boxTopLeftCorner.GetFloorIntX() + c_CarouselBoxCornerRadius, boxTopLeftCorner.GetFloorIntY() + c_CarouselBoxCornerRadius, c_CarouselBoxCornerRadius, color);
 				filledCircleColor(renderer, boxTopLeftCorner.GetFloorIntX() + c_CarouselBoxCornerRadius, boxBottomRightCorner.GetFloorIntY() - c_CarouselBoxCornerRadius, c_CarouselBoxCornerRadius, color);
@@ -1415,7 +1415,7 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void InventoryMenuGUI::DrawFullMode(SDL_Renderer *renderer, const Vector &drawPos) const {
+	void InventoryMenuGUI::DrawFullMode(RenderTarget *renderer, const Vector &drawPos) const {
 		m_GUITopLevelBox->SetPositionAbs(drawPos.GetFloorIntX(), drawPos.GetFloorIntY());
 
 		if (IsEnablingOrDisabling()) {

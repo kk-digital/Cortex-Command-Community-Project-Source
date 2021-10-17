@@ -342,7 +342,7 @@ public:
 // Arguments:       The bitmap to draw on.
 // Return value:    None.
 
-    void Draw(SDL_Renderer* renderer) const;
+    void Draw(RenderTarget* renderer) const;
 
 
 

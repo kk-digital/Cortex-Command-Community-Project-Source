@@ -972,7 +972,7 @@ void AssemblyEditorGUI::Update()
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Draws the menu
 
-void AssemblyEditorGUI::Draw(SDL_Renderer* renderer, const Vector &targetPos) const
+void AssemblyEditorGUI::Draw(RenderTarget* renderer, const Vector &targetPos) const
 {
     // Done, so don't draw the UI
     if (m_EditorGUIMode == DONEEDITING)

@@ -1638,7 +1638,7 @@ void Actor::Update()
 // Description:     Draws this Actor's current graphical representation to a
 //                  BITMAP of choice.
 
-void Actor::Draw(SDL_Renderer* renderer,
+void Actor::Draw(RenderTarget* renderer,
                  const Vector &targetPos,
                  DrawMode mode,
                  bool onlyPhysical,
@@ -1655,7 +1655,7 @@ void Actor::Draw(SDL_Renderer* renderer,
 // Description:     Draws this Actor's current graphical HUD overlay representation to a
 //                  BITMAP of choice.
 
-void Actor::DrawHUD(SDL_Renderer* renderer, const Vector &targetPos, int whichScreen, bool playerControlled)
+void Actor::DrawHUD(RenderTarget* renderer, const Vector &targetPos, int whichScreen, bool playerControlled)
 {
 	// This should indeed be a local var and not alter a member one in a draw func! Can cause nasty jittering etc if multiple sim updates are done without a drawing in between etc
     m_HUDStack = -m_CharHeight / 2;

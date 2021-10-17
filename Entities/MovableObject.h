@@ -1596,7 +1596,7 @@ enum MOType
 //                  get drawn etc.
 // Return value:    None.
 
-    virtual void DrawHUD(SDL_Renderer* renderer, const Vector &targetPos = Vector(), int whichScreen = 0, bool playerControlled = false) { return; }
+    virtual void DrawHUD(RenderTarget* renderer, const Vector &targetPos = Vector(), int whichScreen = 0, bool playerControlled = false) { return; }
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Virtual method:  GetRestThreshold

@@ -1066,7 +1066,7 @@ float HDFirearm::EstimateDigStrenght()
 // Description:     Draws this HDFirearm's current graphical representation to a
 //                  BITMAP of choice.
 
-void HDFirearm::Draw(SDL_Renderer* renderer, const Vector &targetPos, DrawMode mode, bool onlyPhysical, int alphaMod) const {
+void HDFirearm::Draw(RenderTarget* renderer, const Vector &targetPos, DrawMode mode, bool onlyPhysical, int alphaMod) const {
     if (m_pFlash && m_FireFrame && !m_pFlash->IsDrawnAfterParent() && mode == g_DrawColor && !onlyPhysical) {
         m_pFlash->Draw(renderer, targetPos, mode, onlyPhysical, alphaMod);
     }
@@ -1093,7 +1093,7 @@ void HDFirearm::Draw(SDL_Renderer* renderer, const Vector &targetPos, DrawMode m
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Draws an aiming aid in front of this HeldDevice.
 
-void HDFirearm::DrawHUD(SDL_Renderer* renderer, const Vector &targetPos, int whichScreen, bool playerControlled)
+void HDFirearm::DrawHUD(RenderTarget* renderer, const Vector &targetPos, int whichScreen, bool playerControlled)
 {
     if (!m_HUDVisible)
         return;

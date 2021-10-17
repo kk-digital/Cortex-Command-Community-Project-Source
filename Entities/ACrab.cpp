@@ -2795,7 +2795,7 @@ void ACrab::Update()
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void ACrab::Draw(SDL_Renderer* renderer, const Vector &targetPos, DrawMode mode, bool onlyPhysical, int alphaMod) const {
+void ACrab::Draw(RenderTarget* renderer, const Vector &targetPos, DrawMode mode, bool onlyPhysical, int alphaMod) const {
     Actor::Draw(renderer, targetPos, mode, onlyPhysical);
 
     if (mode == g_DrawColor && !onlyPhysical && g_SettingsMan.DrawHandAndFootGroupVisualizations()) {
@@ -2818,7 +2818,7 @@ void ACrab::Draw(SDL_Renderer* renderer, const Vector &targetPos, DrawMode mode,
 // Description:     Draws this Actor's current graphical HUD overlay representation to a
 //                  BITMAP of choice.
 
-void ACrab::DrawHUD(SDL_Renderer* renderer, const Vector &targetPos, int whichScreen, bool playerControlled) {
+void ACrab::DrawHUD(RenderTarget* renderer, const Vector &targetPos, int whichScreen, bool playerControlled) {
 	m_HUDStack = -m_CharHeight / 2;
 
     if (!m_HUDVisible)

@@ -553,7 +553,7 @@ struct SLDrawBox
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Draws this SceneLayer's current scrolled position to a bitmap.
 
-void SceneLayer::Draw(SDL_Renderer * renderer, Box& targetBox, const Vector &scrollOverride) const
+void SceneLayer::Draw(RenderTarget * renderer, Box& targetBox, const Vector &scrollOverride) const
 {
 
 	m_pMainTexture->unlock();
@@ -765,7 +765,7 @@ void SceneLayer::Draw(SDL_Renderer * renderer, Box& targetBox, const Vector &scr
 // Description:     Draws this SceneLayer's current scrolled position to a bitmap, but also
 //                  scaled according to what has been set with SetScaleFactor.
 
-void SceneLayer::DrawScaled(SDL_Renderer *renderer, Box &targetBox, const Vector &scrollOverride) const
+void SceneLayer::DrawScaled(RenderTarget *renderer, Box &targetBox, const Vector &scrollOverride) const
 {
     // If no scaling, use the regular scaling routine
     if (m_ScaleFactor.m_X == 1.0 && m_ScaleFactor.m_Y == 1.0)

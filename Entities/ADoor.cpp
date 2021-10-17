@@ -550,7 +550,7 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void ADoor::DrawHUD(SDL_Renderer* renderer, const Vector &targetPos, int whichScreen, bool playerControlled) {
+	void ADoor::DrawHUD(RenderTarget* renderer, const Vector &targetPos, int whichScreen, bool playerControlled) {
 		m_HUDStack = -m_CharHeight / 2;
 
 		if (!m_HUDVisible) {

@@ -1563,7 +1563,7 @@ void MOSRotating::SetWhichMOToNotHit(MovableObject *moToNotHit, float forHowLong
 // Description:     Draws this MOSRotating's current graphical representation to a
 //                  BITMAP of choice.
 
-void MOSRotating::Draw(SDL_Renderer *renderer,
+void MOSRotating::Draw(RenderTarget *renderer,
                        const Vector &targetPos,
                        DrawMode mode,
                        bool onlyPhysical,

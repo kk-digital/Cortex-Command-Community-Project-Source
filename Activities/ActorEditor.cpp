@@ -314,7 +314,7 @@ void ActorEditor::Update()
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Draws the currently active GUI of a screen to a BITMAP of choice.
 
-void ActorEditor::DrawGUI(SDL_Renderer *renderer, const Vector &targetPos, int which)
+void ActorEditor::DrawGUI(RenderTarget *renderer, const Vector &targetPos, int which)
 {
     // Draw the edited actor
     if (m_pEditedActor)
@@ -339,7 +339,7 @@ void ActorEditor::DrawGUI(SDL_Renderer *renderer, const Vector &targetPos, int w
 // Description:     Draws this ActorEditor's current graphical representation to a
 //                  BITMAP of choice. This includes all game-related graphics.
 
-void ActorEditor::Draw(SDL_Renderer *renderer, const Vector &targetPos)
+void ActorEditor::Draw(RenderTarget *renderer, const Vector &targetPos)
 {
     EditorActivity::Draw(renderer, targetPos);
 }

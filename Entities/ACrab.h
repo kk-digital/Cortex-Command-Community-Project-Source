@@ -18,7 +18,7 @@
 #include "LimbPath.h"
 #include "Leg.h"
 
-struct SDL_Renderer;
+struct RenderTarget;
 
 namespace RTE
 {
@@ -461,7 +461,7 @@ int FirearmActivationDelay() const;
 //                  indicator arrows or hovering HUD text and so on.
 // Return value:    None.
 
-	void Draw(SDL_Renderer* renderer, const Vector &targetPos = Vector(), DrawMode mode = g_DrawColor, bool onlyPhysical = false, int alphaMod = 255) const override;
+	void Draw(RenderTarget* renderer, const Vector &targetPos = Vector(), DrawMode mode = g_DrawColor, bool onlyPhysical = false, int alphaMod = 255) const override;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -475,7 +475,7 @@ int FirearmActivationDelay() const;
 //                  get drawn etc.
 // Return value:    None.
 
-	void DrawHUD(SDL_Renderer* renderer, const Vector &targetPos = Vector(), int whichScreen = 0, bool playerControlled = false) override;
+	void DrawHUD(RenderTarget* renderer, const Vector &targetPos = Vector(), int whichScreen = 0, bool playerControlled = false) override;
 
 
 	/// <summary>

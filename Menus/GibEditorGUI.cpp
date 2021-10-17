@@ -703,7 +703,7 @@ void GibEditorGUI::Update()
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Draws the menu
 
-void GibEditorGUI::Draw(SDL_Renderer *renderer, const Vector &targetPos) const
+void GibEditorGUI::Draw(RenderTarget *renderer, const Vector &targetPos) const
 {
     // Done, so don't draw the UI
     if (m_EditorGUIMode == DONEEDITING)

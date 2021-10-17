@@ -389,7 +389,7 @@ ClassInfoGetters;
 //                  indicator arrows or hovering HUD text and so on.
 // Return value:    None.
 
-    void Draw(SDL_Renderer* renderer, const Vector &targetPos = Vector(), DrawMode mode = g_DrawColor, bool onlyPhysical = false, int alphaMod = 255) const override;
+    void Draw(RenderTarget* renderer, const Vector &targetPos = Vector(), DrawMode mode = g_DrawColor, bool onlyPhysical = false, int alphaMod = 255) const override;
 
     /// <summary>
     /// Draws this Arm's hand's graphical representation to a BITMAP of choice.
@@ -397,7 +397,7 @@ ClassInfoGetters;
     /// <param name="targetBitmap">A pointer to a BITMAP to draw on.</param>
     /// <param name="targetPos">The absolute position of the target bitmap's upper left corner in the Scene.</param>
     /// <param name="mode">Which mode to draw in. See the DrawMode enumeration for available modes.</param>
-	void DrawHand(SDL_Renderer* renderer, const Vector &targetPos = Vector(), DrawMode mode = g_DrawColor) const;
+	void DrawHand(RenderTarget* renderer, const Vector &targetPos = Vector(), DrawMode mode = g_DrawColor) const;
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Protected member variable and method declarations
