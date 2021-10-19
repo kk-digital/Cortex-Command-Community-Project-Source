@@ -1,0 +1,42 @@
+* TODO Rendering backend [0/7]
+** PROG Replace SDLTexture
+   - State "PROG"       from "TODO"       [2021-10-19 Di 20:11]
+** PROG Implement FrameMan with the new OGL stuff
+   - State "PROG"       from "TODO"       [2021-10-19 Di 20:11]
+** PROG Implement RenderTextures
+   - State "PROG"       from "TODO"       [2021-10-19 Di 20:12]
+   need to implement framebuffer textures, and add them to SceneLayer(?)
+** TODO Add Texture blitting
+** TODO Unload scene from gpu on activity reset/change
+** TODO Add SLTerrain to scene blit
+** TODO Remove RenderLayer
+   it bad
+
+* PROJ Input backend [0/2]
+** TODO Finish UInputMan implementation
+** TODO Add all platform gamepad hotplug
+
+* PROJ GUI backend [0/4]
+** TODO Implement RMLUi
+   (librocket-rmlui subbranch)
+*** TODO Recreate all GUIs in rml
+    maybe create a hacked together editor for that.
+** TODO Implemnt gib editor zoom
+** TODO recheck editor implementations
+** TODO Loading screen text box
+
+* PROJ Performance [0/6]
+** TODO Fix Collisions
+** TODO Fix AtomGroup performance degradation
+** TODO Fix particles destroying performance
+** TODO Fix scene load performance
+   Should be handled by returning to indexed pixelformat
+** TODO Fix ADoor material drawing
+   should at least be doable with new backend now
+*** TODO may need to implement surface floodfill
+
+* SOMEDAY Multiplayer [0/1]
+** TODO remove will come back eventually
+
+* SOMEDAY Cross platform testing [0/0]
+  Currently is only (barely even) tested on linux! (and only proved working on 1 machine)
