@@ -15,6 +15,8 @@ namespace RTE {
 		void operator()(SDL_Surface *p);
 	};
 
+	class Palette;
+
 	class Surface {
 		friend class ContentFile;
 	public:
@@ -36,7 +38,7 @@ namespace RTE {
 		/// <returns>
 		/// True if successful.
 		/// </returns>
-		virtual bool Create(int width, int height, uint32_t format);
+		virtual bool Create(int width, int height, BitDepth format);
 
 		/// <summary>
 		/// Returns the stored SDL_Surface. Ownership is not transferred.
@@ -70,12 +72,14 @@ namespace RTE {
 
 		void blitColor(Surface& target, uint32_t color, int x, int y, double angle=0, float scaleX=1.0f, float scaleY=1.0f) const;
 
-	private:
+	protected:
 		int m_Width;
 		int m_Height;
 		int m_BPP;
+
+	private:
 		std::unique_ptr<SDL_Surface, sdl_surface_deleter> m_Pixels;
-		std::vector<unsigned long> m_Palette;
+		std::shared_ptr<Palette> m_Palette;
 	};
 
 }

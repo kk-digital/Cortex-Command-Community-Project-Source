@@ -4,10 +4,6 @@
 #include "BlendMode.h"
 #include "Surface.h"
 
-extern "C" {
-struct SDL_Surface;
-}
-
 namespace RTE {
 	class Shader;
 	enum class Shading {

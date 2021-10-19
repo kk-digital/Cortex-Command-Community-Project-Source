@@ -31,6 +31,9 @@ namespace RTE {
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_INT, nullptr);
+		m_Width = width;
+		m_Height = height;
+		m_BPP = 32;
 		return true;
 	}
 
