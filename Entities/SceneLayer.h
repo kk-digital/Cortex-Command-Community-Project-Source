@@ -502,8 +502,8 @@ protected:
 
     ContentFile m_TextureFile;
 
-	std::shared_ptr<GLTexture> m_pMainTexture;
-	std::shared_ptr<VertexArray> m_SceneVertices;
+	std::shared_ptr<GLTexture> m_pMainTexture; //!< Image texture of this layer.
+	std::shared_ptr<VertexArray> m_SceneVertices; //!< Vertices of this scenelayer, used for wrapping.
 
     bool m_DrawTrans;
     Vector m_Offset;
