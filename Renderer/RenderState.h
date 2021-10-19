@@ -9,17 +9,17 @@ namespace RTE {
 	struct RenderState{
 	public:
 		RenderState();
-		RenderState(GLTexture* texture, glm::mat4 modelTransform, std::shared_ptr<Shader> shader, BlendMode blendMode, glm::vec4 colorMod);
+		RenderState(std::shared_ptr<GLTexture> texture, glm::mat4 modelTransform, std::shared_ptr<Shader> shader, BlendMode blendMode, glm::vec4 colorMod);
 
 		RenderState(glm::vec4 color, std::shared_ptr<VertexArray> vertexArray, glm::mat4 modelTransform);
 
-		std::shared_ptr<VertexArray> m_Vertices;
-		GLTexture* m_Texture;
 		glm::vec4 m_Color;
 		glm::mat4 m_ModelTransform;
 		BlendMode m_BlendMode;
 		PrimitiveType m_PrimitiveType;
 		std::shared_ptr<Shader> m_Shader;
+		std::shared_ptr<VertexArray> m_Vertices; //!< Vertices to draw.
+		std::shared_ptr<GLTexture> m_Texture; //!< Texture to draw.
 	};
 
 }
