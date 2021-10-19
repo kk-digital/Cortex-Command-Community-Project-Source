@@ -9,6 +9,8 @@ namespace RTE {
 		Palette(const std::array<glm::u8vec4, PALETTESIZE> &data);
 		~Palette();
 
+		unsigned int GetTextureID() { return m_Texture; }
+
 		SDL_Palette *GetAsPalette();
 
 	private:
