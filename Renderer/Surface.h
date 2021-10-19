@@ -38,7 +38,7 @@ namespace RTE {
 		/// <returns>
 		/// True if successful.
 		/// </returns>
-		virtual bool Create(int width, int height, BitDepth format);
+		virtual bool Create(int width, int height, BitDepth format, std::optional<std::shared_ptr<Palette>> palette = std::nullopt);
 
 		/// <summary>
 		/// Returns the stored SDL_Surface. Ownership is not transferred.

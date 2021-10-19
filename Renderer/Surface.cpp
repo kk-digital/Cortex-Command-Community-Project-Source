@@ -1,7 +1,6 @@
 #include "Surface.h"
 #include <SDL2/SDL.h>
 #include "GLPalette.h"
-#include "FrameMan.h"
 
 namespace RTE {
 	Surface::Surface() :
@@ -13,7 +12,7 @@ namespace RTE {
 
 	Surface::~Surface() = default;
 
-	bool Surface::Create(int width, int height, BitDepth format) {
+	bool Surface::Create(int width, int height, BitDepth format, std::optional<std::shared_ptr<Palette>> palette) {
 		uint32_t sdlFormat = (format == BitDepth::Indexed8) ? SDL_PIXELFORMAT_INDEX8 : SDL_PIXELFORMAT_RGBA32;
 		m_Pixels = std::unique_ptr<SDL_Surface, sdl_surface_deleter>(SDL_CreateRGBSurfaceWithFormat(0, width, height, SDL_BITSPERPIXEL(sdlFormat), sdlFormat));
 
@@ -21,7 +20,10 @@ namespace RTE {
 		m_Height = height;
 		m_BPP = SDL_BITSPERPIXEL(sdlFormat);
 		if (m_BPP == 8) {
-			m_Palette = g_FrameMan.GetDefaultPalette();
+			if (palette)
+				m_Palette = *palette;
+			else
+				m_Palette = std::make_shared<Palette>(std::array<glm::u8vec4, Palette::PALETTESIZE>());
 			SDL_SetSurfacePalette(m_Pixels.get(), m_Palette->GetAsPalette());
 		}
 		return m_Pixels.get();
