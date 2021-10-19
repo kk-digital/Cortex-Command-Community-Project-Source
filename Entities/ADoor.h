@@ -4,7 +4,7 @@
 #include "Actor.h"
 #include "ADSensor.h"
 
-struct RenderTarget;
+
 
 namespace RTE {
 

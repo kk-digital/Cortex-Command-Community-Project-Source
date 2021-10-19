@@ -4,7 +4,7 @@
 #include "Icon.h"
 #include "Controller.h"
 
-struct RenderTarget;
+
 namespace RTE {
 
 	class Scene;

@@ -17,7 +17,7 @@
 #include "Vector.h"
 #include "Controller.h"
 
-struct RenderTarget;
+
 struct SDL_Texture;
 
 

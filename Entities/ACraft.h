@@ -17,7 +17,7 @@
 #include "Actor.h"
 #include "LimbPath.h"
 
-struct RenderTarget;
+
 
 namespace RTE
 {

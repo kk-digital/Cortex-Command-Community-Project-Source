@@ -30,6 +30,7 @@ class Actor;
 
 namespace RTE
 {
+class RenderTarget;
 
 
 #pragma region Global Macro Definitions

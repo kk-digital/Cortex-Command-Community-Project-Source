@@ -22,7 +22,7 @@
 
 #define g_MovableMan MovableMan::Instance()
 
-struct RenderTarget;
+
 
 namespace RTE
 {

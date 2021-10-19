@@ -19,7 +19,7 @@
 #include "ActivityMan.h"
 #include "Atom.h"
 
-struct RenderTarget;
+
 
 namespace RTE
 {

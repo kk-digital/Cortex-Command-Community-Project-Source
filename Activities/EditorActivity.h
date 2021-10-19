@@ -19,7 +19,7 @@
 #include "ActivityMan.h"
 #include "PostProcessMan.h"
 
-struct RenderTarget;
+
 namespace RTE
 {
 
@@ -34,6 +34,7 @@ class GUIButton;
 class GUILabel;
 class GUIComboBox;
 
+class RenderTarget;
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Class:           EditorActivity

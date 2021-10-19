@@ -3,7 +3,7 @@
 
 #include "ThrownDevice.h"
 
-struct RenderTarget;
+
 namespace RTE {
 
 	/// <summary>

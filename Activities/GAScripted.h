@@ -18,12 +18,11 @@
 #include "GlobalScript.h"
 #include "Box.h"
 
-struct RenderTarget;
+
 namespace RTE
 {
 
 class Actor;
-
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Class:           GAScripted

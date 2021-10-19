@@ -18,7 +18,6 @@
 #include "EditorActivity.h"
 #include "BunkerAssembly.h"
 
-struct RenderTarget;
 namespace RTE
 {
 

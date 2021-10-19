@@ -17,8 +17,6 @@
 #include "MovableObject.h"
 #include "Box.h"
 
-struct RenderTarget;
-
 namespace RTE
 {
 

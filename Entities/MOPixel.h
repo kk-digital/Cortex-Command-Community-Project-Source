@@ -3,7 +3,7 @@
 
 #include "MovableObject.h"
 
-struct RenderTarget;
+
 
 namespace RTE {
 

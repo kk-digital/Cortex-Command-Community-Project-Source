@@ -3,7 +3,7 @@
 
 #include "MOSprite.h"
 
-struct RenderTarget;
+
 
 namespace RTE {
 

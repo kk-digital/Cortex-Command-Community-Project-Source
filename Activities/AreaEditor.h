@@ -17,7 +17,6 @@
 #include "RTETools.h"
 #include "EditorActivity.h"
 
-struct RenderTarget;
 namespace RTE
 {
 
@@ -32,7 +31,6 @@ class GUITextBox;
 class GUIButton;
 class GUILabel;
 class GUIComboBox;
-
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Class:           AreaEditor

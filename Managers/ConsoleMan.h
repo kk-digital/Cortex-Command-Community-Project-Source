@@ -5,7 +5,7 @@
 
 #define g_ConsoleMan ConsoleMan::Instance()
 
-struct RenderTarget;
+
 
 namespace RTE {
 

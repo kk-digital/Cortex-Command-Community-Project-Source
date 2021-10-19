@@ -18,7 +18,7 @@
 #include "LimbPath.h"
 #include "Leg.h"
 
-struct RenderTarget;
+
 
 namespace RTE
 {

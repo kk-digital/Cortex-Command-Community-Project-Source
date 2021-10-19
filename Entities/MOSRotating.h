@@ -20,7 +20,7 @@
 #include "SoundContainer.h"
 #include "SDLTexture.h"
 
-struct RenderTarget;
+
 namespace RTE
 {
 

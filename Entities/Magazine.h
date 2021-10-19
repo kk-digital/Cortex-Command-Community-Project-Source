@@ -17,7 +17,7 @@
 #include "Attachable.h"
 #include "Round.h"
 
-struct RenderTarget;
+
 
 namespace RTE {
 

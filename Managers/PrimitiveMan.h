@@ -6,7 +6,7 @@
 
 #define g_PrimitiveMan PrimitiveMan::Instance()
 
-struct RenderTarget;
+
 
 namespace RTE {
 

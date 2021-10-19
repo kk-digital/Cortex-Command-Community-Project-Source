@@ -18,7 +18,6 @@
 #include "GameActivity.h"
 #include "Box.h"
 
-struct RenderTarget;
 struct SDL_Texture;
 
 namespace RTE

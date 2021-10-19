@@ -17,7 +17,6 @@
 #include "RTETools.h"
 #include "EditorActivity.h"
 
-struct RenderTarget;
 namespace RTE
 {
 

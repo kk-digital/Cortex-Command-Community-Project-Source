@@ -18,7 +18,7 @@
 #include "Emission.h"
 #include "SoundContainer.h"
 
-struct RenderTarget;
+
 
 namespace RTE
 {

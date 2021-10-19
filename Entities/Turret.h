@@ -3,7 +3,7 @@
 
 #include "Attachable.h"
 
-struct RenderTarget;
+
 
 namespace RTE {
 

@@ -16,7 +16,7 @@
 
 #include "HeldDevice.h"
 
-struct RenderTarget;
+
 
 namespace RTE
 {

@@ -17,7 +17,7 @@
 #include "Attachable.h"
 #include "Emission.h"
 
-struct RenderTarget;
+
 namespace RTE
 {
 

@@ -36,7 +36,7 @@ class BuyMenuGUI;
 class SceneEditorGUI;
 class GUIBanner;
 class Loadout;
-
+class RenderTarget;
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Class:           GameActivity

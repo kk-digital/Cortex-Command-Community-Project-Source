@@ -18,7 +18,7 @@
 #include "Actor.h"
 #include "PieMenuGUI.h"
 
-struct RenderTarget;
+
 
 namespace RTE
 {

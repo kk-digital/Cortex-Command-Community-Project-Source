@@ -13,7 +13,7 @@
 
 #define g_FrameMan FrameMan::Instance()
 
-struct RenderTarget;
+
 struct SDL_Window;
 
 namespace RTE {

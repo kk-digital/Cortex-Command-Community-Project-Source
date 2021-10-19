@@ -20,12 +20,11 @@
 
 #include "System/SDLTexture.h"
 
-struct RenderTarget;
 namespace RTE
 {
 
 class ContentFile;
-
+class RenderTarget;
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Class:           SceneLayer

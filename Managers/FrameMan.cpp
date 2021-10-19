@@ -29,6 +29,7 @@
 #include "System/RTEError.h"
 
 #include "System/SDLHelper.h"
+#include "GraphicalPrimitive.h"
 #include "SDL2_gfxPrimitives.h"
 
 #include "GL/glew.h"
@@ -278,10 +279,10 @@ namespace RTE {
 			// Get only the scene-relative post effects that affect this
 			// player's screen
 			if (pActivity) {
-				g_PostProcessMan.GetPostScreenEffectsWrapped(targetPos, renderSize.w, renderSize.h,
+				g_PostProcessMan.GetPostScreenEffectsWrapped(targetPos, renderSize.x, renderSize.y,
 				    screenRelativeEffects, pActivity->GetTeamOfPlayer(pActivity->PlayerOfScreen(playerScreen)));
 
-				g_PostProcessMan.GetGlowAreasWrapped(targetPos, renderSize.w, renderSize.h, screenRelativeGlowBoxes);
+				g_PostProcessMan.GetGlowAreasWrapped(targetPos, renderSize.x, renderSize.y, screenRelativeGlowBoxes);
 
 #ifdef NETWORK_ENBALED
 				if (IsInMultiplayerMode()) {
@@ -303,33 +304,31 @@ namespace RTE {
 				UpdateScreenOffsetForSplitScreen(playerScreen, screenOffset);
 			}
 
-			DrawScreenFlash(playerScreen, m_Renderer);
+			DrawScreenFlash(playerScreen, renderer);
 
-			if (screenCount > 1)
-				PopRenderTarget();
 			if (!IsInMultiplayerMode()) {
 				if (m_PlayerScreen)
-					m_PlayerScreen->render(m_Renderer, screenOffset.GetFloorIntX(), screenOffset.GetFloorIntY());
+					m_PlayerScreen->GetAsTexture()->render(m_Renderer.get(), screenOffset.GetFloorIntX(), screenOffset.GetFloorIntY());
 
-				g_PostProcessMan.AdjustEffectsPosToPlayerScreen(playerScreen, renderSize.w, renderSize.h, screenOffset, screenRelativeEffects, screenRelativeGlowBoxes);
+				g_PostProcessMan.AdjustEffectsPosToPlayerScreen(playerScreen, renderSize.x, renderSize.y, screenOffset, screenRelativeEffects, screenRelativeGlowBoxes);
 			}
 		}
 
 		// Clears the pixels that have been revealed from the unseen layers
 		g_SceneMan.ClearSeenPixels();
 
-		SDL_Rect renderSize;
-		SDL_RenderGetLogicalSize(m_Renderer, &renderSize.w, &renderSize.h);
+		glm::vec2 renderSize = m_Renderer->GetSize();
 
 		if (!IsInMultiplayerMode()) {
 			// Draw separating lines for split-screens
 			if (m_HSplit) {
-				hlineColor(m_Renderer, 0, (renderSize.h / 2) - 1, renderSize.w - 1, g_BlackColor);
-				hlineColor(m_Renderer, 0, (renderSize.h / 2), renderSize.w - 1, g_BlackColor);
+				LinePrimitive().Draw(, const Vector &targetPos)
+				hlineColor(m_Renderer, 0, (renderSize.y / 2) - 1, renderSize.x - 1, g_BlackColor);
+				hlineColor(m_Renderer, 0, (renderSize.y / 2), renderSize.x - 1, g_BlackColor);
 			}
 			if (m_VSplit) {
-				vlineColor(m_Renderer, (renderSize.w / 2) - 1, 0, renderSize.h - 1, g_BlackColor);
-				vlineColor(m_Renderer, (renderSize.w / 2), 0, renderSize.h - 1, g_BlackColor);
+				vlineColor(m_Renderer, (renderSize.x / 2) - 1, 0, renderSize.y - 1, g_BlackColor);
+				vlineColor(m_Renderer, (renderSize.x / 2), 0, renderSize.y - 1, g_BlackColor);
 			}
 #ifdef NETWORK_ENABLED
 			// Replace 8 bit backbuffer contents with network received image
