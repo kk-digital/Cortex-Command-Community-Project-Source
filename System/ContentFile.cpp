@@ -218,12 +218,7 @@ namespace RTE {
 		// TODO: Use stbi for this instead of SDL_img (SDL_img may cause problems; stbi is generally the goto for this)
 		std::unique_ptr<SDL_Surface, sdl_surface_deleter> tempSurfacePreKey{IMG_Load(dataPathToLoad.c_str())};
 
-		RTEAssert(
-		    tempSurfacePreKey.get(),
-		    "Failed to load image file with following path and name:\n\n" +
-		        m_DataPathAndReaderPosition +
-		        "\nThe file may be corrupt, incorrectly converted or saved with unsupported parameters.\n" +
-		        IMG_GetError());
+		RTEAssert(tempSurfacePreKey.get(), "Failed to load image file with following path and name:\n\n" + m_DataPathAndReaderPosition + "\nThe file may be corrupt, incorrectly converted or saved with unsupported parameters.\n" + SDL_GetError());
 
 		// Set the colorkey of tempSurface for transparency
 		Uint32 colorKey{SDL_MapRGB(tempSurfacePreKey->format, 255, 0, 255)};
@@ -251,6 +246,7 @@ namespace RTE {
 				SDL_FreeFormat(globalFmt);
 			}
 			returnTexture->m_BPP = 8;
+			returnTexture->m_Palette = g_FrameMan.GetDefaultPalette();
 			returnTexture->m_ShaderBase = g_FrameMan.GetTextureShader(BitDepth::Indexed8);
 			returnTexture->m_ShaderFill = g_FrameMan.GetTextureShaderFill(BitDepth::Indexed8);
 		}
