@@ -4,7 +4,7 @@
 #include "ContentFile.h"
 #include "Constants.h"
 
-#include "System/SDLTexture.h"
+#include "Renderer/GLTexture.h"
 
 //struct DATAFILE; // DataFile loading not implemented.
 

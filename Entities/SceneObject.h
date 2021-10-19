@@ -16,7 +16,7 @@
 
 #include "Entity.h"
 #include "Matrix.h"
-#include "System/SDLTexture.h"
+#include "Renderer/GLTexture.h"
 
 
 namespace RTE

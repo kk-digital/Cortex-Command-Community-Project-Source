@@ -5,7 +5,7 @@
 #include "Box.h"
 #include "SceneMan.h"
 
-#include "System/SDLTexture.h"
+#include "Renderer/GLTexture.h"
 
 #define g_PostProcessMan PostProcessMan::Instance()
 

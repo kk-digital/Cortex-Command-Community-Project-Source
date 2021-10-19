@@ -15,7 +15,7 @@
 // Inclusions of header files
 
 #include "Attachable.h"
-#include "System/SDLTexture.h"
+#include "Renderer/GLTexture.h"
 
 namespace RTE
 {

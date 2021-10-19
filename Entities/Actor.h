@@ -16,7 +16,7 @@
 
 #include "MOSRotating.h"
 #include "PieMenuGUI.h"
-#include "System/SDLTexture.h"
+#include "Renderer/GLTexture.h"
 
 namespace RTE
 {

@@ -19,7 +19,7 @@
 #include "Controller.h"
 #include "Loadout.h"
 
-#include "System/SDLTexture.h"
+#include "Renderer/GLTexture.h"
 
 namespace RTE
 {

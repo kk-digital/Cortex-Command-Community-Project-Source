@@ -4,7 +4,7 @@
 #include "Controller.h"
 
 
-#include "System/SDLTexture.h"
+#include "Renderer/GLTexture.h"
 
 namespace RTE {
 

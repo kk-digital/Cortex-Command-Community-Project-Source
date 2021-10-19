@@ -23,7 +23,7 @@
 #include "Managers/SceneMan.h"
 #include "Managers/MovableMan.h"
 
-#include "System/SDLTexture.h"
+#include "Renderer/GLTexture.h"
 
 
 class Actor;

@@ -3,7 +3,7 @@
 
 #include "Serializable.h"
 #include "Icon.h"
-#include "SDLTexture.h"
+#include "GLTexture.h"
 
 namespace RTE {
 

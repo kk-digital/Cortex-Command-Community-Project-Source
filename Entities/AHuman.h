@@ -18,7 +18,7 @@
 #include "Arm.h"
 #include "Leg.h"
 #include "LimbPath.h"
-#include "System/SDLTexture.h"
+#include "Renderer/GLTexture.h"
 
 namespace RTE
 {

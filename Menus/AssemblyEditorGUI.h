@@ -22,7 +22,7 @@
 #include "Controller.h"
 #include "PieSlice.h"
 
-#include "System/SDLTexture.h"
+#include "Renderer/GLTexture.h"
 
 namespace RTE
 {

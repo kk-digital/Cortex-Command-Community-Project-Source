@@ -4,7 +4,7 @@
 #include "Entity.h"
 #include "ContentFile.h"
 
-#include "System/SDLTexture.h"
+#include "Renderer/GLTexture.h"
 
 namespace RTE {
 

@@ -2,7 +2,7 @@
 #define _RTELOADINGSCREEN_
 
 #include "Singleton.h"
-#include "SDLTexture.h"
+#include "Renderer/GLTexture.h"
 
 #define g_LoadingScreen LoadingScreen::Instance()
 

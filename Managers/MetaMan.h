@@ -29,7 +29,7 @@
 #include "Icon.h"
 #include "GUIBanner.h"
 
-#include "System/SDLTexture.h"
+#include "Renderer/GLTexture.h"
 
 namespace RTE
 {

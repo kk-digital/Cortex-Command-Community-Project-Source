@@ -22,7 +22,7 @@
 #include "Deployment.h"
 //#include "MovableMan.h"
 
-#include "System/SDLTexture.h"
+#include "Renderer/GLTexture.h"
 
 namespace RTE
 {

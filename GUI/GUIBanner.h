@@ -10,7 +10,7 @@
 //                  data@datarealms.com
 //                  http://www.datarealms.com
 
-#include "System/SDLTexture.h"
+#include "Renderer/GLTexture.h"
 #include "Vector.h"
 #include "Timer.h"
 

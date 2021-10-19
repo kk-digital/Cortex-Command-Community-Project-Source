@@ -17,14 +17,14 @@
 #include "Entity.h"
 #include "Box.h"
 #include "SceneMan.h"
-
-#include "System/SDLTexture.h"
+#include "Renderer/GLTexture.h"
 
 namespace RTE
 {
 
 class ContentFile;
 class RenderTarget;
+class VertexArray;
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Class:           SceneLayer
@@ -218,7 +218,7 @@ ClassInfoGetters;
 // Arguments:       None.
 // Return value:    A pointer to the BITMAP object. Ownership is NOT transferred!
 
-	std::shared_ptr<Texture> GetTexture() { return m_pMainTexture; }
+	SharedTexture GetTexture() { return m_pMainTexture; }
 
 	size_t GetTextureHash() const { return m_TextureFile.GetHash(); }
 
@@ -329,7 +329,7 @@ ClassInfoGetters;
 // Arguments:       None.
 // Return value:    None.
 
-    virtual void LockTexture() { m_pMainTexture->lock(); }
+    virtual void LockTexture() { }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -354,7 +354,7 @@ ClassInfoGetters;
 	// Arguments:       The X and Y coordinates of which pixel to get.
 	// Return value:    An unsigned char specifying the requested pixel's value.
 
-    uint32_t GetPixel(const int pixelX, const int pixelY) {return m_pMainTexture->getPixel(pixelX, pixelY);}
+    uint32_t GetPixel(const int pixelX, const int pixelY) {return m_pMainTexture->GetPixel(pixelX, pixelY);}
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -368,7 +368,7 @@ ClassInfoGetters;
 // Return value:    None.
 
     void SetPixel(const int pixelX, const int pixelY, const uint32_t value){
-		m_pMainTexture->setPixel(pixelX, pixelY, value);
+		m_pMainTexture->SetPixel(pixelX, pixelY, {(value>>24)&0xff, (value>>16)&0xff, (value>>8)&0xff, (value)&0xff});
 	}
 
 
@@ -502,7 +502,8 @@ protected:
 
     ContentFile m_TextureFile;
 
-	std::shared_ptr<Texture> m_pMainTexture;
+	std::shared_ptr<GLTexture> m_pMainTexture;
+	std::shared_ptr<VertexArray> m_SceneVertices;
 
     bool m_DrawTrans;
     Vector m_Offset;

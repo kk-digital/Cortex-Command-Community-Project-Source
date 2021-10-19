@@ -18,7 +18,7 @@
 #include "Gib.h"
 #include "PostProcessMan.h"
 #include "SoundContainer.h"
-#include "SDLTexture.h"
+#include "Renderer/GLTexture.h"
 
 
 namespace RTE

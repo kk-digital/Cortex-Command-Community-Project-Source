@@ -82,7 +82,7 @@ int SceneLayer::Create(ContentFile textureFile,
     m_TextureFile = textureFile;
 
 	// Load the Texture file from disk requesting streaming access
-	m_pMainTexture = m_TextureFile.GetAsTexture(false, "", true);
+	m_pMainTexture = m_TextureFile.GetAsTexture();
 	RTEAssert(m_pMainTexture.get(), "Failed to load SDL_Texture in SceneLayer::Create");
 
 	Create(m_pMainTexture, drawTrans, offset, wrapX, wrapY, scrollInfo);
@@ -109,9 +109,7 @@ int SceneLayer::Create(ContentFile textureFile,
 
 	RTEAssert(texture.get(), "Null bitmap passed in when creating SceneLayer");
 
-	RTEAssert(texture->getAccess() == SDL_TEXTUREACCESS_STREAMING,
-		      "Non streaming access texture passed in when creating SceneLayer")
-		m_pMainTexture = std::move(texture);
+	m_pMainTexture = std::move(texture);
 
     m_DrawTrans = drawTrans;
     m_Offset = offset;
@@ -151,20 +149,20 @@ int SceneLayer::Create(ContentFile textureFile,
     // Sampled color at the edges of the layer that can be used to fill gap if the layer isn't large enough to cover a target bitmap
 	m_FillLeftColor =
 		m_WrapX ? g_AlphaZero
-		        : m_pMainTexture->getPixel(0, (m_pMainTexture->getH() / 2));
+		        : m_pMainTexture->GetPixel(0, (m_pMainTexture->getH() / 2));
 
 	m_FillRightColor =
 		m_WrapX ? g_AlphaZero
-		        : m_pMainTexture->getPixel(m_pMainTexture->getW() - 1,
+		        : m_pMainTexture->GetPixel(m_pMainTexture->getW() - 1,
 		                                   (m_pMainTexture->getH() / 2));
 
 	m_FillUpColor =
 		m_WrapY ? g_AlphaZero
-		        : m_pMainTexture->getPixel((m_pMainTexture->getW() / 2) - 1, 0);
+		        : m_pMainTexture->GetPixel((m_pMainTexture->getW() / 2) - 1, 0);
 
 	m_FillDownColor =
 		m_WrapY ? g_AlphaZero
-		        : m_pMainTexture->getPixel((m_pMainTexture->getW() / 2) - 1,
+		        : m_pMainTexture->GetPixel((m_pMainTexture->getW() / 2) - 1,
 		                                   m_pMainTexture->getH() - 1);
 
 	return 0;
@@ -186,7 +184,7 @@ int SceneLayer::Create(const SceneLayer &reference)
     // Deep copy the bitmap
     if (reference.m_pMainTexture)
     {
-		m_pMainTexture = std::make_shared<Texture>(g_FrameMan.GetRenderer(), *reference.m_pMainTexture);
+		m_pMainTexture = std::make_shared<GLTexture>(g_FrameMan.GetRenderer(), *reference.m_pMainTexture);
     }
     // If no bitmap to copy, has to load the data (LoadData) to create this in the copied to SL
     m_DrawTrans = reference.m_DrawTrans;

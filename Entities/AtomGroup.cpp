@@ -6,7 +6,7 @@
 #include "SceneMan.h"
 #include "Managers/FrameMan.h"
 
-#include "System/SDLTexture.h"
+#include "Renderer/GLTexture.h"
 #include "System/RTESurface.h"
 #include "System/SDLHelper.h"
 #include "SDL2_gfxPrimitives.h"

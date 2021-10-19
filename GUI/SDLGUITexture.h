@@ -3,7 +3,7 @@
 
 #include "GUIInterface.h"
 #include "System/ContentFile.h"
-#include "System/SDLTexture.h"
+#include "Renderer/GLTexture.h"
 
 namespace RTE {
 	class SDLGUITexture : public GUIBitmap {

@@ -19,7 +19,7 @@
 #include "ActivityMan.h"
 #include "Scene.h"
 #include "Actor.h"
-#include "System/SDLTexture.h"
+#include "Renderer/GLTexture.h"
 
 
 namespace RTE

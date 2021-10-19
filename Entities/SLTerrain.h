@@ -19,7 +19,7 @@
 #include "Box.h"
 #include "Material.h"
 
-#include "System/SDLTexture.h"
+#include "Renderer/GLTexture.h"
 
 namespace RTE
 {

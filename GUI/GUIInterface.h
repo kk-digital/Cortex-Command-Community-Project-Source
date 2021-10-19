@@ -3,7 +3,7 @@
 
 // Header file for abstract classes used by the GUI library.
 
-#include "System/SDLTexture.h"
+#include "Renderer/GLTexture.h"
 struct GUIRect;
 namespace RTE {
 

@@ -9,6 +9,7 @@ namespace RTE {
 
 	class Scene;
 	class Actor;
+	class RenderTarget;
 
 	/// <summary>
 	/// Base class for all Activities, including game modes and editors.

@@ -21,7 +21,7 @@
 
 #include "ActivityMan.h"
 
-#include "System/SDLTexture.h"
+#include "Renderer/GLTexture.h"
 
 #define g_SceneMan SceneMan::Instance()
 

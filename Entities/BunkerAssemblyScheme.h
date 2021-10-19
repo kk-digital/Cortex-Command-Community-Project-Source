@@ -17,7 +17,7 @@
 #include "SceneObject.h"
 #include "SceneMan.h"
 
-#include "System/SDLTexture.h"
+#include "Renderer/GLTexture.h"
 
 #define ICON_WIDTH 69
 #define AREA_PER_DEPLOYMENT 64

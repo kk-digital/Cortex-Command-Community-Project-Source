@@ -6,8 +6,8 @@
 
 namespace RTE {
 
-	class Texture;
-	typedef std::shared_ptr<Texture> SharedTexture;
+	class GLTexture;
+	typedef std::shared_ptr<GLTexture> SharedTexture;
 	class InputScheme;
 	class GUIControlManager;
 	class GUICollectionBox;
