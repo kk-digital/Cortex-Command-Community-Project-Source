@@ -1,4 +1,4 @@
-* TODO Rendering backend [0/8]
+* TODO Rendering backend [0/9]
 ** PROG Replace SDLTexture
    - State "PROG"       from "TODO"       [2021-10-19 Di 20:11]
 ** PROG Implement FrameMan with the new OGL stuff
@@ -6,13 +6,14 @@
 ** PROG Implement RenderTextures
    - State "PROG"       from "TODO"       [2021-10-19 Di 20:12]
    need to implement framebuffer textures, and add them to SceneLayer(?)
-** TODO Add Texture blitting
-** TODO Unload scene from gpu on activity reset/change
-** TODO Add SLTerrain to scene blit
 ** TODO Remove RenderLayer
    it bad
+** TODO Add Texture blitting
+** TODO Add SLTerrain to scene blit
 ** TODO Implement view based camera
    This should infinitely simplify drawing
+*** TODO Implement scene wrapping
+** TODO Unload scene from gpu on activity reset/change
 * PROJ Input backend [0/2]
 ** TODO Finish UInputMan implementation
 ** TODO Add all platform gamepad hotplug
