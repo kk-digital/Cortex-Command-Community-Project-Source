@@ -10,7 +10,9 @@ namespace RTE {
 		VertexArray();
 		~VertexArray();
 
-		VertexArray(const std::vector<Vertex>& vertices);
+		VertexArray(const std::vector<Vertex>& vertices, bool updateable = false);
+
+		void Create(const std::vector<Vertex>& vertices, bool updateable = false);
 
 		void Bind();
 
@@ -18,11 +20,16 @@ namespace RTE {
 
 		size_t GetVertexCount() { return m_Vertices.size();}
 
+		void AddVertex();
+		void ResetVertices();
+		void Update();
+
 	private:
 		friend class RenderTarget;
 		unsigned int m_VAO;
 		unsigned int m_VBO;
 		std::vector<Vertex> m_Vertices;
+		bool m_StaticDraw;
 	};
 }
 #endif
