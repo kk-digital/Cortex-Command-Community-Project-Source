@@ -1,4 +1,4 @@
-* TODO Rendering backend [0/7]
+* TODO Rendering backend [0/8]
 ** PROG Replace SDLTexture
    - State "PROG"       from "TODO"       [2021-10-19 Di 20:11]
 ** PROG Implement FrameMan with the new OGL stuff
@@ -11,7 +11,8 @@
 ** TODO Add SLTerrain to scene blit
 ** TODO Remove RenderLayer
    it bad
-
+** TODO Implement view based camera
+   This should infinitely simplify drawing
 * PROJ Input backend [0/2]
 ** TODO Finish UInputMan implementation
 ** TODO Add all platform gamepad hotplug
