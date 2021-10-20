@@ -494,13 +494,13 @@ namespace RTE {
 			if (m_IntroSequenceState >= IntroSequence::GameLogoAppear) { DrawGameLogo(); }
 
 			if (m_IntroSequenceState >= IntroSequence::DataRealmsLogoFadeIn && m_IntroSequenceState <= IntroSequence::DataRealmsLogoFadeOut) {
-				m_DataRealmsLogo->render(g_FrameMan.GetRenderer(), (g_FrameMan.GetResX() - m_DataRealmsLogo->getW()) / 2, (g_FrameMan.GetResY() - m_DataRealmsLogo->getH()) / 2);
+				m_DataRealmsLogo->render(g_FrameMan.GetRenderer(), (g_FrameMan.GetResX() - m_DataRealmsLogo->GetW()) / 2, (g_FrameMan.GetResY() - m_DataRealmsLogo->GetH()) / 2);
 				std::string copyrightNotice(64, '\0');
 				std::snprintf(copyrightNotice.data(), copyrightNotice.size(), "Cortex Command is TM and %c 2017 Data Realms, LLC", -35);
 				SDLGUITexture guiBackBuffer;
 				m_IntroTextFont->DrawAligned(&guiBackBuffer, g_FrameMan.GetResX() / 2, g_FrameMan.GetResY() - m_IntroTextFont->GetFontHeight() - 5, copyrightNotice, GUIFont::Centre);
 			} else if (m_IntroSequenceState >= IntroSequence::FmodLogoFadeIn && m_IntroSequenceState <= IntroSequence::FmodLogoFadeOut) {
-				m_FmodLogo->render(g_FrameMan.GetRenderer(), (g_FrameMan.GetResX() - m_FmodLogo->getW()) / 2, (g_FrameMan.GetResY() - m_FmodLogo->getH()) / 2);
+				m_FmodLogo->render(g_FrameMan.GetRenderer(), (g_FrameMan.GetResX() - m_FmodLogo->GetW()) / 2, (g_FrameMan.GetResY() - m_FmodLogo->GetH()) / 2);
 				SDLGUITexture guiBackBuffer;
 				m_IntroTextFont->DrawAligned(&guiBackBuffer, g_FrameMan.GetResX() / 2, g_FrameMan.GetResY() - m_IntroTextFont->GetFontHeight() - 5, "Made with FMOD Studio by Firelight Technologies Pty Ltd.", GUIFont::Centre);
 			} else if (m_IntroSequenceState >= IntroSequence::ShowSlide1 && m_IntroSequenceState <= IntroSequence::ShowSlide8) {
@@ -571,15 +571,15 @@ namespace RTE {
 
 	void TitleScreen::DrawSlideshowSlide() {
 		int slide = static_cast<int>(m_IntroSequenceState) - static_cast<int>(IntroSequence::ShowSlide1);
-		Vector slidePos(static_cast<float>((g_FrameMan.GetResX() / 2) - (m_IntroSlides.at(slide)->getW() / 2)), static_cast<float>((g_FrameMan.GetResY() / 2) - (m_IntroSlides.at(slide)->getH() / 2)));
+		Vector slidePos(static_cast<float>((g_FrameMan.GetResX() / 2) - (m_IntroSlides.at(slide)->GetW() / 2)), static_cast<float>((g_FrameMan.GetResY() / 2) - (m_IntroSlides.at(slide)->GetH() / 2)));
 
-		if (m_IntroSlides.at(slide)->getW() > g_FrameMan.GetResX()) {
+		if (m_IntroSlides.at(slide)->GetW() > g_FrameMan.GetResX()) {
 			if (m_SectionElapsedTime < m_SlideFadeInDuration) {
 				slidePos.SetX(0);
 			} else if (m_SectionElapsedTime < m_SectionDuration - m_SlideFadeOutDuration) {
-				slidePos.SetX(EaseInOut(0, static_cast<float>(g_FrameMan.GetResX() - m_IntroSlides.at(slide)->getW()), (m_SectionElapsedTime - m_SlideFadeInDuration) / (m_SectionDuration - m_SlideFadeInDuration - m_SlideFadeOutDuration)));
+				slidePos.SetX(EaseInOut(0, static_cast<float>(g_FrameMan.GetResX() - m_IntroSlides.at(slide)->GetW()), (m_SectionElapsedTime - m_SlideFadeInDuration) / (m_SectionDuration - m_SlideFadeInDuration - m_SlideFadeOutDuration)));
 			} else {
-				slidePos.SetX(static_cast<float>(g_FrameMan.GetResX() - m_IntroSlides.at(slide)->getW()));
+				slidePos.SetX(static_cast<float>(g_FrameMan.GetResX() - m_IntroSlides.at(slide)->GetW()));
 			}
 		}
 		int fadeAmount = static_cast<int>((m_SectionElapsedTime < m_SlideFadeInDuration) ? EaseOut(0, 255.0F, m_SectionElapsedTime / m_SlideFadeInDuration) : EaseIn(255.0F, 0, (m_SectionElapsedTime - m_SectionDuration + m_SlideFadeOutDuration) / m_SlideFadeOutDuration));
@@ -588,7 +588,7 @@ namespace RTE {
 
 		if (!m_SlideshowSlideText.empty()) {
 			SDLGUITexture guiBackBuffer;
-			m_IntroTextFont->DrawAligned(&guiBackBuffer, g_FrameMan.GetResX() / 2, (g_FrameMan.GetResY() / 2) + (m_IntroSlides.at(slide)->getH() / 2) + 12, m_SlideshowSlideText, GUIFont::Centre);
+			m_IntroTextFont->DrawAligned(&guiBackBuffer, g_FrameMan.GetResX() / 2, (g_FrameMan.GetResY() / 2) + (m_IntroSlides.at(slide)->GetH() / 2) + 12, m_SlideshowSlideText, GUIFont::Centre);
 		}
 	}
 

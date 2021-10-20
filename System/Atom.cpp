@@ -186,7 +186,7 @@ namespace RTE {
 		}
 		// See if the atom even ends up in the sprite at all
 		Vector atomPos = spriteCenter + m_Offset;
-		if (atomPos.m_X < 0 || atomPos.m_Y < 0 || atomPos.m_X >= sprite->getW() || atomPos.m_Y >= sprite->getH()) {
+		if (atomPos.m_X < 0 || atomPos.m_Y < 0 || atomPos.m_X >= sprite->GetW() || atomPos.m_Y >= sprite->GetH()) {
 			return false;
 		}
 		// Go through all the check positions from the atom's position on the sprite

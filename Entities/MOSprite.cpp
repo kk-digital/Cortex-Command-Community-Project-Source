@@ -71,12 +71,12 @@ int MOSprite::Create()
         // Set default sprite offset
         if (m_SpriteOffset.IsZero())
         {
-            m_SpriteOffset.m_X = -m_aSprite[0]->getW() / 2;
-            m_SpriteOffset.m_Y = -m_aSprite[0]->getH() / 2;
+            m_SpriteOffset.m_X = -m_aSprite[0]->GetW() / 2;
+            m_SpriteOffset.m_Y = -m_aSprite[0]->GetH() / 2;
         }
         // Calc maximum dimensions from the Pos, based on the sprite
-        float maxX =std::max(fabs(m_SpriteOffset.m_X), std::fabs(m_aSprite[0]->getW() + m_SpriteOffset.m_X));
-        float maxY =std::max(fabs(m_SpriteOffset.m_Y), std::fabs(m_aSprite[0]->getH() + m_SpriteOffset.m_Y));
+        float maxX =std::max(fabs(m_SpriteOffset.m_X), std::fabs(m_aSprite[0]->GetW() + m_SpriteOffset.m_X));
+        float maxY =std::max(fabs(m_SpriteOffset.m_Y), std::fabs(m_aSprite[0]->GetH() + m_SpriteOffset.m_Y));
         m_SpriteRadius = std::sqrt((float)(maxX * maxX) + (maxY * maxY));
         m_SpriteDiameter = m_SpriteRadius * 2.0F;
     }
@@ -105,13 +105,13 @@ int MOSprite::Create(ContentFile spriteFile,
     m_FrameCount = frameCount;
 	m_aSprite.clear();
     m_aSprite = m_SpriteFile.GetAsAnimation(m_FrameCount);
-    m_SpriteOffset = Vector(-m_aSprite[0]->getW() / 2, -m_aSprite[0]->getH() / 2);
+    m_SpriteOffset = Vector(-m_aSprite[0]->GetW() / 2, -m_aSprite[0]->GetH() / 2);
 
     m_HFlipped = false;
 
     // Calc maximum dimensions from the Pos, based on the sprite
-    float maxX =std::max(fabs(m_SpriteOffset.m_X), std::fabs(m_aSprite[0]->getW() + m_SpriteOffset.m_X));
-    float maxY =std::max(fabs(m_SpriteOffset.m_Y), std::fabs(m_aSprite[0]->getH() + m_SpriteOffset.m_Y));
+    float maxX =std::max(fabs(m_SpriteOffset.m_X), std::fabs(m_aSprite[0]->GetW() + m_SpriteOffset.m_X));
+    float maxY =std::max(fabs(m_SpriteOffset.m_Y), std::fabs(m_aSprite[0]->GetH() + m_SpriteOffset.m_Y));
     m_SpriteRadius = std::sqrt((float)(maxX * maxX) + (maxY * maxY));
     m_SpriteDiameter = m_SpriteRadius * 2.0F;
 
@@ -517,7 +517,7 @@ void MOSprite::Draw(RenderTarget *renderer, const Vector &targetPos, DrawMode mo
 	// Apply offsets and positions.
 	Vector spriteOffset;
 	if (m_HFlipped)
-		spriteOffset.SetXY(-(m_aSprite[m_Frame]->getW() + m_SpriteOffset.m_X), m_SpriteOffset.m_Y);
+		spriteOffset.SetXY(-(m_aSprite[m_Frame]->GetW() + m_SpriteOffset.m_X), m_SpriteOffset.m_Y);
 	else
 		spriteOffset = m_SpriteOffset;
 
@@ -534,11 +534,11 @@ void MOSprite::Draw(RenderTarget *renderer, const Vector &targetPos, DrawMode mo
 		SDL_RenderGetViewport(renderer, &viewport);
 		// See if need to double draw this across the scene seam if we're being drawn onto a scenewide bitmap
 		if (targetPos.IsZero() && m_WrapDoubleDraw) {
-			if (spritePos.m_X < m_aSprite[m_Frame]->getW()) {
+			if (spritePos.m_X < m_aSprite[m_Frame]->GetW()) {
 				aDrawPos[passes] = spritePos;
 				aDrawPos[passes].m_X += viewport.w;
 				passes++;
-			} else if (spritePos.m_X > viewport.w - m_aSprite[m_Frame]->getW()) {
+			} else if (spritePos.m_X > viewport.w - m_aSprite[m_Frame]->GetW()) {
 				aDrawPos[passes] = spritePos;
 				aDrawPos[passes].m_X -= viewport.w;
 				passes++;
@@ -576,7 +576,7 @@ void MOSprite::Draw(RenderTarget *renderer, const Vector &targetPos, DrawMode mo
 			int spriteX = aDrawPos[i].GetFloorIntX();
 			int spriteY = aDrawPos[i].GetFloorIntY();
 			m_aSprite[m_Frame]->renderFillColor(renderer, spriteX, spriteY, m_MOID|0xff000000, flip);
-			g_SceneMan.RegisterMOIDDrawing(spriteX, spriteY, spriteX + m_aSprite[m_Frame]->getW(), spriteY + m_aSprite[m_Frame]->getH());
+			g_SceneMan.RegisterMOIDDrawing(spriteX, spriteY, spriteX + m_aSprite[m_Frame]->GetW(), spriteY + m_aSprite[m_Frame]->GetH());
 		} else if (mode == g_DrawNoMOID) {
 			m_aSprite[m_Frame]->renderFillColor(renderer, aDrawPos[i].m_X, aDrawPos[i].m_Y, g_NoMOID|0xff000000, flip);
 		} else if (mode == g_DrawTrans) {

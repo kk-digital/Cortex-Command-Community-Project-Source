@@ -24,6 +24,7 @@ namespace RTE
 
 class ContentFile;
 class RenderTarget;
+class RenderTexture;
 class VertexArray;
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -218,7 +219,7 @@ ClassInfoGetters;
 // Arguments:       None.
 // Return value:    A pointer to the BITMAP object. Ownership is NOT transferred!
 
-	SharedTexture GetTexture() { return m_pMainTexture; }
+	std::shared_ptr<RenderTexture> GetTexture() { return m_pMainTexture; }
 
 	size_t GetTextureHash() const { return m_TextureFile.GetHash(); }
 
@@ -354,7 +355,7 @@ ClassInfoGetters;
 	// Arguments:       The X and Y coordinates of which pixel to get.
 	// Return value:    An unsigned char specifying the requested pixel's value.
 
-    uint32_t GetPixel(const int pixelX, const int pixelY) {return m_pMainTexture->GetPixel(pixelX, pixelY);}
+    uint32_t GetPixel(const int pixelX, const int pixelY); //{return m_pMainTexture->GetPixel(pixelX, pixelY);}
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -367,9 +368,7 @@ ClassInfoGetters;
 //                  The value to set the pixel to.
 // Return value:    None.
 
-    void SetPixel(const int pixelX, const int pixelY, const uint32_t value){
-		m_pMainTexture->SetPixel(pixelX, pixelY, {(value>>24)&0xff, (value>>16)&0xff, (value>>8)&0xff, (value)&0xff});
-	}
+    void SetPixel(const int pixelX, const int pixelY, const uint32_t value); //{m_pMainTexture->SetPixel(pixelX, pixelY, {(value>>24)&0xff, (value>>16)&0xff, (value>>8)&0xff, (value)&0xff});}
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -380,11 +379,11 @@ ClassInfoGetters;
 // Arguments:       Int coordinates.
 // Return value:    Whether within bounds or not.
 
-    bool IsWithinBounds(const int pixelX, const int pixelY, const int margin = 0)
-    {
-// TODO: This doesn't take Y wrapping into acocunt!$@#$
-        return (m_WrapX || (pixelX >= -margin) && pixelX < (m_pMainTexture->getW() + margin)) && pixelY >= -1000 && pixelY < (m_pMainTexture->getH() + margin);
-    }
+    bool IsWithinBounds(const int pixelX, const int pixelY, const int margin = 0);
+//     {
+// // TODO: This doesn't take Y wrapping into acocunt!$@#$
+//         return (m_WrapX || (pixelX >= -margin) && pixelX < (m_pMainTexture->getW() + margin)) && pixelY >= -1000 && pixelY < (m_pMainTexture->getH() + margin);
+//     }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -502,7 +501,7 @@ protected:
 
     ContentFile m_TextureFile;
 
-	std::shared_ptr<GLTexture> m_pMainTexture; //!< Image texture of this layer.
+	std::shared_ptr<RenderTexture> m_pMainTexture; //!< Image texture of this layer.
 	std::shared_ptr<VertexArray> m_SceneVertices; //!< Vertices of this scenelayer, used for wrapping.
 
     bool m_DrawTrans;

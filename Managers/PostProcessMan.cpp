@@ -355,8 +355,8 @@ namespace RTE {
 			if (postEffect.m_Texture) {
 				postEffect.m_Texture->setBlendMode(screen);
 				postEffect.m_Texture->setAlphaMod(postEffect.m_Strength);
-				effectPosX = postEffect.m_Pos.GetFloorIntX() - (postEffect.m_Texture->getW() / 2);
-				effectPosY = postEffect.m_Pos.GetFloorIntY() - (postEffect.m_Texture->getH() / 2);
+				effectPosX = postEffect.m_Pos.GetFloorIntX() - (postEffect.m_Texture->GetW() / 2);
+				effectPosY = postEffect.m_Pos.GetFloorIntY() - (postEffect.m_Texture->GetH() / 2);
 
 				postEffect.m_Texture->render(g_FrameMan.GetRenderer(), effectPosX, effectPosY, postEffect.m_Angle);
 			}

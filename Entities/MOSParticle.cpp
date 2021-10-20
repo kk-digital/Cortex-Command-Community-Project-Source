@@ -91,7 +91,7 @@ namespace RTE {
 		MOSprite::RestDetection();
 
 		// If we seem to be about to settle, make sure we're not still flying in the air
-		if ((m_ToSettle || IsAtRest()) && g_SceneMan.OverAltitude(m_Pos, (m_aSprite[m_Frame]->getH() / 2) + 3, 2)) {
+		if ((m_ToSettle || IsAtRest()) && g_SceneMan.OverAltitude(m_Pos, (m_aSprite[m_Frame]->GetH() / 2) + 3, 2)) {
 			m_RestTimer.Reset();
 			m_ToSettle = false;
 		}
@@ -176,7 +176,7 @@ namespace RTE {
 				spriteX = spritePos.GetFloorIntX();
 				spriteY = spritePos.GetFloorIntY();
 				m_aSprite[m_Frame]->renderFillColor(renderer, spriteX, spriteY, (m_MOID) | 0xff000000);
-				g_SceneMan.RegisterMOIDDrawing(spriteX, spriteY, spriteX + m_aSprite[m_Frame]->getW(), spriteY + m_aSprite[m_Frame]->getH());
+				g_SceneMan.RegisterMOIDDrawing(spriteX, spriteY, spriteX + m_aSprite[m_Frame]->GetW(), spriteY + m_aSprite[m_Frame]->GetH());
 				break;
 			case g_DrawNoMOID:
 				m_aSprite[m_Frame]->renderFillColor(renderer, spritePos.GetFloorIntX(), spritePos.GetFloorIntY(), (g_NoMOID) | 0xff000000);

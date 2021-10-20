@@ -92,7 +92,7 @@ int MOSRotating::Create()
     else if (m_pDeepGroup)
         m_pDeepGroup->SetOwner(this);
 
-    m_SpriteCenter.SetXY(m_aSprite[m_Frame]->getW() / 2, m_aSprite[m_Frame]->getH() / 2);
+    m_SpriteCenter.SetXY(m_aSprite[m_Frame]->GetW() / 2, m_aSprite[m_Frame]->GetH() / 2);
     m_SpriteCenter += m_SpriteOffset;
 
     return 0;
@@ -703,8 +703,8 @@ bool MOSRotating::ParticlePenetration(HitData &hd)
         int error, dom, sub, domSteps, subSteps;
         bool inside = false, exited = false, subStepped = false;
 
-        bounds[X] = m_aSprite[m_Frame]->getW();
-        bounds[Y] = m_aSprite[m_Frame]->getH();
+        bounds[X] = m_aSprite[m_Frame]->GetW();
+        bounds[Y] = m_aSprite[m_Frame]->GetH();
 
         // Figure out the entry position in the un-rotated sprite's coordinates.
         Vector entryPos = (g_SceneMan.ShortestDistance(m_Pos, hd.HitPoint) / m_Rotation).GetXFlipped(m_HFlipped) - m_SpriteOffset;
@@ -805,7 +805,7 @@ bool MOSRotating::ParticlePenetration(HitData &hd)
             float damageMultiplier = pEntryWound->HasNoSetDamageMultiplier() ? 1.0F : pEntryWound->GetDamageMultiplier();
 			pEntryWound->SetDamageMultiplier(damageMultiplier * hd.Body[HITOR]->WoundDamageMultiplier());
             // Adjust position so that it looks like the hole is actually *on* the Hitee.
-            entryPos[dom] += increment[dom] * (pEntryWound->GetSpriteFrame()->getW() / 2);
+            entryPos[dom] += increment[dom] * (pEntryWound->GetSpriteFrame()->GetW() / 2);
 			AddWound(pEntryWound, entryPos + m_SpriteOffset);
             pEntryWound = 0;
         }
@@ -820,7 +820,7 @@ bool MOSRotating::ParticlePenetration(HitData &hd)
             {
                 AEmitter *pExitWound = dynamic_cast<AEmitter *>(m_pExitWound->Clone());
                 // Adjust position so that it looks like the hole is actually *on* the Hitee.
-                exitPos[dom] -= increment[dom] * (pExitWound->GetSpriteFrame()->getW() / 2);
+                exitPos[dom] -= increment[dom] * (pExitWound->GetSpriteFrame()->GetW() / 2);
                 pExitWound->SetEmitAngle(dir.GetXFlipped(m_HFlipped).GetAbsRadAngle());
                 float damageMultiplier = pExitWound->HasNoSetDamageMultiplier() ? 1.0F : pExitWound->GetDamageMultiplier();
 				pExitWound->SetDamageMultiplier(damageMultiplier * hd.Body[HITOR]->WoundDamageMultiplier());
@@ -906,8 +906,8 @@ void MOSRotating::CreateGibsWhenGibbing(const Vector &impactImpulse, MovableObje
 
             gibParticleClone->SetRotAngle(GetRotAngle() + gibParticleClone->GetRotAngle());
             gibParticleClone->SetAngularVel((gibParticleClone->GetAngularVel() * 0.35F) + (gibParticleClone->GetAngularVel() * 0.65F / mass) * RandomNum());
-            if (rotatedGibOffset.GetRoundIntX() > m_aSprite[0]->getW() / 3) {
-                float offCenterRatio = rotatedGibOffset.m_X / (static_cast<float>(m_aSprite[0]->getW()) / 2.0F);
+            if (rotatedGibOffset.GetRoundIntX() > m_aSprite[0]->GetW() / 3) {
+                float offCenterRatio = rotatedGibOffset.m_X / (static_cast<float>(m_aSprite[0]->GetW()) / 2.0F);
                 float angularVel = fabs(gibParticleClone->GetAngularVel() * 0.5F) + std::fabs(gibParticleClone->GetAngularVel() * 0.5F * offCenterRatio);
                 gibParticleClone->SetAngularVel(angularVel * (rotatedGibOffset.m_X > 0 ? -1 : 1));
             } else {
@@ -1609,7 +1609,7 @@ void MOSRotating::Draw(RenderTarget *renderer,
 	int flip = SDL_FLIP_NONE;
 	if (m_HFlipped) {
 		flip = SDL_FLIP_HORIZONTAL;
-		spritePivot.m_X = m_aSprite[m_Frame]->getW() + m_SpriteOffset.m_X;
+		spritePivot.m_X = m_aSprite[m_Frame]->GetW() + m_SpriteOffset.m_X;
 	}
 
 	Vector spritePos(m_Pos.GetFloored() - targetPos - spritePivot);

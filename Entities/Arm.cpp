@@ -449,8 +449,8 @@ void Arm::Draw(RenderTarget* renderer, const Vector &targetPos, DrawMode mode, b
 
 void Arm::DrawHand(RenderTarget* renderer, const Vector &targetPos, DrawMode mode) const {
     Vector handPos(m_JointPos + m_HandOffset + (m_Recoiled ? m_RecoilOffset : Vector()) - targetPos);
-    handPos.m_X -= static_cast<float>((m_pHand->getW() / 2) + 1);
-    handPos.m_Y -= static_cast<float>((m_pHand->getH() / 2) + 1);
+    handPos.m_X -= static_cast<float>((m_pHand->GetW() / 2) + 1);
+    handPos.m_Y -= static_cast<float>((m_pHand->GetH() / 2) + 1);
 
     if (!m_HFlipped) {
         if (mode == g_DrawWhite) {

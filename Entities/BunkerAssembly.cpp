@@ -460,7 +460,7 @@ bool BunkerAssembly::IsOnScenePoint(Vector &scenePoint) const
         return false;
 
     Vector bitmapPos = m_Pos + m_TextureOffset;
-    if (WithinBox(scenePoint, bitmapPos, m_pPresentationBitmap->getW(), m_pPresentationBitmap->getH()))
+    if (WithinBox(scenePoint, bitmapPos, m_pPresentationBitmap->GetW(), m_pPresentationBitmap->GetH()))
     {
         // Scene point on the bitmap
         Vector bitmapPoint = scenePoint - bitmapPos;
@@ -509,13 +509,13 @@ void BunkerAssembly::Draw(RenderTarget *renderer, const Vector &targetPos, DrawM
     // See if need to double draw this across the scene seam if we're being drawn onto a scenewide bitmap
 	if (targetPos.IsZero() && g_SceneMan.GetSceneWidth() <= viewport.w)
     {
-        if (aDrawPos[0].m_X < m_pFGColor->getW())
+        if (aDrawPos[0].m_X < m_pFGColor->GetW())
         {
             aDrawPos[passes] = aDrawPos[0];
             aDrawPos[passes].m_X += viewport.w;
             passes++;
         }
-        else if (aDrawPos[0].m_X > viewport.w - m_pFGColor->getW())
+        else if (aDrawPos[0].m_X > viewport.w - m_pFGColor->GetW())
         {
             aDrawPos[passes] = aDrawPos[0];
             aDrawPos[passes].m_X -= viewport.w;

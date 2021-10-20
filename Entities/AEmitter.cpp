@@ -607,7 +607,7 @@ void AEmitter::Draw(RenderTarget* renderer,
 	// Set the screen flash effect to draw at the final post processing stage
 	if (m_EmitEnabled && (!m_FlashOnlyOnBurst || m_BurstTriggered) && m_pFlash && m_pFlash->GetScreenEffect() && mode == g_DrawColor && !onlyPhysical) {
 		// Fudge the glow pos forward a bit so it aligns nicely with the flash
-		Vector emitPos(m_pFlash->GetScreenEffect()->getW() * 0.3F * m_FlashScale, 0);
+		Vector emitPos(m_pFlash->GetScreenEffect()->GetW() * 0.3F * m_FlashScale, 0);
 		emitPos.RadRotate(m_HFlipped ? c_PI + m_Rotation.GetRadAngle() - m_EmitAngle.GetRadAngle() : m_Rotation.GetRadAngle() + m_EmitAngle.GetRadAngle());
 		emitPos = m_Pos + RotateOffset(m_EmissionOffset) + emitPos;
 		if (!g_SceneMan.ObscuredPoint(emitPos)) {

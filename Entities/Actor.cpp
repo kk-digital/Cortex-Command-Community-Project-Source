@@ -908,9 +908,9 @@ void Actor::DropAllInventory()
 			pObject->SetAngularVel((pObject->GetAngularVel() * 0.35F) + (pObject->GetAngularVel() * 0.65F / (pObject->GetMass() != 0 ? pObject->GetMass() : 0.0001F)) * RandomNum());
 			// Make it rotate away in the appropriate direction depending on which side of the object it is on
 			// If the object is far to the relft or right of the center, make it always rotate outwards to some degree
-			if (gibROffset.m_X > m_aSprite[0]->getW() / 3)
+			if (gibROffset.m_X > m_aSprite[0]->GetW() / 3)
 			{
-				float offCenterRatio = gibROffset.m_X / (m_aSprite[0]->getW() / 2);
+				float offCenterRatio = gibROffset.m_X / (m_aSprite[0]->GetW() / 2);
 				angularVel = fabs(pObject->GetAngularVel() * 0.5F);
 				angularVel += fabs(pObject->GetAngularVel() * 0.5F * offCenterRatio);
 				pObject->SetAngularVel(angularVel * (gibROffset.m_X > 0.0F ? -1 : 1));
@@ -996,9 +996,9 @@ void Actor::GibThis(const Vector &impactImpulse, MovableObject *movableObjectToI
         pObject->SetAngularVel((pObject->GetAngularVel() * 0.35F) + (pObject->GetAngularVel() * 0.65F / (pObject->GetMass() != 0 ? pObject->GetMass() : 0.0001F)) * RandomNum());
         // Make it rotate away in the appropriate direction depending on which side of the object it is on
         // If the object is far to the relft or right of the center, make it always rotate outwards to some degree
-        if (gibROffset.m_X > m_aSprite[0]->getW() / 3)
+        if (gibROffset.m_X > m_aSprite[0]->GetW() / 3)
         {
-            float offCenterRatio = gibROffset.m_X / (m_aSprite[0]->getW() / 2);
+            float offCenterRatio = gibROffset.m_X / (m_aSprite[0]->GetW() / 2);
             angularVel = fabs(pObject->GetAngularVel() * 0.5F);
             angularVel += fabs(pObject->GetAngularVel() * 0.5F * offCenterRatio);
             pObject->SetAngularVel(angularVel * (gibROffset.m_X > 0 ? -1 : 1));
@@ -1757,10 +1757,10 @@ void Actor::DrawHUD(RenderTarget* renderer, const Vector &targetPos, int whichSc
 					{
 						m_pControllerIcon->GetTextures()[0]->render(
 							renderer,
-							drawPos.m_X - m_pControllerIcon->GetTextures()[0]->getW() - 2 +
+							drawPos.m_X - m_pControllerIcon->GetTextures()[0]->GetW() - 2 +
 							    10,
 							drawPos.m_Y + m_HUDStack -
-							    (m_pControllerIcon->GetTextures()[0]->getH() / 2) + 8);
+							    (m_pControllerIcon->GetTextures()[0]->GetH() / 2) + 8);
 					}
 				}
 
@@ -1779,7 +1779,7 @@ void Actor::DrawHUD(RenderTarget* renderer, const Vector &targetPos, int whichSc
                     // Make team icon blink faster as the health goes down
                     unsigned int f = m_HeartBeat.AlternateReal(200 + 800 * (m_Health / 100)) ? 0 : 1;
 					f = std::min(f, m_pTeamIcon ? m_pTeamIcon->GetFrameCount() - 1 : 1);
-					apIconTextures[f]->render(renderer, drawPos.m_X - apIconTextures[f]->getW() - 2, drawPos.m_Y + m_HUDStack - (apIconTextures[f]->getH() / 2) + 8);
+					apIconTextures[f]->render(renderer, drawPos.m_X - apIconTextures[f]->GetW() - 2, drawPos.m_Y + m_HUDStack - (apIconTextures[f]->GetH() / 2) + 8);
 				}
             }
             // Draw death icon

@@ -39,6 +39,7 @@
 #include "BuyMenuGUI.h"
 #include "SceneEditorGUI.h"
 #include "GUIBanner.h"
+#include "RTERenderer.h"
 
 #include "System/SDLHelper.h"
 #include "SDL2_gfxPrimitives.h"
@@ -2180,9 +2181,9 @@ void GameActivity::DrawGUI(RenderTarget* renderer, const Vector &targetPos, int 
 	if (PoS < Players::PlayerOne || PoS >= Players::MaxPlayerCount)
 		return;
 
-	SDL_Rect viewport;
-	SDL_RenderGetViewport(renderer, &viewport);
-	Box screenBox(targetPos, viewport.w, viewport.h);
+	glm::vec2 viewport = renderer->GetSize();
+
+	Box screenBox(targetPos, viewport.x, viewport.y);
 	SDLGUITexture pBitmapInt;
 
 	int frame = ((int)m_CursorTimer.GetElapsedSimTimeMS() % 1000) / 250;
@@ -2206,21 +2207,17 @@ void GameActivity::DrawGUI(RenderTarget* renderer, const Vector &targetPos, int 
 	float distance, shortestDist;
 	float sceneWidth = g_SceneMan.GetSceneWidth();
 
-	SDL_Rect renderSize;
-	SDL_RenderGetViewport(renderer, &renderSize);
-	float halfScreenWidth = renderSize.w / 2;
-	float halfScreenHeight = renderSize.h / 2;
+	float halfScreenWidth = viewport.x / 2;
+	float halfScreenHeight = viewport.y / 2;
 	// This is the max distance that is possible between a point inside the
 	// scene, but outside the screen box, and the screen box's outer edge
 	// closest to the point (taking wrapping into account)
-	float maxOffScreenSceneWidth = g_SceneMan.SceneWrapsX()
-		                               ? ((sceneWidth / 2) - halfScreenWidth)
-		                               : (sceneWidth - renderSize.w);
+	float maxOffScreenSceneWidth = g_SceneMan.SceneWrapsX() ? ((sceneWidth / 2) - halfScreenWidth) : (sceneWidth - viewport.x);
 	// These handle arranging the left and right stacks of arrows, so they don't
 	// pile up on top of each other
 
 	cursor = team;
-	float leftStackY = halfScreenHeight - m_aObjCursor[cursor][frame]->getH() * 2;
+	float leftStackY = halfScreenHeight - m_aObjCursor[cursor][frame]->GetH() * 2;
 	float rightStackY = leftStackY;
 
 	// Draw the objective points this player should care about
@@ -2293,7 +2290,7 @@ void GameActivity::DrawGUI(RenderTarget* renderer, const Vector &targetPos, int 
 					itr->Draw(renderer, m_aObjCursor[cursor][frame],
 						      onScreenEdgePos, ARROWRIGHT);
 					// Stack cursor moves down an arrowheight
-					rightStackY += m_aObjCursor[cursor][frame]->getH();
+					rightStackY += m_aObjCursor[cursor][frame]->GetH();
 				} else if (objScenePos.m_X < nearestBoxItr->GetCorner().m_X) {
 					// Make the edge position approach the center of the
 					// vertical edge of the screen the farther away the
@@ -2311,7 +2308,7 @@ void GameActivity::DrawGUI(RenderTarget* renderer, const Vector &targetPos, int 
 					itr->Draw(renderer, m_aObjCursor[cursor][frame],
 						      onScreenEdgePos, ARROWLEFT);
 					// Stack cursor moves down an arrowheight
-					leftStackY += m_aObjCursor[cursor][frame]->getH();
+					leftStackY += m_aObjCursor[cursor][frame]->GetH();
 				} else if (objScenePos.m_Y < nearestBoxItr->GetCorner().m_Y)
 					itr->Draw(renderer, m_aObjCursor[cursor][frame],
 						      nearestBoxItr->GetWithinBox(objScenePos) -
@@ -2605,7 +2602,7 @@ void GameActivity::DrawDeliveryCursors(RenderTarget *renderer,
 
 			m_aLZCursor[cursor][frame]->render(renderer, landZone.m_X - halfWidth, landZone.m_Y - 48);
 
-			m_aLZCursor[cursor][frame]->render(renderer, landZone.m_X + halfWidth - m_aLZCursor[cursor][frame]->getW(), landZone.m_Y - 48);
+			m_aLZCursor[cursor][frame]->render(renderer, landZone.m_X + halfWidth - m_aLZCursor[cursor][frame]->GetW(), landZone.m_Y - 48);
 
 			// Text
 			pSmallFont->DrawAligned(
@@ -2630,7 +2627,7 @@ void GameActivity::DrawDeliveryCursors(RenderTarget *renderer,
 					                    : -g_SceneMan.GetSceneWidth());
 				// Cursor
 				m_aLZCursor[cursor][frame]->render(renderer, wrappedX - halfWidth, landZone.m_Y - 48);
-				m_aLZCursor[cursor][frame]->render(renderer, wrappedX + halfWidth - m_aLZCursor[cursor][frame]->getW(), landZone.m_Y - 48, SDL_FLIP_HORIZONTAL);
+				m_aLZCursor[cursor][frame]->render(renderer, wrappedX + halfWidth - m_aLZCursor[cursor][frame]->GetW(), landZone.m_Y - 48, SDL_FLIP_HORIZONTAL);
 
 				// Text
 				pSmallFont->DrawAligned(&pBitmapInt, wrappedX, landZone.m_Y - 42, m_AIReturnCraft[player] ? "Deliver here" : "Travel here", GUIFont::Centre);
@@ -2929,8 +2926,10 @@ void GameActivity::ObjectivePoint::Draw(RenderTarget* renderer, std::shared_ptr<
     int x = arrowPoint.GetFloorIntX();
     int y = arrowPoint.GetFloorIntY();
 
-    int halfWidth = pArrowTexture->getW() / 2;
-    int halfHeight = pArrowTexture->getH() / 2;
+    int halfWidth = pArrowTexture->GetW() / 2;
+    int halfHeight = pArrowTexture->GetH() / 2;
+
+	glm::vec4 viewport = renderer->GetView();
 
 	SDL_Rect viewport;
 	SDL_RenderGetViewport(renderer, &viewport);
@@ -2950,10 +2949,10 @@ void GameActivity::ObjectivePoint::Draw(RenderTarget* renderer, std::shared_ptr<
         if (x > viewport.w - halfWidth)
             x = viewport.w - halfWidth - 1.0;
 
-        if (y > viewport.h - pArrowTexture->getH())
-            y = viewport.h - pArrowTexture->getH();
-        else if (y < pArrowTexture->getH())
-            y = pArrowTexture->getH();
+        if (y > viewport.h - pArrowTexture->GetH())
+            y = viewport.h - pArrowTexture->GetH();
+        else if (y < pArrowTexture->GetH())
+            y = pArrowTexture->GetH();
     }
     else if (y < halfHeight || y > viewport.h - halfHeight)
     {
@@ -2962,33 +2961,33 @@ void GameActivity::ObjectivePoint::Draw(RenderTarget* renderer, std::shared_ptr<
         if (y > viewport.h - halfHeight)
             y = viewport.h - halfHeight - 1.0;
 
-        if (x > viewport.w - pArrowTexture->getW())
-            x = viewport.w - pArrowTexture->getW();
-        else if (x < pArrowTexture->getW())
-            x = pArrowTexture->getW();
+        if (x > viewport.w - pArrowTexture->GetW())
+            x = viewport.w - pArrowTexture->GetW();
+        else if (x < pArrowTexture->GetW())
+            x = pArrowTexture->GetW();
     }
 
     // Draw the arrow and text descritpion of the Object so the point of the arrow ends up on the arrowPoint
     if (arrowDir == ARROWDOWN)
     {
-		pArrowTexture->render(renderer, x - halfWidth, y - pArrowTexture->getH());
-        g_FrameMan.GetLargeFont()->DrawAligned(&sdlGUITexture, x, y - pArrowTexture->getH() - textSpace, m_Description, GUIFont::Centre, GUIFont::Bottom);
+		pArrowTexture->render(renderer, x - halfWidth, y - pArrowTexture->GetH());
+        g_FrameMan.GetLargeFont()->DrawAligned(&sdlGUITexture, x, y - pArrowTexture->GetH() - textSpace, m_Description, GUIFont::Centre, GUIFont::Bottom);
     }
     else if (arrowDir == ARROWLEFT)
     {
 		pArrowTexture->render(renderer, x, y - halfHeight);
-		g_FrameMan.GetLargeFont()->DrawAligned(&sdlGUITexture, x + pArrowTexture->getW() + textSpace, y, m_Description, GUIFont::Left, GUIFont::Middle);
+		g_FrameMan.GetLargeFont()->DrawAligned(&sdlGUITexture, x + pArrowTexture->GetW() + textSpace, y, m_Description, GUIFont::Left, GUIFont::Middle);
     }
     else if (arrowDir == ARROWRIGHT)
     {
 
-		pArrowTexture->render(renderer, x - pArrowTexture->getW(), y - halfHeight, -64.0);
-        g_FrameMan.GetLargeFont()->DrawAligned(&sdlGUITexture, x - pArrowTexture->getW() - textSpace, y, m_Description, GUIFont::Right, GUIFont::Middle);
+		pArrowTexture->render(renderer, x - pArrowTexture->GetW(), y - halfHeight, -64.0);
+        g_FrameMan.GetLargeFont()->DrawAligned(&sdlGUITexture, x - pArrowTexture->GetW() - textSpace, y, m_Description, GUIFont::Right, GUIFont::Middle);
     }
     else if (arrowDir == ARROWUP)
     {
 		pArrowTexture->render(renderer, x - halfWidth, y, -128.0);
-        g_FrameMan.GetLargeFont()->DrawAligned(&sdlGUITexture, x, y + pArrowTexture->getH() + textSpace, m_Description, GUIFont::Centre, GUIFont::Top);
+        g_FrameMan.GetLargeFont()->DrawAligned(&sdlGUITexture, x, y + pArrowTexture->GetH() + textSpace, m_Description, GUIFont::Centre, GUIFont::Top);
     }
 }
 

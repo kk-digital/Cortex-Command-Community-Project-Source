@@ -828,10 +828,10 @@ int Scene::LoadData(bool placeObjects, bool initPathfinding, bool placeUnits)
 								m_apUnseenLayer[ownerTeam]->LockTexture();
                                 Vector scale = m_apUnseenLayer[ownerTeam]->GetScaleInverse();
 								SDL_Rect scaled;
-                                scaled.x = std::floor((pTO->GetPos().m_X - (float)(pTO->GetFGColorTexture()->getW() / 2)) * scale.m_X);
-                                scaled.y = std::floor((pTO->GetPos().m_Y - (float)(pTO->GetFGColorTexture()->getH() / 2)) * scale.m_Y);
-                                scaled.w = std::ceil(pTO->GetFGColorTexture()->getW() * scale.m_X);
-                                scaled.h = std::ceil(pTO->GetFGColorTexture()->getH() * scale.m_Y);
+                                scaled.x = std::floor((pTO->GetPos().m_X - (float)(pTO->GetFGColorTexture()->GetW() / 2)) * scale.m_X);
+                                scaled.y = std::floor((pTO->GetPos().m_Y - (float)(pTO->GetFGColorTexture()->GetH() / 2)) * scale.m_Y);
+                                scaled.w = std::ceil(pTO->GetFGColorTexture()->GetW() * scale.m_X);
+                                scaled.h = std::ceil(pTO->GetFGColorTexture()->GetH() * scale.m_Y);
                                 // FILL the box with key color for the owner ownerTeam, revealing the area that this thing is on
                                 m_apUnseenLayer[ownerTeam]->GetTexture()->fillRect(scaled, 0);
 								m_apUnseenLayer[ownerTeam]->UnlockTexture();
@@ -1056,7 +1056,7 @@ int Scene::SavePreview(const std::string &bitmapPath) {
 		return -1;
 	}
 
-	if (m_pPreviewBitmap && (m_pPreviewBitmap->getW() != c_ScenePreviewWidth || m_pPreviewBitmap->getH() != c_ScenePreviewHeight)) {
+	if (m_pPreviewBitmap && (m_pPreviewBitmap->GetW() != c_ScenePreviewWidth || m_pPreviewBitmap->GetH() != c_ScenePreviewHeight)) {
 		m_pPreviewBitmap.reset();
 	}
 	if (!m_pPreviewBitmap) { m_pPreviewBitmap = std::make_shared<Texture>(g_FrameMan.GetRenderer(), c_ScenePreviewWidth, c_ScenePreviewHeight, SDL_TEXTUREACCESS_STATIC); }

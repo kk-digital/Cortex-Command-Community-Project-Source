@@ -62,10 +62,10 @@ int TerrainObject::Create()
         if (m_pFGColor->getH() > 24)
             m_TextureOffset.m_Y = -std::ceil(((float)m_pFGColor->getH() / (float)2) + 0.5f);
 */
-        if (m_pFGColor->getW() > 24)
-            m_TextureOffset.m_X = -(m_pFGColor->getW() / 2);
-        if (m_pFGColor->getH() > 24)
-            m_TextureOffset.m_Y = -(m_pFGColor->getH() / 2);
+        if (m_pFGColor->GetW() > 24)
+            m_TextureOffset.m_X = -(m_pFGColor->GetW() / 2);
+        if (m_pFGColor->GetH() > 24)
+            m_TextureOffset.m_Y = -(m_pFGColor->GetH() / 2);
     }
 
     return 0;
@@ -269,11 +269,11 @@ const std::shared_ptr<GLTexture> TerrainObject::GetGraphicalIcon() const
         return m_pBGColor;
 
     // Checking if the FG has anything to show, if not, show the bg layer isntead
-    int piece = m_pFGColor->getW() / 10;
-    if (m_pFGColor->GetPixel(m_pFGColor->getW() / 2, m_pFGColor->getH() / 2) != g_MaskColor ||
+    int piece = m_pFGColor->GetW() / 10;
+    if (m_pFGColor->GetPixel(m_pFGColor->GetW() / 2, m_pFGColor->GetH() / 2) != g_MaskColor ||
         m_pFGColor->GetPixel(piece, piece) != g_MaskColor ||
-        m_pFGColor->GetPixel(m_pFGColor->getW() - piece, piece) != g_MaskColor ||
-        m_pFGColor->GetPixel(piece, m_pFGColor->getH() - piece) != g_MaskColor)
+        m_pFGColor->GetPixel(m_pFGColor->GetW() - piece, piece) != g_MaskColor ||
+        m_pFGColor->GetPixel(piece, m_pFGColor->GetH() - piece) != g_MaskColor)
         return m_pFGColor;
     else
         return m_pBGColor;
@@ -336,7 +336,7 @@ bool TerrainObject::IsOnScenePoint(Vector &scenePoint) const
     }
 */
     Vector bitmapPos = m_Pos + m_TextureOffset;
-    if (WithinBox(scenePoint, bitmapPos, m_pFGColor->getW(), m_pFGColor->getH()))
+    if (WithinBox(scenePoint, bitmapPos, m_pFGColor->GetW(), m_pFGColor->GetH()))
     {
         // Scene point on the bitmap
         Vector bitmapPoint = scenePoint - bitmapPos;
@@ -387,13 +387,13 @@ void TerrainObject::Draw(RenderTarget* renderer, const Vector &targetPos, DrawMo
     // See if need to double draw this across the scene seam if we're being drawn onto a scenewide bitmap
 	if (targetPos.IsZero() && g_SceneMan.GetSceneWidth() <= viewport.w)
     {
-        if (aDrawPos[0].m_X < m_pFGColor->getW())
+        if (aDrawPos[0].m_X < m_pFGColor->GetW())
         {
             aDrawPos[passes] = aDrawPos[0];
             aDrawPos[passes].m_X += viewport.w;
             passes++;
         }
-        else if (aDrawPos[0].m_X > viewport.w - m_pFGColor->getW())
+        else if (aDrawPos[0].m_X > viewport.w - m_pFGColor->GetW())
         {
             aDrawPos[passes] = aDrawPos[0];
             aDrawPos[passes].m_X -= viewport.w;

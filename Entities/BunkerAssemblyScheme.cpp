@@ -108,10 +108,10 @@ int BunkerAssemblyScheme::ReadProperty(const std::string_view &propName, Reader 
 		g_FrameMan.PushRenderTarget(tempPresentation.getAsRenderTarget());
 		// Create internal presentation bitmap which will be drawn by editor
 		// Create horizontal outlines
-        for (int x = 0; x < m_pBitmap->getW(); ++x)
+        for (int x = 0; x < m_pBitmap->GetW(); ++x)
 		{
 	        //Top to bottom
-			for (int y = 0; y < m_pBitmap->getH() ; ++y)
+			for (int y = 0; y < m_pBitmap->GetH() ; ++y)
             {
 				uint32_t px = m_pBitmap->GetPixel(x, y);
 				uint32_t pxp = m_pBitmap->GetPixel(x, y - 1) == 0xFFFFFF00 ? SCHEME_COLOR_EMPTY : m_pBitmap->GetPixel(x, y - 1);
@@ -131,7 +131,7 @@ int BunkerAssemblyScheme::ReadProperty(const std::string_view &propName, Reader 
             }
 
 			//Bottom to top
-	        for (int y = m_pBitmap->getH() - 1; y >= 0 ; --y)
+	        for (int y = m_pBitmap->GetH() - 1; y >= 0 ; --y)
             {
 				uint32_t px = m_pBitmap->GetPixel(x, y);
 				uint32_t pxp = m_pBitmap->GetPixel(x, y + 1) == 0xFFFFFF00 ? SCHEME_COLOR_EMPTY : m_pBitmap->GetPixel(x, y + 1);
@@ -151,10 +151,10 @@ int BunkerAssemblyScheme::ReadProperty(const std::string_view &propName, Reader 
 		}
 
 		// Create vertical outlines
-        for (int y = 0; y < m_pBitmap->getH(); ++y)
+        for (int y = 0; y < m_pBitmap->GetH(); ++y)
 		{
 			// Left
-	        for (int x = 0; x < m_pBitmap->getW() ; ++x)
+	        for (int x = 0; x < m_pBitmap->GetW() ; ++x)
             {
 				uint32_t px = m_pBitmap->GetPixel(x, y);
 				uint32_t pxp = m_pBitmap->GetPixel(x - 1, y) == 0xFFFFFF00 ? SCHEME_COLOR_EMPTY : m_pBitmap->GetPixel(x - 1, y);
@@ -172,7 +172,7 @@ int BunkerAssemblyScheme::ReadProperty(const std::string_view &propName, Reader 
 						lineColor(g_FrameMan.GetRenderer(), x * ScaleX + w, y * ScaleY, x * ScaleX + w, y * ScaleY + ScaleY - 1, PAINT_COLOR_VARIABLE);
 			}
 
-	        for (int x = m_pBitmap->getW() - 1; x >= 0 ; --x)
+	        for (int x = m_pBitmap->GetW() - 1; x >= 0 ; --x)
             {
 				uint32_t px = m_pBitmap->GetPixel(x, y);
 				uint32_t pxp = m_pBitmap->GetPixel(x + 1, y) == 0xFFFFFF00 ? SCHEME_COLOR_EMPTY : m_pBitmap->GetPixel(x + 1, y);
@@ -192,7 +192,7 @@ int BunkerAssemblyScheme::ReadProperty(const std::string_view &propName, Reader 
 		}
 
 		m_pPresentationBitmap->lock();
-		SDL_RenderReadPixels(g_FrameMan.GetRenderer(), nullptr, m_pPresentationBitmap->getFormat(), m_pPresentationBitmap->getPixels(), m_pPresentationBitmap->getW() * sizeof(uint32_t));
+		SDL_RenderReadPixels(g_FrameMan.GetRenderer(), nullptr, m_pPresentationBitmap->getFormat(), m_pPresentationBitmap->getPixels(), m_pPresentationBitmap->GetW() * sizeof(uint32_t));
 		g_FrameMan.PopRenderTarget();
 		m_pPresentationBitmap->unlock();
 
@@ -202,8 +202,8 @@ int BunkerAssemblyScheme::ReadProperty(const std::string_view &propName, Reader 
 		pSmallFont->DrawAligned(&guiBitmap, 4, 4, m_PresetName, GUIFont::Left);
 
 		// Calculate bitmap offset
-		int width = m_pBitmap->getW() / 2;
-		int height = m_pBitmap->getH() / 2;
+		int width = m_pBitmap->GetW() / 2;
+		int height = m_pBitmap->GetH() / 2;
 		m_BitmapOffset = Vector(-width * ScaleX, -height * ScaleY);
 
 		// Count max deployments if not set
@@ -214,13 +214,13 @@ int BunkerAssemblyScheme::ReadProperty(const std::string_view &propName, Reader 
 				m_MaxDeployments = 1;
 		}
 
-		float scale = (float)ICON_WIDTH / (float)m_pPresentationBitmap->getW();
+		float scale = (float)ICON_WIDTH / (float)m_pPresentationBitmap->GetW();
 
 		m_pIconBitmap = std::make_shared<Texture>(g_FrameMan.GetRenderer(), m_pPresentationBitmap->getW() * scale, m_pPresentationBitmap->getH() * scale, SDL_TEXTUREACCESS_STREAMING);
 		m_pIconBitmap->lock();
 
-        for (int x = 0; x < m_pBitmap->getW() ; ++x)
-	        for (int y = 0; y < m_pBitmap->getH(); ++y)
+        for (int x = 0; x < m_pBitmap->GetW() ; ++x)
+	        for (int y = 0; y < m_pBitmap->GetH(); ++y)
             {
 				SDL_Rect fill{static_cast<int>(x * ScaleX * scale), static_cast<int>(y * ScaleX * scale), ScaleX - 1, ScaleY - 1};
 				uint32_t px = m_pBitmap->GetPixel(x, y);
@@ -321,7 +321,7 @@ bool BunkerAssemblyScheme::IsOnScenePoint(Vector &scenePoint) const
         return false;
 
     Vector bitmapPos = m_Pos + m_BitmapOffset;
-    if (WithinBox(scenePoint, bitmapPos, m_pPresentationBitmap->getW(), m_pPresentationBitmap->getH()))
+    if (WithinBox(scenePoint, bitmapPos, m_pPresentationBitmap->GetW(), m_pPresentationBitmap->GetH()))
     {
         // Scene point on the bitmap
         Vector bitmapPoint = scenePoint - bitmapPos;
@@ -374,13 +374,13 @@ void BunkerAssemblyScheme::Draw(RenderTarget *renderer, const Vector &targetPos,
     // See if need to double draw this across the scene seam if we're being drawn onto a scenewide bitmap
 	if (targetPos.IsZero() && g_SceneMan.GetSceneWidth() <= viewport.w)
     {
-        if (aDrawPos[0].m_X < m_pPresentationBitmap->getW())
+        if (aDrawPos[0].m_X < m_pPresentationBitmap->GetW())
         {
             aDrawPos[passes] = aDrawPos[0];
             aDrawPos[passes].m_X += viewport.w;
             passes++;
         }
-        else if (aDrawPos[0].m_X > viewport.w - m_pPresentationBitmap->getW())
+        else if (aDrawPos[0].m_X > viewport.w - m_pPresentationBitmap->GetW())
         {
             aDrawPos[passes] = aDrawPos[0];
             aDrawPos[passes].m_X -= viewport.w;

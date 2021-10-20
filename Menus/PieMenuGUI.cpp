@@ -323,10 +323,10 @@ namespace RTE {
 		if (m_EnabledState != EnabledState::Disabled) {
 			if (m_DrawBackgroundTransparent && !g_FrameMan.IsInMultiplayerMode()) {
 				m_BGTexture->setAlphaMod(MoreTrans);
-				m_BGTexture->render(renderer, drawPos.GetFloorIntX() - m_BGTexture->getW() / 2, drawPos.GetFloorIntY() - m_BGTexture->getH() / 2);
+				m_BGTexture->render(renderer, drawPos.GetFloorIntX() - m_BGTexture->GetW() / 2, drawPos.GetFloorIntY() - m_BGTexture->GetH() / 2);
 				m_BGTexture->setAlphaMod(255);
 			} else {
-				m_BGTexture->render(renderer, drawPos.GetFloorIntX() - m_BGTexture->getW() / 2, drawPos.GetFloorIntY() - m_BGTexture->getH() / 2);
+				m_BGTexture->render(renderer, drawPos.GetFloorIntX() - m_BGTexture->GetW() / 2, drawPos.GetFloorIntY() - m_BGTexture->GetH() / 2);
 			}
 		}
 
@@ -486,8 +486,8 @@ namespace RTE {
 
 	void PieMenuGUI::UpdatePredrawnMenuBackgroundBitmap() {
 		// TODO: Use shader logic instead
-		int centerX = m_BGTexture->getW() / 2;
-		int centerY = m_BGTexture->getH() / 2;
+		int centerX = m_BGTexture->GetW() / 2;
+		int centerY = m_BGTexture->GetH() / 2;
 		g_FrameMan.PushRenderTarget(m_BGTexture);
 
 		/// <summary>
@@ -606,7 +606,7 @@ namespace RTE {
 			sliceIcon = slice->GetAppropriateIcon(slice == m_HoveredSlice);
 
 			if (sliceIcon) {
-				sliceIconOffset = Vector(static_cast<float>(m_InnerRadius + (m_BackgroundThickness / 2)), 0).RadRotate(slice->GetMidAngle()) + Vector(1.0F - static_cast<float>(sliceIcon->getW() / 2), 1.0F - static_cast<float>(sliceIcon->getH() / 2));
+				sliceIconOffset = Vector(static_cast<float>(m_InnerRadius + (m_BackgroundThickness / 2)), 0).RadRotate(slice->GetMidAngle()) + Vector(1.0F - static_cast<float>(sliceIcon->GetW() / 2), 1.0F - static_cast<float>(sliceIcon->GetH() / 2));
 				sliceIcon->render(renderer, drawPos.GetFloorIntX() + sliceIconOffset.GetFloorIntX(), drawPos.GetFloorIntY() + sliceIconOffset.GetFloorIntY());
 			}
 		}

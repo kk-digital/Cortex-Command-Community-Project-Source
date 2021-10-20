@@ -201,7 +201,7 @@ public:
 // Arguments:       0.
 // Return value:    Sprite width if loaded.
 
-    int GetSpriteWidth() const { return m_aSprite[0] ? m_aSprite[0]->getW() : 0; }
+    int GetSpriteWidth() const { return m_aSprite[0] ? m_aSprite[0]->GetW() : 0; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -211,7 +211,7 @@ public:
 // Arguments:       0.
 // Return value:    Sprite height if loaded.
 
-    int GetSpriteHeight() const { return m_aSprite[0] ? m_aSprite[0]->getH() : 0; }
+    int GetSpriteHeight() const { return m_aSprite[0] ? m_aSprite[0]->GetH() : 0; }
 
 
 

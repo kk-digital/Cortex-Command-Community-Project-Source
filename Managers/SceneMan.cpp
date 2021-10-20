@@ -495,7 +495,7 @@ SLTerrain * SceneMan::GetTerrain()
 //                  MovableObject:s draw themselves onto before it itself gets drawn onto
 //                  the screen back buffer.
 
-std::shared_ptr<GLTexture> SceneMan::GetMOColorTexture() const { return m_pMOColorLayer->GetTexture(); }
+std::shared_ptr<RenderTarget> SceneMan::GetMOColorTexture() const { return m_pMOColorLayer->GetTexture(); }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -1044,7 +1044,7 @@ int SceneMan::RemoveOrphans(int posX, int posY,
 
 	std::shared_ptr<GLTexture> mat = m_pCurrentScene->GetTerrain()->GetMaterialTexture();
 
-	if (posX < 0 || posY < 0 || posX >= mat->getW() || posY >= mat->getH()) return 0;
+	if (posX < 0 || posY < 0 || posX >= mat->GetW() || posY >= mat->GetH()) return 0;
 
 	uint32_t materialID  = mat->GetPixel(posX, posY);
 
@@ -1067,7 +1067,7 @@ int SceneMan::RemoveOrphans(int posX, int posY,
 		}
 	}
 
-	m_pOrphanSearchBitmap->setPixel(bmpX, bmpY, materialID);
+	m_pOrphanSearchBitmap->SetPixel(bmpX, bmpY, materialID);
 	area++;
 
 	// We're clear to remove the pixel
@@ -1394,8 +1394,8 @@ bool SceneMan::TryPenetrate(const int posX,
 
 						// Clear the terrain pixel now when the particle has been generated from it
 						RegisterTerrainChange(posX, testY, 1, 1, g_MaskColor, false);
-						pFGColor->setPixel(posX, testY, 0);
-						pMaterial->setPixel(posX, testY, g_MaterialAir);
+						pFGColor->SetPixel(posX, testY, 0);
+						pMaterial->SetPixel(posX, testY, g_MaterialAir);
 					}
 					// There is support, so stop checking
 					else
@@ -2911,7 +2911,7 @@ void SceneMan::StructuralCalc(unsigned long calcTime) {
 		std::shared_ptr<GLTexture> pColTexture = pTerrain->GetFGColorTexture();
 		std::shared_ptr<GLTexture> pMatTexture = pTerrain->GetMaterialTexture();
 		std::shared_ptr<GLTexture> pStructTexture = pTerrain->GetStructuralTexture();
-    int posX, posY, height = pColTexture->getH(), width = pColTexture->getW();
+    int posX, posY, height = pColTexture->GetH(), width = pColTexture->GetW();
 
     // Lock all bitmaps involved, outside the loop.
 		pColTexture->lock();
@@ -2921,7 +2921,7 @@ void SceneMan::StructuralCalc(unsigned long calcTime) {
 
     // Preprocess bottom row to have full support.
     for (posX = width - 1; posX >= 0; --posX)
-			pStructTexture->setPixel(posX, height - 1, 255);
+			pStructTexture->SetPixel(posX, height - 1, 255);
 
     // Start on the second row from bottom.
     for (posY = height - 2; posY >= 0 && !m_CalcTimer.IsPastSimMS(calcTime); --posY) {

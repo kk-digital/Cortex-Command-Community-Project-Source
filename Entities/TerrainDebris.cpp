@@ -120,7 +120,7 @@ namespace RTE {
 		matTexture->lock();
 
 		// How many pieces of debris we're spreading out.
-		unsigned int terrainWidth = terrTexture->getW();
+		unsigned int terrainWidth = terrTexture->GetW();
 		unsigned int pieceCount = (terrainWidth * c_MPP) * m_Density;
 
 		// First is index in the bitmap array, Second is blit location
@@ -135,16 +135,16 @@ namespace RTE {
 			unsigned int currentBitmap = RandomNum<int>(0, m_BitmapCount - 1);
 			RTEAssert(currentBitmap >= 0 && currentBitmap < m_BitmapCount, "Bitmap index is out of bounds!");
 
-			pieceBox.SetWidth(m_Textures[currentBitmap]->getW());
-			pieceBox.SetHeight(m_Textures[currentBitmap]->getH());
+			pieceBox.SetWidth(m_Textures[currentBitmap]->GetW());
+			pieceBox.SetHeight(m_Textures[currentBitmap]->GetH());
 
 			int x = RandomNum<int>(0, terrainWidth);
 			int y = 0;
 			int depth = RandomNum(m_MinDepth, m_MaxDepth);
 
-			while (y < terrTexture->getH()) {
+			while (y < terrTexture->GetH()) {
 				// Find the air-terrain boundary
-				for (; y < terrTexture->getH(); ++y) {
+				for (; y < terrTexture->GetH(); ++y) {
 					checkPixel = matTexture->GetPixel(x, y);
 					// Check for terrain hit
 					if (checkPixel != g_MaterialAir) {

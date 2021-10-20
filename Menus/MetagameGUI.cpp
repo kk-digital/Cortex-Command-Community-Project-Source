@@ -1970,7 +1970,7 @@ void MetagameGUI::Draw(RenderTarget *renderer)
 			pIcon = g_MetaMan.IsActiveTeam(team) ? g_MetaMan.GetTeamIcon(team).GetTextures()[0] : nullptr;
 			if (pIcon) {
 				pIcon->setColorMod(blendAmount, blendAmount, blendAmount);
-				pIcon->render(renderer, screenLocation.m_X - (pIcon->getW() / 2), screenLocation.m_Y - (pIcon->getH() / 2));
+				pIcon->render(renderer, screenLocation.m_X - (pIcon->GetW() / 2), screenLocation.m_Y - (pIcon->GetH() / 2));
 				pIcon->setColorMod(255, 255, 255);
 				// Ownership not known, so place nondescript dot instead
 			} else {

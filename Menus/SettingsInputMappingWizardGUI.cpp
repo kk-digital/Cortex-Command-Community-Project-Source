@@ -161,15 +161,15 @@ namespace RTE {
 			switch (m_ConfiguringGamepadType) {
 				case SettingsInputMappingWizardGUI::DPad:
 					inputDeviceName = "Gamepad (Classic D-Pad Style)";
-					m_WizardManualConfigScreen.GamepadConfigRecommendedDiagramBox->Resize(m_DPadDiagramBitmaps.at(0)->getW(), m_DPadDiagramBitmaps.at(0)->getH());
+					m_WizardManualConfigScreen.GamepadConfigRecommendedDiagramBox->Resize(m_DPadDiagramBitmaps.at(0)->GetW(), m_DPadDiagramBitmaps.at(0)->GetH());
 					break;
 				case SettingsInputMappingWizardGUI::AnalogDualShock:
 					inputDeviceName = "Dual Analog Gamepad (DualShock Style)";
-					m_WizardManualConfigScreen.GamepadConfigRecommendedDiagramBox->Resize(m_DualAnalogDSDiagramBitmaps.at(0)->getW(), m_DualAnalogDSDiagramBitmaps.at(0)->getH());
+					m_WizardManualConfigScreen.GamepadConfigRecommendedDiagramBox->Resize(m_DualAnalogDSDiagramBitmaps.at(0)->GetW(), m_DualAnalogDSDiagramBitmaps.at(0)->GetH());
 					break;
 				case SettingsInputMappingWizardGUI::AnalogXbox:
 					inputDeviceName = "Dual Analog Gamepad (Xbox Style)";
-					m_WizardManualConfigScreen.GamepadConfigRecommendedDiagramBox->Resize(m_DualAnalogXBDiagramBitmaps.at(0)->getW(), m_DualAnalogXBDiagramBitmaps.at(0)->getH());
+					m_WizardManualConfigScreen.GamepadConfigRecommendedDiagramBox->Resize(m_DualAnalogXBDiagramBitmaps.at(0)->GetW(), m_DualAnalogXBDiagramBitmaps.at(0)->GetH());
 					break;
 				default:
 					RTEAbort("Invalid GamepadType passed to SettingsInputMappingWizardGUI::ShowManualConfigScreen!");

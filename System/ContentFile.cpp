@@ -228,7 +228,7 @@ namespace RTE {
 
 		returnTexture->m_BlendMode = BlendModes::Blend;
 		if (colorConversion == ColorConvert::ARGB32 || (colorConversion == ColorConvert::Preserve && tempSurfacePreKey->format->BitsPerPixel > 8)) {
-			SDL_Surface *actualSurface = SDL_ConvertSurfaceFormat(tempSurfacePreKey.get(), SDL_PIXELFORMAT_ARGB8888, 0);
+			SDL_Surface *actualSurface = SDL_ConvertSurfaceFormat(tempSurfacePreKey.get(), SDL_PIXELFORMAT_ARGB32, 0);
 			returnTexture->m_Pixels = std::unique_ptr<SDL_Surface, sdl_surface_deleter>(actualSurface);
 			returnTexture->m_BPP = 32;
 			returnTexture->m_ShaderBase = g_FrameMan.GetTextureShader(BitDepth::BPP32);
@@ -256,7 +256,8 @@ namespace RTE {
 		glBindTexture(GL_TEXTURE_2D, returnTexture->m_TextureID);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTexImage2D(GL_TEXTURE_2D, 0, returnTexture->m_BPP == 8 ? GL_R8 : GL_RGBA, returnTexture->m_Width, returnTexture->m_Height, 0, returnTexture->m_BPP == 8 ? GL_RED : GL_RGBA, GL_UNSIGNED_BYTE, returnTexture->m_Pixels->pixels);
+		glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+		glTexImage2D(GL_TEXTURE_2D, 0, returnTexture->m_BPP == 8 ? GL_R8 : GL_BGRA, returnTexture->m_Width, returnTexture->m_Height, 0, returnTexture->m_BPP == 8 ? GL_RED : GL_BGRA, GL_UNSIGNED_BYTE, returnTexture->m_Pixels->pixels);
 
 		glBindTexture(GL_TEXTURE_2D, 0);
 		return returnTexture;

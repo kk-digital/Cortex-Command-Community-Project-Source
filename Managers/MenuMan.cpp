@@ -232,7 +232,7 @@ namespace RTE {
 				int mouseY = 0;
 				m_GUIInput->GetMousePosition(&mouseX, &mouseY);
 				SharedTexture deviceIcon = g_UInputMan.GetDeviceIcon(device)->GetTextures()[0];
-				if (deviceIcon) { deviceIcon->render(g_FrameMan.GetRenderer(), mouseX + (deviceIcon->getW() / 2), mouseY - (deviceIcon->getH() / 5)); }
+				if (deviceIcon) { deviceIcon->render(g_FrameMan.GetRenderer(), mouseX + (deviceIcon->GetW() / 2), mouseY - (deviceIcon->GetH() / 5)); }
 			}
 			// Show which joysticks are detected by the game.
 			for (int playerIndex = Players::PlayerOne; playerIndex < Players::MaxPlayerCount; playerIndex++) {

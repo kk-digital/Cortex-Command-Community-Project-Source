@@ -7,7 +7,6 @@
 #include "Managers/FrameMan.h"
 
 #include "Renderer/GLTexture.h"
-#include "System/RTESurface.h"
 #include "System/SDLHelper.h"
 #include "SDL2_gfxPrimitives.h"
 
@@ -1546,8 +1545,8 @@ namespace RTE {
 	void AtomGroup::GenerateAtomGroup(MOSRotating *ownerMOSRotating) {
 		SharedTexture refSprite = ownerMOSRotating->GetSpriteFrame();
 		const Vector spriteOffset = ownerMOSRotating->GetSpriteOffset();
-		const int spriteWidth = refSprite->getW() * static_cast<int>(m_OwnerMOSR->GetScale());
-		const int spriteHeight = refSprite->getH() * static_cast<int>(m_OwnerMOSR->GetScale());
+		const int spriteWidth = refSprite->GetW() * static_cast<int>(m_OwnerMOSR->GetScale());
+		const int spriteHeight = refSprite->GetH() * static_cast<int>(m_OwnerMOSR->GetScale());
 
 		// Only try to generate AtomGroup if scaled width and height are > 0 as we're playing with fire trying to create 0x0 bitmap. 
 		if (spriteWidth > 0 && spriteHeight > 0) {
@@ -1555,7 +1554,7 @@ namespace RTE {
 			int y;
 			bool inside;
 
-			UniqueSurface checkBitmap = std::make_unique<Surface>(spriteWidth, spriteHeight);
+			std::unique_ptr<Surface> checkBitmap = std::make_unique<Surface>(spriteWidth, spriteHeight, BitDepth::Indexed8);
 
 			// If Atoms are to be placed right at (below) the bitmap of the sprite.
 			if (m_Depth <= 0) {
@@ -1566,7 +1565,7 @@ namespace RTE {
 						// Detect if we are crossing a silhouette boundary.
 						if (refSprite->GetPixel(x, y) != 0) {
 							// Mark that an Atom has been put in this location, to avoid duplicate Atoms
-							checkBitmap->setPixel(x, y, 0xF9F9E4FF);
+							checkBitmap->SetPixel(x, y, 99);
 							AddAtomToGroup(ownerMOSRotating, spriteOffset, x, y, true);
 							break;
 						}
@@ -1576,7 +1575,7 @@ namespace RTE {
 						// Detect if we are crossing a silhouette boundary.
 						if (refSprite->GetPixel(x, y) != g_AlphaZero && checkBitmap->GetPixel(x, y) == g_AlphaZero) {
 							// Mark that an Atom has been put in this location, to avoid duplicate Atoms
-							checkBitmap->setPixel(x, y, 0xF9F9E4FF);
+							checkBitmap->SetPixel(x, y, 99);
 							AddAtomToGroup(ownerMOSRotating, spriteOffset, x, y, true);
 							break;
 						}
@@ -1589,7 +1588,7 @@ namespace RTE {
 					for (y = 0; y < spriteHeight; ++y) {
 						// Detect if we are crossing a silhouette boundary, but make sure Atom wasn't already placed during the horizontal scans.
 						if (refSprite->GetPixel(x, y) != g_AlphaZero && checkBitmap->GetPixel(x, y) == g_AlphaZero) {
-							checkBitmap->setPixel(x, y, 0xF9F9E4FF);
+							checkBitmap->SetPixel(x, y, 99);
 							AddAtomToGroup(ownerMOSRotating, spriteOffset, x, y, true);
 							break;
 						}
@@ -1624,13 +1623,13 @@ namespace RTE {
 								clear = true;
 								// Check whether depth is sufficient in the other cardinal directions.
 								for (int i = 1; i <= m_Depth && clear; ++i) {
-									if (x + i >= refSprite->getW() || y + i >= refSprite->getH() || y - i < 0 || refSprite->GetPixel(x + i, y) == g_AlphaZero || refSprite->GetPixel(x, y + i) == g_AlphaZero || refSprite->GetPixel(x, y - i) == g_AlphaZero) {
+									if (x + i >= refSprite->GetW() || y + i >= refSprite->GetH() || y - i < 0 || refSprite->GetPixel(x + i, y) == g_AlphaZero || refSprite->GetPixel(x, y + i) == g_AlphaZero || refSprite->GetPixel(x, y - i) == g_AlphaZero) {
 										clear = false;
 									}
 								}
 								if (clear && checkBitmap->GetPixel(x, y) == g_AlphaZero) {
 									// Mark that an Atom has been put in this location, to avoid duplicate Atoms.
-									checkBitmap->setPixel(x, y, 0xF9F9E4FF);
+									checkBitmap->SetPixel(x, y, 99);
 									AddAtomToGroup(ownerMOSRotating, spriteOffset, x, y, true);
 								}
 							}
@@ -1654,13 +1653,13 @@ namespace RTE {
 								clear = true;
 								// Check whether depth is sufficient in the other cardinal directions.
 								for (int i = 1; i <= m_Depth && clear; ++i) {
-									if (x - i < 0 || y + i >= refSprite->getH() || y - i < 0 || refSprite->GetPixel(x - i, y) == g_AlphaZero || refSprite->GetPixel(x, y + i) == g_AlphaZero || refSprite->GetPixel(x, y - i) == g_AlphaZero) {
+									if (x - i < 0 || y + i >= refSprite->GetH() || y - i < 0 || refSprite->GetPixel(x - i, y) == g_AlphaZero || refSprite->GetPixel(x, y + i) == g_AlphaZero || refSprite->GetPixel(x, y - i) == g_AlphaZero) {
 										clear = false;
 									}
 								}
 								if (clear && checkBitmap->GetPixel(x, y) == g_AlphaZero) {
 									// Mark that an Atom has been put in this location, to avoid duplicate Atoms
-									checkBitmap->setPixel(x, y, 0xF9F9E4FF);
+									checkBitmap->SetPixel(x, y, 99);
 									AddAtomToGroup(ownerMOSRotating, spriteOffset, x, y, true);
 								}
 							}
@@ -1684,14 +1683,14 @@ namespace RTE {
 								clear = true;
 								// Check whether depth is sufficient in the other cardinal directions.
 								for (int i = 1; i <= m_Depth && clear; ++i) {
-									if (x + i >= refSprite->getW() || x - i < 0 || y + i >= refSprite->getH() || refSprite->GetPixel(x + i, y) == g_AlphaZero || refSprite->GetPixel(x - i, y) == g_AlphaZero || refSprite->GetPixel(x, y + i) == g_AlphaZero) {
+									if (x + i >= refSprite->GetW() || x - i < 0 || y + i >= refSprite->GetH() || refSprite->GetPixel(x + i, y) == g_AlphaZero || refSprite->GetPixel(x - i, y) == g_AlphaZero || refSprite->GetPixel(x, y + i) == g_AlphaZero) {
 										clear = false;
 									}
 								}
 								// Depth is cleared in all directions, so go ahead and place Atom.
 								if (clear && checkBitmap->GetPixel(x, y) == g_AlphaZero) {
 									// Mark that an Atom has been put in this location, to avoid duplicate Atoms.
-									checkBitmap->setPixel(x, y, 0xF9F9E4FF);
+									checkBitmap->SetPixel(x, y, 99);
 									AddAtomToGroup(ownerMOSRotating, spriteOffset, x, y, true);
 								}
 							}
@@ -1715,14 +1714,14 @@ namespace RTE {
 								clear = true;
 								// Check whether depth is sufficient in the other cardinal directions.
 								for (int i = 1; i <= m_Depth && clear; ++i) {
-									if (x + i >= refSprite->getW() || x - i < 0 || y - i < 0 || refSprite->GetPixel(x + i, y) == g_AlphaZero || refSprite->GetPixel(x - i, y) == g_AlphaZero || refSprite->GetPixel(x, y - i) == g_AlphaZero) {
+									if (x + i >= refSprite->GetW() || x - i < 0 || y - i < 0 || refSprite->GetPixel(x + i, y) == g_AlphaZero || refSprite->GetPixel(x - i, y) == g_AlphaZero || refSprite->GetPixel(x, y - i) == g_AlphaZero) {
 										clear = false;
 									}
 								}
 								// Depth is cleared in all directions, so go ahead and place Atom.
 								if (clear && checkBitmap->GetPixel(x, y) == g_AlphaZero) {
 									// Mark that an Atom has been put in this location, to avoid duplicate Atoms.
-									checkBitmap->setPixel(x, y, 0xF9F9E4FF);
+									checkBitmap->SetPixel(x, y, 99);
 									AddAtomToGroup(ownerMOSRotating, spriteOffset, x, y, true);
 								}
 							}

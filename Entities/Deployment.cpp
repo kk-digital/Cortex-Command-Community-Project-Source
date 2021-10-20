@@ -658,8 +658,8 @@ bool Deployment::IsOnScenePoint(Vector &scenePoint) const
     }
 */
 	std::shared_ptr<GLTexture> pTexture = m_Icon.GetTextures()[0];
-    Vector bitmapPos = m_Pos - Vector(pTexture->getW() / 2, pTexture->getH() / 2);
-    if (WithinBox(scenePoint, bitmapPos, pTexture->getW(), pTexture->getH()))
+    Vector bitmapPos = m_Pos - Vector(pTexture->GetW() / 2, pTexture->GetH() / 2);
+    if (WithinBox(scenePoint, bitmapPos, pTexture->GetW(), pTexture->GetH()))
     {
         // Scene point on the bitmap
         Vector bitmapPoint = scenePoint - bitmapPos;
@@ -693,20 +693,20 @@ void Deployment::Draw(RenderTarget* renderer, const Vector &targetPos, DrawMode 
 
 		// Take care of wrapping situations
 		Vector aDrawPos[4];
-		aDrawPos[0] = m_Pos - Vector(pTexture->getW() / 2, pTexture->getH() / 2) - targetPos;
+		aDrawPos[0] = m_Pos - Vector(pTexture->GetW() / 2, pTexture->GetH() / 2) - targetPos;
 		int passes = 1;
 
 
 		// See if need to double draw this across the scene seam if we're being drawn onto a scenewide bitmap
 		if (targetPos.IsZero())
 		{
-			if (aDrawPos[0].m_X < pTexture->getW())
+			if (aDrawPos[0].m_X < pTexture->GetW())
 			{
 				aDrawPos[passes] = aDrawPos[0];
 				aDrawPos[passes].m_X += viewport.w;
 				passes++;
 			}
-			else if (aDrawPos[0].m_X > viewport.w - pTexture->getW())
+			else if (aDrawPos[0].m_X > viewport.w - pTexture->GetW())
 			{
 				aDrawPos[passes] = aDrawPos[0];
 				aDrawPos[passes].m_X -= viewport.w;
@@ -741,7 +741,7 @@ void Deployment::Draw(RenderTarget* renderer, const Vector &targetPos, DrawMode 
 			{
 				pTexture->render(renderer, aDrawPos[i].GetFloorIntX(), aDrawPos[i].GetFloorIntY());
 				// Draw the spawn radius circle too
-				circleColor(renderer, aDrawPos[i].GetFloorIntX() + (pTexture->getW() / 2), aDrawPos[i].GetFloorIntY() + (pTexture->getH() / 2), m_SpawnRadius, c_GUIColorGray);
+				circleColor(renderer, aDrawPos[i].GetFloorIntX() + (pTexture->GetW() / 2), aDrawPos[i].GetFloorIntY() + (pTexture->GetH() / 2), m_SpawnRadius, c_GUIColorGray);
 			}
 			else if (mode == g_DrawLess)
 			{
@@ -754,7 +754,7 @@ void Deployment::Draw(RenderTarget* renderer, const Vector &targetPos, DrawMode 
 				pTexture->setAlphaMod(255);
 				// Draw the spawn radius circle too
 				uint32_t color = (c_GUIColorGray&0xFFFFFF00)|alphaMod;
-				circleColor(renderer, aDrawPos[i].GetFloorIntX() + (pTexture->getW() / 2), aDrawPos[i].GetFloorIntY() + (pTexture->getH() / 2), m_SpawnRadius, color);
+				circleColor(renderer, aDrawPos[i].GetFloorIntX() + (pTexture->GetW() / 2), aDrawPos[i].GetFloorIntY() + (pTexture->GetH() / 2), m_SpawnRadius, color);
 			}
 		}
 	}
@@ -775,19 +775,19 @@ void Deployment::Draw(RenderTarget* renderer, const Vector &targetPos, DrawMode 
 
 		// Take care of wrapping situations
 		Vector aDrawPos[4];
-		aDrawPos[0] = m_Pos - Vector(pTexture->getW() / 2, pTexture->getH() / 2) - targetPos + offset;
+		aDrawPos[0] = m_Pos - Vector(pTexture->GetW() / 2, pTexture->GetH() / 2) - targetPos + offset;
 		int passes = 1;
 
 		// See if need to double draw this across the scene seam if we're being drawn onto a scenewide bitmap
 		if (targetPos.IsZero())
 		{
-			if (aDrawPos[0].m_X < pTexture->getW())
+			if (aDrawPos[0].m_X < pTexture->GetW())
 			{
 				aDrawPos[passes] = aDrawPos[0];
 				aDrawPos[passes].m_X += viewport.w;
 				passes++;
 			}
-			else if (aDrawPos[0].m_X > viewport.w - pTexture->getW())
+			else if (aDrawPos[0].m_X > viewport.w - pTexture->GetW())
 			{
 				aDrawPos[passes] = aDrawPos[0];
 				aDrawPos[passes].m_X -= viewport.w;

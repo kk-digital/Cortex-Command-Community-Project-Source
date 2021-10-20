@@ -1325,27 +1325,27 @@ namespace RTE {
 			}
 		}
 		if (IsEnablingOrDisabling()) {
-			int hiddenAreaHalfWidth = static_cast<int>((m_EnabledState == EnabledState::Enabling ? 1.0F - enableDisableProgress : enableDisableProgress) * static_cast<float>(m_CarouselBitmap->getW() / 2));
+			int hiddenAreaHalfWidth = static_cast<int>((m_EnabledState == EnabledState::Enabling ? 1.0F - enableDisableProgress : enableDisableProgress) * static_cast<float>(m_CarouselBitmap->GetW() / 2));
 			g_FrameMan.PushRenderTarget(m_CarouselBitmap);
-			boxColor(g_FrameMan.GetRenderer(), 0, 0, hiddenAreaHalfWidth, m_CarouselBitmap->getH(), g_MaskColor);
-			boxColor(g_FrameMan.GetRenderer(), m_CarouselBitmap->getW() - hiddenAreaHalfWidth, 0, m_CarouselBitmap->getW(), m_CarouselBitmap->getH(), g_MaskColor);
+			boxColor(g_FrameMan.GetRenderer(), 0, 0, hiddenAreaHalfWidth, m_CarouselBitmap->GetH(), g_MaskColor);
+			boxColor(g_FrameMan.GetRenderer(), m_CarouselBitmap->GetW() - hiddenAreaHalfWidth, 0, m_CarouselBitmap->GetW(), m_CarouselBitmap->GetH(), g_MaskColor);
 			g_FrameMan.PopRenderTarget();
 			g_FrameMan.PushRenderTarget(m_CarouselBGBitmap);
-			boxColor(g_FrameMan.GetRenderer(), 0, 0, hiddenAreaHalfWidth, m_CarouselBGBitmap->getH(), g_MaskColor);
-			boxColor(g_FrameMan.GetRenderer(), m_CarouselBGBitmap->getW() - hiddenAreaHalfWidth, 0, m_CarouselBGBitmap->getW() , m_CarouselBGBitmap->getH(), g_MaskColor);
+			boxColor(g_FrameMan.GetRenderer(), 0, 0, hiddenAreaHalfWidth, m_CarouselBGBitmap->GetH(), g_MaskColor);
+			boxColor(g_FrameMan.GetRenderer(), m_CarouselBGBitmap->GetW() - hiddenAreaHalfWidth, 0, m_CarouselBGBitmap->GetW() , m_CarouselBGBitmap->GetH(), g_MaskColor);
 			g_FrameMan.PopRenderTarget();
 		}
 
 		g_FrameMan.PopRenderTarget();
 		bool hasDrawnAtLeastOnce = false;
 		std::list<IntRect> wrappedRectangles;
-		g_SceneMan.WrapRect(IntRect(drawPos.GetFloorIntX(), drawPos.GetFloorIntY(), drawPos.GetFloorIntX() + m_CarouselBitmap->getW(), drawPos.GetFloorIntY() + m_CarouselBitmap->getH()), wrappedRectangles);
+		g_SceneMan.WrapRect(IntRect(drawPos.GetFloorIntX(), drawPos.GetFloorIntY(), drawPos.GetFloorIntX() + m_CarouselBitmap->GetW(), drawPos.GetFloorIntY() + m_CarouselBitmap->GetH()), wrappedRectangles);
 		for (const IntRect &wrappedRectangle : wrappedRectangles) {
 			if (m_CarouselBackgroundTransparent && !g_FrameMan.IsInMultiplayerMode()) {
 				m_CarouselBGBitmap->setAlphaMod(MoreTrans);
-				m_CarouselBGBitmap->render(g_FrameMan.GetRenderer(), wrappedRectangle.m_Left - m_CarouselBGBitmap->getW() / 2, wrappedRectangle.m_Top - m_CarouselBGBitmap->getH() / 2);
+				m_CarouselBGBitmap->render(g_FrameMan.GetRenderer(), wrappedRectangle.m_Left - m_CarouselBGBitmap->GetW() / 2, wrappedRectangle.m_Top - m_CarouselBGBitmap->GetH() / 2);
 				m_CarouselBGBitmap->setAlphaMod(255);
-				m_CarouselBitmap->render(g_FrameMan.GetRenderer(), wrappedRectangle.m_Left - m_CarouselBitmap->getW() / 2, wrappedRectangle.m_Top - m_CarouselBitmap->getH() / 2);
+				m_CarouselBitmap->render(g_FrameMan.GetRenderer(), wrappedRectangle.m_Left - m_CarouselBitmap->GetW() / 2, wrappedRectangle.m_Top - m_CarouselBitmap->GetH() / 2);
 			} else {
 				// if (!hasDrawnAtLeastOnce) { draw_sprite(m_CarouselBGBitmap.get(), m_CarouselBitmap.get(), 0, 0); }
 				// draw_sprite(targetBitmap, m_CarouselBGBitmap.get(), wrappedRectangle.m_Left - m_CarouselBGBitmap->w / 2, wrappedRectangle.m_Top - m_CarouselBGBitmap->h / 2);
@@ -1430,7 +1430,7 @@ namespace RTE {
 		if (IsEnabled() && !m_GUIDisplayOnly && m_MenuController->IsMouseControlled()) {
 			if (m_GUISelectedItem && m_GUISelectedItem->DragWasHeldForLongEnough()) {
 				SharedTexture selectedObjectIcon = m_GUISelectedItem->Object->GetGraphicalIcon();
-				selectedObjectIcon->render(renderer, m_GUICursorPos.GetFloorIntX() - (selectedObjectIcon->getW() / 2), m_GUICursorPos.GetFloorIntY() - (selectedObjectIcon->getH() / 2));
+				selectedObjectIcon->render(renderer, m_GUICursorPos.GetFloorIntX() - (selectedObjectIcon->GetW() / 2), m_GUICursorPos.GetFloorIntY() - (selectedObjectIcon->GetH() / 2));
 			} else {
 				s_CursorBitmap->render(renderer, m_GUICursorPos.GetFloorIntX(), m_GUICursorPos.GetFloorIntY());
 			}

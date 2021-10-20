@@ -211,13 +211,13 @@ namespace RTE {
 		/// </summary>
 		/// <param name="materialID">The material ID to get the mapping for.</param>
 		/// <returns>The material ID that the passed in ID is mapped to, if any. 0 if no mapping present.</returns>
-		uint32_t GetMaterialMapping(uint32_t materialID) const;
+		MID GetMaterialMapping(MID materialID) const;
 
 		/// <summary>
 		/// Gets the entire Material mapping array local to this DataModule.
 		/// </summary>
 		/// <returns>A pointer to the entire local mapping array, 256 unsigned chars. Ownership is NOT transferred!</returns>
-		const robin_hood::unordered_map<MID, MID>& GetAllMaterialMappings() const { return m_MaterialMappings; }
+		const std::array<MID, c_PaletteEntriesNumber>& GetAllMaterialMappings() const { return m_MaterialMappings; }
 
 		/// <summary>
 		/// Adds a Material mapping local to a DataModule.
@@ -226,7 +226,7 @@ namespace RTE {
 		/// <param name="fromID">The material ID to map from.</param>
 		/// <param name="toID">The material ID to map to.</param>
 		/// <returns>Whether this created a new mapping which didn't override a previous material mapping.</returns>
-		bool AddMaterialMapping(uint32_t fromID, uint32_t toID);
+		bool AddMaterialMapping(MID fromID, MID toID);
 #pragma endregion
 
 #pragma region Lua Script Handling
@@ -276,7 +276,7 @@ namespace RTE {
 
 		std::list<const Entity *> m_EntityList; //!< A list of loaded entities solely for the purpose of enumeration presets from Lua.
 		std::list<std::string> m_GroupRegister; //!< List of all Entity groups ever registered in this, all uniques.
-		robin_hood::unordered_map<MID, MID> m_MaterialMappings; //!< Material mappings local to this DataModule.
+		std::array<MID, c_PaletteEntriesNumber> m_MaterialMappings; //!< Material mappings local to this DataModule.
 
 		/// <summary>
 		/// Ordered list of all owned Entity instances, ordered by the sequence of their reading - really now with overwriting?.
