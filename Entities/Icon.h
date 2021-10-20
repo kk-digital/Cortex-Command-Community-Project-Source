@@ -74,7 +74,7 @@ namespace RTE {
 		/// Gets the array of 32-bit bitmaps of this Icon, as many as GetFrameCount says.
 		/// </summary>
 		/// <returns>The BITMAPs in 32bpp of this Icon.</returns>
-		const std::vector<std::shared_ptr<Texture>> & GetTextures() const { return m_Textures; }
+		const std::vector<std::shared_ptr<GLTexture>> & GetTextures() const { return m_Textures; }
 #pragma endregion
 
 #pragma region Operator Overloads
@@ -93,7 +93,7 @@ namespace RTE {
 		ContentFile m_BitmapFile; //!< ContentFile containing the bitmap file of this Icon.
 		unsigned int m_FrameCount; //!< Number of frames in this Icon's animation.
 
-		std::vector<std::shared_ptr<Texture>> m_Textures; //!< The 32bpp Textures of this Icon.
+		std::vector<std::shared_ptr<GLTexture>> m_Textures; //!< The 32bpp Textures of this Icon.
 
 	private:
 

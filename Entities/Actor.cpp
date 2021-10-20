@@ -39,10 +39,10 @@ namespace RTE {
 
 ConcreteClassInfo(Actor, MOSRotating, 20);
 
-	std::vector<std::shared_ptr<Texture>> Actor::m_apNoTeamIcon;
-	std::array<std::shared_ptr<Texture>, Actor::AIMODE_COUNT> Actor::m_apAIIcons;
-	std::vector<std::shared_ptr<Texture>> Actor::m_apSelectArrow;
-	std::vector<std::shared_ptr<Texture>> Actor::m_apAlarmExclamation;
+	std::vector<std::shared_ptr<GLTexture>> Actor::m_apNoTeamIcon;
+	std::array<std::shared_ptr<GLTexture>, Actor::AIMODE_COUNT> Actor::m_apAIIcons;
+	std::vector<std::shared_ptr<GLTexture>> Actor::m_apSelectArrow;
+	std::vector<std::shared_ptr<GLTexture>> Actor::m_apAlarmExclamation;
 bool Actor::m_sIconsLoaded = false;
 
 #define ARROWTIME 1000
@@ -1157,7 +1157,7 @@ bool Actor::OnMOHit(MovableObject *pOtherMO)
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Gets the icon bitmap associated with this' current AI mode and team.
 
-std::shared_ptr<Texture> Actor::GetAIModeIcon()
+std::shared_ptr<GLTexture> Actor::GetAIModeIcon()
 {
     return m_apAIIcons[m_AIMode];
 }
@@ -1765,7 +1765,7 @@ void Actor::DrawHUD(RenderTarget* renderer, const Vector &targetPos, int whichSc
 				}
 
                 // Get the Icon bitmaps of this Actor's team, if any
-				std::vector<std::shared_ptr<Texture>> apIconTextures;
+				std::vector<std::shared_ptr<GLTexture>> apIconTextures;
                 if (m_pTeamIcon)
                     apIconTextures = m_pTeamIcon->GetTextures();
 

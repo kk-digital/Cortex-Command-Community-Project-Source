@@ -1289,7 +1289,7 @@ const SceneObject * PickPlacedActorInRange(int whichSet, Vector &scenePoint, int
 // Arguments:       None.
 // Return value:    Pointer to preview bitmap.
 
-	std::shared_ptr<Texture> GetPreviewBitmap() const { return m_pPreviewBitmap; };
+	std::shared_ptr<GLTexture> GetPreviewBitmap() const { return m_pPreviewBitmap; };
 
     // Holds the path calculated by CalculateScenePath
     std::list<Vector> m_ScenePath;
@@ -1360,7 +1360,7 @@ protected:
     // Amounts of limited assemblies
     std::map<std::string, int> m_AssembliesCounts;
 	// Scene preview bitmap
-	std::shared_ptr<Texture> m_pPreviewBitmap;
+	std::shared_ptr<GLTexture> m_pPreviewBitmap;
 	// Scene preview source file
 	ContentFile m_PreviewBitmapFile;
 	// Name of a scene which can be replaced by this scene in MetaGame

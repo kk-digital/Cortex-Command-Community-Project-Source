@@ -367,7 +367,7 @@ protected:
     // Grid snapping enabled
     bool m_GridSnapping;
     // The zooming bitmaps owned by this; source gets the area from the screen, destination is the zoomed in view
-	std::shared_ptr<Texture> m_pZoomSource;
+	std::shared_ptr<GLTexture> m_pZoomSource;
     // The zoom factor of the magnifying window. 0 means no zoom window
     int m_ZoomFactor;
     // Current cursor position, in absolute scene coordinates

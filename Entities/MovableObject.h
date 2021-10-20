@@ -671,7 +671,7 @@ enum MOType
 // Arguments:       None.
 // Return value:    The 32bpp screen effect BITMAP. Ownership is NOT transferred!
 
-	std::shared_ptr<Texture> GetScreenEffect() const { return m_pScreenEffect; }
+	std::shared_ptr<GLTexture> GetScreenEffect() const { return m_pScreenEffect; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -1955,7 +1955,7 @@ protected:
     // Special post processing flash effect file and Bitmap. Shuold be loaded from a 32bpp bitmap
     ContentFile m_ScreenEffectFile;
     // Not owned by this, owned by the contentfiles
-	std::shared_ptr<Texture> m_pScreenEffect;
+	std::shared_ptr<GLTexture> m_pScreenEffect;
 
 	size_t m_ScreenEffectHash;
 

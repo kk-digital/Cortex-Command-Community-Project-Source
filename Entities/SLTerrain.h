@@ -368,7 +368,7 @@ ClassInfoGetters
 // Arguments:       None.
 // Return value:    A pointer to the foreground color bitmap.
 
-	std::shared_ptr<Texture> GetFGColorTexture() { return m_pFGColor->GetTexture(); }
+	std::shared_ptr<GLTexture> GetFGColorTexture() { return m_pFGColor->GetTexture(); }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -378,7 +378,7 @@ ClassInfoGetters
 // Arguments:       None.
 // Return value:    A pointer to the foreground color bitmap.
 
-	std::shared_ptr<Texture> GetBGColorTexture() { return m_pBGColor->GetTexture(); }
+	std::shared_ptr<GLTexture> GetBGColorTexture() { return m_pBGColor->GetTexture(); }
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          GetMaterialBitmap
@@ -387,7 +387,7 @@ ClassInfoGetters
 // Arguments:       None.
 // Return value:    A pointer to the material bitmap.
 
-	std::shared_ptr<Texture> GetMaterialTexture() { return m_pMainTexture; }
+	std::shared_ptr<GLTexture> GetMaterialTexture() { return m_pMainTexture; }
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          GetFGColorPixel
@@ -476,7 +476,7 @@ ClassInfoGetters
 // Description:     Gets the structural bitmap of this Terrain.
 // Arguments:       None.
 // Return value:    A pointer to the material bitmap.
-	std::shared_ptr<Texture> & GetStructuralTexture() { return m_pStructural; }
+	std::shared_ptr<GLTexture> & GetStructuralTexture() { return m_pStructural; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -510,7 +510,7 @@ ClassInfoGetters
 //                  Note that ownership of all the MOPixel:s in the deque ARE transferred!
 //                  This will be empty if makeMOPs is false.
 
-    std::deque<MOPixel *> EraseSilhouette(std::shared_ptr<Texture> pSprite,
+    std::deque<MOPixel *> EraseSilhouette(std::shared_ptr<GLTexture> pSprite,
                                           Vector pos,
                                           Vector pivot,
                                           Matrix rotation,
@@ -694,7 +694,7 @@ protected:
 
     SceneLayer *m_pFGColor;
     SceneLayer *m_pBGColor;
-	std::shared_ptr<Texture> m_pStructural;
+	std::shared_ptr<GLTexture> m_pStructural;
     ContentFile m_BGTextureFile;
 
     std::list<TerrainFrosting> m_TerrainFrostings;

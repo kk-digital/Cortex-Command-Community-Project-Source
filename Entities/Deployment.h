@@ -138,7 +138,7 @@ ClassInfoGetters;
 // Return value:    A good identifyable graphical representation of this in a BITMAP, if
 //                  available. If not, 0 is returned. Ownership is NOT TRANSFERRED!
 
-	const std::shared_ptr<Texture> GetGraphicalIcon() const override {if(m_Icon.GetTextures().empty()) return std::move(std::shared_ptr<Texture>(nullptr)); else return m_Icon.GetTextures()[0]; }
+	const std::shared_ptr<GLTexture> GetGraphicalIcon() const override {if(m_Icon.GetTextures().empty()) return std::move(std::shared_ptr<GLTexture>(nullptr)); else return m_Icon.GetTextures()[0]; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -377,8 +377,8 @@ protected:
 	// Whether the deployment and it's loadout is flipped
 	bool m_HFlipped;
 	// Shared HFlipped arrow bitmaps
-	static std::vector<std::shared_ptr<Texture>> m_apArrowLeftBitmap;
-	static std::vector<std::shared_ptr<Texture>> m_apArrowRightBitmap;
+	static std::vector<std::shared_ptr<GLTexture>> m_apArrowLeftBitmap;
+	static std::vector<std::shared_ptr<GLTexture>> m_apArrowRightBitmap;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////

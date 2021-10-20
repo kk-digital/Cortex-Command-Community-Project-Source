@@ -121,7 +121,7 @@ namespace RTE {
 		/// Gets the BITMAP that visually represents this DataModule, for use in menus.
 		/// </summary>
 		/// <returns>BITMAP pointer that might have the icon. 0 is very possible.</returns>
-		std::shared_ptr<Texture> GetIcon() const { return m_Icon; }
+		std::shared_ptr<GLTexture> GetIcon() const { return m_Icon; }
 
 		/// <summary>
 		/// Returns crab-to-human spawn ration for this tech.
@@ -270,7 +270,7 @@ namespace RTE {
 		int m_ModuleID; //!< ID number assigned to this upon loading, for internal use only, don't reflect in ini's.
 
 		ContentFile m_IconFile; //!< File to the icon/symbol bitmap.
-		std::shared_ptr<Texture> m_Icon; //!< Bitmap with the icon loaded from above file.
+		std::shared_ptr<GLTexture> m_Icon; //!< Bitmap with the icon loaded from above file.
 
 		float m_CrabToHumanSpawnRatio; //!< Crab-to-human Spawn ratio to replace value from Constants.lua.
 

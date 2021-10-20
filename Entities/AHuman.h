@@ -330,7 +330,7 @@ ClassInfoGetters;
 // Return value:    A pointer to the bitmap of with the head of this. Ownership is NOT
 //                  transferred!
 
-	std::shared_ptr<Texture> GetHeadTexture() const;
+	std::shared_ptr<GLTexture> GetHeadTexture() const;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -727,7 +727,7 @@ ClassInfoGetters;
 // Return value:    A good identifyable graphical representation of this in a BITMAP, if
 //                  available. If not, 0 is returned. Ownership is NOT TRANSFERRED!
 
-	const std::shared_ptr<Texture> GetGraphicalIcon() const override { return GetHeadTexture(); }
+	const std::shared_ptr<GLTexture> GetGraphicalIcon() const override { return GetHeadTexture(); }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////

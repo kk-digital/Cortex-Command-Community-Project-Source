@@ -281,7 +281,7 @@ protected:
     // Not owned by this.
     Scene::Area *m_pPickedArea;
     // The cursor image shared by all pickers
-    static std::shared_ptr<Texture> s_pCursor;
+    static std::shared_ptr<GLTexture> s_pCursor;
     // Screen position of the cursor
     Vector m_CursorPos;
 

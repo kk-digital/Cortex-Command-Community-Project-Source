@@ -15,7 +15,7 @@ namespace RTE {
 	/// Structure for storing a post-process screen effect to be applied at the last stage of 32bpp rendering.
 	/// </summary>
 	struct PostEffect {
-		std::shared_ptr<Texture> m_Texture; //!< The bitmap to blend, not owned.
+		std::shared_ptr<GLTexture> m_Texture; //!< The bitmap to blend, not owned.
 		size_t m_BitmapHash = 0; //!< Hash used to transmit glow events over the network.
 		float m_Angle = 0; // Post effect angle in degrees.
 		int m_Strength = 128; //!< Scalar float for how hard to blend it in, 0 - 255.
@@ -24,7 +24,7 @@ namespace RTE {
 		/// <summary>
 		/// Constructor method used to instantiate a PostEffect object in system memory.
 		/// </summary>
-		PostEffect(const Vector &pos, std::shared_ptr<Texture> texture,
+		PostEffect(const Vector &pos, std::shared_ptr<GLTexture> texture,
 		           size_t bitmapHash, int strength, float angle) :
 		    m_Texture{texture},
 		    m_BitmapHash(bitmapHash), m_Angle(angle),
@@ -110,7 +110,7 @@ namespace RTE {
 		/// <param name="hash">Hash value of the effect for transmitting over the network.</param>
 		/// <param name="strength">The intensity level this effect should have when blended in post. 0 - 255.</param>
 		/// <param name="angle">The angle this effect should be rotated at.</param>
-		void RegisterPostEffect(const Vector &effectPos, std::shared_ptr<Texture> effect, size_t hash, int strength = 255, float angle = 0);
+		void RegisterPostEffect(const Vector &effectPos, std::shared_ptr<GLTexture> effect, size_t hash, int strength = 255, float angle = 0);
 
 		/// <summary>
 		/// Gets all screen effects that are located within a box in the scene.
@@ -203,16 +203,16 @@ namespace RTE {
 		std::array<std::list<PostEffect>, c_MaxScreenCount> m_ScreenRelativeEffects; //!< List of screen relative effects for each player in online multiplayer.
 		std::array<std::mutex, c_MaxScreenCount> ScreenRelativeEffectsMutex; //!< Mutex for the ScreenRelativeEffects list when accessed by multiple threads in online multiplayer.
 
-		std::shared_ptr<Texture> m_YellowGlow; //!< Bitmap for the yellow dot glow effect.
-		std::shared_ptr<Texture> m_RedGlow; //!< Bitmap for the red dot glow effect.
-		std::shared_ptr<Texture> m_BlueGlow; //!< Bitmap for the blue dot glow effect.
+		std::shared_ptr<GLTexture> m_YellowGlow; //!< Bitmap for the yellow dot glow effect.
+		std::shared_ptr<GLTexture> m_RedGlow; //!< Bitmap for the red dot glow effect.
+		std::shared_ptr<GLTexture> m_BlueGlow; //!< Bitmap for the blue dot glow effect.
 
 		size_t m_YellowGlowHash; //!< Hash value for the yellow dot glow effect bitmap.
 		size_t m_RedGlowHash; //!< Hash value for the red dot glow effect bitmap.
 		size_t m_BlueGlowHash; //!< Hash value for the blue dot glow effect bitmap.
 
 		//TODO: remove
-		std::unordered_map<int, std::shared_ptr<Texture>> m_TempEffectBitmaps; //!< Stores temporary bitmaps to rotate post effects in for quick access.
+		std::unordered_map<int, std::shared_ptr<GLTexture>> m_TempEffectBitmaps; //!< Stores temporary bitmaps to rotate post effects in for quick access.
 
 	private:
 
@@ -247,7 +247,7 @@ namespace RTE {
 		/// </summary>
 		/// <param name="which">Which of the dot glow colors to get, see the DotGlowColor enumerator.</param>
 		/// <returns>The requested glow dot BITMAP.</returns>
-		std::shared_ptr<Texture> GetDotGlowEffect(DotGlowColor whichColor) const;
+		std::shared_ptr<GLTexture> GetDotGlowEffect(DotGlowColor whichColor) const;
 
 		/// <summary>
 		/// Gets the hash value of a specific standard dot glow effect for making pixels glow.

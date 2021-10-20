@@ -43,7 +43,7 @@
 
 using namespace RTE;
 
-std::shared_ptr<Texture> RTE::BuyMenuGUI::s_pCursor;
+std::shared_ptr<GLTexture> RTE::BuyMenuGUI::s_pCursor;
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          Clear

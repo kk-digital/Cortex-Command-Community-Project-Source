@@ -399,7 +399,7 @@ void SceneObject::DrawTeamMark(RenderTarget* renderer, const Vector &targetPos) 
     }
 
     // Get the Icon bitmaps of this Actor's team, if any
-	std::shared_ptr<Texture> teamIcon = g_ActivityMan.GetActivity()->GetTeamIcon(m_Team)->GetTextures()[0];
+	std::shared_ptr<GLTexture> teamIcon = g_ActivityMan.GetActivity()->GetTeamIcon(m_Team)->GetTextures()[0];
 
     // Now draw the Icon if we can
     if (teamIcon)

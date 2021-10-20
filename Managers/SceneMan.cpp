@@ -495,7 +495,7 @@ SLTerrain * SceneMan::GetTerrain()
 //                  MovableObject:s draw themselves onto before it itself gets drawn onto
 //                  the screen back buffer.
 
-std::shared_ptr<Texture> SceneMan::GetMOColorTexture() const { return m_pMOColorLayer->GetTexture(); }
+std::shared_ptr<GLTexture> SceneMan::GetMOColorTexture() const { return m_pMOColorLayer->GetTexture(); }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -504,7 +504,7 @@ std::shared_ptr<Texture> SceneMan::GetMOColorTexture() const { return m_pMOColor
 // Description:     Gets the bitmap of the SceneLayer that debug graphics is drawn onto.
 //                  Will only return valid BITMAP if building with DEBUG_BUILD.
 
-std::shared_ptr<Texture> SceneMan::GetDebugTexture() const { return m_pDebugLayer->GetTexture(); }
+std::shared_ptr<GLTexture> SceneMan::GetDebugTexture() const { return m_pDebugLayer->GetTexture(); }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -513,7 +513,7 @@ std::shared_ptr<Texture> SceneMan::GetDebugTexture() const { return m_pDebugLaye
 // Description:     Gets the bitmap of the SceneLayer that all MovableObject:s draw their
 //                  current (for the frame only!) MOID's onto.
 
-std::shared_ptr<Texture> SceneMan::GetMOIDTexture() const { return m_pMOIDLayer->GetTexture(); }
+std::shared_ptr<GLTexture> SceneMan::GetMOIDTexture() const { return m_pMOIDLayer->GetTexture(); }
 
 // TEMP!
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -1042,7 +1042,7 @@ int SceneMan::RemoveOrphans(int posX, int posY,
 	int bmpX = 0;
 	int bmpY = 0;
 
-	std::shared_ptr<Texture> mat = m_pCurrentScene->GetTerrain()->GetMaterialTexture();
+	std::shared_ptr<GLTexture> mat = m_pCurrentScene->GetTerrain()->GetMaterialTexture();
 
 	if (posX < 0 || posY < 0 || posX >= mat->getW() || posY >= mat->getH()) return 0;
 
@@ -1341,9 +1341,9 @@ bool SceneMan::TryPenetrate(const int posX,
 		if (sceneMat->IsScrap() || m_pCurrentScene->GetTerrain()->GetBGColorTexture()->getPixel(posX, posY) == 0)
 		{
 			// Get quicker direct access to bitmaps
-			std::shared_ptr<Texture> pFGColor = m_pCurrentScene->GetTerrain()->GetFGColorTexture();
-			std::shared_ptr<Texture> pBGColor = m_pCurrentScene->GetTerrain()->GetBGColorTexture();
-			std::shared_ptr<Texture> pMaterial = m_pCurrentScene->GetTerrain()->GetMaterialTexture();
+			std::shared_ptr<GLTexture> pFGColor = m_pCurrentScene->GetTerrain()->GetFGColorTexture();
+			std::shared_ptr<GLTexture> pBGColor = m_pCurrentScene->GetTerrain()->GetBGColorTexture();
+			std::shared_ptr<GLTexture> pMaterial = m_pCurrentScene->GetTerrain()->GetMaterialTexture();
 
 			int testMaterialID = g_MaterialAir;
 			MOPixel *pixelMO = 0;
@@ -2908,9 +2908,9 @@ void SceneMan::StructuralCalc(unsigned long calcTime) {
     m_CalcTimer.Reset();
 
     SLTerrain *pTerrain = g_SceneMan.GetTerrain();
-		std::shared_ptr<Texture> pColTexture = pTerrain->GetFGColorTexture();
-		std::shared_ptr<Texture> pMatTexture = pTerrain->GetMaterialTexture();
-		std::shared_ptr<Texture> pStructTexture = pTerrain->GetStructuralTexture();
+		std::shared_ptr<GLTexture> pColTexture = pTerrain->GetFGColorTexture();
+		std::shared_ptr<GLTexture> pMatTexture = pTerrain->GetMaterialTexture();
+		std::shared_ptr<GLTexture> pStructTexture = pTerrain->GetStructuralTexture();
     int posX, posY, height = pColTexture->getH(), width = pColTexture->getW();
 
     // Lock all bitmaps involved, outside the loop.
@@ -3536,7 +3536,7 @@ void SceneMan::Update(int screen)
 // Description:     Draws this SceneMan's current graphical representation to a
 //                  BITMAP of choice.
 
-void SceneMan::Draw(RenderTarget* renderer, std::shared_ptr<Texture> pGUITexture, const Vector &targetPos, bool skipSkybox, bool skipTerrain)
+void SceneMan::Draw(RenderTarget* renderer, std::shared_ptr<GLTexture> pGUITexture, const Vector &targetPos, bool skipSkybox, bool skipTerrain)
 {
     if (m_pCurrentScene == nullptr) {
         return;

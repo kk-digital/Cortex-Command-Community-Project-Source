@@ -191,7 +191,7 @@ public:
 // Return value:    A pointer to the requested frame of this MOSprite's BITMAP array.
 //                  Ownership is NOT transferred!
 
-	std::shared_ptr<Texture> GetSpriteFrame(int whichFrame = 0) const { return (whichFrame >= 0 && whichFrame < m_FrameCount) ? m_aSprite[whichFrame] : 0; }
+	std::shared_ptr<GLTexture> GetSpriteFrame(int whichFrame = 0) const { return (whichFrame >= 0 && whichFrame < m_FrameCount) ? m_aSprite[whichFrame] : 0; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -393,7 +393,7 @@ public:
 // Return value:    A good identifyable graphical representation of this in a BITMAP, if
 //                  available. If not, 0 is returned. Ownership is NOT TRANSFERRED!
 
-	const std::shared_ptr<Texture> GetGraphicalIcon() const override { return m_aSprite[0]; }
+	const std::shared_ptr<GLTexture> GetGraphicalIcon() const override { return m_aSprite[0]; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -568,7 +568,7 @@ protected:
     float m_PrevAngVel; // Previous frame's angular velocity.
     ContentFile m_SpriteFile;
     // Array of pointers to BITMAP:s representing the multiple frames of this sprite
-	std::vector<std::shared_ptr<Texture>> m_aSprite;
+	std::vector<std::shared_ptr<GLTexture>> m_aSprite;
     // Number of frames, or elements in the m_aSprite array.
     unsigned int m_FrameCount;
     Vector m_SpriteOffset;

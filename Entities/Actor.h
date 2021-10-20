@@ -652,7 +652,7 @@ ClassInfoGetters;
 // Arguments:       None.
 // Return value:    The current AI mode icon of this. Ownership is NOT transferred!
 
-	std::shared_ptr<Texture> GetAIModeIcon();
+	std::shared_ptr<GLTexture> GetAIModeIcon();
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -1476,13 +1476,13 @@ protected:
          FOLLOWWAIT
     };
     // Unknown team icon
-    static std::vector<std::shared_ptr<Texture>> m_apNoTeamIcon;
+    static std::vector<std::shared_ptr<GLTexture>> m_apNoTeamIcon;
     // The AI mode icons
-    static std::array<std::shared_ptr<Texture>, AIMODE_COUNT> m_apAIIcons;
+    static std::array<std::shared_ptr<GLTexture>, AIMODE_COUNT> m_apAIIcons;
     // Selection arrow
-    static std::vector<std::shared_ptr<Texture>> m_apSelectArrow;
+    static std::vector<std::shared_ptr<GLTexture>> m_apSelectArrow;
     // Selection arrow
-    static std::vector<std::shared_ptr<Texture>> m_apAlarmExclamation;
+    static std::vector<std::shared_ptr<GLTexture>> m_apAlarmExclamation;
     // Whether the static icons have been loaded yet or not
     static bool m_sIconsLoaded;
     // Whether a Lua update AI function was provided in this' script file

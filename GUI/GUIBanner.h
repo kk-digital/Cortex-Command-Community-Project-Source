@@ -281,7 +281,7 @@ public:
 private:
 
     // Font bitmap files - not owned
-	std::shared_ptr<Texture> m_pFontImage[FONTMODECOUNT];
+	std::shared_ptr<GLTexture> m_pFontImage[FONTMODECOUNT];
 
     // The loaded font information for each filepath to a font bitmap
     static std::map<std::string, FontChar *> m_sFontCache;

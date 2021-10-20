@@ -2920,7 +2920,7 @@ void GameActivity::DisableAIs(bool disable, int whichTeam)
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Simply draws this' arrow relative to a point on a bitmap.
 
-void GameActivity::ObjectivePoint::Draw(RenderTarget* renderer, std::shared_ptr<Texture> pArrowTexture, const Vector &arrowPoint, ObjectiveArrowDir arrowDir)
+void GameActivity::ObjectivePoint::Draw(RenderTarget* renderer, std::shared_ptr<GLTexture> pArrowTexture, const Vector &arrowPoint, ObjectiveArrowDir arrowDir)
 {
     if (!renderer || !pArrowTexture)
         return;

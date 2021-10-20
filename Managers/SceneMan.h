@@ -465,7 +465,7 @@ public:
 	/// <returns>
 	/// Shared pointer to the MOColorTexture.
 	/// </returns>
-	std::shared_ptr<Texture> GetMOColorTexture() const;
+	std::shared_ptr<GLTexture> GetMOColorTexture() const;
 
 
 	/// <summary>
@@ -474,7 +474,7 @@ public:
 	/// <reutrns>
 	/// shared pointer to the debug texture
 	/// </returns>
-	std::shared_ptr<Texture> GetDebugTexture() const;
+	std::shared_ptr<GLTexture> GetDebugTexture() const;
 
 	/// <summary>
 	/// Gets the Texture that all MOs draw their current MOID onto.
@@ -483,7 +483,7 @@ public:
 	/// <returns>
 	/// Shared pointer to rhe MOID Texture
 	/// </returns>
-	std::shared_ptr<Texture> GetMOIDTexture() const;
+	std::shared_ptr<GLTexture> GetMOIDTexture() const;
 
 // TEMP!
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -1609,7 +1609,7 @@ public:
 //                  is located.
 // Return value:    None.
 
-    void Draw(RenderTarget* renderer, std::shared_ptr<Texture> pGUITexture,  const Vector &targetPos = Vector(), bool skipSkybox = false, bool skipTerrain = false);
+    void Draw(RenderTarget* renderer, std::shared_ptr<GLTexture> pGUITexture,  const Vector &targetPos = Vector(), bool skipSkybox = false, bool skipTerrain = false);
 
 
 //////////////////////////////////////////////////////////////////////////////////////////

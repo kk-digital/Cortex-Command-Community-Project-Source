@@ -189,7 +189,7 @@ ClassInfoGetters;
 // Return value:    A pointer to the foreground color BITMAP object. Ownership is not
 //                  transferred.
 
-	std::shared_ptr<Texture> GetFGColorTexture() const { return m_pFGColor; }
+	std::shared_ptr<GLTexture> GetFGColorTexture() const { return m_pFGColor; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -201,7 +201,7 @@ ClassInfoGetters;
 // Return value:    A pointer to the background color BITMAP object. Ownership is not
 //                  transferred. This may be 0 if there is no BG info!
 
-	std::shared_ptr<Texture> GetBGColorTexture() const { return m_pBGColor; }
+	std::shared_ptr<GLTexture> GetBGColorTexture() const { return m_pBGColor; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -213,7 +213,7 @@ ClassInfoGetters;
 // Return value:    A pointer to the material BITMAP object. Ownership is not
 //                  transferred.
 
-	std::shared_ptr<Texture> GetMaterialTexture() const { return m_pMaterial; }
+	std::shared_ptr<GLTexture> GetMaterialTexture() const { return m_pMaterial; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -235,7 +235,7 @@ ClassInfoGetters;
 // Return value:    A good identifyable graphical representation of this in a BITMAP, if
 //                  available. If not, 0 is returned. Ownership is NOT TRANSFERRED!
 
-	const std::shared_ptr<Texture> GetGraphicalIcon() const override;
+	const std::shared_ptr<GLTexture> GetGraphicalIcon() const override;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -308,9 +308,9 @@ protected:
     ContentFile m_MaterialFile;
     ContentFile m_BGColorFile;
 
-	std::shared_ptr<Texture> m_pFGColor;
-	std::shared_ptr<Texture> m_pMaterial;
-	std::shared_ptr<Texture> m_pBGColor;
+	std::shared_ptr<GLTexture> m_pFGColor;
+	std::shared_ptr<GLTexture> m_pMaterial;
+	std::shared_ptr<GLTexture> m_pBGColor;
 
     // Offset from the position of this to the top left corner of the bitmap.
     // The inverson of this should point to a corner or pattern in the bitmaps which will snap well with a 24px grid

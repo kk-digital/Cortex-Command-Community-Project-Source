@@ -472,7 +472,7 @@ public:
 // Return value:    A good identifyable graphical representation of this in a BITMAP, if
 //                  available. If not, 0 is returned. Ownership is NOT TRANSFERRED!
 
-    virtual const std::shared_ptr<Texture> GetGraphicalIcon() const { return 0; }
+    virtual const std::shared_ptr<GLTexture> GetGraphicalIcon() const { return 0; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////

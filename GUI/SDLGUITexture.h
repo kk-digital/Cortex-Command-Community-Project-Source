@@ -23,7 +23,7 @@ namespace RTE {
 		/// Texture requests pixel access, this allows GetPixel and SetPixel to
 		/// be called safely
 		/// </param>
-		SDLGUITexture(std::shared_ptr<Texture> pTexture);
+		SDLGUITexture(std::shared_ptr<GLTexture> pTexture);
 
 		SDLGUITexture(const SDLGUITexture &reference);
 

@@ -263,7 +263,7 @@ void TerrainObject::Destroy(bool notInherited)
 // Description:     Gets a bitmap showing a good identifyable icon of this, for use in
 //                  GUI lists etc.
 
-const std::shared_ptr<Texture> TerrainObject::GetGraphicalIcon() const
+const std::shared_ptr<GLTexture> TerrainObject::GetGraphicalIcon() const
 {
     if (!m_pFGColor)
         return m_pBGColor;

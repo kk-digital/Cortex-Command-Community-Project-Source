@@ -204,7 +204,7 @@ ClassInfoGetters;
 // Return value:    A good identifyable graphical representation of this in a BITMAP, if
 //                  available. If not, 0 is returned. Ownership is NOT TRANSFERRED!
 
-	const std::shared_ptr<Texture> GetGraphicalIcon() const override { return m_pPresentationBitmap; };
+	const std::shared_ptr<GLTexture> GetGraphicalIcon() const override { return m_pPresentationBitmap; };
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -258,7 +258,7 @@ protected:
 	// Group proveded by parent scheme to which this assembly was added
 	std::string m_ParentSchemeGroup;
 	// Bitmap shown during draw and icon creation
-	std::shared_ptr<Texture> m_pPresentationBitmap;
+	std::shared_ptr<GLTexture> m_pPresentationBitmap;
 	//Assembly symmetric to this one
 	string m_SymmetricAssembly;
 

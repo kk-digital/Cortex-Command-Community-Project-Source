@@ -945,7 +945,7 @@ protected:
         //                  Which orientation to draw the arrow in, relative to the point.
         // Return value:    None.
 
-        void Draw(RenderTarget* renderer, std::shared_ptr<Texture> pArrowTexture, const Vector &arrowPoint, ObjectiveArrowDir arrowDir = ARROWDOWN);
+        void Draw(RenderTarget* renderer, std::shared_ptr<GLTexture> pArrowTexture, const Vector &arrowPoint, ObjectiveArrowDir arrowDir = ARROWDOWN);
 
 
         // The description of this objective point
@@ -1118,9 +1118,9 @@ protected:
 	bool m_BuyMenuEnabled;
 
     // The cursor animations for the LZ indicators
-	std::array<std::vector<std::shared_ptr<Texture>>,4> m_aLZCursor;
+	std::array<std::vector<std::shared_ptr<GLTexture>>,4> m_aLZCursor;
     // The cursor animations for the objective indications
-	std::array<std::vector<std::shared_ptr<Texture>>,4> m_aObjCursor;
+	std::array<std::vector<std::shared_ptr<GLTexture>>,4> m_aObjCursor;
 
     // Time it takes for a delivery to be made, in ms
     long m_DeliveryDelay;

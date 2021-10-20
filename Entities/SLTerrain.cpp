@@ -311,7 +311,7 @@ int SLTerrain::LoadData()
 
 
     // Get the background texture
-	std::shared_ptr<Texture> m_pBGTexture = m_BGTextureFile.GetAsTexture();
+	std::shared_ptr<GLTexture> m_pBGTexture = m_BGTextureFile.GetAsTexture();
     // Get the material palette for quicker access
 	const robin_hood::unordered_map<MID, Material *> apMaterials = g_SceneMan.GetMaterialPalette();
     // Get the Material palette ID mappings local to the DataModule this SLTerrain is loaded from
@@ -394,7 +394,7 @@ int SLTerrain::LoadData()
 
     bool targetFound = false, applyingFrosting = false;
     uint32_t targetId, frostingId, thickness, thicknessGoal;
-	std::shared_ptr<Texture> pFrostingTex;
+	std::shared_ptr<GLTexture> pFrostingTex;
     for (list<TerrainFrosting>::iterator tfItr = m_TerrainFrostings.begin(); tfItr != m_TerrainFrostings.end(); ++tfItr)
     {
         targetId = (*tfItr).GetTargetMaterial().GetIndex();
@@ -888,7 +888,7 @@ void SLTerrain::SetMaterialPixel(const int pixelX, const int pixelY, const uint3
 //                  which overlap with it. Erases them from the terrain and can optionally
 //                  generate MOPixel:s based on the erased or 'dislodged' terrain pixels.
 
-deque<MOPixel *> SLTerrain::EraseSilhouette(std::shared_ptr<Texture> pSprite,
+deque<MOPixel *> SLTerrain::EraseSilhouette(std::shared_ptr<GLTexture> pSprite,
                                             Vector pos,
                                             Vector pivot,
                                             Matrix rotation,

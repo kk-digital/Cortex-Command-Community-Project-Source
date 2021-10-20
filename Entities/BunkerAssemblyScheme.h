@@ -174,7 +174,7 @@ ClassInfoGetters;
 // Return value:    A pointer to the foreground color BITMAP object. Ownership is not
 //                  transferred.
 
-	std::shared_ptr<Texture> GetBitmap() const { return m_pPresentationBitmap; }
+	std::shared_ptr<GLTexture> GetBitmap() const { return m_pPresentationBitmap; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -196,7 +196,7 @@ ClassInfoGetters;
 // Return value:    A good identifyable graphical representation of this in a BITMAP, if
 //                  available. If not, 0 is returned. Ownership is NOT TRANSFERRED!
 
-	const std::shared_ptr<Texture> GetGraphicalIcon() const override;
+	const std::shared_ptr<GLTexture> GetGraphicalIcon() const override;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -295,9 +295,9 @@ protected:
     ContentFile m_BitmapFile;
 
     // Not owned by this
-	std::shared_ptr<Texture> m_pBitmap;
-	std::shared_ptr<Texture> m_pPresentationBitmap;
-	std::shared_ptr<Texture> m_pIconBitmap;
+	std::shared_ptr<GLTexture> m_pBitmap;
+	std::shared_ptr<GLTexture> m_pPresentationBitmap;
+	std::shared_ptr<GLTexture> m_pIconBitmap;
 
     // The objects that are placed along with this in the scene
     std::list<SOPlacer> m_ChildObjects;

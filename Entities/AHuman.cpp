@@ -630,7 +630,7 @@ void AHuman::SetBGLeg(Leg *newLeg) {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<Texture> AHuman::GetHeadTexture() const {
+std::shared_ptr<GLTexture> AHuman::GetHeadTexture() const {
     return (m_pHead && m_pHead->IsAttached()) ? m_pHead->GetSpriteFrame(0) : nullptr;
 }
 

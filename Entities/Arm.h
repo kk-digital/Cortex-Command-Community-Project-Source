@@ -429,7 +429,7 @@ protected:
     // The file containing the hand bitmap.
     ContentFile m_HandFile;
     // The small bitmap holding the hand bitmap.
-	std::shared_ptr<Texture> m_pHand;
+	std::shared_ptr<GLTexture> m_pHand;
 	// The maximum reaching length of this Arm. Max distance between the joint position and the hand offset. Length of a straight arm sprite in pixels.
     float m_MaxLength;
     // Current offset position of the hand relative to m_JointPos.

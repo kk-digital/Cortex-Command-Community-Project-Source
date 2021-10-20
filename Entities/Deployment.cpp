@@ -30,8 +30,8 @@ namespace RTE {
 ConcreteClassInfo(Deployment, SceneObject, 0);
 
 
-std::vector<std::shared_ptr<Texture>> Deployment::m_apArrowLeftBitmap;
-std::vector<std::shared_ptr<Texture>> Deployment::m_apArrowRightBitmap;
+std::vector<std::shared_ptr<GLTexture>> Deployment::m_apArrowLeftBitmap;
+std::vector<std::shared_ptr<GLTexture>> Deployment::m_apArrowRightBitmap;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -657,7 +657,7 @@ bool Deployment::IsOnScenePoint(Vector &scenePoint) const
         }
     }
 */
-	std::shared_ptr<Texture> pTexture = m_Icon.GetTextures()[0];
+	std::shared_ptr<GLTexture> pTexture = m_Icon.GetTextures()[0];
     Vector bitmapPos = m_Pos - Vector(pTexture->getW() / 2, pTexture->getH() / 2);
     if (WithinBox(scenePoint, bitmapPos, pTexture->getW(), pTexture->getH()))
     {
@@ -689,7 +689,7 @@ void Deployment::Draw(RenderTarget* renderer, const Vector &targetPos, DrawMode 
 	SDL_RenderGetViewport(renderer, &viewport);
 
 	{
-		std::shared_ptr<Texture> pTexture = m_Icon.GetTextures()[0];
+		std::shared_ptr<GLTexture> pTexture = m_Icon.GetTextures()[0];
 
 		// Take care of wrapping situations
 		Vector aDrawPos[4];
@@ -761,7 +761,7 @@ void Deployment::Draw(RenderTarget* renderer, const Vector &targetPos, DrawMode 
 
 	{
 		// Draw direction arrow
-		std::shared_ptr<Texture> pTexture;
+		std::shared_ptr<GLTexture> pTexture;
 		Vector offset;
 		if (m_HFlipped)
 		{
