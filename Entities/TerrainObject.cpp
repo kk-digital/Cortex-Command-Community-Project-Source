@@ -270,10 +270,10 @@ const std::shared_ptr<GLTexture> TerrainObject::GetGraphicalIcon() const
 
     // Checking if the FG has anything to show, if not, show the bg layer isntead
     int piece = m_pFGColor->getW() / 10;
-    if (m_pFGColor->getPixel(m_pFGColor->getW() / 2, m_pFGColor->getH() / 2) != g_MaskColor ||
-        m_pFGColor->getPixel(piece, piece) != g_MaskColor ||
-        m_pFGColor->getPixel(m_pFGColor->getW() - piece, piece) != g_MaskColor ||
-        m_pFGColor->getPixel(piece, m_pFGColor->getH() - piece) != g_MaskColor)
+    if (m_pFGColor->GetPixel(m_pFGColor->getW() / 2, m_pFGColor->getH() / 2) != g_MaskColor ||
+        m_pFGColor->GetPixel(piece, piece) != g_MaskColor ||
+        m_pFGColor->GetPixel(m_pFGColor->getW() - piece, piece) != g_MaskColor ||
+        m_pFGColor->GetPixel(piece, m_pFGColor->getH() - piece) != g_MaskColor)
         return m_pFGColor;
     else
         return m_pBGColor;
@@ -340,9 +340,9 @@ bool TerrainObject::IsOnScenePoint(Vector &scenePoint) const
     {
         // Scene point on the bitmap
         Vector bitmapPoint = scenePoint - bitmapPos;
-        if (m_pFGColor->getPixel(bitmapPoint.m_X, bitmapPoint.m_Y) != g_MaskColor ||
-			(m_pBGColor && m_pBGColor->getPixel(bitmapPoint.m_X, bitmapPoint.m_Y) != g_MaskColor) ||
-			(m_pMaterial && m_pMaterial->getPixel(bitmapPoint.m_X, bitmapPoint.m_Y) != g_MaterialAir))
+        if (m_pFGColor->GetPixel(bitmapPoint.m_X, bitmapPoint.m_Y) != g_MaskColor ||
+			(m_pBGColor && m_pBGColor->GetPixel(bitmapPoint.m_X, bitmapPoint.m_Y) != g_MaskColor) ||
+			(m_pMaterial && m_pMaterial->GetPixel(bitmapPoint.m_X, bitmapPoint.m_Y) != g_MaterialAir))
            return true;
     }
 

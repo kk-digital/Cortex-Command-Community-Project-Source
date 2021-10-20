@@ -194,7 +194,7 @@ namespace RTE {
 		int checkPixel = 0;
 		for (int check = 0; check < c_NormalCheckCount; ++check) {
 			// Establish the current integer position to check for nothingness on the sprite
-			checkPixel = sprite->getPixel(atomPos.m_X + s_NormalChecks[check][X], atomPos.m_Y + s_NormalChecks[check][Y]);
+			checkPixel = sprite->GetPixel(atomPos.m_X + s_NormalChecks[check][X], atomPos.m_Y + s_NormalChecks[check][Y]);
 
 			// If the pixel was outside of the bitmap, or on the key color, then that's a valid direction for normal, add it to the accumulated normal
 			if (checkPixel < 0 || checkPixel == g_AlphaZero) {

@@ -113,8 +113,8 @@ int BunkerAssemblyScheme::ReadProperty(const std::string_view &propName, Reader 
 	        //Top to bottom
 			for (int y = 0; y < m_pBitmap->getH() ; ++y)
             {
-				uint32_t px = m_pBitmap->getPixel(x, y);
-				uint32_t pxp = m_pBitmap->getPixel(x, y - 1) == 0xFFFFFF00 ? SCHEME_COLOR_EMPTY : m_pBitmap->getPixel(x, y - 1);
+				uint32_t px = m_pBitmap->GetPixel(x, y);
+				uint32_t pxp = m_pBitmap->GetPixel(x, y - 1) == 0xFFFFFF00 ? SCHEME_COLOR_EMPTY : m_pBitmap->GetPixel(x, y - 1);
 
 				if (px == SCHEME_COLOR_WALL && pxp != SCHEME_COLOR_WALL)
 					for (int w = 0; w < SchemeWidth; w++) {
@@ -133,8 +133,8 @@ int BunkerAssemblyScheme::ReadProperty(const std::string_view &propName, Reader 
 			//Bottom to top
 	        for (int y = m_pBitmap->getH() - 1; y >= 0 ; --y)
             {
-				uint32_t px = m_pBitmap->getPixel(x, y);
-				uint32_t pxp = m_pBitmap->getPixel(x, y + 1) == 0xFFFFFF00 ? SCHEME_COLOR_EMPTY : m_pBitmap->getPixel(x, y + 1);
+				uint32_t px = m_pBitmap->GetPixel(x, y);
+				uint32_t pxp = m_pBitmap->GetPixel(x, y + 1) == 0xFFFFFF00 ? SCHEME_COLOR_EMPTY : m_pBitmap->GetPixel(x, y + 1);
 
 				if (px == SCHEME_COLOR_WALL && pxp != SCHEME_COLOR_WALL)
 					for (int w = 0; w < SchemeWidth; w++)
@@ -156,8 +156,8 @@ int BunkerAssemblyScheme::ReadProperty(const std::string_view &propName, Reader 
 			// Left
 	        for (int x = 0; x < m_pBitmap->getW() ; ++x)
             {
-				uint32_t px = m_pBitmap->getPixel(x, y);
-				uint32_t pxp = m_pBitmap->getPixel(x - 1, y) == 0xFFFFFF00 ? SCHEME_COLOR_EMPTY : m_pBitmap->getPixel(x - 1, y);
+				uint32_t px = m_pBitmap->GetPixel(x, y);
+				uint32_t pxp = m_pBitmap->GetPixel(x - 1, y) == 0xFFFFFF00 ? SCHEME_COLOR_EMPTY : m_pBitmap->GetPixel(x - 1, y);
 
 				if (px == SCHEME_COLOR_WALL && pxp != SCHEME_COLOR_WALL)
 					for (int w = 0; w < SchemeWidth; w++)
@@ -174,8 +174,8 @@ int BunkerAssemblyScheme::ReadProperty(const std::string_view &propName, Reader 
 
 	        for (int x = m_pBitmap->getW() - 1; x >= 0 ; --x)
             {
-				uint32_t px = m_pBitmap->getPixel(x, y);
-				uint32_t pxp = m_pBitmap->getPixel(x + 1, y) == 0xFFFFFF00 ? SCHEME_COLOR_EMPTY : m_pBitmap->getPixel(x + 1, y);
+				uint32_t px = m_pBitmap->GetPixel(x, y);
+				uint32_t pxp = m_pBitmap->GetPixel(x + 1, y) == 0xFFFFFF00 ? SCHEME_COLOR_EMPTY : m_pBitmap->GetPixel(x + 1, y);
 
 				if (px == SCHEME_COLOR_WALL && pxp != SCHEME_COLOR_WALL)
 					for (int w = 0; w < SchemeWidth; w++)
@@ -223,7 +223,7 @@ int BunkerAssemblyScheme::ReadProperty(const std::string_view &propName, Reader 
 	        for (int y = 0; y < m_pBitmap->getH(); ++y)
             {
 				SDL_Rect fill{static_cast<int>(x * ScaleX * scale), static_cast<int>(y * ScaleX * scale), ScaleX - 1, ScaleY - 1};
-				uint32_t px = m_pBitmap->getPixel(x, y);
+				uint32_t px = m_pBitmap->GetPixel(x, y);
 
 				if (px == SCHEME_COLOR_WALL) {
 					m_pIconBitmap->fillRect(fill, PAINT_COLOR_WALL);
@@ -329,7 +329,7 @@ bool BunkerAssemblyScheme::IsOnScenePoint(Vector &scenePoint) const
 		int x = bitmapPoint.m_X / ScaleX;
 		int y = bitmapPoint.m_Y / ScaleY;
 
-        if (m_pBitmap->getPixel(x, y) != SCHEME_COLOR_EMPTY)
+        if (m_pBitmap->GetPixel(x, y) != SCHEME_COLOR_EMPTY)
            return true;
     }
 

@@ -663,7 +663,7 @@ bool Deployment::IsOnScenePoint(Vector &scenePoint) const
     {
         // Scene point on the bitmap
         Vector bitmapPoint = scenePoint - bitmapPos;
-        if (pTexture->getPixel(bitmapPoint.m_X, bitmapPoint.m_Y) != g_MaskColor)
+        if (pTexture->GetPixel(bitmapPoint.m_X, bitmapPoint.m_Y) != g_MaskColor)
            return true;
     }
 

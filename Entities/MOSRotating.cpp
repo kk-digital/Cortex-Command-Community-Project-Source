@@ -766,7 +766,7 @@ bool MOSRotating::ParticlePenetration(HitData &hd)
             }
 
             // Check if we are inside the sprite.
-            if (m_aSprite[m_Frame]->getPixel(intPos[X], intPos[Y])&0xFF000000)
+            if (m_aSprite[m_Frame]->GetPixel(intPos[X], intPos[Y])&0xFF000000)
             {
                 inside = true;
                 // Break if the particle can't force its way through any further.
@@ -1102,7 +1102,7 @@ bool MOSRotating::IsOnScenePoint(Vector &scenePoint) const {
     if (WithinBox(scenePoint, m_Pos.m_X - m_SpriteRadius, m_Pos.m_Y - m_SpriteRadius, m_Pos.m_X + m_SpriteRadius, m_Pos.m_Y + m_SpriteRadius)) {
         Vector spritePoint = scenePoint - m_Pos;
         spritePoint = UnRotateOffset(spritePoint);
-        int pixel = m_aSprite[m_Frame]->getPixel(spritePoint.m_X - m_SpriteOffset.m_X, spritePoint.m_Y - m_SpriteOffset.m_Y);
+        int pixel = m_aSprite[m_Frame]->GetPixel(spritePoint.m_X - m_SpriteOffset.m_X, spritePoint.m_Y - m_SpriteOffset.m_Y);
         if (pixel&0xFF000000) {
             return true;
         }

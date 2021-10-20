@@ -464,7 +464,7 @@ bool BunkerAssembly::IsOnScenePoint(Vector &scenePoint) const
     {
         // Scene point on the bitmap
         Vector bitmapPoint = scenePoint - bitmapPos;
-        if (m_pPresentationBitmap->getPixel(bitmapPoint.m_X, bitmapPoint.m_Y) != g_AlphaZero)
+        if (m_pPresentationBitmap->GetPixel(bitmapPoint.m_X, bitmapPoint.m_Y) != g_AlphaZero)
            return true;
     }
 

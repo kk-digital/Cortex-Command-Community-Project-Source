@@ -406,7 +406,7 @@ bool MOSprite::IsOnScenePoint(Vector &scenePoint) const
         spritePoint.FlipX(m_HFlipped);
         // Check over overlap
 
-        uint32_t pixel = m_aSprite[m_Frame]->getPixel(spritePoint.m_X - m_SpriteOffset.m_X, spritePoint.m_Y - m_SpriteOffset.m_Y);
+        uint32_t pixel = m_aSprite[m_Frame]->GetPixel(spritePoint.m_X - m_SpriteOffset.m_X, spritePoint.m_Y - m_SpriteOffset.m_Y);
         // Check that it isn't outside the sprite or transparent
         if (pixel&c_AlphaMask)
            return true;

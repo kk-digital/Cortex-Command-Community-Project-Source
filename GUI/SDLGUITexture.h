@@ -63,7 +63,7 @@ namespace RTE {
 
 		void Unlock();
 
-		void Render(int x, int y, GUIRect *pRect, bool trans = true, SDL_Rect *clip = nullptr);
+		void Render(int x, int y, GUIRect *pRect, bool trans = true, glm::vec4 *clip = nullptr);
 		void RenderScaled(int x, int y, int width, int height, bool trans = true);
 
 		void Blit(GUIBitmap *pDestBitmap, int x, int y, GUIRect *pRect, bool trans = true);
@@ -198,7 +198,7 @@ namespace RTE {
 
 		bool m_Locked;
 
-		std::unique_ptr<SDL_Rect> m_ClipRect;
+		glm::vec4 m_ClipRect;
 		int m_Width;
 		int m_Height;
 

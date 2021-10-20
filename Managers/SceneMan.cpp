@@ -1001,7 +1001,7 @@ bool SceneMan::WillPenetrate(const int posX,
 		return false;
 
 	float impMag = impulse.GetMagnitude();
-	uint32_t materialID = m_pCurrentScene->GetTerrain()->GetMaterialTexture()->getPixel(posX, posY);
+	uint32_t materialID = m_pCurrentScene->GetTerrain()->GetMaterialTexture()->GetPixel(posX, posY);
 
 	return impMag >= GetMaterialFromID(materialID)->GetIntegrity();
 }
@@ -1046,7 +1046,7 @@ int SceneMan::RemoveOrphans(int posX, int posY,
 
 	if (posX < 0 || posY < 0 || posX >= mat->getW() || posY >= mat->getH()) return 0;
 
-	uint32_t materialID  = mat->getPixel(posX, posY);
+	uint32_t materialID  = mat->GetPixel(posX, posY);
 
 	if (materialID == g_MaterialAir && (posX != centerPosX || posY != centerPosY))
 		return 0;
@@ -1062,7 +1062,7 @@ int SceneMan::RemoveOrphans(int posX, int posY,
 		else
 		// Check if pixel was already checked
 		{
-			if (m_pOrphanSearchBitmap->getPixel(bmpX, bmpY) != g_MaterialAir)
+			if (m_pOrphanSearchBitmap->GetPixel(bmpX, bmpY) != g_MaterialAir)
 				return 0;
 		}
 	}
@@ -1259,7 +1259,7 @@ bool SceneMan::TryPenetrate(const int posX,
 	if (!m_pCurrentScene->GetTerrain()->IsWithinBounds(posX, posY))
 		return false;
 
-	uint32_t materialID = m_pCurrentScene->GetTerrain()->GetMaterialTexture()->getPixel(posX, posY);
+	uint32_t materialID = m_pCurrentScene->GetTerrain()->GetMaterialTexture()->GetPixel(posX, posY);
 	if (materialID == g_MaterialAir)
 	{
 //        RTEAbort("Why are we penetrating air??");
@@ -1338,7 +1338,7 @@ bool SceneMan::TryPenetrate(const int posX,
 		retardation = -(sceneMat->GetIntegrity() / impMag);
 
 		// If this is a scrap pixel, or there is no background pixel 'supporting' the knocked-loose pixel, make the column above also turn into particles
-		if (sceneMat->IsScrap() || m_pCurrentScene->GetTerrain()->GetBGColorTexture()->getPixel(posX, posY) == 0)
+		if (sceneMat->IsScrap() || m_pCurrentScene->GetTerrain()->GetBGColorTexture()->GetPixel(posX, posY) == 0)
 		{
 			// Get quicker direct access to bitmaps
 			std::shared_ptr<GLTexture> pFGColor = m_pCurrentScene->GetTerrain()->GetFGColorTexture();
@@ -1355,12 +1355,12 @@ bool SceneMan::TryPenetrate(const int posX,
 			for (int testY = posY - 1; testY > posY - COMPACTINGHEIGHT && testY >= 0; --testY)
 			{
 				// Check if there is a material pixel above
-				if ((testMaterialID = pMaterial->getPixel(posX, testY)) != g_MaterialAir)
+				if ((testMaterialID = pMaterial->GetPixel(posX, testY)) != g_MaterialAir)
 				{
 					sceneMat = GetMaterialFromID(testMaterialID);
 
 					// No support in the background layer, or is scrap material, so make particle of some of them
-					if (sceneMat->IsScrap() || pBGColor->getPixel(posX, testY) == 0)
+					if (sceneMat->IsScrap() || pBGColor->GetPixel(posX, testY) == 0)
 					{
 						//  Only generate  particles of some of 'em
 						if (RandomNum() > 0.75F)
@@ -1518,7 +1518,7 @@ bool SceneMan::IsUnseen(const int posX, const int posY, const int team)
 		Vector scale = pUnseenLayer->GetScaleInverse();
 		int scaledX = posX * scale.m_X;
 		int scaledY = posY * scale.m_Y;
-		return pUnseenLayer->GetTexture()->getPixel(scaledX, scaledY) != 0;
+		return pUnseenLayer->GetTexture()->GetPixel(scaledX, scaledY) != 0;
 	}
 
 	return false;
@@ -2926,9 +2926,9 @@ void SceneMan::StructuralCalc(unsigned long calcTime) {
     // Start on the second row from bottom.
     for (posY = height - 2; posY >= 0 && !m_CalcTimer.IsPastSimMS(calcTime); --posY) {
         for (posX = width - 1; posX >= 0; --posX) {
-					pColTexture->getPixel(posX, posY);
-					pMatTexture->getPixel(posX, posY);
-					pStructTexture->getPixel(posX, posY);
+					pColTexture->GetPixel(posX, posY);
+					pMatTexture->GetPixel(posX, posY);
+					pStructTexture->GetPixel(posX, posY);
         }
     }
 

@@ -187,7 +187,7 @@ bool MovableMan::HitTestMOIDAtPixel(MOID moid, int pixelX, int pixelY) {
                 localY = std::floor(entryPos.m_Y);
 
 			// Return the MOID if we hit the Sprite
-			return (mo->GetSpriteFrame(mo->GetFrame())->getPixel(localX, localY) & c_AlphaMask) != 0;
+			return (mo->GetSpriteFrame(mo->GetFrame())->GetPixel(localX, localY) & c_AlphaMask) != 0;
         }
     }
 

@@ -344,7 +344,7 @@ ClassInfoGetters
 // Arguments:       None.
 // Return value:    None.
 
-	void LockTexture() override { SceneLayer::LockTexture(); m_pMainTexture->lock(); m_pFGColor->LockTexture(); m_pBGColor->LockTexture();}
+	void LockTexture() override {} //{ SceneLayer::LockTexture(); m_pMainTexture->lock(); m_pFGColor->LockTexture(); m_pBGColor->LockTexture();}
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -709,7 +709,7 @@ protected:
     bool m_DrawMaterial;
 
     // Intermediate test layers, differnt sizes for efficiency
-	static std::unique_ptr<Texture> s_TempRenderTarget;
+	static std::unique_ptr<GLTexture> s_TempRenderTarget;
 
 	// Indicates, that before processing frostings-related properties for this terrain
 	// derived list with frostings must be cleared to avoid duplication when loading scenes

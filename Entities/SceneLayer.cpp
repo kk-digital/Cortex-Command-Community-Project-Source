@@ -235,18 +235,18 @@ int SceneLayer::LoadData()
 	// the layer isn't large enough to cover a target bitmap
 	m_FillLeftColor =
 		m_WrapX ? g_AlphaZero
-		        : m_pMainTexture->getPixel(0, (m_pMainTexture->getH() / 2) - 1);
+		        : m_pMainTexture->GetPixel(0, (m_pMainTexture->getH() / 2) - 1);
 	m_FillRightColor = m_WrapX
 		                   ? g_AlphaZero
-		                   : m_pMainTexture->getPixel(m_pMainTexture->getW() - 1,
+		                   : m_pMainTexture->GetPixel(m_pMainTexture->getW() - 1,
 		                                              m_pMainTexture->getH() / 2);
 	m_FillUpColor =
 		m_WrapY ? g_AlphaZero
-		        : m_pMainTexture->getPixel((m_pMainTexture->getW() / 2) - 1, 0);
+		        : m_pMainTexture->GetPixel((m_pMainTexture->getW() / 2) - 1, 0);
 
 	m_FillDownColor =
 		m_WrapY ? g_AlphaZero
-		        : m_pMainTexture->getPixel((m_pMainTexture->getW() / 2) - 1,
+		        : m_pMainTexture->GetPixel((m_pMainTexture->getW() / 2) - 1,
 		                                   m_pMainTexture->getH() - 1);
 
 	return 0;

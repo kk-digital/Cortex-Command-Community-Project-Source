@@ -65,11 +65,11 @@ namespace RTE {
 		m_Width = width;
 		m_Height = height;
 		if (!renderer) {
-			m_Texture = std::make_shared<Texture>(g_FrameMan.GetRenderer(), width, height, SDL_TEXTUREACCESS_STREAMING);
+			m_Texture = std::make_shared<GLTexture>(g_FrameMan.GetRenderer(), width, height, SDL_TEXTUREACCESS_STREAMING);
 			Lock();
 			m_Texture->clearAll();
 		} else {
-			m_Texture = std::make_shared<Texture>(g_FrameMan.GetRenderer(), width, height, SDL_TEXTUREACCESS_TARGET);
+			m_Texture = std::make_shared<GLTexture>(g_FrameMan.GetRenderer(), width, height, SDL_TEXTUREACCESS_TARGET);
 		}
 
 		m_Locked = false;

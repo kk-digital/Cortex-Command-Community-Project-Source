@@ -145,7 +145,7 @@ namespace RTE {
 			while (y < terrTexture->getH()) {
 				// Find the air-terrain boundary
 				for (; y < terrTexture->getH(); ++y) {
-					checkPixel = matTexture->getPixel(x, y);
+					checkPixel = matTexture->GetPixel(x, y);
 					// Check for terrain hit
 					if (checkPixel != g_MaterialAir) {
 						if (checkPixel == m_TargetMaterial.GetIndex()) {

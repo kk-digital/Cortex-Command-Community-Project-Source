@@ -370,7 +370,7 @@ int SLTerrain::LoadData()
             else
             {
 //                acquire_bitmap(apTexTextures[matIndex]);
-                pixelColor = materialTexture->getPixel(xPos % materialTexture->getW(), yPos % materialTexture->getH());
+                pixelColor = materialTexture->GetPixel(xPos % materialTexture->getW(), yPos % materialTexture->getH());
             }
 
             // Draw the correct color pixel on the foreground
@@ -414,7 +414,7 @@ int SLTerrain::LoadData()
             for (yPos = m_pMainTexture->getH() - 1; yPos >= 0; --yPos)
             {
                 // Read which material the current pixel represents
-                matIndex = m_pMainTexture->getPixel(xPos, yPos);
+                matIndex = m_pMainTexture->GetPixel(xPos, yPos);
 
                 // We've encountered the target material! Prepare to apply frosting as soon as it ends!
                 if (!targetFound && matIndex == targetId)
@@ -434,7 +434,7 @@ int SLTerrain::LoadData()
                 {
                     // Get the color either from the frosting material's texture or the solid color
                     if (pFrostingTex)
-                        pixelColor = pFrostingTex->getPixel(xPos % pFrostingTex->getW(), yPos % pFrostingTex->getH());
+                        pixelColor = pFrostingTex->GetPixel(xPos % pFrostingTex->getW(), yPos % pFrostingTex->getH());
                     else
                         pixelColor = (*tfItr).GetFrostingMaterial().GetColor().GetRGBA();
 
@@ -795,7 +795,7 @@ bool SLTerrain::IsAirPixel(const int pixelX, const int pixelY) const
 	if (posY < 0)
 		return true;
 
-	uint32_t checkPixel = m_pMainTexture->getPixel(posX, posY);
+	uint32_t checkPixel = m_pMainTexture->GetPixel(posX, posY);
 	//    RTEAssert(m_pMainTexture->m_LockCount > 0, "Trying to access unlocked
 	//    terrain bitmap");
 	return checkPixel == g_MaterialAir || checkPixel == g_FrameMan.GetMIDFromIndex(g_MaterialCavity);

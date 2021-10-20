@@ -596,12 +596,12 @@ namespace RTE {
 		// Special case for key color
 		if (color == 0)
 			return 0;
-		return m_Palette->getPixel(color);
+		return m_Palette->GetPixel(color);
 	}
 
 	// FIXME: VERY TEMPORARY
 	uint32_t FrameMan::GetMIDFromIndex(unsigned char index) const {
-		return m_MatPalette->getPixel(index);
+		return m_MatPalette->GetPixel(index);
 	}
 
 } // namespace RTE

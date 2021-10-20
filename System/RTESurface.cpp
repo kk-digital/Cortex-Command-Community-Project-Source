@@ -14,7 +14,7 @@ namespace RTE {
 		}
 	}
 
-	uint32_t Surface::getPixel(int x, int y) {
+	uint32_t Surface::GetPixel(int x, int y) {
 		if (x < w && y < h)
 			return m_Pixels[(y * w) + x];
 		return 0xFFFFFF00;
