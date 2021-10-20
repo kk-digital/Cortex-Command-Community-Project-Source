@@ -19,13 +19,14 @@
 #include "Box.h"
 #include "Material.h"
 
-#include "Renderer/GLTexture.h"
 
 namespace RTE
 {
 
 class MOPixel;
 class TerrainDebris;
+class GLTexture;
+class Surface;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -368,7 +369,7 @@ ClassInfoGetters
 // Arguments:       None.
 // Return value:    A pointer to the foreground color bitmap.
 
-	std::shared_ptr<GLTexture> GetFGColorTexture() { return m_pFGColor->GetTexture(); }
+	std::shared_ptr<RenderTexture> GetFGColorTexture() { return m_pFGColor->GetTexture(); }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -378,7 +379,7 @@ ClassInfoGetters
 // Arguments:       None.
 // Return value:    A pointer to the foreground color bitmap.
 
-	std::shared_ptr<GLTexture> GetBGColorTexture() { return m_pBGColor->GetTexture(); }
+	std::shared_ptr<RenderTexture> GetBGColorTexture() { return m_pBGColor->GetTexture(); }
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          GetMaterialBitmap
@@ -387,7 +388,7 @@ ClassInfoGetters
 // Arguments:       None.
 // Return value:    A pointer to the material bitmap.
 
-	std::shared_ptr<GLTexture> GetMaterialTexture() { return m_pMainTexture; }
+	std::shared_ptr<RenderTexture> GetMaterialTexture() { return m_pMainTexture; }
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          GetFGColorPixel
@@ -476,7 +477,7 @@ ClassInfoGetters
 // Description:     Gets the structural bitmap of this Terrain.
 // Arguments:       None.
 // Return value:    A pointer to the material bitmap.
-	std::shared_ptr<GLTexture> & GetStructuralTexture() { return m_pStructural; }
+	std::shared_ptr<Surface> GetStructuralTexture() { return m_pStructural; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -694,7 +695,7 @@ protected:
 
     SceneLayer *m_pFGColor;
     SceneLayer *m_pBGColor;
-	std::shared_ptr<GLTexture> m_pStructural;
+	std::shared_ptr<Surface> m_pStructural;
     ContentFile m_BGTextureFile;
 
     std::list<TerrainFrosting> m_TerrainFrostings;
@@ -709,7 +710,7 @@ protected:
     bool m_DrawMaterial;
 
     // Intermediate test layers, differnt sizes for efficiency
-	static std::unique_ptr<GLTexture> s_TempRenderTarget;
+	static std::unique_ptr<RenderTexture> s_TempRenderTarget;
 
 	// Indicates, that before processing frostings-related properties for this terrain
 	// derived list with frostings must be cleared to avoid duplication when loading scenes
