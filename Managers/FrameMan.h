@@ -194,6 +194,14 @@ namespace RTE {
 		void PushRenderTarget(RenderTarget *target);
 
 		/// <summary>
+		/// Set a new render target. May be nullptr which sets the default render target.
+		/// </summary>
+		/// <param name="target">
+		/// The new target.
+		/// </param>
+		void PushRenderTarget(std::shared_ptr<RenderTarget> target);
+
+		/// <summary>
 		/// Reset the render target to the previous target.
 		/// </summary>
 		void PopRenderTarget();
