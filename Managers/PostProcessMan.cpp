@@ -309,7 +309,8 @@ namespace RTE {
 
 #ifdef DEBUG_BUILD
 			// Draw a rectangle around the glow box so we see it's position and size
-			rectangleColor(g_FrameMan.GetRenderer(), startX, startY, endX, endY, g_RedColor);
+			// FIXME: Shapes :D
+			// rectangleColor(g_FrameMan.GetRenderer(), startX, startY, endX, endY, g_RedColor);
 #endif
 			// TODO: this needs to be a shader program otherwise performance may be awful
 			SDL_Rect pixelPos{startX,startY,1,1};
@@ -317,7 +318,7 @@ namespace RTE {
 				pixelPos.y = y;
 				for (int x = startX; x < endX; ++x) {
 					pixelPos.x = x;
-					SDL_RenderReadPixels(g_FrameMan.GetRenderer(), &pixelPos, SDL_PIXELFORMAT_RGBA32, &testpixel, sizeof(uint32_t));
+					// SDL_RenderReadPixels(g_FrameMan.GetRenderer(), &pixelPos, SDL_PIXELFORMAT_RGBA32, &testpixel, sizeof(uint32_t)); FIXME: oh god no
 					// testpixel = _getpixel(g_FrameMan.GetBackBuffer8(), x, y);
 
 					// YELLOW
@@ -344,16 +345,12 @@ namespace RTE {
 
 	void PostProcessMan::DrawPostScreenEffects() const {
 
-		SDL_BlendMode screen = SDL_ComposeCustomBlendMode(
-		    SDL_BLENDFACTOR_ONE, SDL_BLENDFACTOR_ONE_MINUS_SRC_COLOR, SDL_BLENDOPERATION_ADD,
-			SDL_BLENDFACTOR_ONE, SDL_BLENDFACTOR_ONE_MINUS_SRC_ALPHA, SDL_BLENDOPERATION_ADD);
-
 		int effectPosX = 0;
 		int effectPosY = 0;
 
 		for (const PostEffect &postEffect : m_PostScreenEffects) {
 			if (postEffect.m_Texture) {
-				postEffect.m_Texture->setBlendMode(screen);
+				postEffect.m_Texture->setBlendMode(BlendModes::Screen);
 				postEffect.m_Texture->setAlphaMod(postEffect.m_Strength);
 				effectPosX = postEffect.m_Pos.GetFloorIntX() - (postEffect.m_Texture->GetW() / 2);
 				effectPosY = postEffect.m_Pos.GetFloorIntY() - (postEffect.m_Texture->GetH() / 2);
