@@ -33,6 +33,8 @@ namespace RTE {
 		/// </returns>
 		virtual glm::vec2 GetSize() { return m_Size; }
 
+		virtual glm::vec2 GetViewport() { return m_View.zw(); }
+
 	protected:
 		glm::mat4 m_Projection; //!< Orthographic projection matrix to transform screen coords to normalized screen coordinates.
 		glm::vec4 m_View; //!< Current view of this render target. //TODO: implement
