@@ -18,7 +18,7 @@ namespace RTE {
 
 		unsigned long GetVAO() { return m_VAO; }
 
-		size_t GetVertexCount() { return m_Vertices.size();}
+		size_t GetVertexCount();
 
 		void AddVertex();
 		void ResetVertices();

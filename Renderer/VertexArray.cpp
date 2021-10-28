@@ -39,4 +39,6 @@ namespace RTE {
 	void VertexArray::Bind() {
 		glBindVertexArray(m_VAO);
 	}
+
+	size_t VertexArray::GetVertexCount() { return m_Vertices.size(); }
 }
