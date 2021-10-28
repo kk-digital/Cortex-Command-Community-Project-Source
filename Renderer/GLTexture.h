@@ -25,7 +25,8 @@ namespace RTE {
 		GLTexture();
 		virtual ~GLTexture();
 
-		virtual bool Create(int width, int height, uint32_t format= 0) override;
+		virtual bool Create(int width, int height);
+		virtual bool Create(int width, int height, BitDepth format, std::optional<std::shared_ptr<Palette>> palette = std::nullopt) override;
 
 		void render(RenderTarget *renderer, float x, float y);
 
@@ -45,6 +46,12 @@ namespace RTE {
 
 		Shading getShading() const { return m_Shading; }
 
+		void SetBaseShader(std::shared_ptr<Shader> shaderBase) { m_ShaderBase = shaderBase; }
+
+		void SetFillShader(std::shared_ptr<Shader> shaderFill) { m_ShaderFill = shaderFill; }
+
+		void SetCustomShader(std::shared_ptr<Shader> shaderCustom) { m_ShaderCustom = shaderCustom; }
+
 		void setBlendMode(BlendMode blendMode) { m_BlendMode = blendMode; }
 		BlendMode getBlendMode() const { return m_BlendMode; }
 
@@ -58,13 +65,14 @@ namespace RTE {
 
 		float getAlphaMod() const { return m_ColorMod.a; }
 
-		void clearAll(uint32_t color = 0)  {}
+		void clearAll(uint32_t color = 0) {}
 
 		void Bind();
 
-		unsigned int GetTextureID() {return m_TextureID;}
+		unsigned int GetTextureID() { return m_TextureID; }
 
 	private:
+		using Surface::Create;
 		unsigned int m_TextureID; //!< The OpenGL texture handle associated with this texture.
 
 		glm::vec4 m_ColorMod; //!< Color multiplied in the shader stage, used for fill color as well.
@@ -82,6 +90,7 @@ namespace RTE {
 		/// Shared pointer to a shader object used for rendering.
 		/// </returns>
 		std::shared_ptr<Shader> GetCurrentShader();
+
 	private:
 		void Clear();
 	};

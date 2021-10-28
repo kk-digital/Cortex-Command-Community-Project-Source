@@ -12,33 +12,40 @@ namespace RTE {
 
 	void sdl_surface_deleter::operator()(SDL_Surface *p) { SDL_FreeSurface(p); }
 
-	GLTexture::GLTexture() :Surface() {
+	GLTexture::GLTexture() :
+	    Surface() {
 		Clear();
 		glGenTextures(1, &m_TextureID);
 	}
 
 	GLTexture::~GLTexture() {
-		if(m_TextureID){
+		if (m_TextureID) {
 			glDeleteTextures(1, &m_TextureID);
 		}
 	}
 
-	bool GLTexture::Create(int width, int height, uint32_t format) {
-		(void)format;
-
+	bool GLTexture::Create(int width, int height){
 		glBindTexture(GL_TEXTURE_2D, m_TextureID);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_INT, nullptr);
+		glTexImage2D(GL_TEXTURE_2D, 0, m_BPP == 8 ? GL_RED : GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_INT, nullptr);
+
+		return true;
+	}
+
+	bool GLTexture::Create(int width, int height, BitDepth format, std::optional<std::shared_ptr<Palette>> palette) {
+
 		m_Width = width;
 		m_Height = height;
-		m_BPP = 32;
-		return true;
+		m_BPP = format == BitDepth::BPP32 ? 32 : 8;
+
+		return Create(width, height) && Surface::Create(width, height, format, palette);
 	}
 
 	void GLTexture::Clear() {
 		m_TextureID = 0;
+		m_BPP = 32;
 
 		m_ColorMod = glm::vec4(1.0f);
 		m_BlendMode = BlendModes::Blend;
