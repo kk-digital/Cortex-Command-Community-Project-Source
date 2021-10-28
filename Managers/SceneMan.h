@@ -465,7 +465,7 @@ public:
 	/// <returns>
 	/// Shared pointer to the MOColorTexture.
 	/// </returns>
-	std::shared_ptr<GLTexture> GetMOColorTexture() const;
+	std::shared_ptr<RenderTarget> GetMOColorTexture() const;
 
 
 	/// <summary>
@@ -474,7 +474,7 @@ public:
 	/// <reutrns>
 	/// shared pointer to the debug texture
 	/// </returns>
-	std::shared_ptr<GLTexture> GetDebugTexture() const;
+	std::shared_ptr<RenderTarget> GetDebugTexture() const;
 
 	/// <summary>
 	/// Gets the Texture that all MOs draw their current MOID onto.
