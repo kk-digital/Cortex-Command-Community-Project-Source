@@ -52,7 +52,7 @@ namespace RTE {
 		/// </summary>
 		/// <param name="drawScreen">Bitmap to draw on.</param>
 		/// <param name="targetPos">Position of graphical primitive.</param>
-		virtual void Draw(RenderTarget *renderer, const Vector &targetPos, std::optional<RenderState> renderState = std::nullopt);
+		virtual void Draw(RenderTarget *renderer, const Vector &targetPos = {0,0}, std::optional<RenderState> renderState = std::nullopt);
 	};
 #pragma endregion
 
