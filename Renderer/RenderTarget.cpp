@@ -59,7 +59,7 @@ namespace RTE {
 		glDrawArrays(static_cast<GLenum>(state.m_PrimitiveType), 0, state.m_Vertices->GetVertexCount());
     }
 
-	void RenderTarget::Clear() {
+	void RenderTarget::DrawClear() {
 		glClear(GL_COLOR_BUFFER_BIT);
 	}
 }
