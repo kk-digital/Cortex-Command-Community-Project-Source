@@ -29,7 +29,49 @@ namespace RTE {
 		return m_Pixels.get();
 	}
 
-	uint32_t Surface::GetPixel(int x, int y) { return 0; }
+	uint32_t Surface::GetPixel(int x, int y) {
+		if (x < 0 || x >= m_Width || y < 0 || y >= m_Height)
+			return 0;
+		else
+			return m_BPP == 8 ? GetPixel8(x, y) : GetPixel32(x, y);
+	}
+
+	unsigned char Surface::GetPixel8(int x, int y) {
+		return static_cast<unsigned char *>(m_Pixels->pixels)[y * m_Pixels->pitch + x];
+	}
+
+	uint32_t Surface::GetPixel32(int x, int y) {
+		return static_cast<uint32_t *>(m_Pixels->pixels)[y * m_Pixels->pitch + x];
+	}
+
+	void Surface::SetPixel(int x, int y, glm::u8vec4 color) {
+		if (m_BPP == 32)
+			SetPixel(x, y, ((color.a << 24)) | (color.r << 16) | (color.g << 8) | (color.b));
+		else {
+			SDL_PixelFormat *indexed{SDL_AllocFormat(SDL_PIXELFORMAT_INDEX8)};
+			SDL_SetPixelFormatPalette(indexed, m_Palette->GetAsPalette());
+			uint32_t index{SDL_MapRGBA(indexed, color.r, color.g, color.b, color.a)};
+			SetPixel(x, y, index);
+		}
+	}
+
+	void Surface::SetPixel(int x, int y, uint32_t color) {
+		if (x < 0 || x >= m_Width || y < 0 || y >= m_Height)
+			return;
+
+		if (m_BPP == 8)
+			SetPixel8(x, y, color);
+		else
+			SetPixel32(x, y, color);
+	}
+
+	void Surface::SetPixel8(int x, int y, unsigned char color) {
+		static_cast<unsigned char *>(m_Pixels->pixels)[x + y * m_Pixels->pitch] = color;
+	}
+
+	void Surface::SetPixel32(int x, int y, uint32_t color) {
+		static_cast<uint32_t *>(m_Pixels->pixels)[x + y * m_Pixels->pitch] = color;
+	}
 
 	void Surface::blit(Surface &target, int x, int y, double angle, float scaleX, float scaleY) const {}
 
