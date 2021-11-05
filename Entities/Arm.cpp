@@ -16,6 +16,7 @@
 #include "ThrownDevice.h"
 #include "PresetMan.h"
 #include "System/SDLHelper.h"
+#include "RTERenderer.h"
 
 namespace RTE {
 
@@ -453,18 +454,21 @@ void Arm::DrawHand(RenderTarget* renderer, const Vector &targetPos, DrawMode mod
     handPos.m_Y -= static_cast<float>((m_pHand->GetH() / 2) + 1);
 
     if (!m_HFlipped) {
-        if (mode == g_DrawWhite) {
-			m_pHand->renderFillColor(renderer, handPos.GetFloorIntX(), handPos.GetFloorIntY(), g_WhiteColor);
-        } else {
-			m_pHand->render(renderer, handPos.GetFloorIntX(), handPos.GetFloorIntY());
-        }
-    } else {
-        if (mode == g_DrawWhite) {
-			m_pHand->renderFillColor(renderer, handPos.GetFloorIntX(),
-				                     handPos.GetFloorIntY(), g_WhiteColor, SDL_FLIP_HORIZONTAL);
+		if (mode == g_DrawWhite) {
+			m_pHand->setShading(Shading::Fill);
+			m_pHand->setColorMod({1.0f, 1.0f, 1.0f});
+			m_pHand->render(renderer, handPos);
+			m_pHand->setShading(Shading::Base);
 		} else {
-			m_pHand->render(renderer, handPos.GetFloorIntX(),
-				            handPos.GetFloorIntY(), SDL_FLIP_HORIZONTAL);
+			m_pHand->render(renderer, handPos);
+		}
+	} else {
+		if (mode == g_DrawWhite) {
+			m_pHand->setShading(Shading::Fill);
+			m_pHand->render(renderer, handPos, {1.0f, -1.0f});
+			m_pHand->setShading(Shading::Base);
+		} else {
+			m_pHand->render(renderer, handPos, {1.0f, -1.0f});
 		}
 	}
 }
