@@ -32,6 +32,8 @@
 #include "PerformanceMan.h"
 
 #include "GUI/GUI.h"
+#include "GraphicalPrimitive.h"
+#include "RTERenderer.h"
 #include "GUI/SDLGUITexture.h"
 #include "SDL2_gfxPrimitives.h"
 
@@ -1684,18 +1686,17 @@ void Actor::DrawHUD(RenderTarget* renderer, const Vector &targetPos, int whichSc
     // Adjust the draw position to work if drawn to a target screen bitmap that is straddling a scene seam
     if (!targetPos.IsZero())
     {
-		SDL_Rect viewport;
-		SDL_RenderGetViewport(renderer, &viewport);
+		glm::vec2 viewport = renderer->GetViewport();
         // Spans vertical scene seam
         int sceneWidth = g_SceneMan.GetSceneWidth();
-        if (g_SceneMan.SceneWrapsX() && viewport.w < sceneWidth)
+        if (g_SceneMan.SceneWrapsX() && viewport.x < sceneWidth)
         {
-            if ((targetPos.m_X < 0) && (m_Pos.m_X > (sceneWidth - viewport.w)))
+            if ((targetPos.m_X < 0) && (m_Pos.m_X > (sceneWidth - viewport.x)))
             {
                 drawPos.m_X -= sceneWidth;
                 cpuPos.m_X -= sceneWidth;
             }
-            else if (((targetPos.m_X + viewport.w) > sceneWidth) && (m_Pos.m_X < viewport.w))
+            else if (((targetPos.m_X + viewport.x) > sceneWidth) && (m_Pos.m_X < viewport.x))
             {
                 drawPos.m_X += sceneWidth;
                 cpuPos.m_X += sceneWidth;
@@ -1703,14 +1704,14 @@ void Actor::DrawHUD(RenderTarget* renderer, const Vector &targetPos, int whichSc
         }
         // Spans horizontal scene seam
         int sceneHeight = g_SceneMan.GetSceneHeight();
-        if (g_SceneMan.SceneWrapsY() && viewport.h < sceneHeight)
+        if (g_SceneMan.SceneWrapsY() && viewport.y < sceneHeight)
         {
-            if ((targetPos.m_Y < 0) && (m_Pos.m_Y > (sceneHeight - viewport.h)))
+            if ((targetPos.m_Y < 0) && (m_Pos.m_Y > (sceneHeight - viewport.y)))
             {
                 drawPos.m_Y -= sceneHeight;
                 cpuPos.m_Y -= sceneHeight;
             }
-            else if (((targetPos.m_Y + viewport.h) > sceneHeight) && (m_Pos.m_Y < viewport.h))
+            else if (((targetPos.m_Y + viewport.y) > sceneHeight) && (m_Pos.m_Y < viewport.y))
             {
                 drawPos.m_Y += sceneHeight;
                 cpuPos.m_Y += sceneHeight;
@@ -1908,7 +1909,7 @@ void Actor::DrawHUD(RenderTarget* renderer, const Vector &targetPos, int whichSc
 
                 // Draw the points
                 waypoint = (*vItr).first - targetPos;
-                filledCircleColor(renderer, waypoint.m_X, waypoint.m_Y, 2, g_YellowGlowColor);
+                CircleFillPrimitive(-1, waypoint, 2, g_YellowGlowColor).Draw(renderer);
                 // Add pixel glow area around it, in scene coordinates
 				g_PostProcessMan.RegisterGlowArea((*vItr).first, 5);
             }
@@ -1936,8 +1937,8 @@ void Actor::DrawHUD(RenderTarget* renderer, const Vector &targetPos, int whichSc
             skipPhase = g_FrameMan.DrawLine(m_MovePath.front() - targetPos, m_Pos - targetPos, g_YellowGlowColor, 0, AILINEDOTSPACING, skipPhase, true);
             // Draw the first destination/waypoint point
             waypoint = m_MovePath.back() - targetPos;
-			filledCircleColor(renderer, waypoint.m_X, waypoint.m_Y, 2, g_YellowGlowColor);
-            // Add pixel glow area around it, in scene coordinates
+			CircleFillPrimitive(-1, waypoint, 2, g_YellowGlowColor) .Draw(renderer);
+			// Add pixel glow area around it, in scene coordinates
 			g_PostProcessMan.RegisterGlowArea(m_MovePath.back(), 5);
         }
         // If no points left on movepath, then draw straight line to the movetarget
@@ -1947,8 +1948,8 @@ void Actor::DrawHUD(RenderTarget* renderer, const Vector &targetPos, int whichSc
             skipPhase = g_FrameMan.DrawLine(m_MoveTarget - targetPos, m_Pos - targetPos, g_YellowGlowColor, 0, AILINEDOTSPACING, skipPhase, true);
             // Draw the first destination/waypoint point
             waypoint = m_MoveTarget - targetPos;
-			filledCircleColor(renderer, waypoint.m_X, waypoint.m_Y, 2, g_YellowGlowColor);
-            // Add pixel glow area around it, in scene coordinates
+			CircleFillPrimitive(-1, waypoint, 2, g_YellowGlowColor).Draw(renderer);
+			// Add pixel glow area around it, in scene coordinates
 			g_PostProcessMan.RegisterGlowArea(m_MoveTarget, 5);
         }
     }

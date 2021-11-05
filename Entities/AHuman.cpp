@@ -33,6 +33,11 @@
 #include "System/SDLHelper.h"
 #include "SDL2_gfxPrimitives.h"
 
+#include "Vertex.h"
+#include "VertexArray.h"
+#include "RTERenderer.h"
+#include "GraphicalPrimitive.h"
+
 namespace RTE {
 
 ConcreteClassInfo(AHuman, Actor, 20);
@@ -4374,7 +4379,8 @@ void AHuman::DrawThrowingReticule(RenderTarget* renderer, const Vector &targetPo
 
     Vector outOffset(15.0F * GetFlipFactor(), -5.0F);
 
-	std::vector<SDL_Point> drawPoints(pointCount);
+	std::vector<Vertex> drawPoints(pointCount);
+	VertexArray drawArray;
 
     for (int i = 0; i < pointCount * amount; ++i) {
         points[i].FlipX(m_HFlipped);
@@ -4387,17 +4393,13 @@ void AHuman::DrawThrowingReticule(RenderTarget* renderer, const Vector &targetPo
         // Put the flickering glows on the reticule dots, in absolute scene coordinates
 		g_PostProcessMan.RegisterGlowDotEffect(points[i], YellowDot, 55 + RandomNum(0, 100));
 
-		drawPoints[i]=SDL_Point{points[i].GetFloorIntX() - targetPos.GetFloorIntX(), points[i].GetFloorIntY() - targetPos.GetFloorIntY()};
-    }
-	uint8_t r,g,b,a;
-	SDL_GetRenderDrawColor(renderer, &r, &g, &b, &a);
-	SDL_SetRenderDrawColor(renderer,
-						   (g_YellowGlowColor & 0xFF000000) >> 3,
-		                   (g_YellowGlowColor & 0x00FF0000) >> 2,
-		                   (g_YellowGlowColor & 0x0000FF00) >> 1,
-		                   (g_YellowGlowColor & 0x000000FF));
-	SDL_RenderDrawPoints(renderer, drawPoints.data(), pointCount);
-	SDL_SetRenderDrawColor(renderer, r, g, b, a);
+		drawArray.AddVertex({static_cast<glm::vec2>(points[i] - targetPos), g_YellowGlowColor});
+	}
+	RenderState state;
+	state.m_Vertices = &drawArray;
+	state.m_PrimitiveType = PrimitiveType::Point;
+	state.m_BlendMode = BlendModes::Blend;
+	renderer->Draw(state);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -4479,15 +4481,15 @@ void AHuman::DrawHUD(RenderTarget* renderer, const Vector &targetPos, int whichS
     {
         lastPoint = (*last) - targetPos;
         waypoint = lastPoint + g_SceneMan.ShortestDistance(lastPoint, (*lItr) - targetPos);
-        lineColor(renderer, lastPoint.m_X, lastPoint.m_Y, waypoint.m_X, waypoint.m_Y, g_RedColor);
+		LinePrimitive(-1, lastPoint, waypoint, g_RedColor).Draw(renderer);
         last = lItr;
     }
     waypoint = m_MoveTarget - targetPos;
-    filledCircleColor(renderer, waypoint.m_X, waypoint.m_Y, 3, g_RedColor);
+	CircleFillPrimitive(-1, waypoint, 3, g_RedColor).Draw(renderer);
     lastPoint = m_PrevPathTarget - targetPos;
-    filledCircleColor(renderer, lastPoint.m_X, lastPoint.m_Y, 2, g_YellowGlowColor);
+    CircleFillPrimitive(-1, lastPoint, 2, g_YellowGlowColor).Draw(renderer);
     lastPoint = m_DigTunnelEndPos - targetPos;
-    filledCircleColor(renderer, lastPoint.m_X, lastPoint.m_Y, 2, g_YellowGlowColor);
+    CircleFillPrimitive(-1, lastPoint, 2, g_YellowGlowColor).Draw(renderer);
     // Raidus
 //    waypoint = m_Pos - targetPos;
 //    circle(pTargetBitmap, waypoint.m_X, waypoint.m_Y, m_MoveProximityLimit, g_RedColor);
@@ -4517,8 +4519,7 @@ void AHuman::DrawHUD(RenderTarget* renderer, const Vector &targetPos, int whichS
     if (m_Controller.IsPlayerControlled() && g_ActivityMan.GetActivity()->ScreenOfPlayer(m_Controller.GetPlayer()) == whichScreen && pSmallFont && pSymbolFont)
     {
         SDLGUITexture allegroBitmap{};
-		SDL_Rect viewport;
-		SDL_RenderGetViewport(renderer, &viewport);
+		glm::vec2 viewport = renderer->GetViewport();
 /*
         // Device aiming reticule
         if (m_Controller.IsState(AIM_SHARP) &&
@@ -4532,20 +4533,20 @@ void AHuman::DrawHUD(RenderTarget* renderer, const Vector &targetPos, int whichS
         {
             // Spans vertical scene seam
             int sceneWidth = g_SceneMan.GetSceneWidth();
-            if (g_SceneMan.SceneWrapsX() && viewport.w < sceneWidth)
+            if (g_SceneMan.SceneWrapsX() && viewport.x < sceneWidth)
             {
-                if ((targetPos.m_X < 0) && (m_Pos.m_X > (sceneWidth - viewport.w)))
+                if ((targetPos.m_X < 0) && (m_Pos.m_X > (sceneWidth - viewport.x)))
                     drawPos.m_X -= sceneWidth;
-                else if (((targetPos.m_X + viewport.w) > sceneWidth) && (m_Pos.m_X < viewport.w))
+                else if (((targetPos.m_X + viewport.x) > sceneWidth) && (m_Pos.m_X < viewport.x))
                     drawPos.m_X += sceneWidth;
             }
             // Spans horizontal scene seam
             int sceneHeight = g_SceneMan.GetSceneHeight();
-            if (g_SceneMan.SceneWrapsY() && viewport.h < sceneHeight)
+            if (g_SceneMan.SceneWrapsY() && viewport.y < sceneHeight)
             {
-                if ((targetPos.m_Y < 0) && (m_Pos.m_Y > (sceneHeight - viewport.h)))
+                if ((targetPos.m_Y < 0) && (m_Pos.m_Y > (sceneHeight - viewport.y)))
                     drawPos.m_Y -= sceneHeight;
-                else if (((targetPos.m_Y + viewport.h) > sceneHeight) && (m_Pos.m_Y < viewport.h))
+                else if (((targetPos.m_Y + viewport.y) > sceneHeight) && (m_Pos.m_Y < viewport.y))
                     drawPos.m_Y += sceneHeight;
             }
         }
@@ -4574,19 +4575,9 @@ void AHuman::DrawHUD(RenderTarget* renderer, const Vector &targetPos, int whichS
 
             float jetTimeRatio = m_JetTimeLeft / m_JetTimeTotal;
 // TODO: Don't hardcode this shit
-			uint32_t gaugeColor =
-				jetTimeRatio > 0.6F ? 0xFF74B33A : (jetTimeRatio > 0.3F ? 0xFFF6CD33 : 0xFFEA1507);
+			uint32_t gaugeColor = jetTimeRatio > 0.6F ? 0xFF74B33A : (jetTimeRatio > 0.3F ? 0xFFF6CD33 : 0xFFEA1507);
 
-			SDL_FRect gaugeRect{
-				drawPos.m_X, drawPos.m_Y + m_HUDStack + 6,
-				(16 * jetTimeRatio),
-				1.0};
-
-			SDL_SetRenderDrawColor(renderer, (gaugeColor >> 16) & 0xff,
-				                   (gaugeColor >> 8) & 0xff,
-				                   (gaugeColor) & 0xff,
-				                   (gaugeColor >> 24) & 0xff);
-			SDL_RenderFillRectF(renderer, &gaugeRect);
+			BoxFillPrimitive(-1, drawPos + Vector{0, m_HUDStack + 6.0f}, {drawPos + Vector{16 * jetTimeRatio, 1.0}}, gaugeColor).Draw(renderer);
 
 			//                    rect(pTargetBitmap, drawPos.m_X, drawPos.m_Y +
 			//                    m_HUDStack - 2, drawPos.m_X + 24, drawPos.m_Y
