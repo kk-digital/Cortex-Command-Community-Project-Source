@@ -9,6 +9,8 @@ namespace RTE {
 		RenderTexture();
 		virtual ~RenderTexture();
 
+		using RenderTarget::Create;
+
 		/// <summary>
 		/// Creates the associated texture and framebuffer.
 		/// </summary>
@@ -48,6 +50,15 @@ namespace RTE {
 		std::shared_ptr<GLTexture> GetAsTexture() { return m_Texture; }
 
 		/// <summary>
+		/// Set the texture attachment for this render texture.
+		/// May be useful for drawing to textures or blitting textures.
+		/// </summary>
+		/// <param name="texture">
+		/// Shared pointer to attach to the framebuffer.
+		/// </param>
+		void SetTexture(std::shared_ptr<GLTexture> texture);
+
+		/// <summary>
 		/// Get the width of the attached texture.
 		/// </summary>
 		/// <returns>
@@ -63,7 +74,6 @@ namespace RTE {
 		int GetH() const;
 
 	private:
-		using RenderTarget::Create;
 		std::shared_ptr<GLTexture> m_Texture; //!< Texture attachment to the framebuffer.
 		unsigned int m_FBO; //!< The framebuffer object that gets rendered to.
 	};

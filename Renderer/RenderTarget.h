@@ -35,11 +35,23 @@ namespace RTE {
 
 		virtual glm::vec2 GetViewport() { return m_View.zw(); }
 
+		void SetWrapXY(bool wrapX, bool wrapY);
+		void SetWrapX();
+		void SetWrapY();
+
+		bool IsWrapX();
+		bool IsWrapY();
+		glm::bvec2 GetWrapXY();
+
 	protected:
 		glm::mat4 m_Projection; //!< Orthographic projection matrix to transform screen coords to normalized screen coordinates.
 		glm::vec4 m_View; //!< Current view of this render target. //TODO: implement
 
 		glm::vec2 m_Size; //!< Size in pixels of this rendertarget.
+
+		bool m_WrapX;
+		bool m_WrapY;
+
 	private:
 		VertexArray m_DefaultQuad; //!< The default unit rectangle, used for drawing sprites without primitive attachments.
 	};
