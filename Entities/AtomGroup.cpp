@@ -8,7 +8,8 @@
 
 #include "Renderer/GLTexture.h"
 #include "System/SDLHelper.h"
-#include "SDL2_gfxPrimitives.h"
+#include "RTERenderer.h"
+#include "GraphicalPrimitive.h"
 
 namespace RTE {
 
@@ -466,11 +467,9 @@ namespace RTE {
 						}
 #ifdef DEBUG_BUILD
 						// TODO: Remove this once AtomGroup drawing in Material layer draw mode is implemented.
-						g_FrameMan.PushRenderTarget(g_SceneMan.GetMOColorTexture());
 						Vector tPos = atom->GetCurrentPos();
 						Vector tNorm = m_OwnerMOSR->RotateOffset(atom->GetNormal()) * 7;
-						lineColor(g_FrameMan.GetRenderer(), tPos.GetFloorIntX(), tPos.GetFloorIntY(), tPos.GetFloorIntX() + tNorm.GetFloorIntX(), tPos.GetFloorIntY() + tNorm.GetFloorIntY(), 0xEF374FFF);
-						g_FrameMan.PopRenderTarget();
+						LinePrimitive(-1, tPos, tPos + tNorm, 0xEF374FFF).Draw(g_SceneMan.GetMOColorTexture().get());
 						// Draw the positions of the hit points on screen for easy debugging.
 						//putpixel(g_SceneMan.GetMOColorBitmap(), tPos.GetFloorIntX(), tPos.GetFloorIntY(), 5);
 #endif
@@ -1533,9 +1532,9 @@ namespace RTE {
 			}
 			if (!atom->GetNormal().IsZero()) {
 				normal = atom->GetNormal().GetXFlipped(m_OwnerMOSR->m_HFlipped) * 5;
-				lineColor(renderer, atomPos.GetFloorIntX() - targetPos.GetFloorIntX(), atomPos.GetFloorIntY() - targetPos.GetFloorIntY(), atomPos.GetFloorIntX() - targetPos.GetFloorIntX(), atomPos.GetFloorIntY() - targetPos.GetFloorIntY(), 244); // TODO: magic numbers
+				LinePrimitive(-1, atomPos, atomPos + normal, 244).Draw(renderer, targetPos);
 			}
-			pixelRGBA(renderer, atomPos.GetFloorIntX() - targetPos.GetFloorIntX(), atomPos.GetFloorIntY() - targetPos.GetFloorIntY(), color>>24, color>>16, color>>8, color);
+			PointPrimitive(-1, atomPos, color).Draw(renderer, targetPos);
 		}
 	}
 
@@ -1543,7 +1542,7 @@ namespace RTE {
 
 	// TODO: dan pls.
 	void AtomGroup::GenerateAtomGroup(MOSRotating *ownerMOSRotating) {
-		SharedTexture refSprite = ownerMOSRotating->GetSpriteFrame();
+		std::shared_ptr<GLTexture> refSprite = ownerMOSRotating->GetSpriteFrame();
 		const Vector spriteOffset = ownerMOSRotating->GetSpriteOffset();
 		const int spriteWidth = refSprite->GetW() * static_cast<int>(m_OwnerMOSR->GetScale());
 		const int spriteHeight = refSprite->GetH() * static_cast<int>(m_OwnerMOSR->GetScale());
@@ -1554,7 +1553,8 @@ namespace RTE {
 			int y;
 			bool inside;
 
-			std::unique_ptr<Surface> checkBitmap = std::make_unique<Surface>(spriteWidth, spriteHeight, BitDepth::Indexed8);
+			std::unique_ptr<Surface> checkBitmap = std::make_unique<Surface>();
+			checkBitmap->Create(spriteWidth, spriteHeight, BitDepth::Indexed8);
 
 			// If Atoms are to be placed right at (below) the bitmap of the sprite.
 			if (m_Depth <= 0) {
