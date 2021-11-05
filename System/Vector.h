@@ -43,6 +43,14 @@ namespace RTE {
 		/// <param name="inputX">Float defining the initial X value of this Vector.</param>
 		/// <param name="inputY">Float defining the initial Y value of this Vector.</param>
 		Vector(const float inputX, const float inputY) : m_X(inputX), m_Y(inputY) {};
+
+		/// <summary>
+		/// Constructor methond used to instantiate a Vector object from a glm vec2.
+		/// </summary>
+		/// <param name="vec">
+		/// The vec2 from which to create the Vector.
+		/// </param>
+		Vector(glm::vec2 vector): m_X(vector.x), m_Y(vector.y) {}
 #pragma endregion
 
 #pragma region Destruction
@@ -508,9 +516,9 @@ namespace RTE {
 		float & operator[](const int &rhs) { return (rhs == 0) ? m_X : m_Y; }
 
 		/// <summary>
-		/// Type cast to SDL_Point, so Vectors can be used with SDL
+		/// Type cast to glm::vec2, so Vectors can be used with the Renderer
 		/// </summary>
-		operator SDL_Point() const;
+		operator glm::vec2() const { return {m_X, m_Y}; }
 #pragma endregion
 
 	private:
