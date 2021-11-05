@@ -20,7 +20,8 @@
 
 #include "System/Color.h"
 #include "System/SDLHelper.h"
-#include "SDL2_gfxPrimitives.h"
+#include "RTERenderer.h"
+#include "GraphicalPrimitive.h"
 
 namespace RTE {
 
@@ -103,31 +104,30 @@ int BunkerAssemblyScheme::ReadProperty(const std::string_view &propName, Reader 
         reader >> m_BitmapFile;
         m_pBitmap = m_BitmapFile.GetAsTexture();
 
-		m_pPresentationBitmap = std::make_shared<Texture>(g_FrameMan.GetRenderer(), m_pBitmap->getW() * ScaleX, m_pBitmap->getH() * ScaleY, SDL_TEXTUREACCESS_STREAMING);
-		Texture tempPresentation(g_FrameMan.GetRenderer(), m_pBitmap->getW(), m_pBitmap->getH());
-		g_FrameMan.PushRenderTarget(tempPresentation.getAsRenderTarget());
+		m_pPresentationBitmap = std::make_shared<GLTexture>();
+		m_pPresentationBitmap->Create(m_pBitmap->GetW() * ScaleX, m_pBitmap->GetH() * ScaleY, BitDepth::Indexed8, g_FrameMan.GetDefaultPalette());
+
 		// Create internal presentation bitmap which will be drawn by editor
 		// Create horizontal outlines
         for (int x = 0; x < m_pBitmap->GetW(); ++x)
 		{
+			SDL_Rect line{x*ScaleX, 0, ScaleX - 1, 0};
 	        //Top to bottom
 			for (int y = 0; y < m_pBitmap->GetH() ; ++y)
             {
-				uint32_t px = m_pBitmap->GetPixel(x, y);
-				uint32_t pxp = m_pBitmap->GetPixel(x, y - 1) == 0xFFFFFF00 ? SCHEME_COLOR_EMPTY : m_pBitmap->GetPixel(x, y - 1);
+				line.y = y * ScaleY;
+				line.h = SchemeWidth;
+				int px = m_pBitmap->GetPixel(x, y);
+				int pxp = m_pBitmap->GetPixel(x, y - 1) == -1 ? SCHEME_COLOR_EMPTY : m_pBitmap->GetPixel(x, y - 1);
 
 				if (px == SCHEME_COLOR_WALL && pxp != SCHEME_COLOR_WALL)
-					for (int w = 0; w < SchemeWidth; w++) {
-						lineColor(g_FrameMan.GetRenderer(), x * ScaleX, y * ScaleY + w, x * ScaleX + ScaleX - 1, y * ScaleY + w, PAINT_COLOR_WALL);
-					}
+					SDL_FillRect(m_pPresentationBitmap->GetPixels(), &line, PAINT_COLOR_WALL);
 
 				if (px == SCHEME_COLOR_PASSABLE && pxp != SCHEME_COLOR_PASSABLE)
-					for (int w = 0; w < SchemeWidth; w++)
-						lineColor(g_FrameMan.GetRenderer(), x * ScaleX, y * ScaleY + w, x * ScaleX + ScaleX -1, y * ScaleY + w, PAINT_COLOR_PASSABLE);
+					SDL_FillRect(m_pPresentationBitmap->GetPixels(), &line, PAINT_COLOR_PASSABLE);
 
 				if (px == SCHEME_COLOR_VARIABLE && pxp != SCHEME_COLOR_VARIABLE)
-					for (int w = 0; w < SchemeWidth; w++)
-						lineColor(g_FrameMan.GetRenderer(), x * ScaleX, y * ScaleY + w, x * ScaleX + ScaleX -1, y * ScaleY + w, PAINT_COLOR_VARIABLE);
+					SDL_FillRect(m_pPresentationBitmap->GetPixels(), &line, PAINT_COLOR_VARIABLE);
             }
 
 			//Bottom to top
