@@ -9,6 +9,7 @@
 #include "FrameMan.h"
 
 #include "System/SDLHelper.h"
+#include "Renderer/BlitSurface.h"
 
 namespace RTE {
 
@@ -242,36 +243,10 @@ namespace RTE {
 		}
 		if (m_DoorMaterialDrawn) { EraseDoorMaterial(false); }
 
-		// TODO: OH NOOOOOOOOOOOOOOOOOOOOOOO this is gonna be a bad workaround :( (was m_Door->Draw(GetMaterialTexture,...)
-		SharedTexture tempMatRender = std::make_shared<Texture>(g_FrameMan.GetRenderer(), m_Door->GetDiameter(), m_Door->GetDiameter());
-		g_FrameMan.PushRenderTarget(tempMatRender);
-		m_Door->Draw(g_FrameMan.GetRenderer(), Vector(0,0), g_DrawMaterial, true);
-		g_FrameMan.PopRenderTarget();
+		std::unique_ptr<BlitSurface> tempBlitter = std::make_unique<BlitSurface>(g_SceneMan.GetTerrain()->GetMaterialTexture());
 
-		std::vector<uint32_t> pixels(m_Door->GetDiameter() * m_Door->GetDiameter());
-		SDL_RenderReadPixels(g_FrameMan.GetRenderer(), nullptr, tempMatRender->getFormat(), pixels.data(), m_Door->GetDiameter() * sizeof(uint32_t)); // There must be a way to avoid this
-
-		SDL_Surface* tempMatSurface{
-			SDL_CreateRGBSurfaceWithFormatFrom(pixels.data(),
-				m_Door->GetDiameter(), m_Door->GetDiameter(),
-				32, m_Door->GetDiameter() * sizeof(uint32_t), tempMatRender->getFormat())};
-
-		SDL_Rect lock{ m_Door->GetPos().GetFloorIntX(), m_Door->GetPos().GetFloorIntY(), tempMatSurface->w, tempMatSurface->h};
-		g_SceneMan.GetTerrain()->GetMaterialTexture()->lock(lock);
-		SDL_Surface *tempMatTex{SDL_CreateRGBSurfaceWithFormatFrom(
-			g_SceneMan.GetTerrain()->GetMaterialTexture()->getPixels(),
-			tempMatSurface->w, tempMatSurface->h, 32,
-			g_SceneMan.GetTerrain()->GetMaterialTexture()->getW() * sizeof(uint32_t),
-			g_SceneMan.GetTerrain()->GetMaterialTexture()->getFormat())};
-
-		SDL_BlitSurface(tempMatSurface, nullptr, tempMatTex, nullptr);
-
-		SDL_FreeSurface(tempMatTex);
-		SDL_FreeSurface(tempMatSurface);
-		g_SceneMan.GetTerrain()->GetMaterialTexture()->unlock();
-
+		m_Door->Draw(tempBlitter.get(), Vector(), g_DrawDoor, true);
 		m_LastDoorMaterialPos = m_Door->GetPos();
-
 		m_DoorMaterialDrawn = true;
 
 		g_SceneMan.GetTerrain()->AddUpdatedMaterialArea(m_Door->GetBoundingBox());
@@ -310,33 +285,8 @@ namespace RTE {
 		} else {
 			// Draw the door back if we were indeed temporarily suppressing it before
 			if (m_DoorMaterialDrawn && m_DoorMaterialTempErased != enable) {
-				SharedTexture tempMatRender = std::make_shared<Texture>(g_FrameMan.GetRenderer(), m_Door->GetDiameter(), m_Door->GetDiameter());
-				g_FrameMan.PushRenderTarget(tempMatRender);
-				m_Door->Draw(g_FrameMan.GetRenderer(), Vector(0,0), g_DrawMaterial, true);
-
-				g_FrameMan.PopRenderTarget();
-				std::vector<uint32_t> pixels(m_Door->GetDiameter() * m_Door->GetDiameter());
-				SDL_RenderReadPixels(g_FrameMan.GetRenderer(), nullptr, tempMatRender->getFormat(), pixels.data(), m_Door->GetDiameter() * sizeof(uint32_t)); // There must be a way to avoid this
-
-				SDL_Surface* tempMatSurface{
-					SDL_CreateRGBSurfaceWithFormatFrom(pixels.data(),
-						m_Door->GetDiameter(), m_Door->GetDiameter(),
-						32, m_Door->GetDiameter() * sizeof(uint32_t), tempMatRender->getFormat())};
-
-				SDL_Rect lock{ m_Door->GetPos().GetFloorIntX(), m_Door->GetPos().GetFloorIntY(), tempMatSurface->w, tempMatSurface->h};
-				g_SceneMan.GetTerrain()->GetMaterialTexture()->lock();
-				SDL_Surface *tempMatTex{SDL_CreateRGBSurfaceWithFormatFrom(
-					g_SceneMan.GetTerrain()->GetMaterialTexture()->getPixels(),
-					tempMatSurface->w, tempMatSurface->h, 32,
-					g_SceneMan.GetTerrain()->GetMaterialTexture()->getW() * sizeof(uint32_t),
-					g_SceneMan.GetTerrain()->GetMaterialTexture()->getFormat())};
-
-				SDL_BlitSurface(tempMatSurface, nullptr, tempMatTex, nullptr);
-
-				SDL_FreeSurface(tempMatTex);
-				SDL_FreeSurface(tempMatSurface);
-				g_SceneMan.GetTerrain()->GetMaterialTexture()->unlock();
-				// m_Door->Draw(g_SceneMan.GetTerrain()->GetMaterialBitmap(), Vector(), g_DrawMaterial, true);
+				std::unique_ptr<BlitSurface> tempBlitter = std::make_unique<BlitSurface>(g_SceneMan.GetTerrain()->GetMaterialTexture());
+				m_Door->Draw(tempBlitter.get(), Vector(), g_DrawDoor, true);
 				g_SceneMan.GetTerrain()->AddUpdatedMaterialArea(m_Door->GetBoundingBox());
 			}
 		}
