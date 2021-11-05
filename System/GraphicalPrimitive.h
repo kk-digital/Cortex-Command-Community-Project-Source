@@ -56,6 +56,13 @@ namespace RTE {
 	};
 #pragma endregion
 
+#pragma region Point Primitive
+	class PointPrimitive : public GraphicalPrimitive {
+	public:
+		PointPrimitive(int player, const Vector &position, unsigned char color);
+	};
+#pragma endregion
+
 #pragma region Line Primitive
 	/// <summary>
 	/// Class used to schedule drawing of line primitives created from Lua.
@@ -355,6 +362,7 @@ namespace RTE {
 		void Draw(RenderTarget *renderer, const Vector &targetPos, std::optional<RenderState> renderState = std::nullopt) override;
 	};
 #pragma endregion
+
 
 #pragma region Bitmap Primitive
 	/// <summary>
