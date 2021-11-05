@@ -24,6 +24,8 @@
 
 #include "SDLHelper.h"
 #include "SDL2_gfxPrimitives.h"
+#include "RTERenderer.h"
+#include "GraphicalPrimitive.h"
 
 namespace RTE {
 
@@ -685,8 +687,7 @@ void Deployment::Draw(RenderTarget* renderer, const Vector &targetPos, DrawMode 
 	if (m_apArrowLeftBitmap.empty() || m_apArrowRightBitmap.empty())
 		RTEAbort("Deployment's Arrow bitmaps are null when drawing!");
 
-	SDL_Rect viewport;
-	SDL_RenderGetViewport(renderer, &viewport);
+	glm::vec2 viewport = renderer->GetSize();
 
 	{
 		std::shared_ptr<GLTexture> pTexture = m_Icon.GetTextures()[0];
@@ -703,13 +704,13 @@ void Deployment::Draw(RenderTarget* renderer, const Vector &targetPos, DrawMode 
 			if (aDrawPos[0].m_X < pTexture->GetW())
 			{
 				aDrawPos[passes] = aDrawPos[0];
-				aDrawPos[passes].m_X += viewport.w;
+				aDrawPos[passes].m_X += viewport.x;
 				passes++;
 			}
-			else if (aDrawPos[0].m_X > viewport.w - pTexture->GetW())
+			else if (aDrawPos[0].m_X > viewport.x - pTexture->GetW())
 			{
 				aDrawPos[passes] = aDrawPos[0];
-				aDrawPos[passes].m_X -= viewport.w;
+				aDrawPos[passes].m_X -= viewport.x;
 				passes++;
 			}
 		}
@@ -725,7 +726,7 @@ void Deployment::Draw(RenderTarget* renderer, const Vector &targetPos, DrawMode 
 					aDrawPos[passes].m_X -= sceneWidth;
 					passes++;
 				}
-				if (targetPos.m_X + viewport.w > sceneWidth)
+				if (targetPos.m_X + viewport.x > sceneWidth)
 				{
 					aDrawPos[passes] = aDrawPos[0];
 					aDrawPos[passes].m_X += sceneWidth;
@@ -741,7 +742,7 @@ void Deployment::Draw(RenderTarget* renderer, const Vector &targetPos, DrawMode 
 			{
 				pTexture->render(renderer, aDrawPos[i].GetFloorIntX(), aDrawPos[i].GetFloorIntY());
 				// Draw the spawn radius circle too
-				circleColor(renderer, aDrawPos[i].GetFloorIntX() + (pTexture->GetW() / 2), aDrawPos[i].GetFloorIntY() + (pTexture->GetH() / 2), m_SpawnRadius, c_GUIColorGray);
+				CirclePrimitive(-1, aDrawPos[i] + static_cast<Vector>(pTexture->GetSize() / 2.0f), m_SpawnRadius, c_GUIColorGray);
 			}
 			else if (mode == g_DrawLess)
 			{
@@ -753,8 +754,9 @@ void Deployment::Draw(RenderTarget* renderer, const Vector &targetPos, DrawMode 
 				pTexture->render(renderer, aDrawPos[i].GetFloorIntX(), aDrawPos[i].GetFloorIntY());
 				pTexture->setAlphaMod(255);
 				// Draw the spawn radius circle too
-				uint32_t color = (c_GUIColorGray&0xFFFFFF00)|alphaMod;
-				circleColor(renderer, aDrawPos[i].GetFloorIntX() + (pTexture->GetW() / 2), aDrawPos[i].GetFloorIntY() + (pTexture->GetH() / 2), m_SpawnRadius, color);
+				RenderState state;
+				state.m_Color = {1.0f, 1.0f, 1.0f, alphaMod/255.0f};
+				CirclePrimitive(-1, aDrawPos[i] + static_cast<Vector>(pTexture->GetSize() / 2.0f), m_SpawnRadius, c_GUIColorGray).Draw(renderer, {0,0}, state);
 			}
 		}
 	}
@@ -784,13 +786,13 @@ void Deployment::Draw(RenderTarget* renderer, const Vector &targetPos, DrawMode 
 			if (aDrawPos[0].m_X < pTexture->GetW())
 			{
 				aDrawPos[passes] = aDrawPos[0];
-				aDrawPos[passes].m_X += viewport.w;
+				aDrawPos[passes].m_X += viewport.x;
 				passes++;
 			}
-			else if (aDrawPos[0].m_X > viewport.w - pTexture->GetW())
+			else if (aDrawPos[0].m_X > viewport.x - pTexture->GetW())
 			{
 				aDrawPos[passes] = aDrawPos[0];
-				aDrawPos[passes].m_X -= viewport.w;
+				aDrawPos[passes].m_X -= viewport.x;
 				passes++;
 			}
 		}
@@ -806,7 +808,7 @@ void Deployment::Draw(RenderTarget* renderer, const Vector &targetPos, DrawMode 
 					aDrawPos[passes].m_X -= sceneWidth;
 					passes++;
 				}
-				if (targetPos.m_X + viewport.w > sceneWidth)
+				if (targetPos.m_X + viewport.x > sceneWidth)
 				{
 					aDrawPos[passes] = aDrawPos[0];
 					aDrawPos[passes].m_X += sceneWidth;
