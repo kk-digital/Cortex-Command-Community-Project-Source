@@ -11,6 +11,7 @@ namespace RTE {
 		Vertex(glm::vec2 position, glm::vec2 texUV);
 
 		Vertex(glm::vec2 position, glm::u8vec4 color);
+		Vertex(glm::vec2 position, uint32_t color);
 
 		Vertex(float x, float y);
 
