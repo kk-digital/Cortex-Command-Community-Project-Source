@@ -15,7 +15,7 @@
 #include "PresetMan.h"
 #include "AEmitter.h"
 
-#include "System/SDLHelper.h"
+#include "RTERenderer.h"
 
 namespace RTE {
 
@@ -524,23 +524,22 @@ void MOSprite::Draw(RenderTarget *renderer, const Vector &targetPos, DrawMode mo
 	Vector spritePos(m_Pos + spriteOffset - targetPos);
 
 	// Take care of wrapping situations
-	Vector aDrawPos[4];
+	std::array<Vector, 4> aDrawPos;
 	aDrawPos[0] = spritePos;
 	int passes = 1;
 
 	// Only bother with wrap drawing if the scene actually wraps around
 	if (g_SceneMan.SceneWrapsX()) {
-		SDL_Rect viewport;
-		SDL_RenderGetViewport(renderer, &viewport);
+		glm::vec2 viewport = renderer->GetViewport();
 		// See if need to double draw this across the scene seam if we're being drawn onto a scenewide bitmap
 		if (targetPos.IsZero() && m_WrapDoubleDraw) {
 			if (spritePos.m_X < m_aSprite[m_Frame]->GetW()) {
 				aDrawPos[passes] = spritePos;
-				aDrawPos[passes].m_X += viewport.w;
+				aDrawPos[passes].m_X += viewport.x;
 				passes++;
-			} else if (spritePos.m_X > viewport.w - m_aSprite[m_Frame]->GetW()) {
+			} else if (spritePos.m_X > viewport.x - m_aSprite[m_Frame]->GetW()) {
 				aDrawPos[passes] = spritePos;
-				aDrawPos[passes].m_X -= viewport.w;
+				aDrawPos[passes].m_X -= viewport.x;
 				passes++;
 			}
 		}
@@ -551,7 +550,7 @@ void MOSprite::Draw(RenderTarget *renderer, const Vector &targetPos, DrawMode mo
 				aDrawPos[passes].m_X -= g_SceneMan.GetSceneWidth();
 				passes++;
 			}
-			if (targetPos.m_X + viewport.w > g_SceneMan.GetSceneWidth()) {
+			if (targetPos.m_X + viewport.x > g_SceneMan.GetSceneWidth()) {
 				aDrawPos[passes] = aDrawPos[0];
 				aDrawPos[passes].m_X += g_SceneMan.GetSceneWidth();
 				passes++;
@@ -559,32 +558,44 @@ void MOSprite::Draw(RenderTarget *renderer, const Vector &targetPos, DrawMode mo
 		}
 	}
 
-	int flip{SDL_FLIP_NONE};
+	glm::vec2 flip{1.0f, 1.0f};
 	if (m_HFlipped)
-		flip = SDL_FLIP_HORIZONTAL;
+		flip.x = -1.0f;
 
 	for (int i = 0; i < passes; ++i) {
 		if (mode == g_DrawMaterial) {
 			RTEAbort("Ordered to draw an MOSprite in its material, which is not possible!");
-		} else if (mode == g_DrawAir)
-			m_aSprite[m_Frame]->renderFillColor(renderer, aDrawPos[i].m_X, aDrawPos[i].m_Y, g_MaterialAir, flip);
-		else if (mode == g_DrawMask)
-			m_aSprite[m_Frame]->renderFillColor(renderer, aDrawPos[i].m_X, aDrawPos[i].m_Y, g_MaskColor, flip);
-		else if (mode == g_DrawWhite)
-			m_aSprite[m_Frame]->renderFillColor(renderer, aDrawPos[i].m_X, aDrawPos[i].m_Y, g_WhiteColor, flip);
-		else if (mode == g_DrawMOID) {
+		} else if (mode == g_DrawAir) {
+			m_aSprite[m_Frame]->setShading(Shading::Fill);
+			m_aSprite[m_Frame]->setColorMod(g_MaterialAir);
+			m_aSprite[m_Frame]->render(renderer, aDrawPos[i], flip);
+			m_aSprite[m_Frame]->setColorMod(255, 255, 255);
+			m_aSprite[m_Frame]->setShading(Shading::Base);
+		} else if (mode == g_DrawMask) {
+			m_aSprite[m_Frame]->setShading(Shading::Fill);
+			m_aSprite[m_Frame]->setColorMod(g_MaskColor);
+			m_aSprite[m_Frame]->render(renderer, aDrawPos[i], flip);
+			m_aSprite[m_Frame]->setColorMod(255, 255, 255);
+			m_aSprite[m_Frame]->setShading(Shading::Base);
+		} else if (mode == g_DrawWhite) {
+			m_aSprite[m_Frame]->setShading(Shading::Fill);
+			m_aSprite[m_Frame]->setColorMod(g_WhiteColor);
+			m_aSprite[m_Frame]->render(renderer, aDrawPos[i], flip);
+			m_aSprite[m_Frame]->setColorMod(255, 255, 255);
+			m_aSprite[m_Frame]->setShading(Shading::Base);
+		} else if (mode == g_DrawMOID) {
 			int spriteX = aDrawPos[i].GetFloorIntX();
 			int spriteY = aDrawPos[i].GetFloorIntY();
-			m_aSprite[m_Frame]->renderFillColor(renderer, spriteX, spriteY, m_MOID|0xff000000, flip);
+			// m_aSprite[m_Frame]->renderFillColor(renderer, spriteX, spriteY, m_MOID|0xff000000, flip);
 			g_SceneMan.RegisterMOIDDrawing(spriteX, spriteY, spriteX + m_aSprite[m_Frame]->GetW(), spriteY + m_aSprite[m_Frame]->GetH());
 		} else if (mode == g_DrawNoMOID) {
-			m_aSprite[m_Frame]->renderFillColor(renderer, aDrawPos[i].m_X, aDrawPos[i].m_Y, g_NoMOID|0xff000000, flip);
+			// m_aSprite[m_Frame]->renderFillColor(renderer, aDrawPos[i].m_X, aDrawPos[i].m_Y, g_NoMOID|0xff000000, flip);
 		} else if (mode == g_DrawTrans) {
 			m_aSprite[m_Frame]->setAlphaMod(alphaMod);
-			m_aSprite[m_Frame]->render(renderer, aDrawPos[i].m_X, aDrawPos[i].m_Y, flip);
+			m_aSprite[m_Frame]->render(renderer, aDrawPos[i], flip);
 			m_aSprite[m_Frame]->setAlphaMod(255);
 		} else {
-			m_aSprite[m_Frame]->render(renderer, aDrawPos[i].m_X, aDrawPos[i].m_Y, flip);
+			m_aSprite[m_Frame]->render(renderer, aDrawPos[i], flip);
 		}
 	}
 }

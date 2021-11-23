@@ -16,6 +16,7 @@
 #include "SLTerrain.h"
 
 #include "System/SDLHelper.h"
+#include "GraphicalPrimitive.h"
 
 namespace RTE {
 
@@ -669,15 +670,7 @@ void LimbPath::Draw(RenderTarget* renderer,
     {
         nextPoint += (*itr) * m_Rotation;
 
-		uint8_t r,g,b,a;
-		SDL_GetRenderDrawColor(renderer, &r, &g, &b, &a);
-
-		SDL_SetRenderDrawColor(renderer, (color >> 24) & 0xFF,
-			                   (color >> 16) & 0xFF, (color >> 8) & 0xFF,
-			                   (color)&0xFF);
-		SDL_RenderDrawLine(renderer, prevPoint.m_X, prevPoint.m_Y,
-			               nextPoint.m_X, nextPoint.m_Y);
-		SDL_SetRenderDrawColor(renderer, r, g, b, a);
+		LinePrimitive(-1, prevPoint, nextPoint, color).Draw(renderer);
 
 		prevPoint += (*itr) * m_Rotation;
     }

@@ -19,7 +19,7 @@
 #include "Actor.h"
 #include "Managers/FrameMan.h"
 
-#include "SDL2_gfxPrimitives.h"
+#include "RTERenderer.h"
 
 namespace RTE {
 
@@ -1154,19 +1154,18 @@ void HDFirearm::DrawHUD(RenderTarget* renderer, const Vector &targetPos, int whi
         g_SceneMan.WrapPosition(aimPoint3);
         g_SceneMan.WrapPosition(aimPoint4);
 
-		std::array<SDL_Point,4> drawPoints{
-			SDL_Point{aimPoint1.GetFloorIntX(), aimPoint1.GetFloorIntY()},
-			SDL_Point{aimPoint2.GetFloorIntX(), aimPoint2.GetFloorIntY()},
-			SDL_Point{aimPoint3.GetFloorIntX(), aimPoint3.GetFloorIntY()},
-			SDL_Point{aimPoint4.GetFloorIntX(), aimPoint4.GetFloorIntY()}
-		};
-		SDL_SetRenderDrawColor(renderer, (g_YellowGlowColor >> 24) & 0xFF,
-			                   (g_YellowGlowColor >> 16) & 0xFF,
-			                   (g_YellowGlowColor >> 8) & 0xFF,
-			                   g_YellowGlowColor & 0xFF);
+		VertexArray drawPoints{{{aimPoint1},
+			{aimPoint2},
+			{aimPoint3},
+			{aimPoint4}}};
 
-		SDL_RenderDrawPoints(renderer, drawPoints.data(),4);
-    }
+		RenderState drawState;
+		drawState.m_Vertices = &drawPoints;
+		drawState.m_Color = (*g_FrameMan.GetDefaultPalette())[g_YellowGlowColor];
+		drawState.m_PrimitiveType = PrimitiveType::Point;
+		drawState.m_Shader = g_FrameMan.GetColorShader();
+		renderer->Draw(drawState);
+	}
     else
     {
         Vector aimPoint2(sharpLength - 3, 0);
@@ -1193,15 +1192,15 @@ void HDFirearm::DrawHUD(RenderTarget* renderer, const Vector &targetPos, int whi
         g_SceneMan.WrapPosition(aimPoint2);
         g_SceneMan.WrapPosition(aimPoint3);
 
-		std::array<SDL_Point, 4> drawPoints{
-			SDL_Point{aimPoint2.GetFloorIntX(), aimPoint2.GetFloorIntY()},
-			SDL_Point{aimPoint3.GetFloorIntX(), aimPoint3.GetFloorIntY()}};
-		SDL_SetRenderDrawColor(renderer, (g_YellowGlowColor >> 24) & 0xFF,
-			                   (g_YellowGlowColor >> 16) & 0xFF,
-			                   (g_YellowGlowColor >> 8) & 0xFF,
-			                   g_YellowGlowColor & 0xFF);
+		VertexArray drawPoints{{{aimPoint2}, {aimPoint3}}};
 
-		SDL_RenderDrawPoints(renderer, drawPoints.data(), 4);
+		RenderState drawState;
+		drawState.m_Vertices = &drawPoints;
+		drawState.m_Color = (*g_FrameMan.GetDefaultPalette())[g_YellowGlowColor];
+		drawState.m_PrimitiveType = PrimitiveType::Point;
+		drawState.m_Shader = g_FrameMan.GetColorShader();
+
+		renderer->Draw(drawState);
     }
 }
 

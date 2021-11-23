@@ -23,6 +23,7 @@
 
 
 #include "System/SDLHelper.h"
+#include "RTERenderer.h"
 
 namespace RTE {
 
@@ -543,8 +544,7 @@ void HeldDevice::DrawHUD(RenderTarget* renderer, const Vector &targetPos, int wh
 
     Attachable::DrawHUD(renderer, targetPos, whichScreen);
 
-	SDL_Rect viewport;
-	SDL_RenderGetViewport(renderer, &viewport);
+	glm::vec2 viewport = renderer->GetViewport();
 
     if (!m_Parent && !IsUnPickupable())
     {
@@ -562,20 +562,20 @@ void HeldDevice::DrawHUD(RenderTarget* renderer, const Vector &targetPos, int wh
         {
             // Spans vertical scene seam
             int sceneWidth = g_SceneMan.GetSceneWidth();
-            if (g_SceneMan.SceneWrapsX() && viewport.w < sceneWidth)
+            if (g_SceneMan.SceneWrapsX() && viewport.x < sceneWidth)
             {
-                if ((targetPos.m_X < 0) && (m_Pos.m_X > (sceneWidth - viewport.w)))
+                if ((targetPos.m_X < 0) && (m_Pos.m_X > (sceneWidth - viewport.x)))
                     drawPos.m_X -= sceneWidth;
-                else if (((targetPos.m_X + viewport.w) > sceneWidth) && (m_Pos.m_X < viewport.w))
+                else if (((targetPos.m_X + viewport.x) > sceneWidth) && (m_Pos.m_X < viewport.x))
                     drawPos.m_X += sceneWidth;
             }
             // Spans horizontal scene seam
             int sceneHeight = g_SceneMan.GetSceneHeight();
-            if (g_SceneMan.SceneWrapsY() && viewport.h < sceneHeight)
+            if (g_SceneMan.SceneWrapsY() && viewport.y < sceneHeight)
             {
-                if ((targetPos.m_Y < 0) && (m_Pos.m_Y > (sceneHeight - viewport.h)))
+                if ((targetPos.m_Y < 0) && (m_Pos.m_Y > (sceneHeight - viewport.y)))
                     drawPos.m_Y -= sceneHeight;
-                else if (((targetPos.m_Y + viewport.h) > sceneHeight) && (m_Pos.m_Y < viewport.h))
+                else if (((targetPos.m_Y + viewport.y) > sceneHeight) && (m_Pos.m_Y < viewport.y))
                     drawPos.m_Y += sceneHeight;
             }
         }

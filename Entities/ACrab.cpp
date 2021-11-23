@@ -31,6 +31,8 @@
 #include "GUI/GUI.h"
 #include "GUI/SDLGUITexture.h"
 #include "SDLHelper.h"
+#include "RTERenderer.h"
+#include "GraphicalPrimitive.h"
 
 namespace RTE {
 
@@ -2872,8 +2874,7 @@ void ACrab::DrawHUD(RenderTarget* renderer, const Vector &targetPos, int whichSc
     GUIFont *pSymbolFont = g_FrameMan.GetLargeFont();
     GUIFont *pSmallFont = g_FrameMan.GetSmallFont();
 
-	SDL_Rect viewport;
-	SDL_RenderGetViewport(renderer, &viewport);
+	glm::vec2 viewport = renderer->GetViewport();
 
     // Only show extra HUD if this guy is controlled by the same player that this screen belongs to
     if (m_Controller.IsPlayerControlled() && g_ActivityMan.GetActivity()->ScreenOfPlayer(m_Controller.GetPlayer()) == whichScreen && pSmallFont && pSymbolFont)
@@ -2887,20 +2888,20 @@ void ACrab::DrawHUD(RenderTarget* renderer, const Vector &targetPos, int whichSc
         {
             // Spans vertical scene seam
             int sceneWidth = g_SceneMan.GetSceneWidth();
-            if (g_SceneMan.SceneWrapsX() && viewport.w < sceneWidth)
+            if (g_SceneMan.SceneWrapsX() && viewport.x < sceneWidth)
             {
-                if ((targetPos.m_X < 0) && (m_Pos.m_X > (sceneWidth - viewport.w)))
+                if ((targetPos.m_X < 0) && (m_Pos.m_X > (sceneWidth - viewport.x)))
                     drawPos.m_X -= sceneWidth;
-                else if (((targetPos.m_X + viewport.w) > sceneWidth) && (m_Pos.m_X < viewport.w))
+                else if (((targetPos.m_X + viewport.x) > sceneWidth) && (m_Pos.m_X < viewport.x))
                     drawPos.m_X += sceneWidth;
             }
             // Spans horizontal scene seam
             int sceneHeight = g_SceneMan.GetSceneHeight();
-            if (g_SceneMan.SceneWrapsY() && viewport.h < sceneHeight)
+            if (g_SceneMan.SceneWrapsY() && viewport.y < sceneHeight)
             {
-                if ((targetPos.m_Y < 0) && (m_Pos.m_Y > (sceneHeight - viewport.h)))
+                if ((targetPos.m_Y < 0) && (m_Pos.m_Y > (sceneHeight - viewport.y)))
                     drawPos.m_Y -= sceneHeight;
-                else if (((targetPos.m_Y + viewport.h) > sceneHeight) && (m_Pos.m_Y < viewport.h))
+                else if (((targetPos.m_Y + viewport.y) > sceneHeight) && (m_Pos.m_Y < viewport.y))
                     drawPos.m_Y += sceneHeight;
             }
         }
@@ -2923,23 +2924,11 @@ void ACrab::DrawHUD(RenderTarget* renderer, const Vector &targetPos, int whichSc
 
             float jetTimeRatio = m_JetTimeLeft / m_JetTimeTotal;
 // TODO: Don't hardcode this shit
-			uint32_t gaugeColor =
-				jetTimeRatio > 0.6
-				    ? 0X74B33AFF
-				    : (jetTimeRatio > 0.3 ? 0xF6CD33FF : 0xEA1507);
-			SDL_FRect jetGaugeRect{drawPos.m_X, drawPos.m_Y + m_HUDStack + 6,
-				                   drawPos.m_Y + (16 * jetTimeRatio),
-				                   drawPos.m_Y + m_HUDStack + 7};
-			SDL_SetRenderDrawColor(renderer, gaugeColor&0xFF000000, gaugeColor&0x00FF0000, gaugeColor&0x0000FF00, 0xFF);
-			SDL_RenderFillRectF(renderer, &jetGaugeRect);
-			SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
-			//                    rect(pTargetBitmap, drawPos.m_X, drawPos.m_Y +
-			//                    m_HUDStack - 2, drawPos.m_X + 24, drawPos.m_Y
-			//                    + m_HUDStack - 4, 238); std::snprintf(str,
-			//                    sizeof(str), "%.0f Kg", mass);
-			//                    pSmallFont->DrawAligned(&allegroBitmap,
-			//                    drawPos.m_X - 0, drawPos.m_Y + m_HUDStack + 3,
-			//                    str, GUIFont::Left);
+            unsigned char gaugeColor = jetTimeRatio > 0.6 ? 149 : (jetTimeRatio > 0.3 ? 77 : 13);
+			BoxFillPrimitive(-1, drawPos + Vector(0, m_HUDStack + 6), drawPos + Vector(16 * jetTimeRatio, m_HUDStack + 7), gaugeColor).Draw(renderer);
+//                    rect(pTargetBitmap, drawPos.m_X, drawPos.m_Y + m_HUDStack - 2, drawPos.m_X + 24, drawPos.m_Y + m_HUDStack - 4, 238);
+//                    std::snprintf(str, sizeof(str), "%.0f Kg", mass);
+//                    pSmallFont->DrawAligned(&allegroBitmap, drawPos.m_X - 0, drawPos.m_Y + m_HUDStack + 3, str, GUIFont::Left);
 
             m_HUDStack += -10;
         }

@@ -151,35 +151,50 @@ namespace RTE {
 		int spriteY = 0;
 
 		switch (mode) {
-			case g_DrawMaterial:
-				m_aSprite[m_Frame]->renderFillColor(
-					renderer, spritePos.GetFloorIntX(),
-					spritePos.GetFloorIntY(),
-					m_SettleMaterialDisabled
-						? GetMaterial()->GetIndex()
-						: GetMaterial()->GetSettleMaterial());
+			case g_DrawMaterial: {
+				m_aSprite[m_Frame]->setShading(Shading::Fill);
+				uint32_t material = m_SettleMaterialDisabled ? GetMaterial()->GetIndex() : GetMaterial()->GetSettleMaterial();
+				m_aSprite[m_Frame]->setColorMod((material >> 16) & 0xFF, (material >> 8) & 0xff, (material & 0xff));
+				m_aSprite[m_Frame]->render(renderer, spritePos.GetFloorIntX(), spritePos.GetFloorIntY());
+				m_aSprite[m_Frame]->setColorMod(glm::vec3(1));
+				m_aSprite[m_Frame]->setShading(Shading::Base);
 				break;
+			}
 			case g_DrawAir:
-				m_aSprite[m_Frame]->renderFillColor(
-					renderer, spritePos.GetFloorIntX(),
-					spritePos.GetFloorIntY(), g_MaterialAir);
+				m_aSprite[m_Frame]->setShading(Shading::Fill);
+				m_aSprite[m_Frame]->setAlphaMod(0);
+				m_aSprite[m_Frame]->render(renderer, spritePos.GetFloorIntX(), spritePos.GetFloorIntY());
+				m_aSprite[m_Frame]->setAlphaMod(1);
+				m_aSprite[m_Frame]->setShading(Shading::Base);
 				break;
 			case g_DrawMask:
-				m_aSprite[m_Frame]->renderFillColor(
-					renderer, spritePos.GetFloorIntX(),
-					spritePos.GetFloorIntY(), g_MaskColor);
+				m_aSprite[m_Frame]->setShading(Shading::Fill);
+				m_aSprite[m_Frame]->setAlphaMod(0);
+				m_aSprite[m_Frame]->render(renderer, spritePos.GetFloorIntX(), spritePos.GetFloorIntY());
+				m_aSprite[m_Frame]->setAlphaMod(1);
+				m_aSprite[m_Frame]->setShading(Shading::Base);
 				break;
 			case g_DrawWhite:
-				m_aSprite[m_Frame]->renderFillColor(renderer, spritePos.GetFloorIntX(), spritePos.GetFloorIntY(), g_WhiteColor);
+				m_aSprite[m_Frame]->setShading(Shading::Fill);
+				m_aSprite[m_Frame]->render(renderer, spritePos.GetFloorIntX(), spritePos.GetFloorIntY());
+				m_aSprite[m_Frame]->setShading(Shading::Base);
 				break;
 			case g_DrawMOID:
 				spriteX = spritePos.GetFloorIntX();
 				spriteY = spritePos.GetFloorIntY();
-				m_aSprite[m_Frame]->renderFillColor(renderer, spriteX, spriteY, (m_MOID) | 0xff000000);
+				m_aSprite[m_Frame]->setShading(Shading::Fill);
+				m_aSprite[m_Frame]->setColorMod({((m_MOID >> 16) & 0xff) / 255.0f, ((m_MOID >> 8) & 0xff) / 255.0f, (m_MOID & 0xff) / 255.0f});
+				m_aSprite[m_Frame]->render(renderer, spriteX, spriteY);
+				m_aSprite[m_Frame]->setColorMod(glm::vec3(1));
+				m_aSprite[m_Frame]->setShading(Shading::Base);
 				g_SceneMan.RegisterMOIDDrawing(spriteX, spriteY, spriteX + m_aSprite[m_Frame]->GetW(), spriteY + m_aSprite[m_Frame]->GetH());
 				break;
 			case g_DrawNoMOID:
-				m_aSprite[m_Frame]->renderFillColor(renderer, spritePos.GetFloorIntX(), spritePos.GetFloorIntY(), (g_NoMOID) | 0xff000000);
+				m_aSprite[m_Frame]->setShading(Shading::Fill);
+				m_aSprite[m_Frame]->setColorMod({((g_NoMOID >> 16) & 0xff) / 255.0f, ((g_NoMOID >> 8) & 0xff) / 255.0f, (g_NoMOID & 0xff) / 255.0f});
+				m_aSprite[m_Frame]->render(renderer, spriteX, spriteY);
+				m_aSprite[m_Frame]->setColorMod(glm::vec3(1));
+				m_aSprite[m_Frame]->setShading(Shading::Base);
 				break;
 			case g_DrawTrans:
 				m_aSprite[m_Frame]->setAlphaMod(alphaMod);

@@ -9,6 +9,7 @@
 #include "FrameMan.h"
 
 #include "System/SDLHelper.h"
+#include "RTERenderer.h"
 #include "Renderer/BlitSurface.h"
 
 namespace RTE {
@@ -243,7 +244,7 @@ namespace RTE {
 		}
 		if (m_DoorMaterialDrawn) { EraseDoorMaterial(false); }
 
-		std::unique_ptr<BlitSurface> tempBlitter = std::make_unique<BlitSurface>(g_SceneMan.GetTerrain()->GetMaterialTexture());
+		std::unique_ptr<BlitSurface> tempBlitter = std::make_unique<BlitSurface>(g_SceneMan.GetTerrain()->GetMaterialTexture()->GetTexture());
 
 		m_Door->Draw(tempBlitter.get(), Vector(), g_DrawDoor, true);
 		m_LastDoorMaterialPos = m_Door->GetPos();
@@ -285,7 +286,7 @@ namespace RTE {
 		} else {
 			// Draw the door back if we were indeed temporarily suppressing it before
 			if (m_DoorMaterialDrawn && m_DoorMaterialTempErased != enable) {
-				std::unique_ptr<BlitSurface> tempBlitter = std::make_unique<BlitSurface>(g_SceneMan.GetTerrain()->GetMaterialTexture());
+				std::unique_ptr<BlitSurface> tempBlitter = std::make_unique<BlitSurface>(g_SceneMan.GetTerrain()->GetMaterialTexture()->GetTexture());
 				m_Door->Draw(tempBlitter.get(), Vector(), g_DrawDoor, true);
 				g_SceneMan.GetTerrain()->AddUpdatedMaterialArea(m_Door->GetBoundingBox());
 			}

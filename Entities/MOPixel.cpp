@@ -4,6 +4,8 @@
 #include "Managers/FrameMan.h"
 
 #include "System/SDLHelper.h"
+#include "RTERenderer.h"
+#include "GraphicalPrimitive.h"
 
 namespace RTE {
 
@@ -245,32 +247,16 @@ namespace RTE {
 				drawColor = g_MaskColor;
 				break;
 			case g_DrawMOID:
-				drawColor = (m_MOID)|0xff000000;
+				drawColor = m_MOID;
 				break;
 			case g_DrawNoMOID:
-				drawColor = (g_NoMOID)|0xff000000;
+				drawColor = g_NoMOID;
 				break;
 			default:
-				drawColor = m_Color.GetRGBA();
+				drawColor = m_Color.GetIndex();
 				break;
 		}
-		if( mode == g_DrawMOID || mode == g_DrawNoMOID)
-			SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
-
-		SDL_SetRenderDrawColor(renderer, (drawColor>>16)&0xFF, (drawColor>>8)&0xFF,(drawColor)&0xFF, (((drawColor>>24)&0xFF) / 255.0) * alphaMod);
-
-		SDL_RenderDrawPoint(renderer,
-		                    m_Pos.GetFloorIntX() - targetPos.GetFloorIntX(),
-		                    m_Pos.GetFloorIntY() - targetPos.GetFloorIntY());
-
-		if( mode == g_DrawMOID || mode == g_DrawNoMOID)
-			SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
-
-		if (mode == g_DrawMOID) {
-			g_SceneMan.RegisterMOIDDrawing(m_Pos - targetPos, 1);
-		} else if (mode == g_DrawColor && m_pScreenEffect && !onlyPhysical) {
-			SetPostScreenEffectToDraw();
-		}
+		PointPrimitive(-1, m_Pos - targetPos, drawColor).Draw(renderer);
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

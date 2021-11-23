@@ -24,6 +24,7 @@
 
 #include "RTEError.h"
 #include "System/SDLHelper.h"
+#include "RTERenderer.h"
 
 namespace RTE {
 
@@ -1594,8 +1595,7 @@ void MOSRotating::Draw(RenderTarget *renderer,
 	if (mode == g_DrawMOID && (!m_GetsHitByMOs || m_MOID == g_NoMOID))
 		return;
 
-	SDL_Rect viewport;
-	SDL_RenderGetViewport(renderer, &viewport);
+	glm::vec2 viewport = renderer->GetViewport();
 
 	uint32_t keyColor = g_MaskColor;
 
@@ -1606,11 +1606,12 @@ void MOSRotating::Draw(RenderTarget *renderer,
 	}
 
 	Vector spritePivot{-m_SpriteOffset};
-	int flip = SDL_FLIP_NONE;
+	glm::vec2 flipScale{1.0f, 1.0f};
 	if (m_HFlipped) {
-		flip = SDL_FLIP_HORIZONTAL;
+		flipScale.x = -1.0f;
 		spritePivot.m_X = m_aSprite[m_Frame]->GetW() + m_SpriteOffset.m_X;
 	}
+	flipScale *= m_Scale;
 
 	Vector spritePos(m_Pos.GetFloored() - targetPos - spritePivot);
 
@@ -1633,11 +1634,11 @@ void MOSRotating::Draw(RenderTarget *renderer,
 		if (targetPos.IsZero() && m_WrapDoubleDraw) {
 			if (spritePos.m_X < m_SpriteDiameter) {
 				aDrawPos[passes] = aDrawPos[0];
-				aDrawPos[passes].m_X += viewport.w;
+				aDrawPos[passes].m_X += viewport.x;
 				passes++;
-			} else if (spritePos.m_X > viewport.w - m_SpriteDiameter) {
+			} else if (spritePos.m_X > viewport.x - m_SpriteDiameter) {
 				aDrawPos[passes] = aDrawPos[0];
-				aDrawPos[passes].m_X -= viewport.w;
+				aDrawPos[passes].m_X -= viewport.x;
 				passes++;
 			}
 		}
@@ -1649,7 +1650,7 @@ void MOSRotating::Draw(RenderTarget *renderer,
 				aDrawPos[passes].m_X -= g_SceneMan.GetSceneWidth();
 				passes++;
 			}
-			if (targetPos.m_X + viewport.w > g_SceneMan.GetSceneWidth()) {
+			if (targetPos.m_X + viewport.x > g_SceneMan.GetSceneWidth()) {
 				aDrawPos[passes] = aDrawPos[0];
 				aDrawPos[passes].m_X += g_SceneMan.GetSceneWidth();
 				passes++;
@@ -1680,25 +1681,41 @@ void MOSRotating::Draw(RenderTarget *renderer,
 		// TODO: Fix that MaterialAir and KeyColor don't work at all because
 		// they're drawing 0 to a field of 0's Draw the requested material
 		// sihouette on the material bitmap
-		if (mode == g_DrawMaterial)
-			m_aSprite[m_Frame]->renderFillColor(renderer, aDrawPos[i].m_X, aDrawPos[i].m_Y, m_SettleMaterialDisabled ? GetMaterial()->GetIndex() : GetMaterial()->GetSettleMaterial());
-		else if (mode == g_DrawAir)
-			m_aSprite[m_Frame]->renderFillColor(renderer, aDrawPos[i].m_X, aDrawPos[i].m_Y, g_MaterialAir, -m_Rotation.GetDegAngle(), spritePivot, flip, m_Scale);
-		else if (mode == g_DrawMask)
-			m_aSprite[m_Frame]->renderFillColor(renderer, aDrawPos[i].m_X, aDrawPos[i].m_Y, keyColor, -m_Rotation.GetDegAngle(), spritePivot, flip, m_Scale);
-		else if (mode == g_DrawWhite)
-			m_aSprite[m_Frame]->renderFillColor(renderer, aDrawPos[i].m_X, aDrawPos[i].m_Y, g_WhiteColor, -m_Rotation.GetDegAngle(), spritePivot, flip, m_Scale);
-		else if (mode == g_DrawMOID) {
-			m_aSprite[m_Frame]->renderFillColor(renderer, aDrawPos[i].m_X, aDrawPos[i].m_Y, (m_MOID)|0xff000000, -m_Rotation.GetDegAngle(), spritePivot, flip, m_Scale);
+		if (mode == g_DrawMaterial) {
+			m_aSprite[m_Frame]->setShading(Shading::Fill);
+			m_aSprite[m_Frame]->setColorMod(m_SettleMaterialDisabled ? GetMaterial()->GetIndex() : GetMaterial()->GetSettleMaterial());
+			m_aSprite[m_Frame]->render(renderer, aDrawPos[i]);
+			m_aSprite[m_Frame]->setColorMod(255, 255, 255);
+			m_aSprite[m_Frame]->setShading(Shading::Base);
+		} else if (mode == g_DrawAir) {
+			m_aSprite[m_Frame]->setShading(Shading::Fill);
+			m_aSprite[m_Frame]->setColorMod(g_MaterialAir);
+			m_aSprite[m_Frame]->render(renderer, aDrawPos[i], -m_Rotation.GetDegAngle(), spritePivot, flipScale);
+			m_aSprite[m_Frame]->setColorMod(255, 255, 255);
+			m_aSprite[m_Frame]->setShading(Shading::Base);
+		} else if (mode == g_DrawMask) {
+			m_aSprite[m_Frame]->setShading(Shading::Fill);
+			m_aSprite[m_Frame]->setColorMod(keyColor);
+			m_aSprite[m_Frame]->render(renderer, aDrawPos[i], -m_Rotation.GetDegAngle(), spritePivot, flipScale);
+			m_aSprite[m_Frame]->setColorMod(255, 255, 255);
+			m_aSprite[m_Frame]->setShading(Shading::Base);
+		} else if (mode == g_DrawWhite) {
+			m_aSprite[m_Frame]->setShading(Shading::Fill);
+			m_aSprite[m_Frame]->setColorMod(g_WhiteColor);
+			m_aSprite[m_Frame]->render(renderer, aDrawPos[i], -m_Rotation.GetDegAngle(), spritePivot, flipScale);
+			m_aSprite[m_Frame]->setColorMod(255, 255, 255);
+			m_aSprite[m_Frame]->setShading(Shading::Base);
+		} else if (mode == g_DrawMOID) {
+			// m_aSprite[m_Frame]->renderFillColor(renderer, aDrawPos[i].m_X, aDrawPos[i].m_Y, (m_MOID)|0xff000000, -m_Rotation.GetDegAngle(), spritePivot, flipScale);
 			g_SceneMan.RegisterMOIDDrawing(aDrawPos[i].GetFloored(), m_SpriteRadius + 2);
 		} else if (mode == g_DrawNoMOID) {
-			m_aSprite[m_Frame]->renderFillColor(renderer, aDrawPos[i].m_X, aDrawPos[i].m_Y, (g_NoMOID)|0xff000000, -m_Rotation.GetDegAngle(), spritePivot, flip, m_Scale);
+			// m_aSprite[m_Frame]->renderFillColor(renderer, aDrawPos[i].m_X, aDrawPos[i].m_Y, (g_NoMOID)|0xff000000, -m_Rotation.GetDegAngle(), spritePivot, flipScale);
 		} else if (mode == g_DrawTrans){
 			m_aSprite[m_Frame]->setAlphaMod(alphaMod);
-			m_aSprite[m_Frame]->render(renderer, aDrawPos[i].m_X, aDrawPos[i].m_Y, -m_Rotation.GetDegAngle(), spritePivot, flip);
+			m_aSprite[m_Frame]->render(renderer, aDrawPos[i], -m_Rotation.GetDegAngle(), spritePivot, flipScale);
 			m_aSprite[m_Frame]->setAlphaMod(255);
 		} else {
-			m_aSprite[m_Frame]->render(renderer, aDrawPos[i].m_X, aDrawPos[i].m_Y, -m_Rotation.GetDegAngle(), spritePivot, flip);
+			m_aSprite[m_Frame]->render(renderer, aDrawPos[i], -m_Rotation.GetDegAngle(), spritePivot, flipScale);
 		}
 	}
 
