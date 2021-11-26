@@ -215,7 +215,6 @@ namespace RTE {
 		                                       : dataPathToSpecificFrame;
 		SetFormattedReaderPosition(GetFormattedReaderPosition());
 
-		// TODO: Use stbi for this instead of SDL_img (SDL_img may cause problems; stbi is generally the goto for this)
 		std::unique_ptr<SDL_Surface, sdl_surface_deleter> tempSurfacePreKey{IMG_Load(dataPathToLoad.c_str())};
 
 		RTEAssert(tempSurfacePreKey.get(), "Failed to load image file with following path and name:\n\n" + m_DataPathAndReaderPosition + "\nThe file may be corrupt, incorrectly converted or saved with unsupported parameters.\n" + SDL_GetError());
@@ -227,7 +226,7 @@ namespace RTE {
 		SharedTexture returnTexture = std::make_shared<GLTexture>();
 
 		returnTexture->m_BlendMode = BlendModes::Blend;
-		if (colorConversion == ColorConvert::ARGB32 || (colorConversion == ColorConvert::Preserve && tempSurfacePreKey->format->BitsPerPixel > 8)) {
+		if (colorConversion == ColorConvert::ARGB32 || (colorConversion == ColorConvert::Preserve && tempSurfacePreKey->format->BitsPerPixel == 32)) {
 			SDL_Surface *actualSurface = SDL_ConvertSurfaceFormat(tempSurfacePreKey.get(), SDL_PIXELFORMAT_ARGB32, 0);
 			returnTexture->m_Pixels = std::unique_ptr<SDL_Surface, sdl_surface_deleter>(actualSurface);
 			returnTexture->m_BPP = 32;
