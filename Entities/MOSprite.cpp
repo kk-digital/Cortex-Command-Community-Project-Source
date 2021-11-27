@@ -75,8 +75,8 @@ int MOSprite::Create()
             m_SpriteOffset.m_Y = -m_aSprite[0]->GetH() / 2;
         }
         // Calc maximum dimensions from the Pos, based on the sprite
-        float maxX =std::max(fabs(m_SpriteOffset.m_X), std::fabs(m_aSprite[0]->GetW() + m_SpriteOffset.m_X));
-        float maxY =std::max(fabs(m_SpriteOffset.m_Y), std::fabs(m_aSprite[0]->GetH() + m_SpriteOffset.m_Y));
+        float maxX =std::max(std::fabs(m_SpriteOffset.m_X), std::fabs(m_aSprite[0]->GetW() + m_SpriteOffset.m_X));
+        float maxY =std::max(std::fabs(m_SpriteOffset.m_Y), std::fabs(m_aSprite[0]->GetH() + m_SpriteOffset.m_Y));
         m_SpriteRadius = std::sqrt((float)(maxX * maxX) + (maxY * maxY));
         m_SpriteDiameter = m_SpriteRadius * 2.0F;
     }
@@ -110,8 +110,8 @@ int MOSprite::Create(ContentFile spriteFile,
     m_HFlipped = false;
 
     // Calc maximum dimensions from the Pos, based on the sprite
-    float maxX =std::max(fabs(m_SpriteOffset.m_X), std::fabs(m_aSprite[0]->GetW() + m_SpriteOffset.m_X));
-    float maxY =std::max(fabs(m_SpriteOffset.m_Y), std::fabs(m_aSprite[0]->GetH() + m_SpriteOffset.m_Y));
+    float maxX =std::max(std::fabs(m_SpriteOffset.m_X), std::fabs(m_aSprite[0]->GetW() + m_SpriteOffset.m_X));
+    float maxY =std::max(std::fabs(m_SpriteOffset.m_Y), std::fabs(m_aSprite[0]->GetH() + m_SpriteOffset.m_Y));
     m_SpriteRadius = std::sqrt((float)(maxX * maxX) + (maxY * maxY));
     m_SpriteDiameter = m_SpriteRadius * 2.0F;
 
