@@ -15,6 +15,7 @@ namespace RTE {
 	class GUICollectionBox;
 	class GUITextBox;
 	class GUILabel;
+	class RenderTarget;
 
 	/// <summary>
 	/// The singleton manager of the lua console.
