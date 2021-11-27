@@ -50,7 +50,6 @@ EntityAllocation(SceneLayer);
 SerializableOverrideMethods;
 ClassInfoGetters;
 
-
 //////////////////////////////////////////////////////////////////////////////////////////
 // Constructor:     SceneLayer
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -133,7 +132,7 @@ ClassInfoGetters;
 //                  Anything below 0 is an error signal.
 
 // TODO: streamline interface")
-	int Create(SharedTexture &pTexture, bool drawTrans, Vector offset, bool wrapX, bool wrapY, Vector scrollInfo);
+	int Create(std::shared_ptr<RenderTexture> pTexture, bool drawTrans, Vector offset, bool wrapX, bool wrapY, Vector scrollInfo);
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          Create
@@ -481,7 +480,6 @@ ClassInfoGetters;
 // Protected member variable and method declarations
 
 protected:
-
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Virtual method:  InitScrollRatios
