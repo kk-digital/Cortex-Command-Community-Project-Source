@@ -18,7 +18,7 @@ namespace RTE {
 	};
 
 	class RenderTarget;
-	class GLTexture : public Surface {
+	class GLTexture : public Surface, public std::enable_shared_from_this<GLTexture> {
 		friend class ContentFile;
 
 	public:

@@ -61,7 +61,7 @@ namespace RTE {
 	void GLTexture::render(RenderTarget *renderer, glm::vec2 pos) {
 		glm::mat4 translation = glm::translate(glm::mat4(1.0f), {pos, 0.0f});
 
-		RenderState render{this, translation, GetCurrentShader(), m_BlendMode, m_ColorMod};
+		RenderState render{shared_from_this(), translation, GetCurrentShader(), m_BlendMode, m_ColorMod};
 
 		renderer->Draw(render);
 	}
@@ -74,14 +74,14 @@ namespace RTE {
 		modelTransform = glm::rotate(modelTransform, glm::radians(angle), {0.0f, 0.0f, 1.0f});
 		modelTransform = glm::translate(modelTransform, {-0.5f * size, 0.0f});
 		modelTransform = glm::scale(modelTransform, {size, 1.0f});
-		RenderState render(this, modelTransform, GetCurrentShader(), m_BlendMode, m_ColorMod);
+		RenderState render(shared_from_this(), modelTransform, GetCurrentShader(), m_BlendMode, m_ColorMod);
 		renderer->Draw(render);
 	}
 	void GLTexture::render(RenderTarget *renderer, glm::vec2 pos, glm::vec2 scale) {
 		glm::vec2 size = GetSize();
 		glm::mat4 modelTransform = glm::translate(glm::mat4(1.0f), {pos, 0.0f});
 		modelTransform = glm::scale(modelTransform, {scale * size, 1.0f});
-		RenderState render(this, modelTransform, GetCurrentShader(), m_BlendMode, m_ColorMod);
+		RenderState render(shared_from_this(), modelTransform, GetCurrentShader(), m_BlendMode, m_ColorMod);
 	}
 	void GLTexture::render(RenderTarget *renderer, glm::vec2 pos, float angle, glm::vec2 scale) {
 		glm::vec2 size = GetSize();
@@ -89,7 +89,7 @@ namespace RTE {
 		modelTransform = glm::rotate(modelTransform, glm::radians(angle), {0.0f, 0.0f, 1.0f});
 		modelTransform = glm::translate(modelTransform, {-0.5f * size, 0.0f});
 		modelTransform = glm::scale(modelTransform, {scale * size, 1.0f});
-		RenderState render(this, modelTransform, GetCurrentShader(), m_BlendMode, m_ColorMod);
+		RenderState render(shared_from_this(), modelTransform, GetCurrentShader(), m_BlendMode, m_ColorMod);
 		renderer->Draw(render);
 	}
 
@@ -98,7 +98,7 @@ namespace RTE {
 		modelTransform = glm::rotate(modelTransform, glm::radians(angle), {0.0f, 0.0f, 1.0f});
 		modelTransform = glm::translate(modelTransform, {center, 0.0f});
 		modelTransform = glm::scale(modelTransform, {scale * GetSize(), 1.0f});
-		RenderState render(this, modelTransform, GetCurrentShader(), m_BlendMode, m_ColorMod);
+		RenderState render(shared_from_this(), modelTransform, GetCurrentShader(), m_BlendMode, m_ColorMod);
 		renderer->Draw(render);
 	}
 
