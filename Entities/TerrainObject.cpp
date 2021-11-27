@@ -16,6 +16,7 @@
 #include "ContentFile.h"
 
 #include "System/SDLHelper.h"
+#include "RTERenderer.h"
 
 namespace RTE {
 
@@ -381,22 +382,21 @@ void TerrainObject::Draw(RenderTarget* renderer, const Vector &targetPos, DrawMo
     aDrawPos[0] = m_Pos + m_TextureOffset - targetPos;
     int passes = 1;
 
-	SDL_Rect viewport;
-	SDL_RenderGetViewport(renderer, &viewport);
+	glm::vec2 viewport = renderer->GetViewport();
 
     // See if need to double draw this across the scene seam if we're being drawn onto a scenewide bitmap
-	if (targetPos.IsZero() && g_SceneMan.GetSceneWidth() <= viewport.w)
+	if (targetPos.IsZero() && g_SceneMan.GetSceneWidth() <= viewport.x)
     {
         if (aDrawPos[0].m_X < m_pFGColor->GetW())
         {
             aDrawPos[passes] = aDrawPos[0];
-            aDrawPos[passes].m_X += viewport.w;
+            aDrawPos[passes].m_X += viewport.x;
             passes++;
         }
-        else if (aDrawPos[0].m_X > viewport.w - m_pFGColor->GetW())
+        else if (aDrawPos[0].m_X > viewport.x - m_pFGColor->GetW())
         {
             aDrawPos[passes] = aDrawPos[0];
-            aDrawPos[passes].m_X -= viewport.w;
+            aDrawPos[passes].m_X -= viewport.x;
             passes++;
         }
     }
@@ -412,7 +412,7 @@ void TerrainObject::Draw(RenderTarget* renderer, const Vector &targetPos, DrawMo
                 aDrawPos[passes].m_X -= sceneWidth;
                 passes++;
             }
-            if (targetPos.m_X + viewport.w > sceneWidth)
+            if (targetPos.m_X + viewport.x > sceneWidth)
             {
                 aDrawPos[passes] = aDrawPos[0];
                 aDrawPos[passes].m_X += sceneWidth;

@@ -1,7 +1,8 @@
 #include "TerrainDebris.h"
 #include "SLTerrain.h"
 
-#include "System/SDLHelper.h"
+#include "RTERenderer.h"
+#include "SDL2/SDL_surface.h"
 
 namespace RTE {
 
@@ -113,11 +114,9 @@ namespace RTE {
 	void TerrainDebris::ApplyDebris(SLTerrain *terrain) {
 		RTEAssert(!m_Textures.empty() && m_BitmapCount > 0, "No bitmaps loaded for terrain debris!");
 
-		SharedTexture terrTexture = terrain->GetFGColorTexture();
-		SharedTexture matTexture = terrain->GetMaterialTexture();
+		std::shared_ptr<GLTexture> terrTexture = terrain->GetFGColorTexture()->GetTexture();
+		std::shared_ptr<GLTexture> matTexture = terrain->GetMaterialTexture()->GetTexture();
 
-		terrTexture->lock();
-		matTexture->lock();
 
 		// How many pieces of debris we're spreading out.
 		unsigned int terrainWidth = terrTexture->GetW();
@@ -174,28 +173,11 @@ namespace RTE {
 			}
 		}
 
-		std::unique_ptr<SDL_Surface, sdl_deleter> terrMatSurface{matTexture->getPixelsAsSurface()};
-		std::unique_ptr<SDL_Surface, sdl_deleter> terrFGSurface{terrTexture->getPixelsAsSurface()};
-
 		for (const std::pair<int, Vector> &pieceListEntry : piecesToPlace) {
-			std::unique_ptr<SDL_Surface, sdl_deleter> piece{m_Textures[pieceListEntry.first]->getPixelsAsSurface()};
-			SDL_Rect pos{pieceListEntry.second.GetFloorIntX(), pieceListEntry.second.GetFloorIntY(), 0, 0};
 			// Draw the color sprite onto the terrain color layer.
-			SDL_BlitSurface(piece.get(), nullptr, terrFGSurface.get(), &pos);
-			// Draw the material representation onto the terrain's material layer
+			m_Textures[pieceListEntry.first]->blit(terrain->GetFGColorTexture()->GetTexture(), pieceListEntry.second.m_X, pieceListEntry.second.m_Y);
 
-			uint32_t matIndex = SDL_MapRGB(terrMatSurface->format, m_Material.GetIndex()>>24, m_Material.GetIndex()>>16, m_Material.GetIndex()>>8);
-
-			std::vector<uint32_t> pieceMatterPixels;
-			std::copy(m_Textures[pieceListEntry.first]->getPixelsRO().begin(), m_Textures[pieceListEntry.first]->getPixelsRO().end(), std::back_inserter(pieceMatterPixels));
-			uint32_t Amask = piece->format->Amask;
-			std::replace_if(pieceMatterPixels.begin(), pieceMatterPixels.end(), [Amask](auto x) { return (x & Amask) == 0; }, g_MaterialAir);
-			std::replace_if(pieceMatterPixels.begin(), pieceMatterPixels.end(), [Amask](auto x) { return (x & Amask) != 0; }, matIndex);
-
-			SDL_Surface *pieceMatter{SDL_CreateRGBSurfaceWithFormatFrom(pieceMatterPixels.data(), piece->w, piece->h, 32, piece->pitch, terrMatSurface->format->format)};
-
-			SDL_BlitSurface(pieceMatter, nullptr, terrMatSurface.get(), &pos);
-			SDL_FreeSurface(pieceMatter);
+			m_Textures[pieceListEntry.first]->blitMasked(terrain->GetMaterialTexture()->GetTexture(), m_Material.GetIndex(), pieceListEntry.second.m_X, pieceListEntry.second.m_Y);
 		}
 	}
 }
