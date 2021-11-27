@@ -145,6 +145,12 @@ namespace RTE {
 		/// Clears all the member variables of this Color, effectively resetting the members of this abstraction level only.
 		/// </summary>
 		void Clear() { m_R = m_G = m_B = m_Index = 0; }
+
+	public:
+
+		operator glm::vec4() {
+			return { m_R / 255.0f, m_G / 255.0f, m_B / 255.0f, 1.0f};
+		}
 	};
 }
 #endif
