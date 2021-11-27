@@ -93,8 +93,6 @@ namespace RTE {
 
 		m_Renderer = std::make_unique<RenderTarget>();
 
-		RTEAssert(m_Renderer != NULL, "Could not create Renderer because: " + std::string(SDL_GetError()));
-
 		return static_cast<bool>(m_Window && m_Renderer);
 	}
 
@@ -308,7 +306,7 @@ namespace RTE {
 
 			if (!IsInMultiplayerMode()) {
 				if (m_PlayerScreen)
-					m_PlayerScreen->GetAsTexture()->render(m_Renderer.get(), screenOffset.GetFloorIntX(), screenOffset.GetFloorIntY());
+					m_PlayerScreen->GetTexture()->render(m_Renderer.get(), screenOffset.GetFloorIntX(), screenOffset.GetFloorIntY());
 
 				g_PostProcessMan.AdjustEffectsPosToPlayerScreen(playerScreen, renderSize.x, renderSize.y, screenOffset, screenRelativeEffects, screenRelativeGlowBoxes);
 			}
@@ -322,13 +320,12 @@ namespace RTE {
 		if (!IsInMultiplayerMode()) {
 			// Draw separating lines for split-screens
 			if (m_HSplit) {
-				LinePrimitive().Draw(, const Vector &targetPos)
-				hlineColor(m_Renderer, 0, (renderSize.y / 2) - 1, renderSize.x - 1, g_BlackColor);
-				hlineColor(m_Renderer, 0, (renderSize.y / 2), renderSize.x - 1, g_BlackColor);
+				LinePrimitive(-1, {0.0f,renderSize.y/2 - 1}, {renderSize.x - 1, renderSize.y/2 - 1}, g_BlackColor).Draw(m_Renderer.get());
+				LinePrimitive(-1, {0.0f, renderSize.y / 2}, {renderSize.x - 1, renderSize.y / 2}, g_BlackColor).Draw(m_Renderer.get());
 			}
 			if (m_VSplit) {
-				vlineColor(m_Renderer, (renderSize.x / 2) - 1, 0, renderSize.y - 1, g_BlackColor);
-				vlineColor(m_Renderer, (renderSize.x / 2), 0, renderSize.y - 1, g_BlackColor);
+				LinePrimitive(-1, {renderSize.x/2 - 1, 0}, {renderSize.x / 2 - 1, renderSize.y}, g_BlackColor).Draw(m_Renderer.get());
+				LinePrimitive(-1, {renderSize.x / 2, 0}, {renderSize.x / 2, renderSize.y}, g_BlackColor).Draw(m_Renderer.get());
 			}
 #ifdef NETWORK_ENABLED
 			// Replace 8 bit backbuffer contents with network received image
@@ -366,11 +363,11 @@ namespace RTE {
 		}
 
 		// Draw the console on top of everything
-		g_ConsoleMan.Draw(m_Renderer);
+		g_ConsoleMan.Draw(m_Renderer.get());
 
 #ifdef DEBUG_BUILD
 		// Draw scene seam
-		vlineColor(m_Renderer, 0, 0, g_SceneMan.GetSceneHeight(), 0x45F1FFFF);
+		LinePrimitive(-1, {0,0}, {0, 1.0f * g_SceneMan.GetSceneHeight()}, 5).Draw(m_Renderer.get());
 #endif
 
 		// Reset the frame timer so we can measure how much it takes until next
@@ -398,7 +395,7 @@ namespace RTE {
 				break;
 			case BitDepth::Indexed8:
 				return m_ShaderFill8;
-			ddefault:
+			default:
 				return m_ShaderFill8;
 		}
 	}
@@ -408,7 +405,7 @@ namespace RTE {
 	}
 
 	uint32_t FrameMan::GetPixelFormat() const {
-		return SDL_GetWindowPixelFormat(m_Window);
+		return SDL_GetWindowPixelFormat(m_Window.get());
 	}
 
 	int FrameMan::SwitchResolutionMultiplier(unsigned char multiplier) {
@@ -420,16 +417,17 @@ namespace RTE {
 			return -1;
 		}
 
-		if (SDL_RenderSetScale(m_Renderer, multiplier, multiplier) != 0) {
-			g_ConsoleMan.PrintString("ERROR: " + std::string(SDL_GetError()));
-			return 1;
-		}
+		// if (SDL_RenderSetScale(m_Renderer, multiplier, multiplier) != 0) {
+		// 	g_ConsoleMan.PrintString("ERROR: " + std::string(SDL_GetError()));
+		// 	return 1;
+		// }
 
-		SDL_RenderGetLogicalSize(m_Renderer, &m_ResX, &m_ResY);
+		// SDL_RenderGetLogicalSize(m_Renderer, &m_ResX, &m_ResY);
 
 		g_SettingsMan.UpdateSettingsFile();
 
-		g_FrameMan.RenderPresent();
+		RenderClear();
+		RenderPresent();
 
 		return 0;
 	}
@@ -449,21 +447,22 @@ namespace RTE {
 			g_ActivityMan.EndActivity();
 		}
 
-		SDL_RenderClear(m_Renderer);
 
 		if (!m_Fullscreen) {
-			SDL_SetWindowSize(m_Window, newResX * newMultiplier, newResY * newMultiplier);
-			SDL_GetWindowSize(m_Window, &m_ResX, &m_ResY);
+			SDL_SetWindowSize(m_Window.get(), newResX * newMultiplier, newResY * newMultiplier);
+			SDL_GetWindowSize(m_Window.get(), &m_ResX, &m_ResY);
 			m_ResX /= newMultiplier;
 			m_ResY /= newMultiplier;
 
-			SDL_RenderSetLogicalSize(m_Renderer, m_ResX, m_ResY);
+			m_Renderer->SetSize(glm::vec2(m_ResX, m_ResY));
+
 			// SDL_RenderSetScale(m_Renderer, newMultiplier, newMultiplier);
 
 			m_NewResX = m_ResX;
 			m_NewResY = m_ResY;
 		} else {
-			SDL_RenderSetLogicalSize(m_Renderer, newResX, newResY);
+			m_Renderer->SetSize(glm::vec2(newResX, newResY));
+			// SDL_RenderSetLogicalSize(m_Renderer, newResX, newResY);
 
 			// SDL_RenderSetScale(m_Renderer, newMultiplier, newMultiplier);
 
@@ -474,6 +473,8 @@ namespace RTE {
 		m_ResMultiplier = m_NewResMultiplier = newMultiplier;
 
 		g_SettingsMan.UpdateSettingsFile();
+		RenderClear();
+		RenderPresent();
 
 		m_ResChanged = true;
 
@@ -481,12 +482,12 @@ namespace RTE {
 	}
 
 	void FrameMan::SetFullscreen(bool fullscreen) {
-		if (SDL_SetWindowFullscreen(m_Window, fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0) == 0) {
+		if (SDL_SetWindowFullscreen(m_Window.get(), fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0) == 0) {
 			m_Fullscreen = fullscreen;
 			if (fullscreen)
-				SDL_GetDisplayBounds(SDL_GetWindowDisplayIndex(m_Window), m_ScreenRes.get());
+				SDL_GetDisplayBounds(SDL_GetWindowDisplayIndex(m_Window.get()), m_ScreenRes.get());
 			else
-				SDL_GetDisplayUsableBounds(SDL_GetWindowDisplayIndex(m_Window), m_ScreenRes.get());
+				SDL_GetDisplayUsableBounds(SDL_GetWindowDisplayIndex(m_Window.get()), m_ScreenRes.get());
 		} else {
 			g_ConsoleMan.PrintString("ERROR: " + std::string(SDL_GetError()));
 		}
@@ -591,17 +592,4 @@ namespace RTE {
 		m_FlashTimer[screen].SetRealTimeLimitMS(periodMS);
 		m_FlashTimer[screen].Reset();
 	}
-
-	uint32_t FrameMan::GetColorFromIndex(uint32_t color) const {
-		// Special case for key color
-		if (color == 0)
-			return 0;
-		return m_Palette->GetPixel(color);
-	}
-
-	// FIXME: VERY TEMPORARY
-	uint32_t FrameMan::GetMIDFromIndex(unsigned char index) const {
-		return m_MatPalette->GetPixel(index);
-	}
-
 } // namespace RTE

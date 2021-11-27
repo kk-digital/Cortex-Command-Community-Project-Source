@@ -604,10 +604,6 @@ namespace RTE {
 		//!< The default render target
 		std::unique_ptr<RenderTarget> m_Renderer;
 
-		bool m_PaletteUpdated;
-		std::shared_ptr<Palette> m_NewPalette; //!< The new palette to fade in.
-		std::shared_ptr<Palette> m_CurrentPalette; //!< The current palette.
-		std::shared_ptr<Palette> m_DefaultPalette; //!< The default palette.
 
 		std::unique_ptr<void, sdl_context_deleter> m_Context;
 
@@ -667,7 +663,10 @@ namespace RTE {
 		std::stack<RenderTarget *> m_TargetStack;
 
 		ContentFile m_PaletteFile;
-		SharedTexture m_Palette;
+		bool m_PaletteUpdated;
+		std::shared_ptr<Palette> m_NewPalette; //!< The new palette to fade in.
+		std::shared_ptr<Palette> m_CurrentPalette; //!< The current palette.
+		std::shared_ptr<Palette> m_DefaultPalette; //!< The default palette.
 
 		//!< Wether the screen is split horizontally across the
 		//!< screen, i.e. as two scplitscreens above another.
