@@ -21,7 +21,7 @@ namespace RTE {
 
 		Vertex(float x, float y, uint32_t color);
 
-		Vertex(float x, float y, int r = 255, int g = 0, int b = 255, int a = 255);
+		Vertex(float x, float y, int r, int g, int b, int a);
 
 		glm::vec2 pos;
 		glm::vec2 texUV;

@@ -21,6 +21,8 @@ namespace RTE {
 		size_t GetVertexCount();
 
 		void AddVertex(Vertex vertex);
+		void InsertVertex(Vertex vertex, int index);
+		void Reserve(size_t n) {m_Vertices.reserve(n);}
 		void ResetVertices();
 		void Update();
 
@@ -30,6 +32,8 @@ namespace RTE {
 		unsigned int m_VBO;
 		std::vector<Vertex> m_Vertices;
 		bool m_StaticDraw;
+
+		bool m_VerticesUpdated;
 	};
 }
 #endif
