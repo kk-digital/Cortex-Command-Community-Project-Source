@@ -33,6 +33,8 @@ namespace RTE {
 		/// </returns>
 		virtual glm::vec2 GetSize() { return m_Size; }
 
+		virtual void SetSize(glm::vec2 size);
+
 		virtual glm::vec2 GetViewport() { return m_View.zw(); }
 
 		void SetWrapXY(bool wrapX, bool wrapY);
