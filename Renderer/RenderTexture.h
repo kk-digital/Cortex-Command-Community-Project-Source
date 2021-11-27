@@ -47,7 +47,7 @@ namespace RTE {
 		/// <returns>
 		/// Shared pointer to the texture attachment.
 		/// </returns>
-		std::shared_ptr<GLTexture> GetAsTexture() { return m_Texture; }
+		std::shared_ptr<GLTexture> GetTexture() { return m_Texture; }
 
 		/// <summary>
 		/// Set the texture attachment for this render texture.
@@ -57,6 +57,8 @@ namespace RTE {
 		/// Shared pointer to attach to the framebuffer.
 		/// </param>
 		void SetTexture(std::shared_ptr<GLTexture> texture);
+
+		bool HasTexture() { return m_Texture.get(); }
 
 		/// <summary>
 		/// Get the width of the attached texture.
