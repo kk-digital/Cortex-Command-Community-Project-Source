@@ -710,7 +710,7 @@ protected:
     bool m_DrawMaterial;
 
     // Intermediate test layers, differnt sizes for efficiency
-	static std::unique_ptr<RenderTexture> s_TempRenderTarget;
+	static std::shared_ptr<Surface> s_TempRenderTarget;
 
 	// Indicates, that before processing frostings-related properties for this terrain
 	// derived list with frostings must be cleared to avoid duplication when loading scenes

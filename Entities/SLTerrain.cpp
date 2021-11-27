@@ -25,7 +25,6 @@
 #include "RTERenderer.h"
 
 #include "System/SDLHelper.h"
-#include <SDL2/SDL2_rotozoom.h>
 
 namespace RTE {
 
@@ -134,7 +133,7 @@ int SLTerrain::TerrainFrosting::Save(Writer &writer) const
 }
 
 
-std::unique_ptr<RenderTexture> SLTerrain::s_TempRenderTarget;
+std::shared_ptr<Surface> SLTerrain::s_TempRenderTarget;
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          Clear
@@ -277,16 +276,22 @@ int SLTerrain::LoadData() {
 	// Create blank foreground layer
 	m_pFGColor->Destroy();
 
-	std::shared_ptr<GLTexture> pFGTexture = std::make_shared<GLTexture>(m_pMainTexture->GetW(), m_pMainTexture->GetH(), BitDepth::Indexed8, g_FrameMan.GetDefaultPalette());
-	if (!pFGTexture || m_pFGColor->Create(pFGTexture, true, m_Offset, m_WrapX, m_WrapY, m_ScrollRatio)) {
+	std::shared_ptr<GLTexture> pFGTexture = std::make_shared<GLTexture>();
+	pFGTexture->Create(m_pMainTexture->GetW(), m_pMainTexture->GetH(), BitDepth::Indexed8, g_FrameMan.GetDefaultPalette());
+	std::shared_ptr<RenderTexture> pFGBuffer = std::make_shared<RenderTexture>();
+	pFGBuffer->SetTexture(pFGTexture);
+	if (!pFGTexture || m_pFGColor->Create(pFGBuffer, true, m_Offset, m_WrapX, m_WrapY, m_ScrollRatio)) {
 		RTEAbort("Failed to create terrain's foreground layer's bitmap!");
 		return -1;
 	}
 
 	// Create blank background layer
 	m_pBGColor->Destroy();
-	std::shared_ptr<GLTexture> pBGTexture = std::make_shared<GLTexture>(m_pMainTexture->GetW(), m_pMainTexture->GetH(), BitDepth::Indexed8, g_FrameMan.GetDefaultPalette());
-	if (!pBGTexture || m_pBGColor->Create(pBGTexture, true, m_Offset, m_WrapX, m_WrapY, m_ScrollRatio)) {
+	std::shared_ptr<GLTexture> pBGTexture = std::make_shared<GLTexture>();
+	pBGTexture->Create(m_pMainTexture->GetW(), m_pMainTexture->GetH(), BitDepth::Indexed8, g_FrameMan.GetDefaultPalette());
+	std::shared_ptr<RenderTexture> pBGBuffer = std::make_shared<RenderTexture>();
+	pBGBuffer->SetTexture(pBGTexture);
+	if (!pBGTexture || m_pBGColor->Create(pBGBuffer, true, m_Offset, m_WrapX, m_WrapY, m_ScrollRatio)) {
 		RTEAbort("Failed to create terrain's background layer's bitmap!");
 		return -1;
 	}
@@ -315,14 +320,14 @@ int SLTerrain::LoadData() {
 	apMatColors.fill(0);
 
 	// Store the foreground and background textures for easy access
-	std::shared_ptr<GLTexture> fgColor{m_pFGColor->GetTexture()->GetAsTexture()};
-	std::shared_ptr<GLTexture> bgColor{m_pBGColor->GetTexture()->GetAsTexture()};
-	std::shared_ptr<GLTexture> matLayer{m_pMainTexture->GetAsTexture()};
+	std::shared_ptr<GLTexture> fgColor{m_pFGColor->GetTexture()->GetTexture()};
+	std::shared_ptr<GLTexture> bgColor{m_pBGColor->GetTexture()->GetTexture()};
+	std::shared_ptr<GLTexture> matLayer{m_pMainTexture->GetTexture()};
 
 	// Create list of materials
-	GLTexture *materialTexture;
+	GLTexture *materialTexture{nullptr};
 
-	unsigned char materialColor;
+	unsigned char materialColor(0);
 
 	// Go through each pixel on the main bitmap, which contains all the material pixels loaded from the bitmap
 	// Place texture pixels on the FG layer corresponding to the materials on the main material bitmap
@@ -744,7 +749,7 @@ uint32_t SLTerrain::GetMaterialPixel(const int pixelX, const int pixelY) const
         return g_MaterialAir;
 
 //    RTEAssert(m_pMainTexture->m_LockCount > 0, "Trying to access unlocked terrain bitmap");
-    return m_pMainTexture->getPixelLower(posX, posY);
+    return m_pMainTexture->GetTexture()->GetPixel(posX, posY);
 }
 
 
@@ -770,7 +775,7 @@ bool SLTerrain::IsAirPixel(const int pixelX, const int pixelY) const
 	if (posY < 0)
 		return true;
 
-	uint32_t checkPixel = m_pMainTexture->GetPixel(posX, posY);
+	uint32_t checkPixel = m_pMainTexture->GetTexture()->GetPixel(posX, posY);
 	//    RTEAssert(m_pMainTexture->m_LockCount > 0, "Trying to access unlocked
 	//    terrain bitmap");
 	return checkPixel == g_MaterialAir || checkPixel == g_FrameMan.GetMIDFromIndex(g_MaterialCavity);
@@ -852,7 +857,7 @@ void SLTerrain::SetMaterialPixel(const int pixelX, const int pixelY, const uint3
        posY >= m_pMainTexture->GetH())
        return;
 //    RTEAssert(m_pMainTexture->m_LockCount > 0, "Trying to access unlocked terrain bitmap");
-    m_pMainTexture->SetPixel(posX, posY, material);
+    m_pMainTexture->GetTexture()->SetPixel(posX, posY, material);
 }
 
 
@@ -875,17 +880,16 @@ deque<MOPixel *> SLTerrain::EraseSilhouette(std::shared_ptr<GLTexture> pSprite,
 // TODO: OPTIMIZE THIS, IT'S A TIME HOG. MAYBE JSUT STAMP THE OUTLINE AND SAMPLE SOME RANDOM PARTICLES?
 
     RTEAssert(pSprite.get(), "Null BITMAP passed to SLTerrain::EraseSilhouette");
-	RTEAssert(pSprite->getAccess()!=SDL_TEXTUREACCESS_TARGET, "Render Target passed to SLTerrain::EraseSilhouette")
 
     deque<MOPixel *> MOPDeque;
 
 	// TODO: this might be doable without using rendering instead
 	// Create temporary SDL_Surfaces from Sprite and Surface (this is very fast
 	// because the pixels are not copied)
-	std::unique_ptr<SDL_Surface, sdl_deleter> tempSpriteSurface{pSprite->getPixelsAsSurface()};
 
+	// Don't need to do this, just rotate points
 	std::unique_ptr<SDL_Surface, sdl_deleter> rotozoomedSprite{
-		rotozoomSurface(tempSpriteSurface.get(), rotation.GetDegAngle(), scale, false)
+		rotozoomSurface(pSprite->GetPixels(), rotation.GetDegAngle(), scale, false)
 	};
 
 	//TODO: All of the below should be possible to do using some clever blitting
@@ -940,9 +944,9 @@ deque<MOPixel *> SLTerrain::EraseSilhouette(std::shared_ptr<GLTexture> pSprite,
                     continue;
             }
 
-            testPixel =  static_cast<uint32_t*>(rotozoomedSprite->pixels)[testX + testY*rotozoomedSprite->w];
-            matPixel = m_pMainTexture->getPixelLower(terrX, terrY);
-            colorPixel = m_pFGColor->GetTexture()->getPixelLower(terrX, terrY);
+            testPixel =  static_cast<unsigned char*>(rotozoomedSprite->pixels)[testX + testY*rotozoomedSprite->w];
+            matPixel = m_pMainTexture->GetTexture()->GetPixel(terrX, terrY);
+            colorPixel = m_pFGColor->GetTexture()->GetTexture()->GetPixel(terrX, terrY);
 
             if ((testPixel) != 0)
             {
@@ -962,7 +966,7 @@ deque<MOPixel *> SLTerrain::EraseSilhouette(std::shared_ptr<GLTexture> pSprite,
 
                 // Clear the terrain pixels
                 if (matPixel != g_MaterialAir)
-                    m_pMainTexture->setPixelLower(terrX, terrY, g_MaterialAir);
+                    m_pMainTexture->GetTexture()->SetPixel(terrX, terrY, g_MaterialAir);
 				if ((colorPixel & 0xff) != 0)
 				{
 					m_pFGColor->SetPixel(terrX, terrY, g_AlphaZero);
@@ -1032,26 +1036,26 @@ void SLTerrain::ApplyMovableObject(MovableObject *pMObject)
 
 
 		// if neccessary resize the temporary render Target
-		if(!s_TempRenderTarget || spriteDiameter > s_TempRenderTarget->GetW())
-			s_TempRenderTarget = std::make_unique<Texture>(renderer, spriteDiameter, spriteDiameter, SDL_TEXTUREACCESS_TARGET);
+		if (!s_TempRenderTarget || spriteDiameter > s_TempRenderTarget->GetW()) {
+			s_TempRenderTarget = std::make_unique<Surface>();
+			s_TempRenderTarget->Create(spriteDiameter, spriteDiameter, BitDepth::Indexed8);
+		}
 
-        // The position of the upper left corner of the temporary bitmap in the scene
+		// The position of the upper left corner of the temporary bitmap in the scene
         Vector bitmapScroll = pMObject->GetPos().GetFloored() - Vector(pMObject->GetDiameter() / 2, pMObject->GetDiameter() / 2);
 
 		Box notUsed;
 
-		SDL_Rect readBox{0, 0, spriteDiameter, spriteDiameter};
-		g_FrameMan.PushRenderTarget(s_TempRenderTarget->getAsRenderTarget());
-		SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
-		SDL_RenderClear(renderer);
-		SDL_RenderSetViewport(renderer, &readBox);
+		s_TempRenderTarget->Clear();
 
-		pMOSprite->Draw(renderer, bitmapScroll, g_DrawColor, true);
+		std::unique_ptr<BlitSurface> blitter = std::make_unique<BlitSurface>();
+		blitter->Create(s_TempRenderTarget);
 
-		m_pFGColor->Draw(renderer, notUsed, bitmapScroll);
+		pMOSprite->Draw(blitter.get(), bitmapScroll, g_DrawColor, true);
 
-		std::vector<uint32_t> readPixels(readBox.w * readBox.h, 0);
-		SDL_RenderReadPixels(renderer, &readBox, GetFGColorTexture()->getFormat(), readPixels.data(), readBox.w * sizeof(uint32_t));
+		m_pFGColor->Draw(blitter.get(), notUsed, bitmapScroll);
+
+
 		readBox.x = bitmapScroll.m_X;
 		readBox.y = bitmapScroll.m_Y;
 		m_pFGColor->LockTexture();
