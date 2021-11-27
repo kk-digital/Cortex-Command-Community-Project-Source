@@ -1766,7 +1766,7 @@ public:
     Timer m_CleanTimer;
 
 	// Bitmap to look for orphaned regions
-	std::unique_ptr<GLTexture> m_pOrphanSearchBitmap;
+	std::unique_ptr<Surface> m_pOrphanSearchBitmap;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
