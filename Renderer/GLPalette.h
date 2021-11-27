@@ -22,6 +22,10 @@ namespace RTE {
 			void operator()(SDL_Palette *p);
 		};
 		std::unique_ptr<SDL_Palette, sdl_palette_deleter> m_SDLPalette;
+	public:
+		glm::u8vec4 operator[] (size_t index) {
+			return m_Palette[index];
+		}
 	};
 } // namespace RTE
 #endif
