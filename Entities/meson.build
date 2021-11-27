@@ -36,7 +36,6 @@ sources += files(
 'PEmitter.cpp',
 'Round.cpp',
 'Scene.cpp',
-'RenderLayer.cpp',
 'SceneLayer.cpp',
 'SceneObject.cpp',
 'SLTerrain.cpp',
