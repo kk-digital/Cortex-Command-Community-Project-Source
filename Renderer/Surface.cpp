@@ -31,12 +31,12 @@ namespace RTE {
 
 	uint32_t Surface::GetPixel(int x, int y) {
 		if (x < 0 || x >= m_Width || y < 0 || y >= m_Height)
-			return 0;
+			return PixelOutside;
 		else
 			return m_BPP == 8 ? GetPixel8(x, y) : GetPixel32(x, y);
 	}
 
-	unsigned char Surface::GetPixel8(int x, int y) {
+	int Surface::GetPixel8(int x, int y) {
 		return static_cast<unsigned char *>(m_Pixels->pixels)[y * m_Pixels->pitch + x];
 	}
 
@@ -73,7 +73,7 @@ namespace RTE {
 		static_cast<uint32_t *>(m_Pixels->pixels)[x + y * m_Pixels->pitch] = color;
 	}
 
-	void Surface::blit(Surface &target, int x, int y, double angle, float scaleX, float scaleY) const {}
+	void Surface::blit(std::shared_ptr<Surface> target, int x, int y, double angle, float scaleX, float scaleY) const {}
 
-	void Surface::blitColor(Surface &target, uint32_t color, int x, int y, double angle, float scaleX, float scaleY) const {}
+	void Surface::blitColor(std::shared_ptr<Surface> target, uint32_t color, int x, int y, double angle, float scaleX, float scaleY) const {}
 } // namespace RTE

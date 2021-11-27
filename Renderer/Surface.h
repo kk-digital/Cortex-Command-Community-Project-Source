@@ -24,6 +24,8 @@ namespace RTE {
 		Surface();
 		virtual ~Surface();
 
+		Surface(Surface& ref);
+
 		/// <summary>
 		/// Create an empty surface with a defined pixelformat of size Width x Height.
 		/// </summary>
@@ -40,6 +42,8 @@ namespace RTE {
 		/// True if successful.
 		/// </returns>
 		virtual bool Create(int width, int height, BitDepth format, std::optional<std::shared_ptr<Palette>> palette = std::nullopt);
+
+		virtual bool Create(SDL_Surface* pixels, std::optional<std::shared_ptr<Palette>> palette = std::nullopt);
 
 		/// <summary>
 		/// Returns the stored SDL_Surface. Ownership is not transferred.
@@ -93,7 +97,7 @@ namespace RTE {
 		/// <returns>
 		/// The color index of the pixel at (x,y).
 		/// </returns>
-		unsigned char GetPixel8(int x, int y);
+		int GetPixel8(int x, int y);
 
 		/// <summary>
 		/// Get the color at (x,y) without bounds checking. Behaviour is undefined if called on a 8bpp surface.
@@ -165,9 +169,17 @@ namespace RTE {
 		/// </param>
 		void SetPixel32(int x, int y, uint32_t color);
 
-		void blit(Surface &target, int x, int y, double angle = 0, float scaleX = 1.0f, float scaleY = 1.0f) const;
+		/// <summary>
+		/// Clear the surface to color.
+		/// </summary>
+		/// <param name="color">
+		/// The color to clear to in the format of the surface.
+		/// </param>
+		void Clear(uint32_t color = 0);
 
-		void blitColor(Surface &target, uint32_t color, int x, int y, double angle = 0, float scaleX = 1.0f, float scaleY = 1.0f) const;
+		void blit(std::shared_ptr<Surface> target, int x, int y, double angle = 0, float scaleX = 1.0f, float scaleY = 1.0f) const;
+
+		void blitMasked(std::shared_ptr<Surface> target, uint32_t color, int x, int y, double angle = 0, float scaleX = 1.0f, float scaleY = 1.0f) const;
 
 	protected:
 		int m_Width;
@@ -179,6 +191,8 @@ namespace RTE {
 	private:
 		std::unique_ptr<SDL_Surface, sdl_surface_deleter> m_Pixels;
 		std::shared_ptr<Palette> m_Palette;
+	public:
+		static constexpr uint32_t PixelOutside = 0x00FFFFFF;
 	};
 
 } // namespace RTE
