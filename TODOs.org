@@ -1,6 +1,6 @@
-* TODO Rendering backend [0/9]
-** PROG Replace SDLTexture
-   - State "PROG"       from "TODO"       [2021-10-19 Di 20:11]
+* PROJ Rendering backend [1/10]
+** TODO Replace primitives drawing with vertex based primitives
+*** TODO Add vertex cache (DO NOT upload vertices every frame)
 ** PROG Implement FrameMan with the new OGL stuff
    - State "PROG"       from "TODO"       [2021-10-19 Di 20:11]
 ** PROG Implement RenderTextures
@@ -9,11 +9,15 @@
 ** TODO Remove RenderLayer
    it bad
 ** TODO Add Texture blitting
+** TODO Implement Surface blit
 ** TODO Add SLTerrain to scene blit
 ** TODO Implement view based camera
    This should infinitely simplify drawing
 *** TODO Implement scene wrapping
 ** TODO Unload scene from gpu on activity reset/change
+** DONE Replace SDLTexture
+   CLOSED: [2021-11-07 So 20:10]
+   - State "PROG"       from "TODO"       [2021-10-19 Di 20:11]
 * PROJ Input backend [0/2]
 ** TODO Finish UInputMan implementation
 ** TODO Add all platform gamepad hotplug
