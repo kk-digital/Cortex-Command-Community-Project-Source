@@ -8,6 +8,7 @@
 
 #include "System/SDLHelper.h"
 #include "SDL2_gfxPrimitives.h"
+#include "RTERenderer.h"
 
 namespace RTE {
 
@@ -633,11 +634,11 @@ namespace RTE {
 		Vector segTraj;
 		Vector hitAccel;
 
-		std::vector<std::pair<int, int>> trailPoints;
+		std::shared_ptr<VertexArray> trailPoints;
 
 		// This saves us a few ms because Atom::Travel does a lot of allocations and reallocations if you have a lot of particles.
 		// 6 should be enough for most not so fast travels, everything above simply works as usual.
-		trailPoints.reserve(6);
+		trailPoints->Reserve(6);
 		didWrap = false;
 		int removeOrphansRadius = m_OwnerMO->m_RemoveOrphanTerrainRadius;
 		int removeOrphansMaxArea = m_OwnerMO->m_RemoveOrphanTerrainMaxArea;
@@ -658,7 +659,7 @@ namespace RTE {
 
 			// Get trail bitmap and put first pixel.
 			if (m_TrailLength) {
-				trailPoints.push_back({ intPos[X], intPos[Y] });
+				trailPoints->AddVertex(Vertex(intPos[X], intPos[Y]));
 			}
 			// Compute and scale the actual on-screen travel trajectory for this segment, based on the velocity, the travel time and the pixels-per-meter constant.
 			segTraj = velocity * timeLeft * c_PPM;
@@ -859,7 +860,7 @@ namespace RTE {
 					++hitCount;
 
 #ifdef DEBUG_BUILD
-					if (m_TrailLength) { pixelColor(g_FrameMan.GetRenderer(), intPos[X], intPos[Y], 0x12161AFF); }
+					// if (m_TrailLength) { pixelColor(g_FrameMan.GetRenderer(), intPos[X], intPos[Y], 0x12161AFF); }
 #endif
 					// Try penetration of the terrain.
 					if (hitMaterial->GetIndex() != g_MaterialOutOfBounds && g_SceneMan.TryPenetrate(intPos[X], intPos[Y], velocity * mass * sharpness, velocity, retardation, 0.65F, m_NumPenetrations, removeOrphansRadius, removeOrphansMaxArea, removeOrphansRate)) {
@@ -928,7 +929,7 @@ namespace RTE {
 						}
 					}
 				} else if (m_TrailLength) {
-					trailPoints.push_back({ intPos[X], intPos[Y] });
+					trailPoints->AddVertex(Vertex(intPos[X], intPos[Y]));
 				}
 
 				///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -971,9 +972,9 @@ namespace RTE {
 		// Draw the trail
 		if (g_TimerMan.DrawnSimUpdate() && m_TrailLength) {
 			int length = static_cast<int>(static_cast<float>(m_TrailLength) * RandomNum(1.0F - m_TrailLengthVariation, 1.0F));
-			for (int i = trailPoints.size() - std::min(length, static_cast<int>(trailPoints.size())); i < trailPoints.size(); ++i) {
-				pixelColor(g_FrameMan.GetRenderer(), trailPoints[i].first, trailPoints[i].second, m_TrailColor.GetRGBA());
-			}
+			trailPoints->Update();
+			RenderState render(m_TrailColor, trailPoints, glm::mat4(1));
+			g_SceneMan.GetMOColorTexture()->Draw(render);
 		}
 
 		// Unlock all bitmaps involved.
