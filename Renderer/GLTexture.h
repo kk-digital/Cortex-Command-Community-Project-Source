@@ -42,6 +42,8 @@ namespace RTE {
 
 		void render(RenderTarget *renderer, glm::vec2 pos, float angle, glm::vec2 center, glm::vec2 scale);
 
+		void Update(std::optional<glm::vec2> region = std::nullopt);
+
 		void setShading(Shading shader) { m_Shading = shader; }
 
 		Shading getShading() const { return m_Shading; }
@@ -58,6 +60,8 @@ namespace RTE {
 		void setColorMod(const glm::vec3 &colorMod) { m_ColorMod = glm::vec4(colorMod, m_ColorMod.a); }
 
 		void setColorMod(int r, int g, int b) { m_ColorMod = glm::vec4(r / 255.0, g / 255.0, b / 255.0, m_ColorMod.a); }
+
+		void setColorMod(uint32_t rgb);
 
 		glm::vec3 getColorMod() const { return m_ColorMod.rgb(); }
 

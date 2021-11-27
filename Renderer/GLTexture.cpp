@@ -24,7 +24,7 @@ namespace RTE {
 		}
 	}
 
-	bool GLTexture::Create(int width, int height){
+	bool GLTexture::Create(int width, int height) {
 		glBindTexture(GL_TEXTURE_2D, m_TextureID);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -39,8 +39,13 @@ namespace RTE {
 		m_Width = width;
 		m_Height = height;
 		m_BPP = format == BitDepth::BPP32 ? 32 : 8;
-
-		return Create(width, height) && Surface::Create(width, height, format, palette);
+		if (Create(width, height)) {
+			if (Surface::Create(width, height, format, palette)) {
+				Update();
+				return true;
+			}
+		}
+		return false;
 	}
 
 	void GLTexture::Clear() {
