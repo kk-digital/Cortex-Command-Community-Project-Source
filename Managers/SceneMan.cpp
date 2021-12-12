@@ -26,7 +26,6 @@
 #include "SettingsMan.h"
 #include "Scene.h"
 #include "SLTerrain.h"
-#include "RenderLayer.h"
 #include "SceneLayer.h"
 #include "TerrainObject.h"
 #include "MovableObject.h"
@@ -38,6 +37,8 @@
 #include "Material.h"
 // Temp
 #include "Controller.h"
+
+#include "RTERenderer.h"
 
 namespace RTE
 {
@@ -90,7 +91,7 @@ void SceneMan::Clear()
 	m_LayerDrawMode = g_LayerNormal;
 
 	m_MaterialCount = 0;
-	m_apMatPalette.clear();
+	m_apMatPalette.fill(0);
 
 	m_MaterialCopiesVector.clear();
 
@@ -115,7 +116,7 @@ void SceneMan::Clear()
 //    m_CalcTimer.Reset();
 	m_CleanTimer.Reset();
 
-	m_pOrphanSearchBitmap = std::make_unique<Texture>(g_FrameMan.GetRenderer(), MAXORPHANRADIUS, MAXORPHANRADIUS, SDL_TEXTUREACCESS_STREAMING);
+	m_pOrphanSearchBitmap = std::make_unique<Surface>();
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -131,6 +132,8 @@ int SceneMan::Create(std::string readerFile)
 
 	Serializable::Create(*reader);
 	delete reader;
+
+	m_pOrphanSearchBitmap->Create(MAXORPHANRADIUS, MAXORPHANRADIUS, BitDepth::Indexed8);
 
 	return 0;
 }
@@ -197,7 +200,7 @@ int SceneMan::LoadScene(Scene *pNewScene, bool placeObjects, bool placeUnits) {
 		if (pUnseenLayer && pUnseenLayer->GetTexture())
 		{
 			// Calculate how many times smaller the unseen map is compared to the entire terrain's dimensions, and set it as the scale factor on the Unseen layer
-			pUnseenLayer->SetScaleFactor(Vector((float)m_pCurrentScene->GetTerrain()->GetTexture()->getW() / (float)pUnseenLayer->GetTexture()->getW(), (float)m_pCurrentScene->GetTerrain()->GetTexture()->getH() / (float)pUnseenLayer->GetTexture()->getH()));
+			pUnseenLayer->SetScaleFactor(Vector((float)m_pCurrentScene->GetTerrain()->GetTexture()->GetW() / (float)pUnseenLayer->GetTexture()->GetW(), (float)m_pCurrentScene->GetTerrain()->GetTexture()->GetH() / (float)pUnseenLayer->GetTexture()->GetH()));
 		}
 	}
 
@@ -208,24 +211,28 @@ int SceneMan::LoadScene(Scene *pNewScene, bool placeObjects, bool placeUnits) {
 //    m_pCurrentScene->GetTerrain()->CleanAir();
 
 	// Re-create the MoveableObject:s color SceneLayer
-	m_pMOColorLayer = std::make_unique<RenderLayer>();
-	m_pMOColorLayer->Create(GetSceneWidth(), GetSceneHeight(), Vector(),
-		                    m_pCurrentScene->WrapsX(),
-		                    m_pCurrentScene->WrapsY(), Vector(1.0, 1.0));
+	std::shared_ptr<GLTexture> moColorAttachment = MakeTexture();
+	moColorAttachment->Create(GetSceneWidth(), GetSceneHeight());
+	std::shared_ptr<RenderTexture> moColorRenderer = std::make_shared<RenderTexture>();
+	moColorRenderer->SetTexture(moColorAttachment);
+	m_pMOColorLayer = std::make_unique<SceneLayer>();
+	m_pMOColorLayer->Create(moColorRenderer, true, Vector(), m_pCurrentScene->WrapsX(), m_pCurrentScene->WrapsY(), Vector(1.0, 1.0));
 
 	// Re-create the MoveableObject:s ID SceneLayer
-	m_pMOIDLayer = std::make_unique<RenderLayer>();
-	m_pMOIDLayer->Create(GetSceneWidth(), GetSceneHeight(), Vector(),
-		                 m_pCurrentScene->WrapsX(), m_pCurrentScene->WrapsY(),
-		                 Vector(1.0, 1.0));
-	ClearMOIDLayer();
+
+	m_pMOIDLayer.reset(nullptr);
+	// ClearMOIDLayer();
 
   if(m_DrawRayCastVisualizations || m_DrawPixelCheckVisualizations){
 	// Create the Debug SceneLayer
 	m_pDebugLayer = std::make_unique<SceneLayer>();
-	SharedTexture debugTexture = std::make_shared<Texture>(g_FrameMan.GetRenderer(), GetSceneWidth(), GetSceneHeight(), SDL_TEXTUREACCESS_STREAMING);
+	SharedTexture debugTexture = MakeTexture();
+	debugTexture->Create(GetSceneWidth(), GetSceneHeight());
 
-	m_pDebugLayer->Create(debugTexture, true, Vector(), m_pCurrentScene->WrapsX(), m_pCurrentScene->WrapsY(), Vector(1.0, 1.0));
+	std::shared_ptr<RenderTexture> debugRenderer = std::make_shared<RenderTexture>();
+	debugRenderer->SetTexture(debugTexture);
+
+	m_pDebugLayer->Create(debugRenderer, true, Vector(), m_pCurrentScene->WrapsX(), m_pCurrentScene->WrapsY(), Vector(1.0, 1.0));
   }
 
 	// Finally draw the ID:s of the MO:s to the MOID layers for the first time
@@ -316,43 +323,60 @@ int SceneMan::LoadScene(std::string sceneName, bool placeObjects, bool placeUnit
 
 int SceneMan::ReadProperty(const std::string_view &propName, Reader &reader)
 {
-	if (propName == "AddScene")
-		g_PresetMan.GetEntityPreset(reader);
-	else if (propName == "AddTerrain")
-		g_PresetMan.GetEntityPreset(reader);
-	else if (propName == "AddTerrainDebris")
-		g_PresetMan.GetEntityPreset(reader);
-	else if (propName == "AddTerrainObject")
-		g_PresetMan.GetEntityPreset(reader);
-	else if (propName == "AddMaterial")
-	{
-		// Get this before reading Object, since if it's the last one in its datafile, the stream will show the parent file instead
-		string objectFilePath = reader.GetCurrentFilePath();
+    if (propName == "AddScene")
+        g_PresetMan.GetEntityPreset(reader);
+    else if (propName == "AddTerrain")
+        g_PresetMan.GetEntityPreset(reader);
+    else if (propName == "AddTerrainDebris")
+        g_PresetMan.GetEntityPreset(reader);
+    else if (propName == "AddTerrainObject")
+        g_PresetMan.GetEntityPreset(reader);
+    else if (propName == "AddMaterial")
+    {
+        // Get this before reading Object, since if it's the last one in its datafile, the stream will show the parent file instead
+        string objectFilePath = reader.GetCurrentFilePath();
 
-		// Don't use the << operator, because it adds the material to the PresetMan before we get a chance to set the proper ID!
-		Material *pNewMat = new Material;
-		((Serializable *)(pNewMat))->Create(reader);
+        // Don't use the << operator, because it adds the material to the PresetMan before we get a chance to set the proper ID!
+        Material *pNewMat = new Material;
+        ((Serializable *)(pNewMat))->Create(reader);
 
-		uint32_t index = pNewMat->GetIndex();
-		while(m_apMatPalette.find(pNewMat->GetIndex()) != m_apMatPalette.end()){
-			pNewMat->SetIndex(RandomNum(0, 255), RandomNum(0,255), RandomNum(0,255));
-		}
+        // If the initially requested material slot is available, then put it there
+        // But if it's not available, then check if any subsequent one is, looping around the palette if necessary
+        for (unsigned int tryId = pNewMat->GetIndex(); tryId < c_PaletteEntriesNumber; ++tryId)
+        {
+            // We found an empty slot in the Material palette!
+            if (m_apMatPalette.at(tryId) == nullptr)
+            {
+                // If the final ID isn't the same as the one originally requested by the data file, then make the mapping so
+                // subsequent ID references to this within the same data module can be translated to the actual ID of this material
+                if (tryId != pNewMat->GetIndex())
+                    g_PresetMan.AddMaterialMapping(pNewMat->GetIndex(), tryId, reader.GetReadModuleID());
 
-		if(pNewMat->GetIndex()!=index){
-			g_PresetMan.AddMaterialMapping(index, pNewMat->GetIndex(), reader.GetReadModuleID());
-		}
+                // Assign the final ID to the material and register it in the palette
+                pNewMat->SetIndex(tryId);
+                m_apMatPalette.at(tryId) = pNewMat;
+                m_MatNameMap.insert(pair<string, unsigned char>(string(pNewMat->GetPresetName()), pNewMat->GetIndex()));
+                // Now add the instance, when ID has been registered!
+                g_PresetMan.AddEntityPreset(pNewMat, reader.GetReadModuleID(), reader.GetPresetOverwriting(), objectFilePath);
+                ++m_MaterialCount;
+                break;
+            }
+            // We reached the end of the Material palette without finding any empty slots.. loop around to the start
+            else if (tryId >= c_PaletteEntriesNumber - 1)
+                tryId = 0;
+            // If we've looped around without finding anything, break and throw error
+            else if (tryId == pNewMat->GetIndex() - 1)
+            {
+// TODO: find the closest matching mateiral and map to it?
+                RTEAbort("Tried to load material \"" + pNewMat->GetPresetName() + "\" but the material palette (256 max) is full! Try consolidating or removing some redundant materials, or removing some entire data modules.");
+                break;
+            }
+        }
+    }
+    else
+        return Serializable::ReadProperty(propName, reader);
 
-		m_apMatPalette[pNewMat->GetIndex()] = pNewMat;
-
-		m_MatNameMap[pNewMat->GetPresetName()] = pNewMat->GetIndex();
-
-		g_PresetMan.AddEntityPreset(pNewMat, reader.GetReadModuleID(), reader.GetPresetOverwriting(), objectFilePath);
-		++m_MaterialCount;
-	}
-	else
-		return Serializable::ReadProperty(propName, reader);
-
-	return 0;
+    return 0;
 }
 
 
@@ -367,8 +391,8 @@ int SceneMan::Save(Writer &writer) const {
 
 	Serializable::Save(writer);
 
-	for (auto mat: m_apMatPalette) {
-		writer.NewPropertyWithValue("AddMaterial", *(mat.second));
+	for (int i = 0; i < m_MaterialCount; ++i) {
+		writer.NewPropertyWithValue("AddMaterial", *(m_apMatPalette.at(i)));
 	}
 
 	return 0;
@@ -382,9 +406,9 @@ int SceneMan::Save(Writer &writer) const {
 
 void SceneMan::Destroy()
 {
-	for (auto mat: m_apMatPalette) {
-		delete mat.second;
-		mat.second = nullptr;
+	for (auto &mat: m_apMatPalette) {
+		delete mat;
+		mat = nullptr;
 	}
 
 	delete m_pCurrentScene;
@@ -504,7 +528,7 @@ std::shared_ptr<RenderTarget> SceneMan::GetMOColorTexture() const { return m_pMO
 // Description:     Gets the bitmap of the SceneLayer that debug graphics is drawn onto.
 //                  Will only return valid BITMAP if building with DEBUG_BUILD.
 
-std::shared_ptr<GLTexture> SceneMan::GetDebugTexture() const { return m_pDebugLayer->GetTexture(); }
+std::shared_ptr<RenderTarget> SceneMan::GetDebugTexture() const { return m_pDebugLayer->GetTexture(); }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -513,7 +537,7 @@ std::shared_ptr<GLTexture> SceneMan::GetDebugTexture() const { return m_pDebugLa
 // Description:     Gets the bitmap of the SceneLayer that all MovableObject:s draw their
 //                  current (for the frame only!) MOID's onto.
 
-std::shared_ptr<GLTexture> SceneMan::GetMOIDTexture() const { return m_pMOIDLayer->GetTexture(); }
+std::shared_ptr<GLTexture> SceneMan::GetMOIDTexture() const { return std::shared_ptr<GLTexture>(nullptr); }
 
 // TEMP!
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -525,13 +549,14 @@ std::shared_ptr<GLTexture> SceneMan::GetMOIDTexture() const { return m_pMOIDLaye
 
 bool SceneMan::MOIDClearCheck()
 {
+#if 0
 	g_FrameMan.PushRenderTarget(m_pMOIDLayer->GetTexture());
 	uint32_t badMOID = g_NoMOID;
 	SDL_Rect pos{0,0,1,1};
-	for (int y = 0; y < m_pMOIDLayer->GetTexture()->getW(); ++y)
+	for (int y = 0; y < m_pMOIDLayer->GetTexture()->GetW(); ++y)
 	{
 		pos.y=y;
-		for (int x = 0; x < m_pMOIDLayer->GetTexture()->getW(); ++x)
+		for (int x = 0; x < m_pMOIDLayer->GetTexture()->GetW(); ++x)
 		{
 			pos.x=x;
 			// FIXME: This might be very very slow
@@ -547,6 +572,7 @@ bool SceneMan::MOIDClearCheck()
 		}
 	}
 	g_FrameMan.PopRenderTarget();
+#endif
 	return true;
 }
 
@@ -591,7 +617,9 @@ MOID SceneMan::GetMOIDPixel(int pixelX, int pixelY)
 	WrapPosition(pixelX, pixelY);
 
   if (m_pDebugLayer && m_DrawPixelCheckVisualizations) { m_pDebugLayer->SetPixel(pixelX, pixelY, 5); }
+
   return g_MovableMan.GetMOIDPixel(pixelX, pixelY);
+#if 0
 	// Out of Bounds
 	if (pixelX < 0 ||
 	   pixelX >= m_pMOIDLayer->GetTexture()->getW() ||
@@ -607,6 +635,7 @@ MOID SceneMan::GetMOIDPixel(int pixelX, int pixelY)
 	SDL_RenderReadPixels(g_FrameMan.GetRenderer(), &pos, SDL_PIXELFORMAT_ARGB8888, &pixel, sizeof(uint32_t));
 	// Shift the pixel right by 8 bits because all MOs draw shifted to avoid alpha blending
 	return pixel&0x00FFFFFF;
+#endif
 }
 
 
@@ -617,31 +646,14 @@ MOID SceneMan::GetMOIDPixel(int pixelX, int pixelY)
 
 Material const * SceneMan::GetMaterial(const std::string &matName)
 {
-	map<std::string, MID>::iterator itr = m_MatNameMap.find(matName);
-	if (itr == m_MatNameMap.end())
-	{
-		g_ConsoleMan.PrintString("ERROR: Material of name: " + matName + " not found!");
-		return 0;
-	}
-	else
-		return m_apMatPalette[(*itr).second];
-}
-
-Material const *SceneMan::GetMaterialFromID(uint32_t screen) const {
-	// RTEAssert(!m_apMatPalette.empty(), "No Materials loaded!");
-	if(m_MaterialCount == 0)
-		return nullptr;
-
-	MID mat = screen;
-
-	if(screen && screen <= 255)
-		mat = g_FrameMan.GetMIDFromIndex(screen);
-
-	if(m_apMatPalette.find(mat) == m_apMatPalette.end()){
-		return m_apMatPalette.at(g_MaterialAir);
-	} else {
-		return m_apMatPalette.at(mat);
-	}
+    map<std::string, MID>::iterator itr = m_MatNameMap.find(matName);
+    if (itr == m_MatNameMap.end())
+    {
+        g_ConsoleMan.PrintString("ERROR: Material of name: " + matName + " not found!");
+        return 0;
+    }
+    else
+        return m_apMatPalette.at((*itr).second);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -720,8 +732,8 @@ void SceneMan::SetScrollTarget(const Vector &targetCenter,
 	{
 		SLTerrain *pTerrain = m_pCurrentScene->GetTerrain();
 		// If the difference is more than half the scene width, then wrap
-		if ((pTerrain->WrapsX() && fabs(targetCenter.m_X - m_ScrollTarget[screen].m_X) > pTerrain->GetTexture()->getW() / 2) ||
-			(pTerrain->WrapsY() && fabs(targetCenter.m_Y - m_ScrollTarget[screen].m_Y) > pTerrain->GetTexture()->getH() / 2))
+		if ((pTerrain->WrapsX() && fabs(targetCenter.m_X - m_ScrollTarget[screen].m_X) > pTerrain->GetTexture()->GetW() / 2) ||
+			(pTerrain->WrapsY() && fabs(targetCenter.m_Y - m_ScrollTarget[screen].m_Y) > pTerrain->GetTexture()->GetH() / 2))
 			targetWrapped = true;
 	}
 
@@ -822,17 +834,17 @@ void SceneMan::CheckOffset(int screen)
 		frameHeight = g_FrameMan.GetPlayerFrameBufferHeight(screen);
 	}
 
-	if (!pTerrain->WrapsX() && m_Offset[screen].m_X >= pTerrain->GetTexture()->getW() - frameWidth)
-		m_Offset[screen].m_X = pTerrain->GetTexture()->getW() - frameWidth;
+	if (!pTerrain->WrapsX() && m_Offset[screen].m_X >= pTerrain->GetTexture()->GetW() - frameWidth)
+		m_Offset[screen].m_X = pTerrain->GetTexture()->GetW() - frameWidth;
 
-	if (!pTerrain->WrapsY() && m_Offset[screen].m_Y >= pTerrain->GetTexture()->getH() - frameHeight)
-		m_Offset[screen].m_Y = pTerrain->GetTexture()->getH() - frameHeight;
+	if (!pTerrain->WrapsY() && m_Offset[screen].m_Y >= pTerrain->GetTexture()->GetH() - frameHeight)
+		m_Offset[screen].m_Y = pTerrain->GetTexture()->GetH() - frameHeight;
 
-	if (!pTerrain->WrapsX() && m_Offset[screen].m_X >= pTerrain->GetTexture()->getW() - frameWidth)
-		m_Offset[screen].m_X = pTerrain->GetTexture()->getW() - frameWidth;
+	if (!pTerrain->WrapsX() && m_Offset[screen].m_X >= pTerrain->GetTexture()->GetW() - frameWidth)
+		m_Offset[screen].m_X = pTerrain->GetTexture()->GetW() - frameWidth;
 
-	if (!pTerrain->WrapsY() && m_Offset[screen].m_Y >= pTerrain->GetTexture()->getH() - frameHeight)
-		m_Offset[screen].m_Y = pTerrain->GetTexture()->getH() - frameHeight;
+	if (!pTerrain->WrapsY() && m_Offset[screen].m_Y >= pTerrain->GetTexture()->GetH() - frameHeight)
+		m_Offset[screen].m_Y = pTerrain->GetTexture()->GetH() - frameHeight;
 }
 
 
@@ -906,6 +918,7 @@ void SceneMan::RegisterMOIDDrawing(const Vector &center, float radius)
 
 void SceneMan::ClearAllMOIDDrawings()
 {
+#if 0
 	g_FrameMan.PushRenderTarget(m_pMOIDLayer->GetTexture());
 	SDL_SetRenderDrawColor(g_FrameMan.GetRenderer(), 0, 0, 0xFF, 0xFF);
 	SDL_RenderClear(g_FrameMan.GetRenderer());
@@ -917,6 +930,7 @@ void SceneMan::ClearAllMOIDDrawings()
 
 	m_MOIDDrawings.clear();
 	*/
+#endif
 }
 
 
@@ -928,6 +942,7 @@ void SceneMan::ClearAllMOIDDrawings()
 
 void SceneMan::ClearMOIDRect(int left, int top, int right, int bottom)
 {
+#if 0
 	// Draw the first unwrapped rect
 	g_FrameMan.PushRenderTarget(m_pMOIDLayer->GetTexture());
 	SDL_SetRenderDrawColor(g_FrameMan.GetRenderer(), (g_NoMOID >> 16) & 0xff, (g_NoMOID >> 8) & 0xff, (g_NoMOID) & 0xff, 0xff);
@@ -981,6 +996,7 @@ void SceneMan::ClearMOIDRect(int left, int top, int right, int bottom)
 	}
 	g_FrameMan.PopRenderTarget();
 	SDL_SetRenderDrawColor(g_FrameMan.GetRenderer(), 0, 0, 0, 0);
+#endif
 }
 
 
@@ -1001,7 +1017,7 @@ bool SceneMan::WillPenetrate(const int posX,
 		return false;
 
 	float impMag = impulse.GetMagnitude();
-	uint32_t materialID = m_pCurrentScene->GetTerrain()->GetMaterialTexture()->GetPixel(posX, posY);
+	MID materialID = m_pCurrentScene->GetTerrain()->GetMaterialTexture()->GetTexture()->GetPixel(posX, posY);
 
 	return impMag >= GetMaterialFromID(materialID)->GetIntegrity();
 }
@@ -1013,19 +1029,17 @@ bool SceneMan::WillPenetrate(const int posX,
 
 int SceneMan::RemoveOrphans(int posX, int posY, int radius, int maxArea, bool remove)
 {
-	m_pOrphanSearchBitmap->lock();
 	if (radius > MAXORPHANRADIUS)
 		radius = MAXORPHANRADIUS;
 
-	m_pOrphanSearchBitmap->clearAll();
+	m_pOrphanSearchBitmap->ClearColor();
 	int area = RemoveOrphans(posX, posY, posX, posY, 0, radius, maxArea, false);
 	if (remove && area <= maxArea)
 	{
-		m_pOrphanSearchBitmap->clearAll();
+		m_pOrphanSearchBitmap->ClearColor();
 		RemoveOrphans(posX, posY, posX, posY, 0, radius, maxArea, true);
 	}
 
-	m_pOrphanSearchBitmap->unlock();
 	return area;
 }
 
@@ -1042,11 +1056,11 @@ int SceneMan::RemoveOrphans(int posX, int posY,
 	int bmpX = 0;
 	int bmpY = 0;
 
-	std::shared_ptr<GLTexture> mat = m_pCurrentScene->GetTerrain()->GetMaterialTexture();
+	std::shared_ptr<GLTexture> mat = m_pCurrentScene->GetTerrain()->GetMaterialTexture()->GetTexture();
 
 	if (posX < 0 || posY < 0 || posX >= mat->GetW() || posY >= mat->GetH()) return 0;
 
-	uint32_t materialID  = mat->GetPixel(posX, posY);
+	MID materialID  = mat->GetPixel(posX, posY);
 
 	if (materialID == g_MaterialAir && (posX != centerPosX || posY != centerPosY))
 		return 0;
@@ -1081,10 +1095,10 @@ int SceneMan::RemoveOrphans(int posX, int posY,
 		if (spawnMat->UsesOwnColor())
 			spawnColor = spawnMat->GetColor();
 		else
-			spawnColor.SetRGBAFromColor(m_pCurrentScene->GetTerrain()->GetFGColorPixel(posX, posY));
+			spawnColor.SetRGBWithIndex(m_pCurrentScene->GetTerrain()->GetFGColorPixel(posX, posY));
 
 		// No point generating a key-colored MOPixel
-		if (spawnColor.GetRGBA() != 0)
+		if (spawnColor.GetIndex() != 0)
 		{
 			// TEST COLOR
 			// spawnColor = 5;
@@ -1127,7 +1141,7 @@ int SceneMan::RemoveOrphans(int posX, int posY,
 
 void SceneMan::RegisterTerrainChange(int x, int y, int w, int h, unsigned char color, bool back)
 {
-	#ifdef NETWORK_ENABLED
+#ifdef NETWORK_ENABLED
 	if (!g_NetworkServer.IsServerModeEnabled())
 		return;
 
@@ -1229,7 +1243,7 @@ void SceneMan::RegisterTerrainChange(int x, int y, int w, int h, unsigned char c
 	tc.back = back;
 	tc.color = color;
 	g_NetworkServer.RegisterTerrainChange(tc);
-	#endif
+#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -1259,7 +1273,7 @@ bool SceneMan::TryPenetrate(const int posX,
 	if (!m_pCurrentScene->GetTerrain()->IsWithinBounds(posX, posY))
 		return false;
 
-	uint32_t materialID = m_pCurrentScene->GetTerrain()->GetMaterialTexture()->GetPixel(posX, posY);
+	MID materialID = m_pCurrentScene->GetTerrain()->GetMaterialTexture()->GetTexture()->GetPixel(posX, posY);
 	if (materialID == g_MaterialAir)
 	{
 //        RTEAbort("Why are we penetrating air??");
@@ -1282,10 +1296,10 @@ bool SceneMan::TryPenetrate(const int posX,
 			if (spawnMat->UsesOwnColor())
 				spawnColor = spawnMat->GetColor();
 			else
-				spawnColor.SetRGBAFromColor(m_pCurrentScene->GetTerrain()->GetFGColorPixel(posX, posY));
+				spawnColor.SetRGBWithIndex(m_pCurrentScene->GetTerrain()->GetFGColorPixel(posX, posY));
 
 			// No point generating a key-colored MOPixel
-			if (spawnColor.GetRGBA() != g_AlphaZero)
+			if (spawnColor.GetIndex() != g_MaskColor)
 			{
 				// Get the new pixel from the pre-allocated pool, should be faster than dynamic allocation
 				// Density is used as the mass for the new MOPixel
@@ -1338,12 +1352,12 @@ bool SceneMan::TryPenetrate(const int posX,
 		retardation = -(sceneMat->GetIntegrity() / impMag);
 
 		// If this is a scrap pixel, or there is no background pixel 'supporting' the knocked-loose pixel, make the column above also turn into particles
-		if (sceneMat->IsScrap() || m_pCurrentScene->GetTerrain()->GetBGColorTexture()->GetPixel(posX, posY) == 0)
+		if (sceneMat->IsScrap() || m_pCurrentScene->GetTerrain()->GetBGColorTexture()->GetTexture()->GetPixel(posX, posY) == 0)
 		{
 			// Get quicker direct access to bitmaps
-			std::shared_ptr<GLTexture> pFGColor = m_pCurrentScene->GetTerrain()->GetFGColorTexture();
-			std::shared_ptr<GLTexture> pBGColor = m_pCurrentScene->GetTerrain()->GetBGColorTexture();
-			std::shared_ptr<GLTexture> pMaterial = m_pCurrentScene->GetTerrain()->GetMaterialTexture();
+			std::shared_ptr<GLTexture> pFGColor = m_pCurrentScene->GetTerrain()->GetFGColorTexture()->GetTexture();
+			std::shared_ptr<GLTexture> pBGColor = m_pCurrentScene->GetTerrain()->GetBGColorTexture()->GetTexture();
+			std::shared_ptr<GLTexture> pMaterial = m_pCurrentScene->GetTerrain()->GetMaterialTexture()->GetTexture();
 
 			int testMaterialID = g_MaterialAir;
 			MOPixel *pixelMO = 0;
@@ -1370,10 +1384,10 @@ bool SceneMan::TryPenetrate(const int posX,
 							if (spawnMat->UsesOwnColor())
 								spawnColor = spawnMat->GetColor();
 							else
-								spawnColor.SetRGBAFromColor(m_pCurrentScene->GetTerrain()->GetFGColorPixel(posX, testY));
+								spawnColor.SetRGBWithIndex(m_pCurrentScene->GetTerrain()->GetFGColorPixel(posX, testY));
 
 							// No point generating a key-colored MOPixel
-							if (spawnColor.GetRGBA() != 0)
+							if (spawnColor.GetIndex() != 0)
 							{
 								// Figure out the randomized velocity the spray should have upward
 								sprayVel.SetXY(sprayMag* RandomNormalNum() * 0.5F, (-sprayMag * 0.5F) + (-sprayMag * RandomNum(0.0F, 0.5F)));
@@ -1518,7 +1532,7 @@ bool SceneMan::IsUnseen(const int posX, const int posY, const int team)
 		Vector scale = pUnseenLayer->GetScaleInverse();
 		int scaledX = posX * scale.m_X;
 		int scaledY = posY * scale.m_Y;
-		return pUnseenLayer->GetTexture()->GetPixel(scaledX, scaledY) != 0;
+		return pUnseenLayer->GetTexture()->GetTexture()->GetPixel(scaledX, scaledY) != 0;
 	}
 
 	return false;
@@ -1623,14 +1637,14 @@ void SceneMan::RevealUnseenBox(const int posX, const int posY, const int width, 
 		pUnseenLayer->LockTexture();
 		// Translate to the scaled unseen layer's coordinates
 		Vector scale = pUnseenLayer->GetScaleInverse();
-		SDL_Rect scaled;
+		glm::vec4 scaled;
 		scaled.x = posX * scale.m_X;
 		scaled.y = posY * scale.m_Y;
-		scaled.w = width * scale.m_X;
-		scaled.h = height * scale.m_Y;
+		scaled.z = width * scale.m_X;
+		scaled.w = height * scale.m_Y;
 
 		// Fill the box
-		pUnseenLayer->GetTexture()->fillRect(scaled, 0);
+		pUnseenLayer->GetTexture()->GetTexture()->fillRect(scaled, 0);
 		pUnseenLayer->UnlockTexture();
 	}
 }
@@ -1653,14 +1667,14 @@ void SceneMan::RestoreUnseenBox(const int posX, const int posY, const int width,
 		pUnseenLayer->LockTexture();
 		// Translate to the scaled unseen layer's coordinates
 		Vector scale = pUnseenLayer->GetScaleInverse();
-		SDL_Rect scaled;
+		glm::vec4 scaled;
 		scaled.x = posX * scale.m_X;
 		scaled.y = posY * scale.m_Y;
-		scaled.w = width * scale.m_X;
-		scaled.h = height * scale.m_Y;
+		scaled.z = width * scale.m_X;
+		scaled.w = height * scale.m_Y;
 
 		// Fill the box
-		pUnseenLayer->GetTexture()->fillRect(scaled, g_BlackColor);
+		pUnseenLayer->GetTexture()->GetTexture()->fillRect(scaled, g_BlackColor);
 		pUnseenLayer->UnlockTexture();
 	}
 }
@@ -2897,47 +2911,35 @@ Vector SceneMan::MovePointToGround(const Vector &from, int maxAltitude, int accu
 
 void SceneMan::StructuralCalc(unsigned long calcTime) {
 
-// TODO: Develop this!")
-    return;
+	// TODO: Develop this!")
+	return;
+#if 0
+	if (calcTime <= 0)
+		return;
+	// Pad the time a little for FPS smoothness.
+	calcTime -= 1;
+	m_CalcTimer.Reset();
 
+	SLTerrain *pTerrain = g_SceneMan.GetTerrain();
+	std::shared_ptr<GLTexture> pColTexture = pTerrain->GetFGColorTexture()->GetTexture();
+	std::shared_ptr<GLTexture> pMatTexture = pTerrain->GetMaterialTexture()->GetTexture();
+	std::shared_ptr<Surface> pStructTexture = pTerrain->GetStructuralTexture();
+	int posX, posY, height = pColTexture->GetH(), width = pColTexture->GetW();
 
-    if (calcTime <= 0)
-        return;
-    // Pad the time a little for FPS smoothness.
-    calcTime -= 1;
-    m_CalcTimer.Reset();
+	// Preprocess bottom row to have full support.
+	for (posX = width - 1; posX >= 0; --posX)
+		pStructTexture->SetPixel(posX, height - 1, 255);
 
-    SLTerrain *pTerrain = g_SceneMan.GetTerrain();
-		std::shared_ptr<GLTexture> pColTexture = pTerrain->GetFGColorTexture();
-		std::shared_ptr<GLTexture> pMatTexture = pTerrain->GetMaterialTexture();
-		std::shared_ptr<GLTexture> pStructTexture = pTerrain->GetStructuralTexture();
-    int posX, posY, height = pColTexture->GetH(), width = pColTexture->GetW();
-
-    // Lock all bitmaps involved, outside the loop.
-		pColTexture->lock();
-		pMatTexture->lock();
-		pStructTexture->lock();
-
-
-    // Preprocess bottom row to have full support.
-    for (posX = width - 1; posX >= 0; --posX)
-			pStructTexture->SetPixel(posX, height - 1, 255);
-
-    // Start on the second row from bottom.
-    for (posY = height - 2; posY >= 0 && !m_CalcTimer.IsPastSimMS(calcTime); --posY) {
-        for (posX = width - 1; posX >= 0; --posX) {
-					pColTexture->GetPixel(posX, posY);
-					pMatTexture->GetPixel(posX, posY);
-					pStructTexture->GetPixel(posX, posY);
-        }
-    }
-
-    // Unlock all bitmaps involved.
-		pColTexture->unlock();
-		pMatTexture->unlock();
-		pStructTexture->unlock();
+	// Start on the second row from bottom.
+	for (posY = height - 2; posY >= 0 && !m_CalcTimer.IsPastSimMS(calcTime); --posY) {
+		for (posX = width - 1; posX >= 0; --posX) {
+			pColTexture->GetPixel(posX, posY);
+			pMatTexture->GetPixel(posX, posY);
+			pStructTexture->GetPixel(posX, posY);
+		}
+	}
+#endif
 }
-
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          IsWithinBounds
@@ -3429,28 +3431,28 @@ void SceneMan::Update(int screen)
         {
             if (pTerrain->WrapsX())
             {
-                if (m_ScrollTarget[screen].m_X < (pTerrain->GetTexture()->getW() / 2))
+                if (m_ScrollTarget[screen].m_X < (pTerrain->GetTexture()->GetW() / 2))
                 {
-                    m_Offset[screen].m_X -= pTerrain->GetTexture()->getW();
+                    m_Offset[screen].m_X -= pTerrain->GetTexture()->GetW();
                     m_SeamCrossCount[screen][X] += 1;
                 }
                 else
                 {
-                    m_Offset[screen].m_X += pTerrain->GetTexture()->getW();
+                    m_Offset[screen].m_X += pTerrain->GetTexture()->GetW();
                     m_SeamCrossCount[screen][X] -= 1;
                 }
             }
 
             if (pTerrain->WrapsY())
             {
-                if (m_ScrollTarget[screen].m_Y < (pTerrain->GetTexture()->getH() / 2))
+                if (m_ScrollTarget[screen].m_Y < (pTerrain->GetTexture()->GetH() / 2))
                 {
-                    m_Offset[screen].m_Y -= pTerrain->GetTexture()->getH();
+                    m_Offset[screen].m_Y -= pTerrain->GetTexture()->GetH();
                     m_SeamCrossCount[screen][Y] += 1;
                 }
                 else
                 {
-                    m_Offset[screen].m_Y += pTerrain->GetTexture()->getH();
+                    m_Offset[screen].m_Y += pTerrain->GetTexture()->GetH();
                     m_SeamCrossCount[screen][Y] -= 1;
                 }
             }
@@ -3509,8 +3511,8 @@ void SceneMan::Update(int screen)
     // Background layers may scroll in fractions of the real offset, and need special care to avoid jumping after having traversed wrapped edges
     // Reconstruct and give them the total offset, not taking any wrappings into account
     Vector offsetUnwrapped = m_Offset[screen];
-    offsetUnwrapped.m_X += pTerrain->GetTexture()->getW() * m_SeamCrossCount[screen][X];
-    offsetUnwrapped.m_Y += pTerrain->GetTexture()->getH() * m_SeamCrossCount[screen][Y];
+    offsetUnwrapped.m_X += pTerrain->GetTexture()->GetW() * m_SeamCrossCount[screen][X];
+    offsetUnwrapped.m_Y += pTerrain->GetTexture()->GetH() * m_SeamCrossCount[screen][Y];
 
     for (list<SceneLayer *>::iterator itr = m_pCurrentScene->GetBackLayers().begin(); itr != m_pCurrentScene->GetBackLayers().end(); ++itr)
         (*itr)->SetOffset(offsetUnwrapped);
@@ -3548,20 +3550,19 @@ void SceneMan::Draw(RenderTarget* renderer, std::shared_ptr<GLTexture> pGUITextu
     int team = m_ScreenTeam[m_LastUpdatedScreen];
     SceneLayer *pUnseenLayer = team != Activity::NoTeam ? m_pCurrentScene->GetUnseenLayer(team) : 0;
 
-	SDL_Rect viewport;
-	SDL_RenderGetViewport(renderer, &viewport);
+	glm::vec2 viewport = renderer->GetViewport();
 
     // Set up the target box to draw to on the target bitmap, if it is larger than the scene in either dimension
-    Box targetBox(Vector(0, 0), viewport.w, viewport.h);
+    Box targetBox(Vector(0, 0), viewport.x, viewport.y);
 
-    if (!pTerrain->WrapsX() && viewport.w > GetSceneWidth())
+    if (!pTerrain->WrapsX() && viewport.x > GetSceneWidth())
     {
-        targetBox.m_Corner.m_X = (viewport.w - GetSceneWidth()) / 2;
+        targetBox.m_Corner.m_X = (viewport.x - GetSceneWidth()) / 2;
         targetBox.m_Width = GetSceneWidth();
     }
-    if (!pTerrain->WrapsY() && viewport.h > GetSceneHeight())
+    if (!pTerrain->WrapsY() && viewport.y > GetSceneHeight())
     {
-        targetBox.m_Corner.m_Y = (viewport.h - GetSceneHeight()) / 2;
+        targetBox.m_Corner.m_Y = (viewport.y - GetSceneHeight()) / 2;
         targetBox.m_Height = GetSceneHeight();
     }
 
@@ -3604,18 +3605,21 @@ void SceneMan::Draw(RenderTarget* renderer, std::shared_ptr<GLTexture> pGUITextu
                 pUnseenLayer->DrawScaled(renderer, targetBox);
             }
 
-            // Actor and gameplay HUDs and GUIs
-            g_MovableMan.DrawHUD(renderer, targetPos, m_LastUpdatedScreen);
-			g_FrameMan.PushRenderTarget(pGUITexture);
-			g_PrimitiveMan.DrawPrimitives(m_LastUpdatedScreen, g_FrameMan.GetRenderer(), targetPos);
+			// Actor and gameplay HUDs and GUIs
+			g_MovableMan.DrawHUD(renderer, targetPos, m_LastUpdatedScreen);
+			std::shared_ptr<RenderTexture> guiRenderer = std::make_shared<RenderTexture>();
+			guiRenderer->SetTexture(pGUITexture);
+			g_PrimitiveMan.DrawPrimitives(m_LastUpdatedScreen, guiRenderer.get(), targetPos);
 			g_FrameMan.PopRenderTarget();
-//            g_ActivityMan.GetActivity()->Draw(pTargetBitmap, targetPos, m_LastUpdatedScreen);
-            g_ActivityMan.GetActivity()->DrawGUI(renderer, targetPos, m_LastUpdatedScreen);
+			//            g_ActivityMan.GetActivity()->Draw(pTargetBitmap, targetPos, m_LastUpdatedScreen);
+			g_ActivityMan.GetActivity()->DrawGUI(renderer, targetPos, m_LastUpdatedScreen);
 
-//            std::snprintf(str, sizeof(str), "Normal Layer Draw Mode\nHit M to cycle modes");
+			//            std::snprintf(str, sizeof(str), "Normal Layer Draw Mode\nHit M to cycle modes");
 
-            if (m_pDebugLayer) { m_pDebugLayer->Draw(renderer, targetBox); }
-    }
+			if (m_pDebugLayer) {
+				m_pDebugLayer->Draw(renderer, targetBox);
+			}
+	}
 }
 
 
@@ -3626,11 +3630,10 @@ void SceneMan::Draw(RenderTarget* renderer, std::shared_ptr<GLTexture> pGUITextu
 
 void SceneMan::ClearMOColorLayer()
 {
-	SDL_SetRenderDrawColor(g_FrameMan.GetRenderer(), 0, 0, 0, 0);
-	SDL_RenderClear(g_FrameMan.GetRenderer());
+	m_pMOColorLayer->GetTexture()->DrawClear();
+
 	if (m_pDebugLayer) {
-		m_pDebugLayer->GetTexture()->lock();
-		m_pDebugLayer->GetTexture()->clearAll();
+		m_pDebugLayer->GetTexture()->DrawClear();
 	}
 }
 
@@ -3642,11 +3645,6 @@ void SceneMan::ClearMOColorLayer()
 
 void SceneMan::ClearMOIDLayer()
 {
-	g_FrameMan.PushRenderTarget(m_pMOIDLayer->GetTexture());
-	SDL_SetRenderDrawColor(g_FrameMan.GetRenderer(), (g_NoMOID >> 16) & 0xff, (g_NoMOID >> 8) & 0xff, (g_NoMOID) & 0xff, 0xff);
-	SDL_RenderClear(g_FrameMan.GetRenderer());
-	SDL_SetRenderDrawColor(g_FrameMan.GetRenderer(), 0, 0, 0, 0);
-	g_FrameMan.PopRenderTarget();
 }
 
 

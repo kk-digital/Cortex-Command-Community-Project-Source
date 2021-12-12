@@ -30,7 +30,6 @@ namespace RTE
 
 class Scene;
 class SceneLayer;
-class RenderLayer;
 class SLTerrain;
 class SceneObject;
 class TerrainObject;
@@ -361,7 +360,8 @@ public:
 // Arguments:       The unsigned char index specifying screen material to get (0-255).
 // Return value:    A reference to the requested material. OWNERSHIP IS NOT TRANSFERRED!
 
-    Material const * GetMaterialFromID(uint32_t screen) const;
+    Material const * GetMaterialFromID(MID screen) { return screen >= 0 && screen < c_PaletteEntriesNumber && m_apMatPalette[screen] ?  m_apMatPalette[screen] : m_apMatPalette[g_MaterialAir]; }
+
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          SceneWrapsX
@@ -1699,9 +1699,9 @@ public:
     // Current scene being used
     Scene *m_pCurrentScene;
     // Color MO layer
-	std::unique_ptr<RenderLayer> m_pMOColorLayer;
+	std::unique_ptr<SceneLayer> m_pMOColorLayer;
     // MovableObject ID layer
-	std::unique_ptr<RenderLayer> m_pMOIDLayer;
+	std::unique_ptr<SceneLayer> m_pMOIDLayer;
     // All the areas drawn within on the MOID layer since last Update
     std::list<IntRect> m_MOIDDrawings;
 
