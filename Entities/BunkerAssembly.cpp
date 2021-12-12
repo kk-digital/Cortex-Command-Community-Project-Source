@@ -129,16 +129,16 @@ int BunkerAssembly::Create(BunkerAssemblyScheme * pScheme)
 	if (TerrainObject::Create() < 0)
 		return -1;
 
-	m_pPresentationBitmap = std::make_shared<GLTexture>();
+	m_pPresentationBitmap = MakeTexture();
 	m_pPresentationBitmap->Create(pScheme->GetBitmapWidth(), pScheme->GetBitmapHeight(), BitDepth::Indexed8, g_FrameMan.GetDefaultPalette());
 
-	m_pFGColor = std::make_shared<GLTexture>();
+	m_pFGColor = MakeTexture();
 	m_pFGColor->Create(pScheme->GetBitmapWidth(), pScheme->GetBitmapHeight(), BitDepth::Indexed8, g_FrameMan.GetDefaultPalette());
 
-	m_pMaterial = std::make_shared<GLTexture>();
+	m_pMaterial = MakeTexture();
 	m_pMaterial->Create(pScheme->GetBitmapWidth() , pScheme->GetBitmapHeight(), BitDepth::Indexed8, g_FrameMan.GetDefaultPalette());
 
-	m_pBGColor = std::make_shared<GLTexture>();
+	m_pBGColor = MakeTexture();
 	m_pBGColor->Create(pScheme->GetBitmapWidth() , pScheme->GetBitmapHeight(), BitDepth::Indexed8, g_FrameMan.GetDefaultPalette());
 
 	m_TextureOffset = pScheme->GetBitmapOffset();
@@ -237,16 +237,16 @@ int BunkerAssembly::ReadProperty(const std::string_view &propName, Reader &reade
 				pScheme->GetGoldValue();
 
 			//Delete existing bitmaps to avoid leaks if someone adds assembly to multiple groups by mistake
-			m_pPresentationBitmap = std::make_shared<GLTexture>();
+			m_pPresentationBitmap = MakeTexture();
 			m_pPresentationBitmap->Create(pScheme->GetBitmapWidth() , pScheme->GetBitmapHeight(), BitDepth::Indexed8, g_FrameMan.GetDefaultPalette());
 
-			m_pFGColor = std::make_shared<GLTexture>();
+			m_pFGColor = MakeTexture();
 			m_pFGColor->Create(pScheme->GetBitmapWidth() , pScheme->GetBitmapHeight(), BitDepth::Indexed8, g_FrameMan.GetDefaultPalette());
 
-			m_pMaterial = std::make_shared<GLTexture>();
+			m_pMaterial = MakeTexture();
 			m_pMaterial->Create(pScheme->GetBitmapWidth() , pScheme->GetBitmapHeight(), BitDepth::Indexed8, g_FrameMan.GetDefaultPalette());
 
-			m_pBGColor = std::make_shared<GLTexture>();
+			m_pBGColor = MakeTexture();
 			m_pBGColor->Create(pScheme->GetBitmapWidth() , pScheme->GetBitmapHeight(), BitDepth::Indexed8, g_FrameMan.GetDefaultPalette());
 
 			m_ParentAssemblyScheme = parentScheme;

@@ -22,8 +22,8 @@ namespace RTE {
 		friend class ContentFile;
 
 	public:
-		GLTexture();
 		virtual ~GLTexture();
+
 
 		virtual bool Create(int width, int height);
 		virtual bool Create(int width, int height, BitDepth format, std::optional<std::shared_ptr<Palette>> palette = std::nullopt) override;
@@ -75,6 +75,8 @@ namespace RTE {
 
 		unsigned int GetTextureID() { return m_TextureID; }
 
+		bool SaveToDisk(const std::string& filename);
+
 	private:
 		using Surface::Create;
 		unsigned int m_TextureID; //!< The OpenGL texture handle associated with this texture.
@@ -96,8 +98,22 @@ namespace RTE {
 		std::shared_ptr<Shader> GetCurrentShader();
 
 	private:
+		GLTexture();
+		GLTexture(std::shared_ptr<GLTexture> ref);
+
+		template<class ...Args>
+		friend std::unique_ptr<GLTexture> MakeTexture(Args&& ...args) {
+			return std::unique_ptr<GLTexture>(new GLTexture(std::forward<Args>(args)...));
+		}
+
 		void Clear();
 	};
 	typedef std::shared_ptr<GLTexture> SharedTexture;
+
+	/// <summary>
+	/// Factory function for creating smart pointers of GLTexture.
+	/// </summary>
+	template<class ...Args>
+	std::unique_ptr<GLTexture> MakeTexture(Args&& ...args);
 } // namespace RTE
 #endif

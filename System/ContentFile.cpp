@@ -107,9 +107,7 @@ namespace RTE {
 		if (m_DataPath.empty()) {
 			return nullptr;
 		}
-		std::string dataPathToLoad = dataPathToSpecificFrame.empty()
-		                                 ? m_DataPath
-		                                 : dataPathToSpecificFrame;
+		std::string dataPathToLoad = dataPathToSpecificFrame.empty() ? m_DataPath : dataPathToSpecificFrame;
 		SetFormattedReaderPosition(GetFormattedReaderPosition());
 		std::shared_ptr<GLTexture> returnTexture;
 
@@ -223,7 +221,7 @@ namespace RTE {
 		Uint32 colorKey{SDL_MapRGB(tempSurfacePreKey->format, 255, 0, 255)};
 		SDL_SetColorKey(tempSurfacePreKey.get(), SDL_TRUE, colorKey);
 
-		SharedTexture returnTexture = std::make_shared<GLTexture>();
+		SharedTexture returnTexture = MakeTexture();
 
 		returnTexture->m_BlendMode = BlendModes::Blend;
 		if (colorConversion == ColorConvert::ARGB32 || (colorConversion == ColorConvert::Preserve && tempSurfacePreKey->format->BitsPerPixel == 32)) {
