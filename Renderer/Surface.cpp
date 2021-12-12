@@ -75,5 +75,7 @@ namespace RTE {
 
 	void Surface::blit(std::shared_ptr<Surface> target, int x, int y, double angle, float scaleX, float scaleY) const {}
 
+	void Surface::blit(std::shared_ptr<Surface> target, glm::vec2 position) const {}
+
 	void Surface::blitColor(std::shared_ptr<Surface> target, uint32_t color, int x, int y, double angle, float scaleX, float scaleY) const {}
 } // namespace RTE
