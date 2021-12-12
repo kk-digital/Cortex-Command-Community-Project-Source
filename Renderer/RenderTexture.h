@@ -9,6 +9,8 @@ namespace RTE {
 		RenderTexture();
 		virtual ~RenderTexture();
 
+		RenderTexture(std::shared_ptr<RenderTexture> ref);
+
 		using RenderTarget::Create;
 
 		/// <summary>
@@ -39,7 +41,7 @@ namespace RTE {
 		/// <summary>
 		/// Clear this texture.
 		/// </summary>
-		void DrawClear() override;
+		void DrawClear(glm::vec4 color = glm::vec4(0)) override;
 
 		/// <summary>
 		/// Get the texture attachment of this render target.
