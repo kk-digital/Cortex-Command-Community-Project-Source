@@ -35,6 +35,7 @@
 #include "HeldDevice.h"
 
 #include "System/SDLHelper.h"
+#include "RTERenderer.h"
 
 namespace RTE {
 
@@ -546,7 +547,7 @@ int Scene::Create(const Scene &reference)
 	// Deep copy of the bitmap
     if (reference.m_pPreviewBitmap)
     {
-		m_pPreviewBitmap = std::make_shared<Texture>(g_FrameMan.GetRenderer(), *reference.m_pPreviewBitmap);
+		m_pPreviewBitmap = MakeTexture(reference.m_pPreviewBitmap);
 	}
 
 	m_MetasceneParent = reference.m_MetasceneParent;
@@ -582,13 +583,16 @@ int Scene::LoadData(bool placeObjects, bool initPathfinding, bool placeUnits)
         if (!m_UnseenPixelSize[team].IsZero())
         {
             // Create the bitmap to make the unseen scene layer out of
-            SharedTexture pUnseenBitmap = std::make_shared<Texture>(g_FrameMan.GetRenderer(), GetWidth() / m_UnseenPixelSize[team].m_X, GetHeight() / m_UnseenPixelSize[team].m_Y, SDL_TEXTUREACCESS_STREAMING);
+			std::shared_ptr<GLTexture> pUnseenBitmap = MakeTexture();
+			pUnseenBitmap->Create(GetWidth() / m_UnseenPixelSize[team].m_X, GetHeight() / m_UnseenPixelSize[team].m_Y);
 
             // Replace any old unseen layer with the new one that is generated
             delete m_apUnseenLayer[team];
 
+			std::shared_ptr<RenderTexture> unseenRenderer = std::make_shared<RenderTexture>();
+			unseenRenderer->SetTexture(pUnseenBitmap);
             m_apUnseenLayer[team] = new SceneLayer();
-            m_apUnseenLayer[team]->Create(pUnseenBitmap, true, Vector(), WrapsX(), WrapsY(), Vector(1.0, 1.0));
+            m_apUnseenLayer[team]->Create(unseenRenderer, true, Vector(), WrapsX(), WrapsY(), Vector(1.0, 1.0));
             m_apUnseenLayer[team]->SetScaleFactor(m_UnseenPixelSize[team]);
         }
         // If not dynamically generated, was it custom loaded?
