@@ -30,26 +30,21 @@ namespace RTE {
 
 	int PostProcessMan::Initialize() {
 
-		// Screen blend mode is SrcRGBA + (1-SrcRGBA)*DstRGBA (TODO might be DstA=DstA)
-		SDL_BlendMode screen = SDL_ComposeCustomBlendMode(
-		    SDL_BLENDFACTOR_ONE, SDL_BLENDFACTOR_ONE_MINUS_SRC_COLOR, SDL_BLENDOPERATION_ADD,
-			SDL_BLENDFACTOR_ONE, SDL_BLENDFACTOR_ONE_MINUS_SRC_ALPHA, SDL_BLENDOPERATION_ADD);
-
 		// TODO: Make more robust and load more glows!
 		ContentFile glowFile("Base.rte/Effects/Glows/YellowTiny.png");
 		m_YellowGlow = glowFile.GetAsTexture();
 		m_YellowGlowHash = glowFile.GetHash();
-		m_YellowGlow->setBlendMode(screen);
+		m_YellowGlow->setBlendMode(BlendModes::Screen);
 
 		glowFile.SetDataPath("Base.rte/Effects/Glows/RedTiny.png");
 		m_RedGlow = glowFile.GetAsTexture();
 		m_RedGlowHash = glowFile.GetHash();
-		m_RedGlow->setBlendMode(screen);
+		m_RedGlow->setBlendMode(BlendModes::Screen);
 
 		glowFile.SetDataPath("Base.rte/Effects/Glows/BlueTiny.png");
 		m_BlueGlow = glowFile.GetAsTexture();
 		m_BlueGlowHash = glowFile.GetHash();
-		m_BlueGlow->setBlendMode(screen);
+		m_BlueGlow->setBlendMode(BlendModes::Screen);
 
 		return 0;
 	}
