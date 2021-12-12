@@ -297,7 +297,8 @@ int SLTerrain::LoadData() {
 	}
 
 	// Structural integrity calc buffer bitmap
-	m_pStructural = std::make_unique<Surface>(m_pMainTexture->GetW(), m_pMainTexture->GetH(), BitDepth::Indexed8);
+	m_pStructural = std::make_unique<Surface>();
+	m_pStructural->Create(m_pMainTexture->GetW(), m_pMainTexture->GetH(), BitDepth::Indexed8);
 	RTEAssert(m_pStructural.get(), "Failed to allocate BITMAP in Terrain::Create");
 
 	///////////////////////////////////////////////
