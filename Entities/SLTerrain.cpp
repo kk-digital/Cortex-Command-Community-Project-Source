@@ -24,7 +24,7 @@
 #include "FrameMan.h"
 #include "RTERenderer.h"
 
-#include "System/SDLHelper.h"
+#include <SDL2/SDL2_rotozoom.h>
 
 namespace RTE {
 
@@ -276,7 +276,7 @@ int SLTerrain::LoadData() {
 	// Create blank foreground layer
 	m_pFGColor->Destroy();
 
-	std::shared_ptr<GLTexture> pFGTexture = std::make_shared<GLTexture>();
+	std::shared_ptr<GLTexture> pFGTexture = MakeTexture();
 	pFGTexture->Create(m_pMainTexture->GetW(), m_pMainTexture->GetH(), BitDepth::Indexed8, g_FrameMan.GetDefaultPalette());
 	std::shared_ptr<RenderTexture> pFGBuffer = std::make_shared<RenderTexture>();
 	pFGBuffer->SetTexture(pFGTexture);
@@ -287,7 +287,7 @@ int SLTerrain::LoadData() {
 
 	// Create blank background layer
 	m_pBGColor->Destroy();
-	std::shared_ptr<GLTexture> pBGTexture = std::make_shared<GLTexture>();
+	std::shared_ptr<GLTexture> pBGTexture = MakeTexture();
 	pBGTexture->Create(m_pMainTexture->GetW(), m_pMainTexture->GetH(), BitDepth::Indexed8, g_FrameMan.GetDefaultPalette());
 	std::shared_ptr<RenderTexture> pBGBuffer = std::make_shared<RenderTexture>();
 	pBGBuffer->SetTexture(pBGTexture);
@@ -888,7 +888,7 @@ deque<MOPixel *> SLTerrain::EraseSilhouette(std::shared_ptr<GLTexture> pSprite,
 	// because the pixels are not copied)
 
 	// Don't need to do this, just rotate points
-	std::unique_ptr<SDL_Surface, sdl_deleter> rotozoomedSprite{
+	std::unique_ptr<SDL_Surface, sdl_surface_deleter> rotozoomedSprite{
 		rotozoomSurface(pSprite->GetPixels(), rotation.GetDegAngle(), scale, false)
 	};
 
@@ -1032,149 +1032,41 @@ void SLTerrain::ApplyMovableObject(MovableObject *pMObject)
 
 		int spriteDiameter{static_cast<int>(pMObject->GetDiameter())};
 
-		RenderTarget *renderer = g_FrameMan.GetRenderer();
-
-
-		// if neccessary resize the temporary render Target
-		if (!s_TempRenderTarget || spriteDiameter > s_TempRenderTarget->GetW()) {
-			s_TempRenderTarget = std::make_unique<Surface>();
-			s_TempRenderTarget->Create(spriteDiameter, spriteDiameter, BitDepth::Indexed8);
-		}
-
 		// The position of the upper left corner of the temporary bitmap in the scene
         Vector bitmapScroll = pMObject->GetPos().GetFloored() - Vector(pMObject->GetDiameter() / 2, pMObject->GetDiameter() / 2);
 
 		Box notUsed;
 
-		s_TempRenderTarget->Clear();
+		s_TempRenderTarget->ClearColor();
 
-		std::unique_ptr<BlitSurface> blitter = std::make_unique<BlitSurface>();
-		blitter->Create(s_TempRenderTarget);
+		std::unique_ptr<BlitSurface> fgBlitter = std::make_unique<BlitSurface>();
+		std::unique_ptr<BlitSurface> matBlitter = std::make_unique<BlitSurface>();
+		fgBlitter->SetWrapXY(m_WrapX, m_WrapY);
+		fgBlitter->Create(GetFGColorTexture()->GetTexture());
+		matBlitter->SetWrapXY(m_WrapX, m_WrapY);
+		matBlitter->Create(m_pMainTexture->GetTexture());
 
-		pMOSprite->Draw(blitter.get(), bitmapScroll, g_DrawColor, true);
+		// TODO (SDL): this is quite likely horribly wrong right now
+		pMOSprite->Draw(fgBlitter.get(), bitmapScroll, g_DrawColor, true);
+		pMOSprite->Draw(matBlitter.get(), bitmapScroll, g_DrawMaterial, true);
 
-		m_pFGColor->Draw(blitter.get(), notUsed, bitmapScroll);
-
-
-		readBox.x = bitmapScroll.m_X;
-		readBox.y = bitmapScroll.m_Y;
-		m_pFGColor->LockTexture();
-		GetFGColorTexture()->setPixels(readBox, readPixels);
+		m_pFGColor->Draw(fgBlitter.get(), notUsed, bitmapScroll);
+		SceneLayer::Draw(matBlitter.get(), notUsed, bitmapScroll);
 
 		// Register terrain change
 		g_SceneMan.RegisterTerrainChange(bitmapScroll.m_X, bitmapScroll.m_Y, spriteDiameter, spriteDiameter, g_MaskColor, false);
 
-
-// TODO: centralize seam drawing!
-        // Draw over seams
-        if (g_SceneMan.SceneWrapsX())
-        {
-            if (bitmapScroll.m_X < 0){
-				readBox.x += g_SceneMan.GetSceneWidth();
-				readBox.w += bitmapScroll.GetFloorIntX();
-			} else if (bitmapScroll.m_X + spriteDiameter > g_SceneMan.GetSceneWidth()) {
-				readBox.x = 0;
-				readBox.w -= bitmapScroll.GetFloorIntX() - g_SceneMan.GetSceneWidth();
-			}
-			// readPixels.resize(readBox.w * readBox.h);
-			// SDL_RenderReadPixels(renderer, &readBox, GetFGColorTexture()->getFormat(), readPixels.data(), readBox.w * sizeof(uint32_t));
-			GetFGColorTexture()->setPixels(readBox, readPixels);
-			readBox.x = bitmapScroll.GetFloorIntX();
-			readBox.w = spriteDiameter;
-        }
-        if (g_SceneMan.SceneWrapsY())
-        {
-            if (bitmapScroll.m_Y < 0){
-				readBox.y += g_SceneMan.GetSceneHeight();
-				readBox.h += bitmapScroll.GetFloorIntY();
-			}
-            else if (bitmapScroll.m_Y + spriteDiameter > g_SceneMan.GetSceneHeight()){
-				GetFGColorTexture()->lock();
-				readBox.y = 0;
-				readBox.h -= bitmapScroll.GetFloorIntY() - g_SceneMan.GetSceneHeight();
-			}
-			// readPixels.resize(readBox.w * readBox.h);
-			// SDL_RenderReadPixels(renderer, &readBox, GetFGColorTexture()->getFormat(), readPixels.data(), readBox.w * sizeof(uint32_t));
-			GetFGColorTexture()->setPixels(readBox, readPixels);
-			readBox.y = bitmapScroll.GetFloorIntY();
-			readBox.h = spriteDiameter;
-		}
-
-		SDL_PixelFormat *globalFormat{SDL_AllocFormat(SDL_PIXELFORMAT_RGBA32)};
-		uint8_t air_r, air_g, air_b, air_a;
-		SDL_GetRGBA(g_MaterialAir, globalFormat, &air_r, &air_g, &air_b,
-			        &air_a);
-		SDL_FreeFormat(globalFormat);
-
-		SDL_SetRenderDrawColor(renderer, air_r, air_g, air_b, air_a);
-		SDL_RenderClear(renderer);
-		// Draw the actor and then the scene material layer to temp bitmap
-        pMOSprite->Draw(renderer, bitmapScroll, g_DrawMaterial, true);
-        SceneLayer::Draw(renderer, notUsed, bitmapScroll);
-
-		GetMaterialTexture()->lock();
-		readBox.x = 0;
-		readBox.y = 0;
-
-		SDL_RenderReadPixels(renderer, &readBox, GetMaterialTexture()->getFormat(), readPixels.data(), readBox.w * sizeof(uint32_t));
-
-		readBox.x = bitmapScroll.m_X;
-		readBox.y = bitmapScroll.m_Y;
-
         // Add a box to the updated areas list to show there's been change to the materials layer
         m_UpdatedMateralAreas.push_back(Box(bitmapScroll, spriteDiameter, spriteDiameter));
-// TODO: centralize seam drawing!
-        // Draw over seams
-        if (g_SceneMan.SceneWrapsX())
-        {
-            if (bitmapScroll.m_X < 0){
-				readBox.x += g_SceneMan.GetSceneWidth();
-				readBox.w += bitmapScroll.GetFloorIntX();
-			} else if (bitmapScroll.m_X + spriteDiameter > g_SceneMan.GetSceneWidth()) {
-				readBox.x = 0;
-				readBox.w -= bitmapScroll.GetFloorIntX() - g_SceneMan.GetSceneWidth();
-			}
-			// readPixels.resize(readBox.w * readBox.h);
-			// SDL_RenderReadPixels(renderer, &readBox, GetFGColorTexture()->getFormat(), readPixels.data(), readBox.w * sizeof(uint32_t));
-			GetMaterialTexture()->setPixels(readBox, readPixels);
-			readBox.x = bitmapScroll.GetFloorIntX();
-			readBox.w = spriteDiameter;
-        }
-        if (g_SceneMan.SceneWrapsY())
-        {
-            if (bitmapScroll.m_Y < 0) {
-				readBox.y += g_SceneMan.GetSceneHeight();
-				readBox.h += bitmapScroll.GetFloorIntY();
-			}
-            else if (bitmapScroll.m_Y + spriteDiameter > g_SceneMan.GetSceneHeight()){
-				readBox.y = 0;
-				readBox.h -= bitmapScroll.GetFloorIntY() - g_SceneMan.GetSceneHeight();
-			}
-			// readPixels.resize(readBox.w * readBox.h);
-			// SDL_RenderReadPixels(renderer, &readBox, GetFGColorTexture()->getFormat(), readPixels.data(), readBox.w * sizeof(uint32_t));
-			GetMaterialTexture()->setPixels(readBox, readPixels);
-			readBox.y = bitmapScroll.GetFloorIntY();
-			readBox.h = spriteDiameter;
-		}
-
-		SDL_RenderSetViewport(renderer, nullptr);
-
-		g_FrameMan.PopRenderTarget();
     }
     // MOPixel, so update single pixel
     else
     {
-		MOPixel* pPixel{dynamic_cast<MOPixel *>(pMObject)};
-		if (pPixel) {
-			Color c{pPixel->GetColor()};
-			GetFGColorTexture()->lock();
-			GetFGColorTexture()->SetPixel(pPixel->GetPos().GetFloorIntX(), pPixel->GetPos().GetFloorIntY(), c.GetR(), c.GetG(), c.GetB(), 255); // Register terrain change
-			g_SceneMan.RegisterTerrainChange(pPixel->GetPos().m_X, pPixel->GetPos().m_Y, 1, 1, g_DrawColor, false);
+		pMObject->Draw(GetFGColorTexture().get(), Vector(), g_DrawColor, true);
+		// Register terrain change
+		g_SceneMan.RegisterTerrainChange(pMObject->GetPos().m_X, pMObject->GetPos().m_Y, 1, 1, g_DrawColor, false);
 
-			uint32_t mat = g_FrameMan.GetMIDFromIndex(pPixel->GetAtom()->GetMaterial()->GetSettleMaterial());
-			GetMaterialTexture()->lock();
-			GetMaterialTexture()->SetPixel(pPixel->GetPos().GetFloorIntX(),pPixel->GetPos().GetFloorIntY(), mat);
-		}
+		pMObject->Draw(GetMaterialTexture().get(), Vector(), g_DrawMaterial, true);
 	}
 	LockTexture();
 }
@@ -1211,70 +1103,17 @@ void SLTerrain::ApplyTerrainObject(TerrainObject *pTObject)
 
     Vector loc = pTObject->GetPos() + pTObject->GetTextureOffset();
 
-	std::unique_ptr<SDL_Surface, sdl_deleter> TOFGSurface = pTObject->GetFGColorTexture()->getPixelsAsSurface();
-	std::unique_ptr<SDL_Surface, sdl_deleter> TOMatSurface = pTObject->GetMaterialTexture()->getPixelsAsSurface();
+	std::shared_ptr<BlitSurface> blitter = std::make_shared<BlitSurface>();
+	blitter->Create(m_pMainTexture->GetTexture());
+	blitter->SetWrapXY(m_WrapX, m_WrapY);
 
-	std::unique_ptr<SDL_Surface, sdl_deleter> TOBGSurface{nullptr};
-	if (pTObject->HasBGColor())
-		TOBGSurface = pTObject->GetBGColorTexture()->getPixelsAsSurface();
+	pTObject->GetMaterialTexture()->render(blitter.get(), loc);
+	blitter->SetSurface(m_pFGColor->GetTexture()->GetTexture());
+	pTObject->GetFGColorTexture()->render(blitter.get(), loc);
 
-	// TODO: SDL add texture update region.
-	std::unique_ptr<SDL_Surface, sdl_deleter> MatSurface = m_pMainTexture->getPixelsAsSurface();
-	std::unique_ptr<SDL_Surface, sdl_deleter> FGSurface = m_pFGColor->GetTexture()->getPixelsAsSurface();
-
-	std::unique_ptr<SDL_Surface, sdl_deleter> BGSurface{nullptr};
-	if(pTObject->HasBGColor())
-		BGSurface = m_pBGColor->GetTexture()->getPixelsAsSurface();
-
-	SDL_Rect wrapBox{static_cast<int>(loc.m_X), static_cast<int>(loc.m_Y), pTObject->GetTextureWidth(), pTObject->GetTextureHeight()};
-
-	// Do duplicate drawing if the terrain object straddles a wrapping border
-    if (loc.m_X < 0)
-    {
-		SDL_Point offset{m_pMainTexture->GetW(),0};
-		SDL_Rect drawBox = wrapBox + offset;
-
-		SDL_BlitSurface(TOMatSurface.get(), nullptr, MatSurface.get(), &drawBox);
-
-		offset.x = m_pFGColor->GetTexture()->GetW();
-		drawBox = wrapBox + offset;
-
-		SDL_BlitSurface(TOFGSurface.get(), nullptr, FGSurface.get(), &drawBox);
-
-		if (pTObject->HasBGColor()){
-			offset.x = m_pBGColor->GetTexture()->GetW();
-			drawBox = wrapBox + offset;
-			SDL_BlitSurface(TOBGSurface.get(), nullptr, BGSurface.get(), &drawBox);
-		}
-    }
-    else if (loc.m_X >= m_pMainTexture->GetW() - pTObject->GetFGColorTexture()->GetW())
-    {
-		SDL_Point offset{-m_pMainTexture->GetW(),0};
-		SDL_Rect drawBox = wrapBox + offset;
-		SDL_BlitSurface(TOMatSurface.get(), nullptr, MatSurface.get(), &drawBox);
-
-		offset.x = -m_pFGColor->GetTexture()->GetW();
-		drawBox = wrapBox + offset;
-
-		SDL_BlitSurface(TOFGSurface.get(), nullptr, FGSurface.get(), &drawBox);
-
-        if (pTObject->HasBGColor()){
-			offset.x = -m_pBGColor->GetTexture()->GetW();
-			drawBox = wrapBox + offset;
-
-			SDL_BlitSurface(TOBGSurface.get(), nullptr, BGSurface.get(), &drawBox);
-		}
-    }
-
-    // Regular drawing
-	SDL_BlitSurface(TOMatSurface.get(), nullptr, MatSurface.get(), &wrapBox);
-	SDL_BlitSurface(TOFGSurface.get(), nullptr, FGSurface.get(), &wrapBox);
-
-	if (pTObject->HasBGColor())
-	{
-		SDL_BlitSurface(TOBGSurface.get(), nullptr, BGSurface.get(), &wrapBox);
-
-		g_SceneMan.RegisterTerrainChange(loc.m_X, loc.m_Y, pTObject->GetTextureWidth(), pTObject->GetTextureHeight(), g_MaskColor, true);
+	if (pTObject->HasBGColor()) {
+		blitter->SetSurface(m_pBGColor->GetTexture()->GetTexture());
+		pTObject->GetBGColorTexture()->render(blitter.get(), loc);
 	}
 
 	// Register terrain change
@@ -1326,12 +1165,10 @@ bool SLTerrain::IsBoxBuried(const Box &checkBox) const
 
 void SLTerrain::CleanAirBox(Box box, bool wrapsX, bool wrapsY)
 {
-	m_pMainTexture->lock();
-	m_pFGColor->GetTexture()->lock();
 
     int width = m_pMainTexture->GetW();
     int height = m_pMainTexture->GetH();
-    uint32_t matPixel;
+    uint8_t matPixel;
 
 	for (int y = box.m_Corner.m_Y; y < box.m_Corner.m_Y + box.m_Height; ++y) {
 		for (int x = box.m_Corner.m_X; x < box.m_Corner.m_X + box.m_Width; ++x) {
@@ -1359,13 +1196,13 @@ void SLTerrain::CleanAirBox(Box box, bool wrapsX, bool wrapsY)
 
 			if (wrapX >= 0 && wrapY >=0 && wrapX < width && wrapY < height)
 			{
-				matPixel = m_pMainTexture->getPixelLower(wrapX, wrapY);
+				matPixel = m_pMainTexture->GetTexture()->GetPixel(wrapX, wrapY);
 				if (matPixel == g_FrameMan.GetMIDFromIndex(g_MaterialCavity)) {
-					m_pMainTexture->setPixelLower(wrapX, wrapY, g_MaterialAir);
+					m_pMainTexture->GetTexture()->SetPixel(wrapX, wrapY, g_MaterialAir);
 					matPixel = g_MaterialAir;
 				}
 				if (matPixel == g_MaterialAir)
-					m_pFGColor->GetTexture()->setPixelLower(wrapX, wrapY, 0);
+					m_pFGColor->GetTexture()->GetTexture()->SetPixel(wrapX, wrapY, 0);
 			}
 
         }
@@ -1381,22 +1218,19 @@ void SLTerrain::CleanAirBox(Box box, bool wrapsX, bool wrapsY)
 
 void SLTerrain::CleanAir()
 {
-	m_pMainTexture->lock();
-	m_pFGColor->GetTexture()->lock();
-
     int width = m_pMainTexture->GetW();
     int height = m_pMainTexture->GetH();
-    uint32_t matPixel;
+    uint8_t matPixel;
 
     for (int y = 0; y < height; ++y) {
         for (int x = 0; x < width; ++x) {
-            matPixel = m_pMainTexture->getPixelLower(x, y);
+            matPixel = m_pMainTexture->GetTexture()->GetPixel(x, y);
             if (matPixel == g_FrameMan.GetMIDFromIndex(g_MaterialCavity)) {
-                m_pMainTexture->setPixelLower(x, y, g_MaterialAir);
+                m_pMainTexture->GetTexture()->SetPixel(x, y, g_MaterialAir);
                 matPixel = g_MaterialAir;
             }
             if (matPixel == g_MaterialAir)
-                m_pFGColor->GetTexture()->setPixelLower(x, y, 0);
+                m_pFGColor->GetTexture()->GetTexture()->SetPixel(x, y, 0);
         }
     }
 }
@@ -1410,11 +1244,9 @@ void SLTerrain::CleanAir()
 
 void SLTerrain::ClearAllMaterial()
 {
-	m_pMainTexture->lock();
-	m_pMainTexture->clearAll();
+	m_pMainTexture->GetTexture()->ClearColor();
 
-	m_pFGColor->GetTexture()->lock();
-	m_pFGColor->GetTexture()->clearAll(g_MaterialAir);
+	m_pFGColor->GetTexture()->DrawClear();
 }
 
 

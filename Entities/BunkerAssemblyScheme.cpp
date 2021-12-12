@@ -104,7 +104,7 @@ int BunkerAssemblyScheme::ReadProperty(const std::string_view &propName, Reader 
         reader >> m_BitmapFile;
         m_pBitmap = m_BitmapFile.GetAsTexture();
 
-		m_pPresentationBitmap = std::make_shared<GLTexture>();
+		m_pPresentationBitmap = MakeTexture();
 		m_pPresentationBitmap->Create(m_pBitmap->GetW() * ScaleX, m_pBitmap->GetH() * ScaleY, BitDepth::Indexed8, g_FrameMan.GetDefaultPalette());
 
 		// Create internal presentation bitmap which will be drawn by editor
@@ -232,7 +232,7 @@ int BunkerAssemblyScheme::ReadProperty(const std::string_view &propName, Reader 
 
 		float scale = (float)ICON_WIDTH / (float)m_pPresentationBitmap->GetW();
 
-		m_pIconBitmap = std::make_shared<GLTexture>();
+		m_pIconBitmap = MakeTexture();
 		m_pIconBitmap->Create(m_pPresentationBitmap->GetW() * scale, m_pPresentationBitmap->GetH() * scale, BitDepth::Indexed8, g_FrameMan.GetDefaultPalette());
 
 		for (int x = 0; x < m_pBitmap->GetW() ; ++x)

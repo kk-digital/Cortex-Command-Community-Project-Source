@@ -1154,13 +1154,13 @@ void HDFirearm::DrawHUD(RenderTarget* renderer, const Vector &targetPos, int whi
         g_SceneMan.WrapPosition(aimPoint3);
         g_SceneMan.WrapPosition(aimPoint4);
 
-		VertexArray drawPoints{{{aimPoint1},
+		std::shared_ptr<VertexArray> drawPoints{std::make_shared<VertexArray>(std::vector<Vertex>{{aimPoint1},
 			{aimPoint2},
 			{aimPoint3},
-			{aimPoint4}}};
+			{aimPoint4}})};
 
 		RenderState drawState;
-		drawState.m_Vertices = &drawPoints;
+		drawState.m_Vertices = drawPoints;
 		drawState.m_Color = (*g_FrameMan.GetDefaultPalette())[g_YellowGlowColor];
 		drawState.m_PrimitiveType = PrimitiveType::Point;
 		drawState.m_Shader = g_FrameMan.GetColorShader();
@@ -1192,10 +1192,10 @@ void HDFirearm::DrawHUD(RenderTarget* renderer, const Vector &targetPos, int whi
         g_SceneMan.WrapPosition(aimPoint2);
         g_SceneMan.WrapPosition(aimPoint3);
 
-		VertexArray drawPoints{{{aimPoint2}, {aimPoint3}}};
+		std::shared_ptr<VertexArray> drawPoints{std::make_shared<VertexArray>(std::vector<Vertex>{{aimPoint2}, {aimPoint3}})};
 
 		RenderState drawState;
-		drawState.m_Vertices = &drawPoints;
+		drawState.m_Vertices = drawPoints;
 		drawState.m_Color = (*g_FrameMan.GetDefaultPalette())[g_YellowGlowColor];
 		drawState.m_PrimitiveType = PrimitiveType::Point;
 		drawState.m_Shader = g_FrameMan.GetColorShader();
