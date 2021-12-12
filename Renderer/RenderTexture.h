@@ -30,6 +30,8 @@ namespace RTE {
 		/// </returns>
 		void Create(int width, int height, uint32_t format = 0);
 
+		void Create(std::shared_ptr<GLTexture> texture);
+
 		/// <summary>
 		/// Draw the passed state to this render target.
 		/// </summary>

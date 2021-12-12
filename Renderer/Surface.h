@@ -183,6 +183,8 @@ namespace RTE {
 
 		void blitMasked(std::shared_ptr<Surface> target, uint32_t color, int x, int y, double angle = 0, float scaleX = 1.0f, float scaleY = 1.0f) const;
 
+		void fillRect(glm::vec4 rect, uint32_t color);
+
 	protected:
 		int m_Width;
 		int m_Height;
