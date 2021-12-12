@@ -22,7 +22,7 @@ namespace RTE {
 
 		void AddVertex(Vertex vertex);
 		void InsertVertex(Vertex vertex, int index);
-		void Reserve(size_t n) {m_Vertices.reserve(n);}
+		void Reserve(size_t n);
 		void ResetVertices();
 		void Update();
 
