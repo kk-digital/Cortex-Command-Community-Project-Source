@@ -1,4 +1,4 @@
-* PROJ Rendering backend [1/10]
+* PROJ Rendering backend [2/11]
 ** TODO Replace primitives drawing with vertex based primitives
 *** TODO Add vertex cache (DO NOT upload vertices every frame)
 ** PROG Implement FrameMan with the new OGL stuff
@@ -14,7 +14,12 @@
 ** TODO Implement view based camera
    This should infinitely simplify drawing
 *** TODO Implement scene wrapping
-** TODO Unload scene from gpu on activity reset/change
+*** TODO remove the messy wrapping logic from SceneLayer
+** TODO Add culling
+** CANCEL Unload scene from gpu on activity reset/change
+   CLOSED: [2021-11-28 So 01:10]
+   - State "CANCEL"     from "TODO"       [2021-11-28 So 01:10] \\
+     not necessary
 ** DONE Replace SDLTexture
    CLOSED: [2021-11-07 So 20:10]
    - State "PROG"       from "TODO"       [2021-10-19 Di 20:11]
