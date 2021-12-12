@@ -8,6 +8,7 @@ namespace RTE {
 	/// </summary>
 	class BlitSurface : public RenderTarget {
 	public:
+		BlitSurface();
 		BlitSurface(std::shared_ptr<Surface> surface);
 		virtual ~BlitSurface();
 
