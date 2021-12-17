@@ -4,7 +4,8 @@ namespace RTE {
 	class Shader {
 	public:
 		Shader();
-		~Shader();
+		Shader(const std::string &vertexFilename, const std::string &fragPath);
+		virtual ~Shader();
 
 		bool Compile(const std::string &vertexFilename, const std::string &fragPath);
 
