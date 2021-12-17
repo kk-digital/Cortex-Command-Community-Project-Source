@@ -18,7 +18,6 @@
 #include "GUISlider.h"
 
 #include "SDLHelper.h"
-#include "SDL2_gfxPrimitives.h"
 
 namespace RTE {
 
@@ -406,20 +405,23 @@ namespace RTE {
 		// Apply a colored overlay on top of team rows that are locked or disabled by the Activity and are not modifiable.
 		for (int team = Activity::Teams::TeamOne; team < Activity::Teams::MaxTeamCount; ++team) {
 			if (!m_SelectedActivity->TeamActive(team) || m_LockedCPUTeam == team) {
-
+#if 0
 				SDL_SetRenderDrawBlendMode(g_FrameMan.GetRenderer(), BLENDMODE_SCREEN);
 
 				int blendAmount = 230;
 				uint32_t blendColor = c_GUIColorDarkBlue * (blendAmount / 255.0);
 				boxColor(g_FrameMan.GetRenderer(), m_PlayersAndTeamsConfigBox->GetXPos() + 2, m_PlayersAndTeamsConfigBox->GetYPos() + rectPosY, m_PlayersAndTeamsConfigBox->GetXPos() + m_PlayersAndTeamsConfigBox->GetWidth() - 3, m_PlayersAndTeamsConfigBox->GetYPos() + rectPosY + 25, blendColor);
 				SDL_SetRenderDrawBlendMode(g_FrameMan.GetRenderer(), SDL_BLENDMODE_BLEND);
+#endif
 			}
 			rectPosY += 25;
 		}
 
 		int linePosY = 25;
 		for (int i = 0; i < 6; ++i) {
+#if 0
 			hlineColor(g_FrameMan.GetRenderer(), m_PlayersAndTeamsConfigBox->GetXPos() + 2, m_PlayersAndTeamsConfigBox->GetYPos() + linePosY, m_PlayersAndTeamsConfigBox->GetXPos() + m_PlayersAndTeamsConfigBox->GetWidth() - 2, c_GUIColorLightBlue);
+#endif
 			linePosY += 25;
 		}
 

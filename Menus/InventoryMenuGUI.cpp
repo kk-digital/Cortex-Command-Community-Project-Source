@@ -1299,6 +1299,7 @@ namespace RTE {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void InventoryMenuGUI::DrawCarouselMode(RenderTarget *renderer, const Vector &drawPos) const {
+#if 0
 		// TODO: Use shaders here
 		g_FrameMan.PushRenderTarget(m_CarouselBitmap);
 		SDL_RenderClear(g_FrameMan.GetRenderer());
@@ -1354,11 +1355,13 @@ namespace RTE {
 			}
 			hasDrawnAtLeastOnce = true;
 		}
+#endif
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void InventoryMenuGUI::DrawCarouselItemBoxBackground(const CarouselItemBox &itemBoxToDraw) const {
+#if 0
 		auto DrawBox = [](RenderTarget *renderer, const Vector &boxTopLeftCorner, const Vector &boxBottomRightCorner, int color, bool roundedLeftSide, bool roundedRightSide) {
 			if (roundedLeftSide) {
 				filledCircleColor(renderer, boxTopLeftCorner.GetFloorIntX() + c_CarouselBoxCornerRadius, boxTopLeftCorner.GetFloorIntY() + c_CarouselBoxCornerRadius, c_CarouselBoxCornerRadius, color);
@@ -1380,11 +1383,13 @@ namespace RTE {
 		}
 		DrawBox(g_FrameMan.GetRenderer(), itemBoxToDraw.Pos + (itemBoxToDraw.RoundedAndBorderedSides.first ? m_CarouselBackgroundBoxBorderSize : Vector(0, m_CarouselBackgroundBoxBorderSize.GetY())), itemBoxToDraw.Pos + itemBoxToDraw.CurrentSize - spriteZeroIndexSizeOffset - (itemBoxToDraw.RoundedAndBorderedSides.second ? m_CarouselBackgroundBoxBorderSize : Vector(0, m_CarouselBackgroundBoxBorderSize.GetY())), m_CarouselBackgroundBoxColor, itemBoxToDraw.RoundedAndBorderedSides.first, itemBoxToDraw.RoundedAndBorderedSides.second);
 		g_FrameMan.PopRenderTarget();
+#endif
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void InventoryMenuGUI::DrawCarouselItemBoxForeground(const CarouselItemBox &itemBoxToDraw, SDLGUITexture *carouselSDLGUITexture) const {
+#if 0
 		std::vector<SharedTexture> itemIcons;
 		float totalItemMass = 0;
 		itemBoxToDraw.GetIconsAndMass(itemIcons, totalItemMass, &m_InventoryActorEquippedItems);
@@ -1413,6 +1418,7 @@ namespace RTE {
 
 		std::string massString = RoundFloatToPrecision(std::fminf(999, totalItemMass), 0) + (totalItemMass > 999 ? "+ " : " ") + "KG";
 		m_SmallFont->DrawAligned(carouselSDLGUITexture, itemBoxToDraw.IconCenterPosition.GetFloorIntX(), itemBoxToDraw.IconCenterPosition.GetFloorIntY() - ((itemBoxToDraw.CurrentSize.GetFloorIntY() + m_SmallFont->GetFontHeight()) / 2) + 1, massString.c_str(), GUIFont::Centre);
+#endif
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

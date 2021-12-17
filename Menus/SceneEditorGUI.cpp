@@ -1530,11 +1530,13 @@ void SceneEditorGUI::Draw(RenderTarget *renderer, const Vector &targetPos) const
     if (!m_DrawCurrentObject)
     {
         Vector center = m_CursorPos - targetPos;
+#if 0
         pixelColor(renderer, center.m_X, center.m_Y, g_YellowGlowColor);
         hlineColor(renderer, center.m_X - 5, center.m_Y, center.m_X - 2, g_YellowGlowColor);
         hlineColor(renderer, center.m_X + 5, center.m_Y, center.m_X + 2, g_YellowGlowColor);
         vlineColor(renderer, center.m_X, center.m_Y - 5, center.m_Y - 2, g_YellowGlowColor);
         vlineColor(renderer, center.m_X, center.m_Y + 5, center.m_Y + 2, g_YellowGlowColor);
+#endif
     }
     // If the held object will be placed at the end of the list, draw it last to the scene, transperent blinking
 	else if (m_pCurrentObject && (m_ObjectListOrder < 0 || (pSceneObjectList &&  m_ObjectListOrder == pSceneObjectList->size())))

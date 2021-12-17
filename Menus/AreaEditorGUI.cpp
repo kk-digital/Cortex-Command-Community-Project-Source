@@ -597,6 +597,7 @@ void AreaEditorGUI::Update()
 
 void AreaEditorGUI::Draw(RenderTarget* renderer, const Vector &targetPos) const
 {
+#if 0
     // Done or can't, so don't draw the UI
     if (!m_pCurrentArea || m_EditorGUIMode == DONEEDITING)
         return;
@@ -684,6 +685,7 @@ void AreaEditorGUI::Draw(RenderTarget* renderer, const Vector &targetPos) const
 
     // Draw the pie menu
     m_pPieMenu->Draw(renderer, targetPos);
+#endif
 }
 
 

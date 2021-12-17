@@ -21,7 +21,8 @@
 #include "GUILabel.h"
 
 #include "SDLHelper.h"
-#include "SDL2_gfxPrimitives.h"
+#include "RTERenderer.h"
+#include "GraphicalPrimitive.h"
 
 namespace RTE {
 
@@ -169,11 +170,11 @@ namespace RTE {
 			m_SceneInfoBox->SetVisible(true);
 
 			if (SharedTexture preview = m_SelectedScene->GetPreviewBitmap()) {
-				g_FrameMan.PushRenderTarget(m_ScenePreviewBitmap->GetTexture());
-				SDL_SetRenderDrawColor(g_FrameMan.GetRenderer(), 0, 0, 0, 0);
-				SDL_RenderClear(g_FrameMan.GetRenderer());
-				preview->render(g_FrameMan.GetRenderer(),0,0);
-				g_FrameMan.PopRenderTarget();
+				// g_FrameMan.PushRenderTarget(m_ScenePreviewBitmap->GetTexture());
+				// SDL_SetRenderDrawColor(g_FrameMan.GetRenderer(), 0, 0, 0, 0);
+				// SDL_RenderClear(g_FrameMan.GetRenderer());
+				// preview->render(g_FrameMan.GetRenderer(),0,0);
+				// g_FrameMan.PopRenderTarget();
 				m_ScenePreviewImageBox->SetDrawImage(new SDLGUITexture(m_ScenePreviewBitmap->GetTexture()));
 				m_DrawDefaultScenePreview = false;
 			} else {
@@ -526,7 +527,7 @@ namespace RTE {
 
 	void ScenarioGUI::DrawSitePoints(RenderTarget *renderer) const {
 		int blendAmount = 0;
-		SDL_SetRenderDrawBlendMode(renderer, BLENDMODE_SCREEN);
+		// SDL_SetRenderDrawBlendMode(renderer, BLENDMODE_SCREEN);
 		for (const Scene *scenePointer : *m_ActivityScenes) {
 			uint32_t drawColor = 0;
 			if (scenePointer->GetModuleID() == g_PresetMan.GetModuleID("Base.rte")) {
@@ -542,14 +543,14 @@ namespace RTE {
 
 			blendAmount = 70 + RandomNum(0, 40);
 			uint32_t blendColor = drawColor * (blendAmount / 255.0);
-			filledCircleColor(renderer, sitePosX, sitePosY, 4, blendColor);
-			filledCircleColor(renderer, sitePosX, sitePosY, 2, blendColor);
+			// filledCircleColor(renderer, sitePosX, sitePosY, 4, blendColor);
+			// filledCircleColor(renderer, sitePosX, sitePosY, 2, blendColor);
 
 			blendAmount = 145 + RandomNum(0, 110);
 			blendColor = drawColor * (blendAmount / 255.0);
-			filledCircleColor(renderer, sitePosX, sitePosY, 1, blendColor);
+			// filledCircleColor(renderer, sitePosX, sitePosY, 1, blendColor);
 		}
-		SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+		// SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -558,7 +559,7 @@ namespace RTE {
 		int blendAmount = 0;
 		uint32_t drawColor = c_GUIColorWhite;
 
-		SDL_SetRenderDrawBlendMode(renderer, BLENDMODE_SCREEN);
+		// SDL_SetRenderDrawBlendMode(renderer, BLENDMODE_SCREEN);
 
 		if (!m_LineToSitePoints.empty()) {
 			for (int i = 0; i < m_LineToSitePoints.size() - 1; i++) {
@@ -571,16 +572,16 @@ namespace RTE {
 				uint32_t blendColor = drawColor * (blendAmount / 255.0);
 				blendColor |= 0xFF000000;
 
-				lineColor(renderer, lineStartX, lineStartY, lineEndX, lineEndY, blendColor);
+				// lineColor(renderer, lineStartX, lineStartY, lineEndX, lineEndY, blendColor);
 
 				blendAmount = 30 + RandomNum(0, 50);
 
 				blendColor = drawColor * (blendAmount / 255.0);
 				blendColor |= 0xFF000000;
-				lineColor(renderer, lineStartX + 1, lineStartY, lineEndX + 1, lineEndY, blendColor);
-				lineColor(renderer, lineStartX - 1, lineStartY, lineEndX - 1, lineEndY, blendColor);
-				lineColor(renderer, lineStartX, lineStartY + 1, lineEndX, lineEndY + 1, blendColor);
-				lineColor(renderer, lineStartX, lineStartY - 1, lineEndX, lineEndY - 1, blendColor);
+				// lineColor(renderer, lineStartX + 1, lineStartY, lineEndX + 1, lineEndY, blendColor);
+				// lineColor(renderer, lineStartX - 1, lineStartY, lineEndX - 1, lineEndY, blendColor);
+				// lineColor(renderer, lineStartX, lineStartY + 1, lineEndX, lineEndY + 1, blendColor);
+				// lineColor(renderer, lineStartX, lineStartY - 1, lineEndX, lineEndY - 1, blendColor);
 			}
 		}
 		Vector sitePos = m_PlanetCenter + m_SelectedScene->GetLocation() + m_SelectedScene->GetLocationOffset();
@@ -591,12 +592,12 @@ namespace RTE {
 		blendAmount = 195 + RandomNum(0, 30);
 		uint32_t blendColor = drawColor * (blendAmount / 255.0);
 		blendColor |= 0xFF000000;
-		circleColor(renderer, sitePosX, sitePosY, circleRadius, blendColor);
+		// circleColor(renderer, sitePosX, sitePosY, circleRadius, blendColor);
 
 		blendAmount = 120 + RandomNum(0, 50);
 		blendColor = drawColor * (blendAmount / 255.0);
 		blendColor |= 0xFF000000;
-		circleColor(renderer, sitePosX, sitePosY, circleRadius - 1, blendColor);
-		SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+		// circleColor(renderer, sitePosX, sitePosY, circleRadius - 1, blendColor);
+		// SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 	}
 }

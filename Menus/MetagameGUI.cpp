@@ -81,6 +81,7 @@ const string MetagameGUI::c_ClassName = "MetagameGUI";
 
 void MetagameGUI::SiteTarget::Draw(RenderTarget *renderer) const
 {
+#if 0
     if (!renderer)
         return;
 
@@ -159,6 +160,7 @@ void MetagameGUI::SiteTarget::Draw(RenderTarget *renderer) const
         rectangleColor(renderer, m_CenterPos.m_X - radius, m_CenterPos.m_Y - radius, m_CenterPos.m_X + radius, m_CenterPos.m_Y + radius, m_Color);
     }
 	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+#endif
 }
 
 
@@ -1943,6 +1945,7 @@ void MetagameGUI::Update()
 
 void MetagameGUI::Draw(RenderTarget *renderer)
 {
+#if 0
     // Don't draw site lines and dots if we're in the menus
     if (!g_MetaMan.IsSuspended())
     {
@@ -2083,6 +2086,7 @@ void MetagameGUI::Draw(RenderTarget *renderer)
         m_pBannerYellowTop->Draw(renderer);
         m_pBannerYellowBottom->Draw(renderer);
     }
+#endif
 }
 
 
@@ -6648,6 +6652,7 @@ void MetagameGUI::UpdatePlayerLineRatios(vector<SiteLine> &lineList, int metaPla
 
 void MetagameGUI::DrawGlowLine(RenderTarget *renderer, const Vector &start, const Vector &end, uint32_t color)
 {
+#if 0
 	int blendAmount = 210 + RandomNum(-15, 15);
 	SDL_SetRenderDrawBlendMode(renderer, BLENDMODE_SCREEN);
 	uint32_t blendColor = color * (blendAmount / 255.0);
@@ -6673,6 +6678,7 @@ void MetagameGUI::DrawGlowLine(RenderTarget *renderer, const Vector &start, cons
     lineColor(renderer, start.m_X, start.m_Y + 1, end.m_X, end.m_Y + 1, blendColor);
     lineColor(renderer, start.m_X, start.m_Y - 1, end.m_X, end.m_Y - 1, blendColor);
 	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+#endif
 }
 
 
@@ -6692,6 +6698,8 @@ bool MetagameGUI::DrawScreenLineToSitePoint(RenderTarget *renderer,
                                             float circleSize,
                                             bool squareSite) const
 {
+	return false;
+#if 0
     // No part of the line is visible with these params, so just quit
     if (onlyFirstSegments == 0 || onlyLastSegments == 0)
         return false;
@@ -6807,6 +6815,7 @@ bool MetagameGUI::DrawScreenLineToSitePoint(RenderTarget *renderer,
 	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 
     return totalSegments <= onlyFirstSegments && totalSegments <= onlyLastSegments;
+#endif
 }
 
 
@@ -6952,6 +6961,7 @@ bool MetagameGUI::DrawPlayerLineToSitePoint(RenderTarget *renderer,
 		uint32_t blendColor = color * (blendAmount / 255.0);
 		blendColor |= 0xFF000000;
 
+#if 0
         // If specified, draw a squareSite instead (with chamfered corners)
         if (squareSite)
         {
@@ -6963,15 +6973,17 @@ bool MetagameGUI::DrawPlayerLineToSitePoint(RenderTarget *renderer,
             vlineColor(renderer, sitePos.m_X - circleRadius - 1 - 1, sitePos.m_Y - circleRadius - 1, sitePos.m_Y + circleRadius, blendColor);
             vlineColor(renderer, sitePos.m_X + circleRadius, sitePos.m_Y + circleRadius, sitePos.m_Y - circleRadius - 1, blendColor);
             vlineColor(renderer, sitePos.m_X + circleRadius + 1, sitePos.m_Y + circleRadius, sitePos.m_Y - circleRadius - 1, blendColor);
+
         }
         else
         {
             circleColor(renderer, sitePos.m_X, sitePos.m_Y, circleRadius, blendColor);
             circleColor(renderer, sitePos.m_X, sitePos.m_Y, circleRadius - 1, blendColor);
         }
+#endif
     }
 
-	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+	// SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 
     return totalSegments <= onlyFirstSegments && totalSegments <= onlyLastSegments;
 }
