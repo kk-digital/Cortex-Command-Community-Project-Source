@@ -596,7 +596,7 @@ namespace RTE {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void TitleScreen::DrawOverlayEffectBitmap() const {
-		SDL_SetRenderDrawColor(g_FrameMan.GetRenderer(), (m_FadeColor >> 16) & 0xff, (m_FadeColor >> 8) & 0xff, (m_FadeColor) & 0xff, ((m_FadeColor>>24) & 0xFF) * (m_FadeAmount / 255.0));
-		SDL_RenderFillRect(g_FrameMan.GetRenderer(), NULL);
+		// SDL_SetRenderDrawColor(g_FrameMan.GetRenderer(), (m_FadeColor >> 16) & 0xff, (m_FadeColor >> 8) & 0xff, (m_FadeColor) & 0xff, ((m_FadeColor>>24) & 0xFF) * (m_FadeAmount / 255.0));
+		// SDL_RenderFillRect(g_FrameMan.GetRenderer(), NULL);
 	}
 }
