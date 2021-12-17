@@ -22,7 +22,7 @@ namespace RTE {
 		m_PresetList.clear();
 		m_EntityList.clear();
 		m_TypeMap.clear();
-		m_MaterialMappings.clear();
+		m_MaterialMappings.fill(0);
 		m_ScanFolderContents = false;
 		m_IgnoreMissingItems = false;
 		m_CrabToHumanSpawnRatio = 0;
@@ -319,18 +319,15 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	uint32_t DataModule::GetMaterialMapping(uint32_t materialID) const {
-		if(m_MaterialMappings.find(materialID) != m_MaterialMappings.end())
-			return m_MaterialMappings.at(materialID);
-		else
-			return 0;
+	MID DataModule::GetMaterialMapping(MID materialID) const {
+		return m_MaterialMappings.at(materialID);
 	}
 
-	bool DataModule::AddMaterialMapping(uint32_t fromID, uint32_t toID) {
-		// RTEAssert(fromID > 0 && fromID < c_PaletteEntriesNumber && toID > 0 && toID < c_PaletteEntriesNumber, "Tried to make an out-of-bounds Material mapping");
+	bool DataModule::AddMaterialMapping(MID fromID, MID toID) {
+		RTEAssert(fromID > 0 && fromID < c_PaletteEntriesNumber && toID > 0 && toID < c_PaletteEntriesNumber, "Tried to make an out-of-bounds Material mapping");
 
-		bool clear = m_MaterialMappings.find(fromID) == m_MaterialMappings.end();
-		m_MaterialMappings[fromID] = toID;
+		bool clear = m_MaterialMappings.at(fromID) == 0;
+		m_MaterialMappings.at(fromID) = toID;
 
 		return clear;
 	}
