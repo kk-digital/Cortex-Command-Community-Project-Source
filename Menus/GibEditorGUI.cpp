@@ -30,6 +30,7 @@
 
 #include "System/SDLHelper.h"
 #include "SDL2_gfxPrimitives.h"
+#include "RTERenderer.h"
 
 using namespace RTE;
 
@@ -100,7 +101,9 @@ int GibEditorGUI::Create(Controller *pController, int whichModuleSpace)
     m_pPicker->Create(pController, whichModuleSpace, "MovableObject");
 
     // Intermediate zooming bitmap
-    m_pZoomSource = std::make_shared<Texture>(g_FrameMan.GetRenderer(), 64, 64);
+	std::shared_ptr<GLTexture> zoomTextureAttachment = MakeTexture();
+	zoomTextureAttachment->Create(64, 64);
+    m_pZoomSource = std::make_shared<RenderTexture>(zoomTextureAttachment);
 
     // Cursor init
     m_CursorPos = g_SceneMan.GetSceneDim() / 2;

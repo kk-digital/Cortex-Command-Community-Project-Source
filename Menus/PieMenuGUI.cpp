@@ -14,6 +14,8 @@
 #include <SDL2/SDL.h>
 #include "SDL2_gfxPrimitives.h"
 
+#include "RTERenderer.h"
+
 namespace RTE {
 
 	SharedTexture PieMenuGUI::s_CursorBitmap;
@@ -67,7 +69,8 @@ namespace RTE {
 
 		if (!m_BGTexture) {
 			int diameter = (c_FullRadius + std::max(m_BackgroundThickness, m_BackgroundSeparatorSize) + 2) * 2;
-			m_BGTexture = std::make_shared<Texture>(g_FrameMan.GetRenderer(), diameter, diameter, SDL_TEXTUREACCESS_TARGET);
+			m_BGTexture = MakeTexture();
+			m_BGTexture->Create(diameter, diameter);
 		}
 
 		return 0;
@@ -549,13 +552,12 @@ namespace RTE {
 	//TODO Need to investigate this stuff, I don't fully understand what it does and maybe it's mostly undesirable since we'll want to be able to draw pie menus partly off the screen
 	void PieMenuGUI::CalculateDrawPosition(RenderTarget *renderer, const Vector &targetPos, Vector &drawPos) const {
 		drawPos = m_CenterPos - targetPos;
-		SDL_Rect viewport;
-		SDL_RenderGetViewport(g_FrameMan.GetRenderer(), &viewport);
+		glm::vec2 viewport = renderer->GetViewport();
 
 		if (!targetPos.IsZero()) {
 			const Box *nearestBox = nullptr;
 
-			Box screenBox(targetPos, static_cast<float>(viewport.w), static_cast<float>(viewport.h));
+			Box screenBox(targetPos, static_cast<float>(viewport.x), static_cast<float>(viewport.y));
 			std::list<Box> wrappedBoxes;
 			bool withinAnyBox = false;
 			float distance = std::numeric_limits<float>::max();
@@ -586,13 +588,13 @@ namespace RTE {
 		int menuDrawRadius = m_InnerRadius + m_BackgroundThickness + 2 + m_LargeFont->GetFontHeight();
 		if (drawPos.m_X - static_cast<float>(menuDrawRadius) < 0.0F) {
 			drawPos.m_X = static_cast<float>(menuDrawRadius);
-		} else if (drawPos.m_X + static_cast<float>(menuDrawRadius) > static_cast<float>(viewport.w)) {
-			drawPos.m_X = static_cast<float>(viewport.w - menuDrawRadius);
+		} else if (drawPos.m_X + static_cast<float>(menuDrawRadius) > static_cast<float>(viewport.x)) {
+			drawPos.m_X = static_cast<float>(viewport.y - menuDrawRadius);
 		}
 		if (drawPos.m_Y - static_cast<float>(menuDrawRadius) < 0.0F) {
 			drawPos.m_Y = static_cast<float>(menuDrawRadius);
-		} else if (drawPos.m_Y + static_cast<float>(menuDrawRadius) > static_cast<float>(viewport.h)) {
-			drawPos.m_Y = static_cast<float>(viewport.h - menuDrawRadius);
+		} else if (drawPos.m_Y + static_cast<float>(menuDrawRadius) > static_cast<float>(viewport.y)) {
+			drawPos.m_Y = static_cast<float>(viewport.y - menuDrawRadius);
 		}
 	}
 

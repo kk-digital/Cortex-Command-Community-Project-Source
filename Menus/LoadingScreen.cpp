@@ -11,6 +11,7 @@
 #include "GUIListBox.h"
 
 #include "System/System.h"
+#include "Renderer/RenderTexture.h"
 
 namespace RTE {
 
@@ -37,9 +38,9 @@ namespace RTE {
 		}
 		SceneLayer loadingSplash;
 		loadingSplash.Create(ContentFile("Base.rte/GUIs/Title/LoadingSplash.png"), false, Vector(), true, false, Vector(1.0F, 0));
-		loadingSplash.SetOffset(Vector(static_cast<float>(((loadingSplash.GetTexture()->getW() - g_FrameMan.GetResX()) / 2) + loadingSplashOffset), 0));
+		loadingSplash.SetOffset(Vector(static_cast<float>(((loadingSplash.GetTexture()->GetW() - g_FrameMan.GetResX()) / 2) + loadingSplashOffset), 0));
 
-		Box loadingSplashTargetBox(Vector(0, static_cast<float>((g_FrameMan.GetResY() - loadingSplash.GetTexture()->getH()) / 2)), static_cast<float>(g_FrameMan.GetResX()), static_cast<float>(loadingSplash.GetTexture()->getH()));
+		Box loadingSplashTargetBox(Vector(0, static_cast<float>((g_FrameMan.GetResY() - loadingSplash.GetTexture()->GetH()) / 2)), static_cast<float>(g_FrameMan.GetResX()), static_cast<float>(loadingSplash.GetTexture()->GetH()));
 		loadingSplash.Draw(g_FrameMan.GetRenderer(), loadingSplashTargetBox);
 
 #ifdef LOADINGUI

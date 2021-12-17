@@ -18,7 +18,6 @@
 #include "Controller.h"
 
 
-struct SDL_Texture;
 
 
 namespace RTE
@@ -26,6 +25,7 @@ namespace RTE
 	class SceneObject;
 	class ObjectPickerGUI;
 	class PieMenuGUI;
+	class RenderTexture;
 
 	//////////////////////////////////////////////////////////////////////////////////////////
 	// Class:           MultiplayerGameGUI

@@ -9,6 +9,7 @@
 #include "SDLGUITexture.h"
 
 #include "SDLHelper.h"
+#include "RTERenderer.h"
 
 namespace RTE {
 
@@ -72,7 +73,7 @@ namespace RTE {
 	void TitleScreen::Create(SDLScreen *guiScreen) {
 		CreateTitleElements();
 
-		m_IntroScrollStartOffsetY = (static_cast<float>(m_Nebula.GetTexture()->getH()) / m_BackdropScrollRatio) - (static_cast<float>(g_FrameMan.GetResY()) / m_BackdropScrollRatio);
+		m_IntroScrollStartOffsetY = (static_cast<float>(m_Nebula.GetTexture()->GetH()) / m_BackdropScrollRatio) - (static_cast<float>(g_FrameMan.GetResY()) / m_BackdropScrollRatio);
 		m_ScrollOffset.SetXY(0, m_IntroScrollStartOffsetY);
 
 		m_StationOrbitTimer.SetElapsedRealTimeS(15);
@@ -115,7 +116,7 @@ namespace RTE {
 		int starHugeBitmapCount = 2;
 		std::vector<SharedTexture> starHugeBitmaps = ContentFile("Base.rte/GUIs/Title/Stars/StarHuge.png").GetAsAnimation(starHugeBitmapCount);
 
-		int starCount = (g_FrameMan.GetResX() * m_Nebula.GetTexture()->getH()) / 1000;
+		int starCount = (g_FrameMan.GetResX() * m_Nebula.GetTexture()->GetH()) / 1000;
 		for (int i = 0; i < starCount; ++i) {
 			Star newStar;
 			if (RandomNum() < 0.95F) {
@@ -131,7 +132,7 @@ namespace RTE {
 				newStar.Bitmap = starHugeBitmaps.at(RandomNum(0, starLargeBitmapCount - 1));
 				newStar.Intensity = RandomNum(166, 185);
 			}
-			newStar.Position = Vector(RandomNum(0.0F, static_cast<float>(g_FrameMan.GetResX())), RandomNum(-100.0F, static_cast<float>(m_Nebula.GetTexture()->getH())));
+			newStar.Position = Vector(RandomNum(0.0F, static_cast<float>(g_FrameMan.GetResX())), RandomNum(-100.0F, static_cast<float>(m_Nebula.GetTexture()->GetH())));
 
 			m_BackdropStars.emplace_back(newStar);
 		}
@@ -507,11 +508,11 @@ namespace RTE {
 				DrawSlideshowSlide();
 			} else if (m_IntroSequenceState == IntroSequence::SlideshowEnd) {
 				m_PreGameLogoText.Draw(g_FrameMan.GetRenderer(), Vector(), DrawMode::g_DrawAlpha);
-				int blendAmount = 220 + RandomNum(-35, 35);
-				m_PreGameLogoText.GetSpriteFrame()->setBlendMode(BLENDMODE_SCREEN);
+				glm::vec3 blendAmount((220 + RandomNum(-35, 35))/255.0);
+				m_PreGameLogoText.GetSpriteFrame()->setBlendMode(BlendModes::Screen);
 				m_PreGameLogoText.GetSpriteFrame()->setColorMod(blendAmount);
 				m_PreGameLogoTextGlow.Draw(g_FrameMan.GetRenderer(), Vector(), DrawMode::g_DrawTrans);
-				m_PreGameLogoText.GetSpriteFrame()->setColorMod();
+				m_PreGameLogoText.GetSpriteFrame()->setColorMod(glm::vec3(1));
 			}
 		} else {
 			DrawTitleScreenScene();
@@ -531,14 +532,14 @@ namespace RTE {
 
 	void TitleScreen::DrawTitleScreenScene() {
 		Vector nebulaPos(0, m_ScrollOffset.GetY() * m_BackdropScrollRatio);
-		if (m_Nebula.GetTexture()->getW() != g_FrameMan.GetResX()) { nebulaPos.SetX(static_cast<float>((m_Nebula.GetTexture()->getW() - g_FrameMan.GetResX()) / 2)); }
+		if (m_Nebula.GetTexture()->GetW() != g_FrameMan.GetResX()) { nebulaPos.SetX(static_cast<float>((m_Nebula.GetTexture()->GetW() - g_FrameMan.GetResX()) / 2)); }
 		Box nebulaTargetBox;
 		m_Nebula.Draw(g_FrameMan.GetRenderer(), nebulaTargetBox, nebulaPos);
 
 		for (const Star &star : m_BackdropStars) {
-			int intensity = star.Intensity + RandomNum(0, (star.Size == Star::StarSize::StarSmall) ? 35 : 70);
+			glm::vec3 intensity((star.Intensity + RandomNum(0, (star.Size == Star::StarSize::StarSmall) ? 35 : 70)) / 255.0);
 			int starPosY = static_cast<int>(star.Position.GetY() - (m_ScrollOffset.GetY() * (m_BackdropScrollRatio * ((star.Size == Star::StarSize::StarSmall) ? 0.8F : 1.0F))));
-			star.Bitmap->setBlendMode(BLENDMODE_SCREEN);
+			star.Bitmap->setBlendMode(BlendModes::Screen);
 			star.Bitmap->setColorMod(intensity);
 			star.Bitmap->render(g_FrameMan.GetRenderer(), star.Position.GetFloorIntX(), starPosY);
 		}
@@ -561,8 +562,8 @@ namespace RTE {
 	void TitleScreen::DrawGameLogo() {
 		m_GameLogo.Draw(g_FrameMan.GetRenderer(), Vector(), DrawMode::g_DrawAlpha);
 		m_GameLogoGlow.SetPos(m_GameLogo.GetPos());
-		int glowIntensity = 220 + RandomNum(-35, 35);
-		m_GameLogoGlow.GetSpriteFrame()->setBlendMode(BLENDMODE_SCREEN);
+		glm::vec3 glowIntensity((220 + RandomNum(-35, 35)) / 255.0);
+		m_GameLogoGlow.GetSpriteFrame()->setBlendMode(BlendModes::Screen);
 		m_GameLogoGlow.GetSpriteFrame()->setColorMod(glowIntensity);
 		m_GameLogoGlow.Draw(g_FrameMan.GetRenderer(), Vector(), DrawMode::g_DrawTrans);
 	}

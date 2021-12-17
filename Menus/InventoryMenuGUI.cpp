@@ -181,8 +181,10 @@ namespace RTE {
 		m_CarouselExitingItemBox->IconCenterPosition.SetY(c_CarouselBoxMaxSize.GetY() / 2 + static_cast<float>(m_SmallFont->GetFontHeight() / 2));
 		m_CarouselExitingItemBox->FullSize = c_CarouselBoxMinSize - c_CarouselBoxSizeStep;
 
-		m_CarouselBitmap = std::make_unique<Texture>(g_FrameMan.GetRenderer(), carouselBitmapWidth, c_CarouselBoxMaxSize.GetFloorIntY() + m_SmallFont->GetFontHeight() / 2);
-		m_CarouselBGBitmap = std::make_unique<Texture>(g_FrameMan.GetRenderer(), carouselBitmapWidth, c_CarouselBoxMaxSize.GetFloorIntY() + m_SmallFont->GetFontHeight() / 2);
+		m_CarouselBitmap = MakeTexture();
+		m_CarouselBitmap->Create(carouselBitmapWidth, c_CarouselBoxMaxSize.GetFloorIntY() + m_SmallFont->GetFontHeight() / 2);
+		m_CarouselBGBitmap = MakeTexture();
+		m_CarouselBitmap->Create(carouselBitmapWidth, c_CarouselBoxMaxSize.GetFloorIntY() + m_SmallFont->GetFontHeight() / 2);
 
 		return 0;
 	}
