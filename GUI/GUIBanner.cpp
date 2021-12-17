@@ -78,7 +78,7 @@ bool GUIBanner::Create(const std::string fontFilePath, const std::string fontBlu
         RTEAssert(m_pFontImage[mode].get(), "Couldn't load font bitmap for banner font from this file:\n" + fontFilePath);
 
         // Check the color key to be the same color as the Bottom-Right hand corner pixel
-        uint32_t keyColor = m_pFontImage[mode]->getPixel(m_pFontImage[mode]->getW() - 1, m_pFontImage[mode]->getH() - 1);
+        uint32_t keyColor = m_pFontImage[mode]->GetPixel(m_pFontImage[mode]->GetW() - 1, m_pFontImage[mode]->GetH() - 1);
 // No need (or way!) to actually set it; it's assumed to be bright pink (255, 255, 0)
 //        m_pFontImage[mode]->SetColorKey(keyColor);
 
@@ -101,11 +101,11 @@ bool GUIBanner::Create(const std::string fontFilePath, const std::string fontBlu
             if (mode == REGULAR)
             {
                 // The red separator MUST be on the Top-Left hand corner
-                dotColor = m_pFontImage[mode]->getPixel(0, 0);
+                dotColor = m_pFontImage[mode]->GetPixel(0, 0);
                 m_FontHeight = 0;
-                for (y = 1; y < m_pFontImage[mode]->getH(); y++)
+                for (y = 1; y < m_pFontImage[mode]->GetH(); y++)
                 {
-                    if (m_pFontImage[mode]->getPixel(0, y) == dotColor)
+                    if (m_pFontImage[mode]->GetPixel(0, y) == dotColor)
                     {
                         m_FontHeight = y;
                         break;
@@ -117,15 +117,15 @@ bool GUIBanner::Create(const std::string fontFilePath, const std::string fontBlu
         else
         {
             // The red separator MUST be on the Top-Left hand corner
-            dotColor = m_pFontImage[mode]->getPixel(0, 0);
+            dotColor = m_pFontImage[mode]->GetPixel(0, 0);
             // Find the separating gap of the font lines
             // Calc the font height - the horizontally blurred one should be the same
             if (mode == REGULAR)
             {
                 m_FontHeight = 0;
-                for (y = 1; y < m_pFontImage[mode]->getH(); y++)
+                for (y = 1; y < m_pFontImage[mode]->GetH(); y++)
                 {
-                    if (m_pFontImage[mode]->getPixel(0, y) == dotColor)
+                    if (m_pFontImage[mode]->GetPixel(0, y) == dotColor)
                     {
                         m_FontHeight = y;
                         break;
@@ -146,9 +146,9 @@ bool GUIBanner::Create(const std::string fontFilePath, const std::string fontBlu
                 // Find the next red pixel
                 int w = 0;
                 int n;
-                for (n = x; n < m_pFontImage[mode]->getW(); n++, w++)
+                for (n = x; n < m_pFontImage[mode]->GetW(); n++, w++)
                 {
-                    if (m_pFontImage[mode]->getPixel(n, y) == dotColor)
+                    if (m_pFontImage[mode]->GetPixel(n, y) == dotColor)
                     {
                         break;
                     }
@@ -160,7 +160,7 @@ bool GUIBanner::Create(const std::string fontFilePath, const std::string fontBlu
                 {
                     for (int i = x; i < x + w; i++)
                     {
-                        uint32_t Pixel = m_pFontImage[mode]->getPixel(i, j);
+                        uint32_t Pixel = m_pFontImage[mode]->GetPixel(i, j);
                         if (Pixel != dotColor && Pixel != keyColor)
                             Height = std::max(Height, j - y);
                     }
@@ -179,7 +179,7 @@ bool GUIBanner::Create(const std::string fontFilePath, const std::string fontBlu
                     x = 1;
                     y += m_FontHeight;
                     // Stop if we run out of bitmap
-                    if ((y + m_FontHeight) > m_pFontImage[mode]->getH())
+                    if ((y + m_FontHeight) > m_pFontImage[mode]->GetH())
                         break;
                 }
             }
@@ -448,13 +448,13 @@ void GUIBanner::Draw(RenderTarget *renderer)
             charWidth = m_aaFontChars[mode][c].m_Width;
             offX = m_aaFontChars[mode][c].m_Offset;
             offY = ((c - 32) / 16) * m_FontHeight;
-			SDL_Rect src_pos{
+			glm::vec4 src_pos{
 				offX,
 				offY,
 				charWidth,
 				m_FontHeight
 			};
-			SDL_Rect dest_pos{
+			glm::vec4 dest_pos{
 				cItr->m_PosX,
 				m_BannerPosY,
 				charWidth,
