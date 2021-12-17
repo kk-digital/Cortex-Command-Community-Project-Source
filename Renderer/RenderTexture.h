@@ -10,6 +10,7 @@ namespace RTE {
 		virtual ~RenderTexture();
 
 		RenderTexture(std::shared_ptr<RenderTexture> ref);
+		RenderTexture(std::shared_ptr<GLTexture> texture);
 
 		using RenderTarget::Create;
 
