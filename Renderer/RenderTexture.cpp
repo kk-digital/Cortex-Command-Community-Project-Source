@@ -10,7 +10,7 @@ namespace RTE {
 
 	RenderTexture::~RenderTexture() {
 		if (m_FBO) {
-			glDeleteFramebuffers(1, m_FBO);
+			glDeleteFramebuffers(1, &m_FBO);
 		}
 	}
 
