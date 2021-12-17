@@ -106,7 +106,4 @@ namespace RTE {
 		return *this;
 	}
 
-	Vector::operator SDL_Point() const{
-		return SDL_Point{GetFloorIntX(), GetFloorIntY()};
-	}
 }
