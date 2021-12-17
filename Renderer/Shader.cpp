@@ -7,7 +7,12 @@
 namespace RTE {
 
 	Shader::Shader() :
-	    m_ProgramID(glCreateProgram()) {}
+	    m_ProgramID(glCreateProgram()), m_TextureUniform(-1), m_ColorUniform(-1), m_TransformUniform(-1), m_ProjectionUniform(-1) {}
+
+	Shader::Shader(const std::string &vertexFilename, const std::string &fragPath) :
+	    m_ProgramID(glCreateProgram()), m_TextureUniform(-1), m_ColorUniform(-1), m_TransformUniform(-1), m_ProjectionUniform(-1) {
+		Compile(vertexFilename, fragPath);
+	}
 
 	Shader::~Shader() {
 		if (m_ProgramID) {
@@ -22,17 +27,16 @@ namespace RTE {
 
 		std::string error;
 		result = compileShader(vertexShader, vertexPath, error) && compileShader(fragmentShader, fragPath, error);
-		if (result){
+		if (result) {
 			glBindAttribLocation(m_ProgramID, 0, "rteVertexPosition");
 			glBindAttribLocation(m_ProgramID, 1, "rteVertexTexUV");
 			glBindAttribLocation(m_ProgramID, 2, "rteVertexColor");
-			if(Link(vertexShader, fragmentShader)){
+			if (Link(vertexShader, fragmentShader)) {
 				m_TextureUniform = GetUniformLocation("rteTexture");
 				m_ColorUniform = GetUniformLocation("rteColor");
 				m_TransformUniform = GetUniformLocation("rteTransform");
 				m_ProjectionUniform = GetUniformLocation("rteProjection");
 			} else {
-
 			}
 		} else {
 			glDeleteShader(vertexShader);
@@ -47,9 +51,7 @@ namespace RTE {
 
 	void Shader::Use() { glUseProgram(m_ProgramID); }
 
-
 	GLint Shader::GetUniformLocation(const std::string &name) { return glGetUniformLocation(m_ProgramID, name.c_str()); }
-
 
 	void Shader::SetBool(const std::string &name, bool value) { glUniform1i(glGetUniformLocation(m_ProgramID, name.c_str()), static_cast<int>(value)); }
 
@@ -65,7 +67,6 @@ namespace RTE {
 
 	void Shader::SetVector4f(const std::string &name, const glm::vec4 &value) { glUniform4fv(glGetUniformLocation(m_ProgramID, name.c_str()), 1, glm::value_ptr(value)); }
 
-
 	void Shader::SetBool(int32_t uniformLoc, bool value) { glUniform1i(uniformLoc, value); }
 
 	void Shader::SetInt(int32_t uniformLoc, int value) { glUniform1i(uniformLoc, value); }
@@ -79,7 +80,6 @@ namespace RTE {
 	void Shader::SetVector3f(int32_t uniformLoc, const glm::vec3 &value) { glUniform3fv(uniformLoc, 1, glm::value_ptr(value)); }
 
 	void Shader::SetVector4f(int32_t uniformLoc, const glm::vec4 &value) { glUniform4fv(uniformLoc, 1, glm::value_ptr(value)); }
-
 
 	bool Shader::compileShader(GLuint shaderID, const std::string &filename, std::string &error) {
 		std::ifstream file(filename);
