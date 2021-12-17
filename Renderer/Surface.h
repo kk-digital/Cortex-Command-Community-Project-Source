@@ -1,5 +1,7 @@
 #ifndef _RTESURFACE_
 #define _RTESURFACE_
+#include "BlendMode.h"
+
 extern "C" {
 struct SDL_Surface;
 }
@@ -177,18 +179,26 @@ namespace RTE {
 		/// </param>
 		void ClearColor(uint32_t color = 0);
 
+		void setBlendMode(BlendMode blendMode) { m_BlendMode = blendMode; }
+		BlendMode getBlendMode() const { return m_BlendMode; }
+
 		void blit(std::shared_ptr<Surface> target, int x, int y, double angle = 0, float scaleX = 1.0f, float scaleY = 1.0f) const;
 
 		void blit(std::shared_ptr<Surface> target, glm::vec2 position) const;
+		void blit(std::shared_ptr<Surface> target, std::optional<glm::vec4> srcRect, glm::vec4 destRect) const;
 
 		void blitMasked(std::shared_ptr<Surface> target, uint32_t color, int x, int y, double angle = 0, float scaleX = 1.0f, float scaleY = 1.0f) const;
 
 		void fillRect(glm::vec4 rect, uint32_t color);
 
+		void rect(glm::vec4 rect, uint32_t color);
+
 	protected:
 		int m_Width;
 		int m_Height;
 		int m_BPP;
+
+		BlendMode m_BlendMode;
 
 		void SetPalette(std::shared_ptr<Palette> palette) { m_Palette = palette; }
 

@@ -42,6 +42,9 @@ namespace RTE {
 
 		void render(RenderTarget *renderer, glm::vec2 pos, float angle, glm::vec2 center, glm::vec2 scale);
 
+		void render(RenderTarget *renderer, glm::vec4 src, glm::vec4 dest);
+		void render(RenderTarget *renderer, glm::vec4 dest);
+
 		void Update(std::optional<glm::vec2> region = std::nullopt);
 
 		void setShading(Shading shader) { m_Shading = shader; }
@@ -53,9 +56,6 @@ namespace RTE {
 		void SetFillShader(std::shared_ptr<Shader> shaderFill) { m_ShaderFill = shaderFill; }
 
 		void SetCustomShader(std::shared_ptr<Shader> shaderCustom) { m_ShaderCustom = shaderCustom; }
-
-		void setBlendMode(BlendMode blendMode) { m_BlendMode = blendMode; }
-		BlendMode getBlendMode() const { return m_BlendMode; }
 
 		void setColorMod(const glm::vec3 &colorMod) { m_ColorMod = glm::vec4(colorMod, m_ColorMod.a); }
 
@@ -82,7 +82,6 @@ namespace RTE {
 		unsigned int m_TextureID; //!< The OpenGL texture handle associated with this texture.
 
 		glm::vec4 m_ColorMod; //!< Color multiplied in the shader stage, used for fill color as well.
-		BlendMode m_BlendMode; //!< The blendmode used for drawing this texture.
 
 		Shading m_Shading; //!< Which shader to use while drawing.
 		std::shared_ptr<Shader> m_ShaderBase; //!< Base shader appropriate for the bitdepth, also used as fallback in case other shaders are unset. MUST BE SET BEFORE DRAWING.
