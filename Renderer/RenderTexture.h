@@ -1,15 +1,31 @@
 #ifndef _RTERENDERTEXTURE_
 #define _RTERENDERTEXTURE_
 #include "RenderTarget.h"
+#include "GLTexture.h"
 
 namespace RTE {
-	class GLTexture;
 	class RenderTexture : public RenderTarget {
 	public:
+		/// <summary>
+		/// Initializes a RenderTexture in memory. Creates the FBO.
+		/// </summary>
 		RenderTexture();
 		virtual ~RenderTexture();
 
+		/// <summary>
+		/// Initializes a RenderTexture in memory from an existing RenderTexture. Creates the FBO.
+		/// </summary>
+		/// <param name="ref">
+		/// The reference to get the texture attachment from.
+		/// </param>
 		RenderTexture(std::shared_ptr<RenderTexture> ref);
+
+		/// <summary>
+		/// Initializes a RenderTexture in memory from an existing RenderTexture. Creates the FBO.
+		/// </summary>
+		/// <param name="texture">
+		/// The texture attachment to use.
+		/// </param>
 		RenderTexture(std::shared_ptr<GLTexture> texture);
 
 		using RenderTarget::Create;
@@ -29,7 +45,7 @@ namespace RTE {
 		/// <returns>
 		/// True  if creation was successful.
 		/// </returns>
-		void Create(int width, int height, uint32_t format = 0);
+		void Create(int width, int height, BitDepth format);
 
 		void Create(std::shared_ptr<GLTexture> texture);
 
