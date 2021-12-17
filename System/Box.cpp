@@ -142,4 +142,43 @@ namespace RTE {
 		return (box1.m_Corner.m_X < box2.m_Corner.m_X + box2.m_Width) && (box1.m_Corner.m_X + box1.m_Width > box2.m_Corner.m_X) &&
 			(box1.m_Corner.m_Y < box2.m_Corner.m_Y + box2.m_Height) && (box1.m_Corner.m_Y + box1.m_Height > box2.m_Corner.m_Y);
 	}
+
+	Box Box::GetIntersection(const Box &rhs) {
+		Box intersection = *this;
+		intersection.Unflip();
+		Box tester = rhs;
+		tester.Unflip();
+
+		int aMinX = intersection.m_Corner.m_X;
+		int aMaxX = intersection.m_Corner.m_X + intersection.m_Width;
+		int bMinX = tester.m_Corner.m_X;
+		int bMaxX = tester.m_Corner.m_X + tester.m_Width;
+
+		if (bMinX > aMinX) {
+			aMinX = bMinX;
+		}
+		intersection.m_Corner.m_X = aMinX;
+
+		if (bMaxX < aMaxX) {
+			aMaxX = bMaxX;
+		}
+		intersection.m_Width = aMaxX - aMinX;
+
+		int aMinY = intersection.m_Corner.m_Y;
+		int aMaxY = intersection.m_Corner.m_Y + intersection.m_Height;
+		int bMinY = tester.m_Corner.m_Y;
+		int bMaxY = tester.m_Corner.m_Y + tester.m_Height;
+
+		if (bMinY > aMinY) {
+			aMinY = bMinY;
+		}
+		intersection.m_Corner.m_Y = aMinY;
+
+		if (bMaxY < aMaxY){
+			aMaxY = bMaxY;
+		}
+		intersection.m_Height = aMaxY - aMinY;
+
+		return intersection;
+	}
 }

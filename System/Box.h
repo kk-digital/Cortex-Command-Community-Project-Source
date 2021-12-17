@@ -182,6 +182,8 @@ namespace RTE {
 		/// <returns>Intersecting the other box or not.</returns>
 		bool IntersectsBox(const Box &rhs);
 
+		Box GetIntersection(const Box &rhs);
+
 		/// <summary>
 		/// Tells whether a point is within the Box or not, taking potential flipping into account.
 		/// </summary>
@@ -248,6 +250,8 @@ namespace RTE {
 		/// <param name="rhs">A Box reference as the right hand side operand.</param>
 		/// <returns>A boolean indicating whether the two operands are unequal or not.</returns>
 		friend bool operator!=(const Box &lhs, const Box &rhs) { return lhs.m_Corner != rhs.m_Corner || lhs.m_Width != rhs.m_Width || lhs.m_Height != rhs.m_Height; }
+
+		operator glm::vec4() const {return glm::vec4(static_cast<glm::vec2>(m_Corner), m_Width, m_Height); }
 #pragma endregion
 
 	private:
