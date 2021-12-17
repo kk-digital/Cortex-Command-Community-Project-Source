@@ -60,6 +60,11 @@ namespace RTE {
 	}
 
 	void RenderTexture::Draw(RenderState &state) {
+		glBindFramebuffer(GL_FRAMEBUFFER, m_FBO);
+
+		RenderTarget::Draw(state);
+
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 
 	void RenderTexture::DrawClear(glm::vec4 color) {
