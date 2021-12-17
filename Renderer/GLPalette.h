@@ -13,6 +13,14 @@ namespace RTE {
 
 		SDL_Palette *GetAsPalette();
 
+		glm::u8vec4 at(size_t index);
+
+		unsigned char GetIndexFromColor(const glm::vec4& color);
+
+		void Bind();
+
+		void Update();
+
 	private:
 		unsigned int m_Texture;
 
@@ -23,7 +31,7 @@ namespace RTE {
 		};
 		std::unique_ptr<SDL_Palette, sdl_palette_deleter> m_SDLPalette;
 	public:
-		glm::u8vec4 operator[] (size_t index) {
+		glm::u8vec4 & operator[] (size_t index) {
 			return m_Palette[index];
 		}
 	};
