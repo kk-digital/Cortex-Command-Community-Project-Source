@@ -1,4 +1,5 @@
 #include "Color.h"
+#include "FrameMan.h"
 
 namespace RTE {
 
@@ -10,16 +11,17 @@ namespace RTE {
 		if (Serializable::Create()) {
 			return -1;
 		}
+		RecalculateIndex();
 		return 0;
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	int Color::Create(int inputR, int inputG, int inputB, int inputA) {
+	int Color::Create(int inputR, int inputG, int inputB) {
 		SetR(inputR);
 		SetG(inputG);
 		SetB(inputB);
-		SetA(inputA);
+		RecalculateIndex();
 		return 0;
 	}
 
@@ -27,15 +29,13 @@ namespace RTE {
 
 	int Color::ReadProperty(const std::string_view &propName, Reader &reader) {
 		if (propName == "Index") {
-			SetRGBAFromColor(std::stoi(reader.ReadPropValue()));
+			SetRGBWithIndex(std::stoi(reader.ReadPropValue()));
 		} else if (propName == "R") {
 			SetR(std::stoi(reader.ReadPropValue()));
 		} else if (propName == "G") {
 			SetG(std::stoi(reader.ReadPropValue()));
 		} else if (propName == "B") {
 			SetB(std::stoi(reader.ReadPropValue()));
-		} else if (propName == "A"){
-			SetA(std::stoi(reader.ReadPropValue()));
 		} else {
 			return Serializable::ReadProperty(propName, reader);
 		}
@@ -50,36 +50,26 @@ namespace RTE {
 		writer.NewPropertyWithValue("R", m_R);
 		writer.NewPropertyWithValue("G", m_G);
 		writer.NewPropertyWithValue("B", m_B);
-		writer.NewPropertyWithValue("A", m_A);
 
 		return 0;
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void Color::SetRGBAFromColor(uint32_t color) {
-		m_R = (color >> 16) & 0xFF;
-		m_G = (color >> 8) & 0xFF;
-		m_B = (color) & 0xFF;
-		m_A = (color >> 24) & 0xFF;
-#if 0
+	void Color::SetRGBWithIndex(int index) {
 		m_Index = std::clamp(index, 0, 255);
 
-		RGB rgbColor;
-		get_color(m_Index, &rgbColor);
+		glm::vec4 rgbColor = g_FrameMan.GetDefaultPalette()->at(m_Index);
 
 		// Multiply by 4 because the Allegro RGB struct elements are in range 0-63, and proper RGB needs 0-255.
-		m_R = rgbColor.r * 4;
-		m_G = rgbColor.g * 4;
-		m_B = rgbColor.b * 4;
-#endif
+		m_R = rgbColor.r;
+		m_G = rgbColor.g;
+		m_B = rgbColor.b;
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#if 0
 	int Color::RecalculateIndex() {
-		return m_Index = makecol8(m_R, m_G, m_B);
+		return m_Index = g_FrameMan.GetDefaultPalette()->GetIndexFromColor(*this);
 	}
-#endif
 }
