@@ -38,12 +38,12 @@ namespace RTE {
 		virtual glm::vec2 GetViewport() { return m_View.zw(); }
 
 		void SetWrapXY(bool wrapX, bool wrapY);
-		void SetWrapX();
-		void SetWrapY();
+		void SetWrapX() { m_WrapX = true; }
+		void SetWrapY() { m_WrapY = true; }
 
-		bool IsWrapX();
-		bool IsWrapY();
-		glm::bvec2 GetWrapXY();
+		bool IsWrapX() { return m_WrapX; }
+		bool IsWrapY() { return m_WrapY; }
+		glm::bvec2 GetWrapXY() {return glm::bvec2(m_WrapX, m_WrapY);}
 
 	protected:
 		glm::mat4 m_Projection; //!< Orthographic projection matrix to transform screen coords to normalized screen coordinates.
