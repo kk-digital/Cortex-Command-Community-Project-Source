@@ -831,25 +831,25 @@ int Scene::LoadData(bool placeObjects, bool initPathfinding, bool placeUnits)
                                 // Translate to the scaled unseen layer's coordinates
 								m_apUnseenLayer[ownerTeam]->LockTexture();
                                 Vector scale = m_apUnseenLayer[ownerTeam]->GetScaleInverse();
-								SDL_Rect scaled;
+								glm::vec4 scaled;
                                 scaled.x = std::floor((pTO->GetPos().m_X - (float)(pTO->GetFGColorTexture()->GetW() / 2)) * scale.m_X);
                                 scaled.y = std::floor((pTO->GetPos().m_Y - (float)(pTO->GetFGColorTexture()->GetH() / 2)) * scale.m_Y);
-                                scaled.w = std::ceil(pTO->GetFGColorTexture()->GetW() * scale.m_X);
-                                scaled.h = std::ceil(pTO->GetFGColorTexture()->GetH() * scale.m_Y);
+                                scaled.z = std::ceil(pTO->GetFGColorTexture()->GetW() * scale.m_X);
+                                scaled.w = std::ceil(pTO->GetFGColorTexture()->GetH() * scale.m_Y);
                                 // FILL the box with key color for the owner ownerTeam, revealing the area that this thing is on
-                                m_apUnseenLayer[ownerTeam]->GetTexture()->fillRect(scaled, 0);
+                                m_apUnseenLayer[ownerTeam]->GetTexture()->GetTexture()->fillRect(scaled, 0);
 								m_apUnseenLayer[ownerTeam]->UnlockTexture();
                                 // Expand the box a little so the whole placed object is going to be hidden
                                 scaled.x -= 1;
                                 scaled.y -= 1;
+                                scaled.z += 2;
                                 scaled.w += 2;
-                                scaled.h += 2;
                                 // Fill the box with BLACK for all the other teams so they can't see the new developments here!
                                 for (int t = Activity::TeamOne; t < Activity::MaxTeamCount; ++t)
                                 {
 									if (t != ownerTeam && m_apUnseenLayer[t] && m_apUnseenLayer[t]->GetTexture()) {
 										m_apUnseenLayer[t]->LockTexture();
-										m_apUnseenLayer[t]->GetTexture()->fillRect(scaled, g_BlackColor);
+										m_apUnseenLayer[t]->GetTexture()->GetTexture()->fillRect(scaled, g_BlackColor);
 										m_apUnseenLayer[t]->UnlockTexture();
 									}
 								}
@@ -1055,6 +1055,7 @@ int Scene::SaveData(string pathBase)
 //
 
 int Scene::SavePreview(const std::string &bitmapPath) {
+#if 0
 	// Do not save preview for MetaScenes!
 	if (!m_MetasceneParent.empty()) {
 		return -1;
@@ -1124,6 +1125,7 @@ int Scene::SavePreview(const std::string &bitmapPath) {
 		m_pPreviewBitmap = m_PreviewBitmapFile.GetAsTexture();
 	}
 
+#endif
 	return 0;
 }
 
@@ -1706,15 +1708,16 @@ void Scene::FillUnseenLayer(Vector pixelSize, int team, bool createNow)
     // Create the bitmap to make the unseen scene layer out of
     if (createNow)
     {
-		SharedTexture pUnseenBitmap = std::make_shared<Texture>(g_FrameMan.GetRenderer(), GetWidth() / m_UnseenPixelSize[team].m_X, GetHeight() / m_UnseenPixelSize[team].m_Y, SDL_TEXTUREACCESS_STREAMING);
-		pUnseenBitmap->lock();
-		pUnseenBitmap->clearAll(g_BlackColor);
+		SharedTexture pUnseenBitmap = MakeTexture();
+		pUnseenBitmap->Create( GetWidth() / m_UnseenPixelSize[team].m_X, GetHeight() / m_UnseenPixelSize[team].m_Y);
+		std::shared_ptr<RenderTexture> pUnseenRenderer = std::make_shared<RenderTexture>(pUnseenBitmap);
+		pUnseenRenderer->DrawClear(glm::vec4(0,0,0,1));
         // Replace any old unseen layer with the new one that is generated
         delete m_apUnseenLayer[team];
         m_apUnseenLayer[team] = new SceneLayer();
-        m_apUnseenLayer[team]->Create(pUnseenBitmap, true, Vector(), WrapsX(), WrapsY(), Vector(1.0, 1.0));
+        m_apUnseenLayer[team]->Create(pUnseenRenderer, true, Vector(), WrapsX(), WrapsY(), Vector(1.0, 1.0));
         // Calculate how many times smaller the unseen map is compared to the entire terrain's dimensions, and set it as the scale factor on the Unseen layer
-        m_apUnseenLayer[team]->SetScaleFactor(Vector((float)GetTerrain()->GetTexture()->getW() / (float)m_apUnseenLayer[team]->GetTexture()->getW(), (float)GetTerrain()->GetTexture()->getH() / (float)m_apUnseenLayer[team]->GetTexture()->getH()));
+        m_apUnseenLayer[team]->SetScaleFactor(Vector((float)GetTerrain()->GetTexture()->GetW() / (float)m_apUnseenLayer[team]->GetTexture()->GetW(), (float)GetTerrain()->GetTexture()->GetH() / (float)m_apUnseenLayer[team]->GetTexture()->GetH()));
     }
 }
 
@@ -1733,8 +1736,8 @@ void Scene::SetUnseenLayer(SceneLayer *pNewLayer, int team)
     delete m_apUnseenLayer[team];
     m_apUnseenLayer[team] = pNewLayer;
     // Calculate how many times smaller the unseen map is compared to the entire terrain's dimensions, and set it as the scale factor on the Unseen layer
-    m_apUnseenLayer[team]->SetScaleFactor(Vector((float)GetTerrain()->GetTexture()->getW() / (float)m_apUnseenLayer[team]->GetTexture()->getW(),
-												 (float)GetTerrain()->GetTexture()->getH() / (float)m_apUnseenLayer[team]->GetTexture()->getH()));
+    m_apUnseenLayer[team]->SetScaleFactor(Vector((float)GetTerrain()->GetTexture()->GetW() / (float)m_apUnseenLayer[team]->GetTexture()->GetW(),
+												 (float)GetTerrain()->GetTexture()->GetH() / (float)m_apUnseenLayer[team]->GetTexture()->GetH()));
 }
 
 
@@ -1879,7 +1882,7 @@ bool Scene::CleanOrphanPixel(int posX, int posY, NeighborDirection checkingFrom,
 
 Vector Scene::GetDimensions() const
 {
-    return m_pTerrain ? Vector(m_pTerrain->GetTexture()->getW(), m_pTerrain->GetTexture()->getH()) : Vector();
+    return m_pTerrain ? Vector(m_pTerrain->GetTexture()->GetW(), m_pTerrain->GetTexture()->GetH()) : Vector();
 }
 
 
@@ -1888,7 +1891,7 @@ Vector Scene::GetDimensions() const
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Gets the total width of the scene, in pixels.
 
-int Scene::GetWidth() const { return m_pTerrain ? m_pTerrain->GetTexture()->getW() : 0; }
+int Scene::GetWidth() const { return m_pTerrain ? m_pTerrain->GetTexture()->GetW() : 0; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -1896,7 +1899,7 @@ int Scene::GetWidth() const { return m_pTerrain ? m_pTerrain->GetTexture()->getW
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Gets the total height of the scene, in pixels.
 
-int Scene::GetHeight() const { return m_pTerrain ? m_pTerrain->GetTexture()->getH() : 0; }
+int Scene::GetHeight() const { return m_pTerrain ? m_pTerrain->GetTexture()->GetH() : 0; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
