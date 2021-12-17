@@ -83,7 +83,7 @@
 
 #include "robin_hood.h" //TODO: this should ideally replace unordered_map/set
 
-#define GLM_SWIZZLE
+#define GLM_FORCE_SWIZZLE
 #include "glm/glm.hpp"
 
 // TODO: Get rid of these once alias qualifiers are added.
