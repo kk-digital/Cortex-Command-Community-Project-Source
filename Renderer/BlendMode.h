@@ -42,9 +42,9 @@ namespace RTE {
 		BlendFactor m_DestAlpha = BlendFactor::One;
 	};
 	namespace BlendModes {
-		extern constexpr BlendMode None{};
-		extern constexpr BlendMode Blend{BlendFunc::Add, BlendFactor::SrcAlpha, BlendFactor::OneMinusSrcAlpha, BlendFunc::Add, BlendFactor::One, BlendFactor::OneMinusSrcAlpha};
-		extern constexpr BlendMode Screen{BlendFunc::Add, BlendFactor::One, BlendFactor::OneMinusSrcColor, BlendFunc::Add, BlendFactor::One, BlendFactor::OneMinusSrcAlpha};
+		static constexpr BlendMode None{};
+		static constexpr BlendMode Blend{BlendFunc::Add, BlendFactor::SrcAlpha, BlendFactor::OneMinusSrcAlpha, BlendFunc::Add, BlendFactor::One, BlendFactor::OneMinusSrcAlpha};
+		static constexpr BlendMode Screen{BlendFunc::Add, BlendFactor::One, BlendFactor::OneMinusSrcColor, BlendFunc::Add, BlendFactor::One, BlendFactor::OneMinusSrcAlpha};
 	} // namespace BlendModes
 } // namespace RTE
 #endif
