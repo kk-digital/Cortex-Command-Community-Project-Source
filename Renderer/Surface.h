@@ -26,7 +26,7 @@ namespace RTE {
 		Surface();
 		virtual ~Surface();
 
-		Surface(Surface& ref);
+		Surface(Surface &ref);
 
 		/// <summary>
 		/// Create an empty surface with a defined pixelformat of size Width x Height.
@@ -45,7 +45,7 @@ namespace RTE {
 		/// </returns>
 		virtual bool Create(int width, int height, BitDepth format, std::optional<std::shared_ptr<Palette>> palette = std::nullopt);
 
-		virtual bool Create(SDL_Surface* pixels, std::optional<std::shared_ptr<Palette>> palette = std::nullopt);
+		virtual bool Create(SDL_Surface *pixels, std::optional<std::shared_ptr<Palette>> palette = std::nullopt);
 
 		/// <summary>
 		/// Returns the stored SDL_Surface. Ownership is not transferred.
@@ -182,12 +182,19 @@ namespace RTE {
 		void setBlendMode(BlendMode blendMode) { m_BlendMode = blendMode; }
 		BlendMode getBlendMode() const { return m_BlendMode; }
 
+		int GetBitDepth() const { return m_BPP; }
+
+		std::shared_ptr<Palette> GetPalette() { return m_Palette; }
+
 		void blit(std::shared_ptr<Surface> target, int x, int y, double angle = 0, float scaleX = 1.0f, float scaleY = 1.0f) const;
+
+		void blit(std::shared_ptr<Surface> target, glm::mat4 model);
 
 		void blit(std::shared_ptr<Surface> target, glm::vec2 position) const;
 		void blit(std::shared_ptr<Surface> target, std::optional<glm::vec4> srcRect, glm::vec4 destRect) const;
 
 		void blitMasked(std::shared_ptr<Surface> target, uint32_t color, int x, int y, double angle = 0, float scaleX = 1.0f, float scaleY = 1.0f) const;
+		void blitMasked(std::shared_ptr<Surface> target, uint32_t color, glm::mat4 model);
 
 		void fillRect(glm::vec4 rect, uint32_t color);
 
@@ -205,6 +212,7 @@ namespace RTE {
 	private:
 		std::unique_ptr<SDL_Surface, sdl_surface_deleter> m_Pixels;
 		std::shared_ptr<Palette> m_Palette;
+
 	public:
 		static constexpr uint32_t PixelOutside = 0x00FFFFFF;
 	};
