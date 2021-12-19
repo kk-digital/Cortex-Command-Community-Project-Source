@@ -779,7 +779,7 @@ bool SLTerrain::IsAirPixel(const int pixelX, const int pixelY) const
 	uint32_t checkPixel = m_pMainTexture->GetTexture()->GetPixel(posX, posY);
 	//    RTEAssert(m_pMainTexture->m_LockCount > 0, "Trying to access unlocked
 	//    terrain bitmap");
-	return checkPixel == g_MaterialAir || checkPixel == g_FrameMan.GetMIDFromIndex(g_MaterialCavity);
+	return checkPixel == g_MaterialAir || checkPixel == g_MaterialCavity;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -1198,7 +1198,7 @@ void SLTerrain::CleanAirBox(Box box, bool wrapsX, bool wrapsY)
 			if (wrapX >= 0 && wrapY >=0 && wrapX < width && wrapY < height)
 			{
 				matPixel = m_pMainTexture->GetTexture()->GetPixel(wrapX, wrapY);
-				if (matPixel == g_FrameMan.GetMIDFromIndex(g_MaterialCavity)) {
+				if (matPixel == g_MaterialCavity) {
 					m_pMainTexture->GetTexture()->SetPixel(wrapX, wrapY, g_MaterialAir);
 					matPixel = g_MaterialAir;
 				}
@@ -1226,7 +1226,7 @@ void SLTerrain::CleanAir()
     for (int y = 0; y < height; ++y) {
         for (int x = 0; x < width; ++x) {
             matPixel = m_pMainTexture->GetTexture()->GetPixel(x, y);
-            if (matPixel == g_FrameMan.GetMIDFromIndex(g_MaterialCavity)) {
+            if (matPixel == g_MaterialCavity) {
                 m_pMainTexture->GetTexture()->SetPixel(x, y, g_MaterialAir);
                 matPixel = g_MaterialAir;
             }

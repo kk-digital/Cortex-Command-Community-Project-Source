@@ -1670,7 +1670,6 @@ void MovableMan::Update()
 
     // Clear the MO color layer only if this is a drawn update
 	if (g_TimerMan.DrawnSimUpdate()) {
-		g_FrameMan.PushRenderTarget(g_SceneMan.GetMOColorTexture());
 		g_SceneMan.ClearMOColorLayer();
 	}
 
@@ -2050,8 +2049,7 @@ void MovableMan::Update()
     // Draw the MO colors ONLY if this is a drawn update!
 
 	if (g_TimerMan.DrawnSimUpdate()) {
-		Draw(g_FrameMan.GetRenderer());
-		g_FrameMan.PopRenderTarget();
+		Draw(g_SceneMan.GetMOColorTexture().get());
 	}
 
 	// Sort team rosters if necessary

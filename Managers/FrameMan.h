@@ -185,27 +185,6 @@ namespace RTE {
 		/// </returns>
 		RenderTarget *GetRenderer() { return m_Renderer.get(); }
 
-		/// <summary>
-		/// Set a new render target. May be nullptr which sets the default render target.
-		/// </summary>
-		/// <param name="target">
-		/// The new target.
-		/// </param>
-		void PushRenderTarget(RenderTarget *target);
-
-		/// <summary>
-		/// Set a new render target. May be nullptr which sets the default render target.
-		/// </summary>
-		/// <param name="target">
-		/// The new target.
-		/// </param>
-		void PushRenderTarget(std::shared_ptr<RenderTarget> target);
-
-		/// <summary>
-		/// Reset the render target to the previous target.
-		/// </summary>
-		void PopRenderTarget();
-
 		void RenderClear();
 
 		/// <summary>
@@ -587,10 +566,6 @@ namespace RTE {
 		int SaveTextureToPNG(std::shared_ptr<GLTexture> tex, std::string nameBase) { return 0; };
 
 		bool IsInMultiplayerMode() const { return false; }
-
-		uint32_t GetColorFromIndex(uint32_t color) const;
-
-		uint32_t GetMIDFromIndex(unsigned char index) const;
 
 		// Private members
 	private:

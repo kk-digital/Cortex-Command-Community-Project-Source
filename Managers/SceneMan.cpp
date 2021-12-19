@@ -1998,8 +1998,6 @@ bool SceneMan::CastNotMaterialRay(const Vector &start, const Vector &ray, unsign
 	/////////////////////////////////////////////////////
 	// Bresenham's line drawing algorithm execution
 
-	g_FrameMan.PushRenderTarget(m_pMOIDLayer->GetTexture());
-
 	for (domSteps = 0; domSteps < delta[dom]; ++domSteps)
 	{
 		intPos[dom] += increment[dom];
@@ -2034,7 +2032,6 @@ bool SceneMan::CastNotMaterialRay(const Vector &start, const Vector &ray, unsign
         }
     }
 
-	g_FrameMan.PopRenderTarget();
 	return foundPixel;
 }
 
@@ -2528,7 +2525,6 @@ MOID SceneMan::CastMORay(const Vector &start, const Vector &ray, MOID ignoreMOID
     /////////////////////////////////////////////////////
     // Bresenham's line drawing algorithm execution
 
-	g_FrameMan.PushRenderTarget(m_pMOIDLayer->GetTexture());
     for (domSteps = 0; domSteps < delta[dom]; ++domSteps)
     {
         intPos[dom] += increment[dom];
@@ -2564,7 +2560,6 @@ MOID SceneMan::CastMORay(const Vector &start, const Vector &ray, MOID ignoreMOID
                     {
                         // Save last ray pos
                         m_LastRayHitPos.SetXY(intPos[X], intPos[Y]);
-						g_FrameMan.PopRenderTarget();
                         return hitMOID;
                     }
                 }
@@ -2573,7 +2568,6 @@ MOID SceneMan::CastMORay(const Vector &start, const Vector &ray, MOID ignoreMOID
                 {
                     // Save last ray pos
                     m_LastRayHitPos.SetXY(intPos[X], intPos[Y]);
-					g_FrameMan.PopRenderTarget();
                     return hitMOID;
                 }
             }
@@ -2587,7 +2581,6 @@ MOID SceneMan::CastMORay(const Vector &start, const Vector &ray, MOID ignoreMOID
                     // Save last ray pos
                     m_LastRayHitPos.SetXY(intPos[X], intPos[Y]);
 
-					g_FrameMan.PopRenderTarget();
                     return g_NoMOID;
                 }
             }
@@ -2597,7 +2590,6 @@ MOID SceneMan::CastMORay(const Vector &start, const Vector &ray, MOID ignoreMOID
             if (m_pDebugLayer && m_DrawRayCastVisualizations) { m_pDebugLayer->SetPixel(intPos[X], intPos[Y], 13); } // TODO: Magic numbers
         }
     }
-	g_FrameMan.PopRenderTarget();
 
     // Didn't hit anything but air
     return g_NoMOID;
@@ -3207,9 +3199,7 @@ float SceneMan::ShortestDistanceY(float val1, float val2, bool checkBounds, int 
 
 bool SceneMan::ObscuredPoint(int x, int y, int team)
 {
-	g_FrameMan.PushRenderTarget(m_pMOIDLayer->GetTexture());
-    bool obscured = m_pMOIDLayer->GetPixel(x, y) != g_NoMOID || m_pCurrentScene->GetTerrain()->GetPixel(x, y) != g_MaterialAir;
-	g_FrameMan.PopRenderTarget();
+    bool obscured = GetMOIDPixel(x, y) != g_NoMOID || m_pCurrentScene->GetTerrain()->GetPixel(x, y) != g_MaterialAir;
     if (team != Activity::NoTeam)
         obscured = obscured || IsUnseen(x, y, team);
 
@@ -3610,7 +3600,6 @@ void SceneMan::Draw(RenderTarget* renderer, std::shared_ptr<GLTexture> pGUITextu
 			std::shared_ptr<RenderTexture> guiRenderer = std::make_shared<RenderTexture>();
 			guiRenderer->SetTexture(pGUITexture);
 			g_PrimitiveMan.DrawPrimitives(m_LastUpdatedScreen, guiRenderer.get(), targetPos);
-			g_FrameMan.PopRenderTarget();
 			//            g_ActivityMan.GetActivity()->Draw(pTargetBitmap, targetPos, m_LastUpdatedScreen);
 			g_ActivityMan.GetActivity()->DrawGUI(renderer, targetPos, m_LastUpdatedScreen);
 
