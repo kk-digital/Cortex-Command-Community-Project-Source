@@ -43,7 +43,7 @@ namespace RTE {
 
 		bool IsWrapX() { return m_WrapX; }
 		bool IsWrapY() { return m_WrapY; }
-		glm::bvec2 GetWrapXY() {return glm::bvec2(m_WrapX, m_WrapY);}
+		glm::bvec2 GetWrapXY() { return glm::bvec2(m_WrapX, m_WrapY); }
 
 	protected:
 		glm::mat4 m_Projection; //!< Orthographic projection matrix to transform screen coords to normalized screen coordinates.

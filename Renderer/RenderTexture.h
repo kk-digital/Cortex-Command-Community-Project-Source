@@ -45,7 +45,7 @@ namespace RTE {
 		/// <returns>
 		/// True  if creation was successful.
 		/// </returns>
-		void Create(int width, int height, BitDepth format);
+		void Create(int width, int height, BitDepth format = BitDepth::Indexed8);
 
 		void Create(std::shared_ptr<GLTexture> texture);
 
