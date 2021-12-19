@@ -4,6 +4,8 @@ namespace RTE {
 	class Vertex {
 	public:
 		Vertex();
+		Vertex(Vertex &&ref) = default;
+		Vertex(const Vertex &ref) = default;
 		~Vertex();
 
 		Vertex(glm::vec2 position);
@@ -26,6 +28,9 @@ namespace RTE {
 		glm::vec2 pos;
 		glm::vec2 texUV;
 		glm::u8vec4 color;
+
+		Vertex &operator=(const Vertex &rhs) = default;
+		Vertex &operator=(Vertex&& rhs) = default;
 	};
 } // namespace RTE
 #endif
