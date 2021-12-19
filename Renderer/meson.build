@@ -1,6 +1,7 @@
 sources += files(
   'BlendMode.cpp',
   'BlitSurface.cpp',
+  'GLCheck.cpp',
   'GLPalette.cpp',
   'GLTexture.cpp',
   'RenderState.cpp',

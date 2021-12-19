@@ -33,6 +33,7 @@
 #include "SDL2_gfxPrimitives.h"
 
 #include "GL/glew.h"
+#include "Renderer/GLCheck.h"
 
 namespace RTE {
 
@@ -53,6 +54,7 @@ namespace RTE {
 		SDL_GetDisplayUsableBounds(0, m_ScreenRes.get());
 
 		m_MatPaletteFile.Reset();
+		m_PaletteFile.Create("Base.rte/palette.bmp");
 
 		m_ResX = 960;
 		m_ResY = 540;
@@ -109,9 +111,9 @@ namespace RTE {
 		m_ResX /= m_ResMultiplier;
 		m_ResY /= m_ResMultiplier;
 
-		glViewport(0,0,m_ResX, m_ResY);
-		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
+		glCheck(glViewport(0,0,m_ResX, m_ResY));
+		glCheck(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
+		glCheck(glClear(GL_COLOR_BUFFER_BIT));
 
 		SetFullscreen(m_Fullscreen);
 
@@ -122,25 +124,27 @@ namespace RTE {
 
 		m_CurrentPalette = m_DefaultPalette = m_PaletteFile.GetAsPalette();
 
-		m_MatPaletteFile.Create("Base.rte/palettemat.bmp");
-		m_MatPalette = m_MatPaletteFile.GetAsTexture();
-		RTEAssert(m_MatPalette.get(), "Failed to load material palette because: " + std::string(SDL_GetError()));
+		// m_MatPaletteFile.Create("Base.rte/palettemat.bmp");
+		// m_MatPalette = m_MatPaletteFile.GetAsTexture();
+		// RTEAssert(m_MatPalette.get(), "Failed to load material palette because: " + std::string(SDL_GetError()));
 
 		m_ShaderBase8 = std::make_shared<Shader>("Base.rte/Shaders/Base.vert", "Base.rte/Shaders/Indexed8Base.frag");
 		m_ShaderFill8 = std::make_shared<Shader>("Base.rte/Shaders/Base.vert", "Base.rte/Shaders/Indexed8Fill.frag");
 
 		m_ShaderBase8->Use();
-		m_ShaderBase8->SetInt("rtePalette", 1);
+		m_ShaderBase8->SetInt(m_ShaderBase8->GetUniformLocation("rtePalette"), 1);
 		m_ShaderFill8->Use();
-		m_ShaderBase8->SetInt("rtePalette", 1);
+		m_ShaderFill8->SetInt(m_ShaderFill8->GetUniformLocation("rtePalette"), 1);
 
-		glUseProgram(0);
+		glCheck(glUseProgram(0));
 
 		m_ShaderBase32 = std::make_shared<Shader>("Base.rte/Shaders/Base.vert", "Base.rte/Shaders/Rgba32Base.frag");
 		m_ShaderFill32 = std::make_shared<Shader>("Base.rte/Shaders/Base.vert", "Base.rte/Shaders/Rgba32Fill.frag");
 
-		m_ColorShader = std::make_shared<Shader>("Base.rte/Shaders/VertexColor.vert", "Base.rte/Shaders/Rgba32VertexColor.frag");
+		m_ColorShader = std::make_shared<Shader>("Base.rte/Shaders/Base.vert", "Base.rte/Shaders/Rgba32VertexColor.frag");
 		m_ColorShader->Use();
+
+		glCheck(glDisable(GL_CULL_FACE));
 
 		return 0;
 	}
@@ -183,12 +187,12 @@ namespace RTE {
 
 
 	void FrameMan::RenderClear() {
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glCheck(glBindFramebuffer(GL_FRAMEBUFFER, 0));
 		m_Renderer->DrawClear();
 	}
 
 	void FrameMan::RenderPresent() {
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glCheck(glBindFramebuffer(GL_FRAMEBUFFER, 0));
 		SDL_GL_SwapWindow(m_Window.get());
 	}
 

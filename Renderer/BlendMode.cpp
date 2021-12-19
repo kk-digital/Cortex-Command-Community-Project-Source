@@ -1,4 +1,5 @@
 #include "BlendMode.h"
+#include "GLCheck.h"
 #include "GL/glew.h"
 
 namespace RTE {
@@ -30,7 +31,7 @@ namespace RTE {
 			} break;
 		}
 
-		glBlendEquationSeparate(srcBlendFunc, dstBlendFunc);
-		glBlendFuncSeparate(static_cast<GLenum>(m_SrcColor), static_cast<GLenum>(m_DestColor), static_cast<GLenum>(m_SrcAlpha), static_cast<GLenum>(m_DestAlpha));
+		glCheck(glBlendEquationSeparate(srcBlendFunc, dstBlendFunc));
+		glCheck(glBlendFuncSeparate(static_cast<GLenum>(m_SrcColor), static_cast<GLenum>(m_DestColor), static_cast<GLenum>(m_SrcAlpha), static_cast<GLenum>(m_DestAlpha)));
 	}
 } // namespace RTE

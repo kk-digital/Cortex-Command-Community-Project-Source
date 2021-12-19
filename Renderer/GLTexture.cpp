@@ -7,6 +7,8 @@
 #include "VertexArray.h"
 #include "GLPalette.h"
 
+#include "GLCheck.h"
+
 #include "GL/glew.h"
 #include "glm/gtc/matrix_transform.hpp"
 
@@ -18,12 +20,12 @@ namespace RTE {
 	GLTexture::GLTexture() :
 	    Surface() {
 		Clear();
-		glGenTextures(1, &m_TextureID);
+		glCheck(glGenTextures(1, &m_TextureID));
 	}
 
 	GLTexture::GLTexture(std::shared_ptr<GLTexture> ref) :
 	    Surface(*ref) {
-		glGenTextures(1, &m_TextureID);
+		glCheck(glGenTextures(1, &m_TextureID));
 		m_ColorMod = ref->m_ColorMod;
 		m_Shading = ref->m_Shading;
 		m_ShaderBase = ref->m_ShaderBase;
@@ -33,17 +35,17 @@ namespace RTE {
 
 	GLTexture::~GLTexture() {
 		if (m_TextureID) {
-			glDeleteTextures(1, &m_TextureID);
+			glCheck(glDeleteTextures(1, &m_TextureID));
 		}
 	}
 
 	bool GLTexture::Create(int width, int height) {
-		glBindTexture(GL_TEXTURE_2D, m_TextureID);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glCheck(glBindTexture(GL_TEXTURE_2D, m_TextureID));
+		glCheck(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
+		glCheck(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
 
-		glTexImage2D(GL_TEXTURE_2D, 0, m_BPP == 8 ? GL_RED : GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_INT, nullptr);
-		glBindTexture(GL_TEXTURE_2D, 0);
+		glCheck(glTexImage2D(GL_TEXTURE_2D, 0, m_BPP == 8 ? GL_RED : GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_INT, nullptr));
+		glCheck(glBindTexture(GL_TEXTURE_2D, 0));
 
 		return true;
 	}
@@ -146,9 +148,9 @@ namespace RTE {
 	void GLTexture::Update(std::optional<glm::vec4> region) {
 		if (region) {}
 
-		glBindTexture(GL_TEXTURE_2D, m_TextureID);
+		glCheck(glBindTexture(GL_TEXTURE_2D, m_TextureID));
 
-		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_Width, m_Height, m_BPP == 8 ? GL_RED : GL_BGRA, GL_UNSIGNED_BYTE, GetPixels()->pixels);
+		glCheck(glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_Width, m_Height, m_BPP == 8 ? GL_RED : GL_BGRA, GL_UNSIGNED_BYTE, GetPixels()->pixels));
 	}
 
 	void GLTexture::setColorMod(uint32_t rgb) {
@@ -166,12 +168,13 @@ namespace RTE {
 
 	void GLTexture::ClearColor(uint32_t color) {
 		Surface::ClearColor(color);
-		glBindTexture(GL_TEXTURE_2D, m_TextureID);
-		glClearTexImage(GL_TEXTURE_2D, 0, m_BPP == 8 ? GL_RED : GL_BGRA, m_BPP == 8 ? GL_UNSIGNED_BYTE : GL_UNSIGNED_INT_8_8_8_8, &color);
+		glCheck(glBindTexture(GL_TEXTURE_2D, m_TextureID));
+		glCheck(glClearTexImage(GL_TEXTURE_2D, 0, m_BPP == 8 ? GL_RED : GL_BGRA, m_BPP == 8 ? GL_UNSIGNED_BYTE : GL_UNSIGNED_INT_8_8_8_8, &color));
 	}
 
 	void GLTexture::Bind() {
-		glBindTexture(GL_TEXTURE0, m_TextureID);
+		glCheck(glActiveTexture(GL_TEXTURE0));
+		glCheck(glBindTexture(GL_TEXTURE_2D, m_TextureID));
 	}
 
 	std::shared_ptr<Shader> GLTexture::GetCurrentShader() {

@@ -8,6 +8,7 @@
 
 #include "glm/gtc/matrix_transform.hpp"
 #include "GL/glew.h"
+#include "GLCheck.h"
 
 namespace RTE {
 	RenderTarget::RenderTarget() {
@@ -29,6 +30,7 @@ namespace RTE {
 
 	void RenderTarget::Draw(RenderState &state) {
 		RTEAssert(state.m_Shader.get(), "Trying to render without a shader.");
+		std::cout << "Draw" << std::endl;
 		state.m_Shader->Use();
 		state.m_BlendMode.Enable();
 		if (state.m_Vertices) {
@@ -55,15 +57,18 @@ namespace RTE {
 		if (colorUniform != -1) {
 			state.m_Shader->SetVector4f(colorUniform, state.m_Color);
 		}
+		glCheck(glBindFramebuffer(GL_FRAMEBUFFER, state.m_FBO));
 
-		glDrawArrays(static_cast<GLenum>(state.m_PrimitiveType), 0, state.m_Vertices->GetVertexCount());
-		glBindVertexArray(0);
+		glCheck(glDrawArrays(static_cast<GLenum>(state.m_PrimitiveType), 0, state.m_Vertices->GetVertexCount()));
+		glCheck(glBindVertexArray(0));
+
+		glCheck(glBindFramebuffer(GL_FRAMEBUFFER, 0));
 	}
 
 	void RenderTarget::DrawClear(glm::vec4 color) {
-		glClearColor(color.r, color.g, color.b, color.a);
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-		glClear(GL_COLOR_BUFFER_BIT);
+		glCheck(glClearColor(color.r, color.g, color.b, color.a));
+		glCheck(glBindFramebuffer(GL_FRAMEBUFFER, 0));
+		glCheck(glClear(GL_COLOR_BUFFER_BIT));
 	}
 
 	void RenderTarget::SetSize(glm::vec2 size) {

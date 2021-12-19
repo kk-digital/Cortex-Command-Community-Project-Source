@@ -1,21 +1,22 @@
 #include "VertexArray.h"
 #include "Vertex.h"
+#include "GLCheck.h"
 
 #include "GL/glew.h"
 
 namespace RTE {
 	VertexArray::VertexArray() {
-		glGenVertexArrays(1, &m_VAO);
-		glGenBuffers(1, &m_VBO);
+		glCheck(glGenVertexArrays(1, &m_VAO));
+		glCheck(glGenBuffers(1, &m_VBO));
 	}
 
 	VertexArray::~VertexArray() {
 		if (m_VBO) {
-			glDeleteBuffers(1, &m_VBO);
+			glCheck(glDeleteBuffers(1, &m_VBO));
 		}
 
 		if (m_VAO) {
-			glDeleteVertexArrays(1, &m_VAO);
+			glCheck(glDeleteVertexArrays(1, &m_VAO));
 		}
 	}
 
@@ -25,31 +26,31 @@ namespace RTE {
 	}
 
 	void VertexArray::Create(const std::vector<Vertex> &vertices, bool updateable) {
-		assert(m_VBO  != 0);
+		assert(m_VBO != 0);
 		m_Vertices = vertices;
-		glBindVertexArray(m_VAO);
+		glCheck(glBindVertexArray(m_VAO));
 		if (!vertices.empty()) {
-			glBindBuffer(GL_VERTEX_ARRAY, m_VBO);
-			glBufferData(GL_VERTEX_ARRAY, vertices.size() * sizeof(Vertex), vertices.data(), updateable ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);
-			glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)(offsetof(Vertex, pos)));
-			glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)(offsetof(Vertex, texUV)));
-			glVertexAttribPointer(2, 4, GL_UNSIGNED_INT, GL_TRUE, sizeof(Vertex), (void *)(offsetof(Vertex, color)));
+			glCheck(glBindBuffer(GL_ARRAY_BUFFER, m_VBO));
+			glCheck(glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(), updateable ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW));
+			glCheck(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)(offsetof(Vertex, pos))));
+			glCheck(glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)(offsetof(Vertex, texUV))));
+			glCheck(glVertexAttribPointer(2, 4, GL_UNSIGNED_INT, GL_TRUE, sizeof(Vertex), (void *)(offsetof(Vertex, color))));
 		}
-		glBindVertexArray(0);
+		glCheck(glBindVertexArray(0));
 	}
 
 	void VertexArray::Bind() {
-		glBindVertexArray(m_VAO);
+		glCheck(glBindVertexArray(m_VAO));
 	}
 
 	size_t VertexArray::GetVertexCount() { return m_Vertices.size(); }
 
-	void VertexArray::AddVertex(Vertex&& vertex) {
+	void VertexArray::AddVertex(Vertex &&vertex) {
 		m_Vertices.emplace_back(vertex);
 		m_VerticesUpdated = true;
 	}
 
-	void VertexArray::InsertVertex(int index, Vertex&& vertex) {
+	void VertexArray::InsertVertex(int index, Vertex &&vertex) {
 		m_Vertices.emplace(m_Vertices.begin() + index, vertex);
 		m_VerticesUpdated = true;
 	}
@@ -65,14 +66,14 @@ namespace RTE {
 	void VertexArray::Update() {
 		if (m_VerticesUpdated) {
 			if (!m_Vertices.empty()) {
-				glBindBuffer(GL_VERTEX_ARRAY, m_VBO);
-				glBufferData(GL_VERTEX_ARRAY, m_Vertices.size() * sizeof(Vertex), m_Vertices.data(), GL_DYNAMIC_DRAW);
+				glCheck(glBindBuffer(GL_ARRAY_BUFFER, m_VBO));
+				glCheck(glBufferData(GL_ARRAY_BUFFER, m_Vertices.size() * sizeof(Vertex), m_Vertices.data(), GL_DYNAMIC_DRAW));
 
-				glBindBuffer(GL_VERTEX_ARRAY, 0);
+				glCheck(glBindBuffer(GL_ARRAY_BUFFER, 0));
 			} else {
-				glBindBuffer(GL_VERTEX_ARRAY, m_VBO);
-				glMapBufferRange(GL_VERTEX_ARRAY, 0, 0, GL_MAP_WRITE_BIT|GL_MAP_INVALIDATE_BUFFER_BIT);
-				glBindBuffer(GL_VERTEX_ARRAY, 0);
+				glCheck(glBindBuffer(GL_ARRAY_BUFFER, m_VBO));
+				glCheck(glMapBufferRange(GL_ARRAY_BUFFER, 0, 0, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT));
+				glCheck(glBindBuffer(GL_ARRAY_BUFFER, 0));
 			}
 		}
 	}
