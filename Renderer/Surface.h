@@ -26,7 +26,7 @@ namespace RTE {
 		Surface();
 		virtual ~Surface();
 
-		Surface(Surface &ref);
+		Surface(const Surface &ref);
 
 		/// <summary>
 		/// Create an empty surface with a defined pixelformat of size Width x Height.
