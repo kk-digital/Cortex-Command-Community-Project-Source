@@ -12,7 +12,8 @@ namespace RTE {
 	    m_ModelTransform(1),
 	    m_BlendMode(BlendModes::Blend),
 	    m_PrimitiveType(PrimitiveType::Triangle),
-	    m_Shader(nullptr) {}
+	    m_Shader(nullptr),
+		m_FBO(0){}
 
 	RenderState::RenderState(std::shared_ptr<GLTexture> texture, glm::mat4 modelTransform, std::shared_ptr<Shader> shader, BlendMode blendMode, glm::vec4 colorMod) :
 		m_Vertices(nullptr),
@@ -21,7 +22,8 @@ namespace RTE {
 	    m_ModelTransform(modelTransform),
 	    m_BlendMode(blendMode),
 	    m_PrimitiveType(PrimitiveType::Triangle),
-	    m_Shader(shader) {}
+	    m_Shader(shader),
+		m_FBO(0) {}
 
 	RenderState::RenderState(glm::vec4 color, std::shared_ptr<VertexArray> vertexArray, glm::mat4 modelTransform) :
 		m_Vertices(vertexArray),
@@ -30,5 +32,6 @@ namespace RTE {
 	    m_ModelTransform(modelTransform),
 	    m_BlendMode(BlendModes::Blend),
 	    m_PrimitiveType(PrimitiveType::Triangle),
-	    m_Shader(nullptr) {}
+	    m_Shader(nullptr),
+		m_FBO(0) {}
 } // namespace RTE

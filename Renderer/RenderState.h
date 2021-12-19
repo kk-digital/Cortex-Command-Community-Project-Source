@@ -20,6 +20,7 @@ namespace RTE {
 		BlendMode m_BlendMode; //!< Blendmode to use for drawing. (applied after shader stage)
 		PrimitiveType m_PrimitiveType; //!< What primitive type to use for drawing the vertices.
 		std::shared_ptr<Shader> m_Shader; //!< Shader to use for drawing (must not be nullptr ever).
+		int m_FBO; //!< Framebuffer object to draw to.
 	};
 
 } // namespace RTE
