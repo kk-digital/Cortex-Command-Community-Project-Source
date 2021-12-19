@@ -56,7 +56,7 @@ namespace RTE {
 		/// the current video color depth
 		/// </param>
 		unsigned long ConvertColor(unsigned long color,
-		                           int targetDepth = 0) override;
+		                           int targetDepth = 8) override;
 
 	private:
 		std::shared_ptr<SDLGUITexture> m_GUIBitmap;
