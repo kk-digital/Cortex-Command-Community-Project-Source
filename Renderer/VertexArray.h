@@ -20,8 +20,9 @@ namespace RTE {
 
 		size_t GetVertexCount();
 
-		void AddVertex(Vertex vertex);
-		void InsertVertex(Vertex vertex, int index);
+		void AddVertex(Vertex&& vertex);
+
+		void InsertVertex(int index, Vertex&& vertex);
 		void Reserve(size_t n);
 		void ResetVertices();
 		void Update();
