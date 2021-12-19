@@ -4,9 +4,8 @@
 #include "GL/glew.h"
 
 namespace RTE {
-	VertexArray::VertexArray() :
-	    m_VAO(0), m_VBO(0) {
-		glCreateVertexArrays(1, &m_VAO);
+	VertexArray::VertexArray() {
+		glGenVertexArrays(1, &m_VAO);
 		glGenBuffers(1, &m_VBO);
 	}
 
@@ -26,6 +25,7 @@ namespace RTE {
 	}
 
 	void VertexArray::Create(const std::vector<Vertex> &vertices, bool updateable) {
+		assert(m_VBO  != 0);
 		m_Vertices = vertices;
 		glBindVertexArray(m_VAO);
 		if (!vertices.empty()) {
