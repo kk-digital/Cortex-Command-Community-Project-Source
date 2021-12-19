@@ -16,7 +16,7 @@ namespace RTE {
 		    {1.0f, 1.0f, 1.0f, 1.0f},
 		    {0.0f, 0.0f, 0.0f, 0.0f},
 		    {1.0f, 0.0f, 1.0f, 0.0f}};
-		m_DefaultQuad = VertexArray(quad);
+		m_DefaultQuad = std::make_shared<VertexArray>(std::move(quad));
 	}
 
 	RenderTarget::~RenderTarget() {}
@@ -24,7 +24,7 @@ namespace RTE {
 	void RenderTarget::Create(int x, int y, int width, int height) {
 		m_Size = glm::vec2(width, height);
 		m_View = glm::vec4(x, y, width, height);
-		m_Projection = glm::ortho(x, y, x + width, y + height);
+		m_Projection = glm::ortho(x, x + width, y, y + height);
 	}
 
 	void RenderTarget::Draw(RenderState &state) {
@@ -34,8 +34,9 @@ namespace RTE {
 		if (state.m_Vertices) {
 			state.m_Vertices->Bind();
 		} else {
-			m_DefaultQuad.Bind();
+			m_DefaultQuad->Bind();
 			state.m_PrimitiveType = PrimitiveType::TriangleStrip;
+			state.m_Vertices = m_DefaultQuad;
 		}
 
 		if (state.m_Texture && state.m_Shader->GetTextureUniform() != -1) {
@@ -56,6 +57,7 @@ namespace RTE {
 		}
 
 		glDrawArrays(static_cast<GLenum>(state.m_PrimitiveType), 0, state.m_Vertices->GetVertexCount());
+		glBindVertexArray(0);
 	}
 
 	void RenderTarget::DrawClear(glm::vec4 color) {
@@ -69,7 +71,7 @@ namespace RTE {
 		m_View.z = size.x;
 		m_View.w = size.y;
 
-		m_Projection = glm::ortho(m_View.x, m_View.y, m_View.x + m_View.z, m_View.y + m_View.w);
+		m_Projection = glm::ortho(m_View.x, m_View.x + m_View.z, m_View.y, m_View.y + m_View.w);
 	}
 
 	void RenderTarget::SetWrapXY(bool wrapX, bool wrapY) {

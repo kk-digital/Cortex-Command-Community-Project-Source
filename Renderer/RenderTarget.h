@@ -55,7 +55,7 @@ namespace RTE {
 		bool m_WrapY;
 
 	private:
-		VertexArray m_DefaultQuad; //!< The default unit rectangle, used for drawing sprites without primitive attachments.
+		std::shared_ptr<VertexArray> m_DefaultQuad; //!< The default unit rectangle, used for drawing sprites without primitive attachments.
 	};
 } // namespace RTE
 #endif
