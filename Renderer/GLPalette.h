@@ -13,7 +13,7 @@ namespace RTE {
 
 		SDL_Palette *GetAsPalette();
 
-		glm::u8vec4 at(size_t index);
+		glm::u8vec4& at(size_t index) {return m_Palette.at(index); }
 
 		unsigned char GetIndexFromColor(const glm::vec4& color);
 
