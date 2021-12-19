@@ -257,7 +257,7 @@ int SceneLayer::SaveData(string bitmapPath)
     if (m_pMainTexture)
     {
 
-		if(!m_pMainTexture->GetTexture()->SaveToDisk(bitmapPath)){
+		if(!g_FrameMan.SaveTextureToPNG(m_pMainTexture->GetTexture(), bitmapPath)){
 			return -1;
 		}
 
@@ -371,6 +371,18 @@ void SceneLayer::SetScaleFactor(const Vector newScale)
         m_ScaledDimensions.SetXY(m_pMainTexture->GetW() * newScale.m_X, m_pMainTexture->GetH() * newScale.m_Y);
 }
 
+uint32_t SceneLayer::GetPixel(const int pixelX, const int pixelY) {
+	return m_pMainTexture->GetTexture()->GetPixel(pixelX, pixelY);
+}
+
+void SceneLayer::SetPixel(const int pixelX, const int pixelY, const uint32_t value) {
+	m_pMainTexture->GetTexture()->SetPixel(pixelX, pixelY, value);
+}
+
+bool SceneLayer::IsWithinBounds(const int pixelX, const int pixelY, const int margin) {
+	// TODO: This doesn't take Y wrapping into acocunt!$@#$
+	return (m_WrapX || ((pixelX >= -margin) && pixelX < (m_pMainTexture->GetW() + margin) && pixelY >= -1000 && pixelY < (m_pMainTexture->GetH() + margin)));
+}
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          ForceBounds

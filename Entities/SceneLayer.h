@@ -379,10 +379,6 @@ ClassInfoGetters;
 // Return value:    Whether within bounds or not.
 
     bool IsWithinBounds(const int pixelX, const int pixelY, const int margin = 0);
-//     {
-// // TODO: This doesn't take Y wrapping into acocunt!$@#$
-//         return (m_WrapX || (pixelX >= -margin) && pixelX < (m_pMainTexture->getW() + margin)) && pixelY >= -1000 && pixelY < (m_pMainTexture->getH() + margin);
-//     }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
