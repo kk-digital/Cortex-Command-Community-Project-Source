@@ -231,17 +231,12 @@ namespace RTE {
 			returnTexture->m_ShaderBase = g_FrameMan.GetTextureShader(BitDepth::BPP32);
 			returnTexture->m_ShaderFill = g_FrameMan.GetTextureShaderFill(BitDepth::BPP32);
 		} else {
-			if (colorConversion == ColorConvert::Preserve){
-				returnTexture->m_Pixels = std::move(tempSurfacePreKey);
-				SDL_SetSurfacePalette(returnTexture->m_Pixels.get(), nullptr);
-			} else {
-				SDL_PixelFormat *globalFmt = SDL_AllocFormat(SDL_PIXELFORMAT_INDEX8);
-				SDL_PixelFormat pf = *globalFmt;
-				SDL_SetPixelFormatPalette(&pf, g_FrameMan.GetDefaultPalette()->GetAsPalette());
-				SDL_Surface *actualSurface = SDL_ConvertSurface(tempSurfacePreKey.get(), &pf, 0);
-				returnTexture->m_Pixels = std::unique_ptr<SDL_Surface, sdl_surface_deleter>(actualSurface);
-				SDL_FreeFormat(globalFmt);
-			}
+			SDL_PixelFormat *globalFmt = SDL_AllocFormat(SDL_PIXELFORMAT_INDEX8);
+			SDL_PixelFormat pf = *globalFmt;
+			SDL_SetPixelFormatPalette(&pf, g_FrameMan.GetDefaultPalette()->GetAsPalette());
+			SDL_Surface *actualSurface = SDL_ConvertSurface(tempSurfacePreKey.get(), &pf, 0);
+			returnTexture->m_Pixels = std::unique_ptr<SDL_Surface, sdl_surface_deleter>(actualSurface);
+			SDL_FreeFormat(globalFmt);
 			returnTexture->m_BPP = 8;
 			returnTexture->m_Palette = g_FrameMan.GetDefaultPalette();
 			returnTexture->m_ShaderBase = g_FrameMan.GetTextureShader(BitDepth::Indexed8);
