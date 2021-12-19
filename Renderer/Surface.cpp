@@ -62,7 +62,7 @@ namespace RTE {
 	}
 
 	uint32_t Surface::GetPixel32(int x, int y) {
-		return static_cast<uint32_t *>(m_Pixels->pixels)[y * m_Pixels->pitch + x];
+		return static_cast<uint32_t *>(m_Pixels->pixels)[y * m_Width + x];
 	}
 
 	void Surface::SetPixel(int x, int y, glm::u8vec4 color) {
@@ -91,7 +91,7 @@ namespace RTE {
 	}
 
 	void Surface::SetPixel32(int x, int y, uint32_t color) {
-		static_cast<uint32_t *>(m_Pixels->pixels)[x + y * m_Pixels->pitch] = color;
+		static_cast<uint32_t *>(m_Pixels->pixels)[x + y * m_Width] = color;
 	}
 
 	void Surface::ClearColor(uint32_t color) {
