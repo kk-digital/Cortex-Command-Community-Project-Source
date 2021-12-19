@@ -4379,8 +4379,8 @@ void AHuman::DrawThrowingReticule(RenderTarget* renderer, const Vector &targetPo
 
     Vector outOffset(15.0F * GetFlipFactor(), -5.0F);
 
-	std::vector<Vertex> drawPoints(pointCount);
-	std::shared_ptr<VertexArray> drawArray;
+	std::vector<Vertex> drawPoints;
+	drawPoints.reserve(pointCount);
 
     for (int i = 0; i < pointCount * amount; ++i) {
         points[i].FlipX(m_HFlipped);
@@ -4393,8 +4393,9 @@ void AHuman::DrawThrowingReticule(RenderTarget* renderer, const Vector &targetPo
         // Put the flickering glows on the reticule dots, in absolute scene coordinates
 		g_PostProcessMan.RegisterGlowDotEffect(points[i], YellowDot, 55 + RandomNum(0, 100));
 
-		drawArray->AddVertex({static_cast<glm::vec2>(points[i] - targetPos), g_YellowGlowColor});
+		drawPoints.emplace_back(static_cast<glm::vec2>(points[i] - targetPos), g_YellowGlowColor);
 	}
+	std::shared_ptr<VertexArray> drawArray = std::make_shared<VertexArray>(drawPoints);
 	RenderState state;
 	state.m_Vertices = drawArray;
 	state.m_PrimitiveType = PrimitiveType::Point;
