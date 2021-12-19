@@ -45,7 +45,7 @@ namespace RTE {
 		void render(RenderTarget *renderer, glm::vec4 src, glm::vec4 dest);
 		void render(RenderTarget *renderer, glm::vec4 dest);
 
-		void Update(std::optional<glm::vec2> region = std::nullopt);
+		void Update(std::optional<glm::vec4> region = std::nullopt);
 
 		void setShading(Shading shader) { m_Shading = shader; }
 
@@ -69,7 +69,7 @@ namespace RTE {
 
 		float getAlphaMod() const { return m_ColorMod.a; }
 
-		void clearAll(uint32_t color = 0) {}
+		void ClearColor(uint32_t color = 0);
 
 		void Bind();
 

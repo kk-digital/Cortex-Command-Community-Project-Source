@@ -5,6 +5,7 @@
 #include "RenderTarget.h"
 #include "Vertex.h"
 #include "VertexArray.h"
+#include "GLPalette.h"
 
 #include "GL/glew.h"
 #include "glm/gtc/matrix_transform.hpp"
@@ -20,6 +21,16 @@ namespace RTE {
 		glGenTextures(1, &m_TextureID);
 	}
 
+	GLTexture::GLTexture(std::shared_ptr<GLTexture> ref) :
+	    Surface(*ref) {
+		glGenTextures(1, &m_TextureID);
+		m_ColorMod = ref->m_ColorMod;
+		m_Shading = ref->m_Shading;
+		m_ShaderBase = ref->m_ShaderBase;
+		m_ShaderFill = ref->m_ShaderFill;
+		m_ShaderCustom = ref->m_ShaderCustom;
+	}
+
 	GLTexture::~GLTexture() {
 		if (m_TextureID) {
 			glDeleteTextures(1, &m_TextureID);
@@ -32,6 +43,7 @@ namespace RTE {
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
 		glTexImage2D(GL_TEXTURE_2D, 0, m_BPP == 8 ? GL_RED : GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_INT, nullptr);
+		glBindTexture(GL_TEXTURE_2D, 0);
 
 		return true;
 	}
@@ -114,7 +126,7 @@ namespace RTE {
 		std::vector<Vertex> uvQuad;
 		uvQuad.emplace_back(0.0f, 0.0f, src.x / m_Width, src.y / m_Height);
 		uvQuad.emplace_back(0.0f, 1.0f, src.x / m_Width, (src.y + src.w) / m_Height);
-		uvQuad.emplace_back(1.0f, 0.0f, (src.x + src.z)/m_Width, (src.y) / m_Height);
+		uvQuad.emplace_back(1.0f, 0.0f, (src.x + src.z) / m_Width, (src.y) / m_Height);
 		uvQuad.emplace_back(1.0f, 1.0f, (src.x + src.z) / m_Width, (src.y + src.w) / m_Height);
 		std::shared_ptr<VertexArray> uvVBO = std::make_shared<VertexArray>(std::move(uvQuad));
 
@@ -129,6 +141,33 @@ namespace RTE {
 
 	void GLTexture::render(RenderTarget *renderer, glm::vec4 dest) {
 		render(renderer, dest.xy(), {dest.z / GetW(), dest.w / GetH()});
+	}
+
+	void GLTexture::Update(std::optional<glm::vec4> region) {
+		if (region) {}
+
+		glBindTexture(GL_TEXTURE_2D, m_TextureID);
+
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_Width, m_Height, m_BPP == 8 ? GL_RED : GL_BGRA, GL_UNSIGNED_BYTE, GetPixels()->pixels);
+	}
+
+	void GLTexture::setColorMod(uint32_t rgb) {
+		if (GetBitDepth() == 8) {
+			float alphaMod = m_ColorMod.a;
+			m_ColorMod = GetPalette()->at(rgb);
+			m_ColorMod /= 255.0f;
+			m_ColorMod.a = alphaMod;
+		} else {
+			m_ColorMod.r = ((rgb << 16) & 0xff) / 255.0f;
+			m_ColorMod.g = ((rgb << 8) & 0xff) / 255.0f;
+			m_ColorMod.b = ((rgb)&0xff) / 255.0f;
+		}
+	}
+
+	void GLTexture::ClearColor(uint32_t color) {
+		Surface::ClearColor(color);
+		glBindTexture(GL_TEXTURE_2D, m_TextureID);
+		glClearTexImage(GL_TEXTURE_2D, 0, m_BPP == 8 ? GL_RED : GL_BGRA, m_BPP == 8 ? GL_UNSIGNED_BYTE : GL_UNSIGNED_INT_8_8_8_8, &color);
 	}
 
 	void GLTexture::Bind() {
