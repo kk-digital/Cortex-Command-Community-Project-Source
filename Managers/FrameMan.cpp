@@ -91,6 +91,11 @@ namespace RTE {
 		RTEAssert(m_Window != NULL, "Could not create Window because: " + std::string(SDL_GetError()));
 		m_Context = std::unique_ptr<void, sdl_context_deleter>(SDL_GL_CreateContext(m_Window.get()));
 
+		RTEAssert(m_Context.get(), "Failed to get context: " + std::string(SDL_GetError()));
+
+		GLenum err = glewInit();
+
+		RTEAssert(err == GLEW_OK, "Failed to initialize GLEW: \n\t" + std::string(reinterpret_cast<const char*>(glewGetErrorString(err))));
 		m_Renderer = std::make_unique<RenderTarget>();
 
 		return static_cast<bool>(m_Window && m_Renderer);
@@ -183,6 +188,7 @@ namespace RTE {
 	}
 
 	void FrameMan::RenderPresent() {
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		SDL_GL_SwapWindow(m_Window.get());
 	}
 
