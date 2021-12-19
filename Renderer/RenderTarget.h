@@ -23,7 +23,7 @@ namespace RTE {
 		/// <summary>
 		/// Clear the current render target.
 		/// </summary>
-		virtual void DrawClear(glm::vec4 color = glm::vec4(0));
+		virtual void DrawClear(glm::vec4 color = glm::vec4(1.0f, 0.0f, 1.0f, 1.0f));
 
 		/// <summary>
 		/// Get the dimensions in pixels of the render target.

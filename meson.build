@@ -134,6 +134,8 @@ executable(
   gui_app:true,
 )
 
+executable('test_gl', ['test.cpp', sources], include_directories:[source_inc_dirs, external_inc_dirs_common, external_inc_dirs_platform], cpp_pch:pch, link_with: external_libs, objects:[external_objects], dependencies:[deps], build_by_default: true, link_args:link_args, build_rpath:build_rpath)
+
 # disable appimage target unless option appimage_enabbled is set
 appimage_disable = get_option('enable_appimage') or disabler()
 

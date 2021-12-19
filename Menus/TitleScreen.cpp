@@ -532,7 +532,7 @@ namespace RTE {
 
 	void TitleScreen::DrawTitleScreenScene() {
 		Vector nebulaPos(0, m_ScrollOffset.GetY() * m_BackdropScrollRatio);
-		if (m_Nebula.GetTexture()->GetW() != g_FrameMan.GetResX()) { nebulaPos.SetX(static_cast<float>((m_Nebula.GetTexture()->GetW() - g_FrameMan.GetResX()) / 2)); }
+		if (m_Nebula.GetTexture()->GetW() != g_FrameMan.GetResX()) { nebulaPos.SetX(static_cast<float>((m_Nebula.GetTexture()->GetW() - g_FrameMan.GetResX()) / 2.0f)); }
 		Box nebulaTargetBox;
 		m_Nebula.Draw(g_FrameMan.GetRenderer(), nebulaTargetBox, nebulaPos);
 
