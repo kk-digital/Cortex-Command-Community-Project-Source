@@ -681,7 +681,7 @@ void SceneLayer::Draw(RenderTarget * renderer, Box& targetBox, const Vector &scr
 				// dest.h = source.h;
 				// m_pMainTexture->GetTexture()->render(renderer, source, dest);
 
-                // tiledOffsetX += m_pMainTexture->GetW();
+                tiledOffsetX += m_pMainTexture->GetW();
             }
             // Only tile if we're supposed to wrap widthwise
             while (m_WrapX && toCoverX > tiledOffsetX);
