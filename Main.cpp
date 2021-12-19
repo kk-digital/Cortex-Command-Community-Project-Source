@@ -74,7 +74,7 @@ namespace RTE {
 		g_UInputMan.Initialize();
 		g_ConsoleMan.Initialize();
 		g_MovableMan.Initialize();
-		// g_MetaMan.Initialize();
+		g_MetaMan.Initialize();
 		g_MenuMan.Initialize();
 
 		// Overwrite Settings.ini after all the managers are created to fully populate the file. Up until this moment Settings.ini is populated only with minimal required properties to run.
@@ -94,7 +94,7 @@ namespace RTE {
 		g_NetworkClient.Destroy();
 		g_NetworkServer.Destroy();
 #endif
-		// g_MetaMan.Destroy();
+		g_MetaMan.Destroy();
 		g_MovableMan.Destroy();
 		g_SceneMan.Destroy();
 		g_ActivityMan.Destroy();
