@@ -41,6 +41,7 @@ namespace RTE {
 		loadingSplash.SetOffset(Vector(static_cast<float>(((loadingSplash.GetTexture()->GetW() - g_FrameMan.GetResX()) / 2) + loadingSplashOffset), 0));
 
 		Box loadingSplashTargetBox(Vector(0, static_cast<float>((g_FrameMan.GetResY() - loadingSplash.GetTexture()->GetH()) / 2)), static_cast<float>(g_FrameMan.GetResX()), static_cast<float>(loadingSplash.GetTexture()->GetH()));
+		g_FrameMan.RenderClear();
 		loadingSplash.Draw(g_FrameMan.GetRenderer(), loadingSplashTargetBox);
 
 #ifdef LOADINGUI
