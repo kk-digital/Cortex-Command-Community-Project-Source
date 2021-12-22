@@ -33,8 +33,11 @@ namespace RTE {
 			glCheck(glBindBuffer(GL_ARRAY_BUFFER, m_VBO));
 			glCheck(glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(), updateable ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW));
 			glCheck(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)(offsetof(Vertex, pos))));
+			glCheck(glEnableVertexAttribArray(0));
 			glCheck(glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)(offsetof(Vertex, texUV))));
-			glCheck(glVertexAttribPointer(2, 4, GL_UNSIGNED_INT, GL_TRUE, sizeof(Vertex), (void *)(offsetof(Vertex, color))));
+			glCheck(glEnableVertexAttribArray(1));
+			glCheck(glVertexAttribPointer(2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), (void *)(offsetof(Vertex, color))));
+			glCheck(glEnableVertexAttribArray(2));
 		}
 		glCheck(glBindVertexArray(0));
 	}
