@@ -634,7 +634,7 @@ namespace RTE {
 		Vector segTraj;
 		Vector hitAccel;
 
-		std::shared_ptr<VertexArray> trailPoints;
+		std::shared_ptr<VertexArray> trailPoints =std::make_shared<VertexArray>();;
 
 		// This saves us a few ms because Atom::Travel does a lot of allocations and reallocations if you have a lot of particles.
 		// 6 should be enough for most not so fast travels, everything above simply works as usual.
@@ -974,6 +974,7 @@ namespace RTE {
 			int length = static_cast<int>(static_cast<float>(m_TrailLength) * RandomNum(1.0F - m_TrailLengthVariation, 1.0F));
 			trailPoints->Update();
 			RenderState render(m_TrailColor, trailPoints, glm::mat4(1));
+			render.m_Shader = g_FrameMan.GetColorShader();
 			g_SceneMan.GetMOColorTexture()->Draw(render);
 		}
 
