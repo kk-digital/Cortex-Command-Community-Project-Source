@@ -8,8 +8,8 @@
 namespace RTE {
 	RenderState::RenderState() :
 	    m_Texture(0),
-	    m_Color(1),
-	    m_ModelTransform(1),
+	    m_Color(1.0f),
+	    m_ModelTransform(1.0f),
 	    m_BlendMode(BlendModes::Blend),
 	    m_PrimitiveType(PrimitiveType::Triangle),
 	    m_Shader(nullptr),
