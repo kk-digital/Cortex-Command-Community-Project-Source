@@ -5,6 +5,8 @@
 #include "glm/gtx/matrix_decompose.hpp"
 
 namespace RTE {
+	void sdl_surface_deleter::operator()(SDL_Surface *p) { SDL_FreeSurface(p); }
+
 	Surface::Surface() :
 	    m_Width(0),
 	    m_Height(0),
