@@ -9,7 +9,7 @@ namespace RTE {
 		RenderTarget();
 		virtual ~RenderTarget();
 
-		virtual void Create(int x, int y, int width, int height);
+		virtual void Create(float x, float y, float width, float height);
 
 		/// <summary>
 		/// Draws the passed state to the screen (or the active render target which should be the screen).
