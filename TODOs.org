@@ -1,25 +1,28 @@
-* PROJ Rendering backend [2/11]
-** TODO Replace primitives drawing with vertex based primitives
-*** TODO Add vertex cache (DO NOT upload vertices every frame)
-** PROG Implement FrameMan with the new OGL stuff
-   - State "PROG"       from "TODO"       [2021-10-19 Di 20:11]
-** PROG Implement RenderTextures
-   - State "PROG"       from "TODO"       [2021-10-19 Di 20:12]
-   need to implement framebuffer textures, and add them to SceneLayer(?)
-** TODO Remove RenderLayer
-   it bad
-** TODO Add Texture blitting
-** TODO Implement Surface blit
-** TODO Add SLTerrain to scene blit
+* PROJ Rendering backend [6/11]
 ** TODO Implement view based camera
+** TODO Add culling
+	 CLOSED: [2021-12-22 Mi 19:13]
+** TODO Add SLTerrain to scene blit
    This should infinitely simplify drawing
 *** TODO Implement scene wrapping
 *** TODO remove the messy wrapping logic from SceneLayer
-** TODO Add culling
-** CANCEL Unload scene from gpu on activity reset/change
-   CLOSED: [2021-11-28 So 01:10]
+** TODO Implement FrameMan with the new OGL stuff
+   - State "PROG"       from "TODO"       [2021-10-19 Di 20:11]
+** TODO Implement RenderTextures
+   - State "PROG"       from "TODO"       [2021-10-19 Di 20:12]
+   need to implement framebuffer textures, and add them to SceneLayer(?)
+** DONE Replace primitives drawing with vertex based primitives
+*** TODO Add vertex cache (DO NOT upload vertices every frame)
+** DONE Add Texture blitting
+	 CLOSED: [2021-12-22 Mi 19:13]
+** DONE Implement Surface blit
+** DONE Unload scene from gpu on activity reset/change
+	 CLOSED: [2021-12-22 Mi 19:15]
    - State "CANCEL"     from "TODO"       [2021-11-28 So 01:10] \\
      not necessary
+** DONE Remove RenderLayer
+	 CLOSED: [2021-12-22 Mi 19:12]
+   it bad
 ** DONE Replace SDLTexture
    CLOSED: [2021-11-07 So 20:10]
    - State "PROG"       from "TODO"       [2021-10-19 Di 20:11]
@@ -27,20 +30,20 @@
 ** TODO Finish UInputMan implementation
 ** TODO Add all platform gamepad hotplug
 
-* PROJ GUI backend [0/4]
+* PROJ GUI backend [0/3]
 ** TODO Implement RMLUi
-   (librocket-rmlui subbranch)
-*** TODO Recreate all GUIs in rml
+   (librocket-rmlui subTODObTODOh)
+*** Recreate all GUIs in rml
     maybe create a hacked together editor for that.
 ** TODO Implemnt gib editor zoom
 ** TODO recheck editor implementations
-** TODO Loading screen text box
+** Loading screen text box
 
-* PROJ Performance [0/6]
-** TODO Fix Collisions
+* PROJ Performance [0/4]
+** Fix Collisions
 ** TODO Fix AtomGroup performance degradation
-** TODO Fix particles destroying performance
-** TODO Fix scene load performance
+** TODO Fix particles destroying perforDONEDONE
+*ancem* TODO Fix scene load performance
    Should be handled by returning to indexed pixelformat
 ** TODO Fix ADoor material drawing
    should at least be doable with new backend now
