@@ -10,6 +10,7 @@
 #include <SDL2/SDL_image.h>
 #include "Renderer/GLTexture.h"
 #include "Renderer/GLPalette.h"
+#include "Renderer/GLCheck.h"
 #include "GL/glew.h"
 
 #include "fmod/fmod.hpp"
@@ -224,19 +225,24 @@ namespace RTE {
 		SharedTexture returnTexture = MakeTexture();
 
 		returnTexture->m_BlendMode = BlendModes::Blend;
-		if (colorConversion == ColorConvert::ARGB32 || (colorConversion == ColorConvert::Preserve && tempSurfacePreKey->format->BitsPerPixel == 32)) {
-			SDL_Surface *actualSurface = SDL_ConvertSurfaceFormat(tempSurfacePreKey.get(), SDL_PIXELFORMAT_ARGB32, 0);
+		if (colorConversion == ColorConvert::ARGB32 || (colorConversion == ColorConvert::Preserve && !tempSurfacePreKey->format->palette)) {
+			SDL_Surface *actualSurface = SDL_ConvertSurfaceFormat(tempSurfacePreKey.get(), SDL_PIXELFORMAT_ARGB8888, 0);
 			returnTexture->m_Pixels = std::unique_ptr<SDL_Surface, sdl_surface_deleter>(actualSurface);
 			returnTexture->m_BPP = 32;
 			returnTexture->m_ShaderBase = g_FrameMan.GetTextureShader(BitDepth::BPP32);
 			returnTexture->m_ShaderFill = g_FrameMan.GetTextureShaderFill(BitDepth::BPP32);
 		} else {
-			SDL_PixelFormat *globalFmt = SDL_AllocFormat(SDL_PIXELFORMAT_INDEX8);
-			SDL_PixelFormat pf = *globalFmt;
-			SDL_SetPixelFormatPalette(&pf, g_FrameMan.GetDefaultPalette()->GetAsPalette());
-			SDL_Surface *actualSurface = SDL_ConvertSurface(tempSurfacePreKey.get(), &pf, 0);
-			returnTexture->m_Pixels = std::unique_ptr<SDL_Surface, sdl_surface_deleter>(actualSurface);
-			SDL_FreeFormat(globalFmt);
+			if (!tempSurfacePreKey->format->palette) {
+				SDL_PixelFormat *globalFmt = SDL_AllocFormat(SDL_PIXELFORMAT_INDEX8);
+				SDL_PixelFormat pf = *globalFmt;
+				SDL_SetPixelFormatPalette(&pf, g_FrameMan.GetDefaultPalette()->GetAsPalette());
+				SDL_Surface *actualSurface = SDL_ConvertSurface(tempSurfacePreKey.get(), &pf, 0);
+				returnTexture->m_Pixels = std::unique_ptr<SDL_Surface, sdl_surface_deleter>(actualSurface);
+				SDL_FreeFormat(globalFmt);
+			} else {
+				SDL_SetSurfacePalette(tempSurfacePreKey.get(), g_FrameMan.GetDefaultPalette()->GetAsPalette());
+				returnTexture->m_Pixels = std::move(tempSurfacePreKey);
+			}
 			returnTexture->m_BPP = 8;
 			returnTexture->m_Palette = g_FrameMan.GetDefaultPalette();
 			returnTexture->m_ShaderBase = g_FrameMan.GetTextureShader(BitDepth::Indexed8);
@@ -245,13 +251,16 @@ namespace RTE {
 
 		returnTexture->m_Width = returnTexture->m_Pixels->w;
 		returnTexture->m_Height = returnTexture->m_Pixels->h;
-		glBindTexture(GL_TEXTURE_2D, returnTexture->m_TextureID);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
-		glTexImage2D(GL_TEXTURE_2D, 0, returnTexture->m_BPP == 8 ? GL_R8 : GL_BGRA, returnTexture->m_Width, returnTexture->m_Height, 0, returnTexture->m_BPP == 8 ? GL_RED : GL_BGRA, GL_UNSIGNED_BYTE, returnTexture->m_Pixels->pixels);
+		glCheck(glBindTexture(GL_TEXTURE_2D, returnTexture->m_TextureID));
+		glCheck(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
+		glCheck(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
+		glCheck(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT));
+		glCheck(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT));
+		glCheck(glPixelStorei(GL_UNPACK_ALIGNMENT, 4));
+		glCheck(glTexImage2D(GL_TEXTURE_2D, 0, returnTexture->m_BPP == 8 ? GL_R8 : GL_RGBA, returnTexture->m_Width, returnTexture->m_Height, 0, returnTexture->m_BPP == 8 ? GL_RED : GL_BGRA, GL_UNSIGNED_BYTE, returnTexture->m_Pixels->pixels));
+		glCheck(glGenerateMipmap(GL_TEXTURE_2D));
 
-		glBindTexture(GL_TEXTURE_2D, 0);
+		glCheck(glBindTexture(GL_TEXTURE_2D, 0));
 		return returnTexture;
 	}
 
