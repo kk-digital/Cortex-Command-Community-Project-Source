@@ -10,13 +10,13 @@ namespace RTE {
 		Zero = 0,
 		One = 1,
 		SrcColor = 0x0300,
-		OneMinusSrcColor,
-		SrcAlpha,
-		OneMinusSrcAlpha,
-		DestAlpha,
-		OneMinusDestAlpha,
-		DestColor,
-		OneMinusDestColor
+		OneMinusSrcColor = 0x0301,
+		SrcAlpha = 0x0302,
+		OneMinusSrcAlpha = 0x0303,
+		DestAlpha = 0x0304,
+		OneMinusDestAlpha = 0x0305,
+		DestColor = 0x0306,
+		OneMinusDestColor = 0x0307
 	};
 	class BlendMode {
 	public:
@@ -36,15 +36,15 @@ namespace RTE {
 	private:
 		BlendFunc m_SrcBlendFunc = BlendFunc::Add;
 		BlendFunc m_DestBlendFunc = BlendFunc::Add;
-		BlendFactor m_SrcColor = BlendFactor::Zero;
-		BlendFactor m_DestColor = BlendFactor::One;
-		BlendFactor m_SrcAlpha = BlendFactor::Zero;
-		BlendFactor m_DestAlpha = BlendFactor::One;
+		BlendFactor m_SrcColor = BlendFactor::One;
+		BlendFactor m_DestColor = BlendFactor::Zero;
+		BlendFactor m_SrcAlpha = BlendFactor::One;
+		BlendFactor m_DestAlpha = BlendFactor::Zero;
 	};
 	namespace BlendModes {
 		static constexpr BlendMode None{};
-		static constexpr BlendMode Blend{BlendFunc::Add, BlendFactor::SrcAlpha, BlendFactor::OneMinusSrcAlpha, BlendFunc::Add, BlendFactor::One, BlendFactor::OneMinusSrcAlpha};
-		static constexpr BlendMode Screen{BlendFunc::Add, BlendFactor::One, BlendFactor::OneMinusSrcColor, BlendFunc::Add, BlendFactor::One, BlendFactor::OneMinusSrcAlpha};
+		static constexpr BlendMode Blend{BlendFunc::Add, BlendFactor::SrcAlpha, BlendFactor::One, BlendFunc::Add, BlendFactor::OneMinusSrcAlpha, BlendFactor::OneMinusSrcAlpha};
+		static constexpr BlendMode Screen{BlendFunc::Add, BlendFactor::One, BlendFactor::One, BlendFunc::Add, BlendFactor::OneMinusSrcColor, BlendFactor::OneMinusSrcAlpha};
 	} // namespace BlendModes
 } // namespace RTE
 #endif

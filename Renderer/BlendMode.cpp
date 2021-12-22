@@ -31,6 +31,11 @@ namespace RTE {
 			} break;
 		}
 
+		GLenum srcColor;
+		GLenum destColor;
+		GLenum srcAlpha;
+		GLenum destAlpha;
+
 		glCheck(glBlendEquationSeparate(srcBlendFunc, dstBlendFunc));
 		glCheck(glBlendFuncSeparate(static_cast<GLenum>(m_SrcColor), static_cast<GLenum>(m_DestColor), static_cast<GLenum>(m_SrcAlpha), static_cast<GLenum>(m_DestAlpha)));
 	}
