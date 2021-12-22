@@ -90,7 +90,7 @@ int SceneLayer::Create(ContentFile textureFile,
 
 	Create(m_pMainTexture, drawTrans, offset, wrapX, wrapY, scrollInfo);
 
-    // Establisht he scaled dimensions of this
+    // Establish the scaled dimensions of this
     m_ScaledDimensions.SetXY(m_pMainTexture->GetW() * m_ScaleFactor.m_X, m_pMainTexture->GetH() * m_ScaleFactor.m_Y);
 
     return 0;
@@ -113,6 +113,9 @@ int SceneLayer::Create(std::shared_ptr<RenderTexture> texture,
     RTEAssert(texture->HasTexture(), "Framebuffer without texture attachment passed in when creating SceneLayer");
 
     m_pMainTexture = texture;
+
+		assert(m_pMainTexture->GetW() != 0);
+		assert(m_pMainTexture->GetH() != 0);
 
     m_DrawTrans = drawTrans;
     m_Offset = offset;
@@ -554,23 +557,23 @@ struct SLDrawBox
 void SceneLayer::Draw(RenderTarget * renderer, Box& targetBox, const Vector &scrollOverride) const
 {
 
-    RTEAssert(m_pMainTexture.get(), "Data of this SceneLayer has not been loaded before trying to draw!");
-
+	RTEAssert(m_pMainTexture.get(), "Data of this SceneLayer has not been loaded before trying to draw!");
+	RenderState overrideVerts{glm::vec4(1), m_SceneVertices, glm::mat4(1)};
+	m_pMainTexture->GetTexture()->render(renderer, static_cast<glm::vec2>(targetBox.m_Corner), overrideVerts);
 	SDL_Rect source;
 	SDL_Rect dest;
-    list<SLDrawBox> drawList;
+	list<SLDrawBox> drawList;
 
 	glm::vec2 viewport = renderer->GetSize();
 
 	int offsetX;
-    int offsetY;
-    bool scrollOverridden = !(scrollOverride.m_X == -1 && scrollOverride.m_Y == -1);
+	int offsetY;
+	bool scrollOverridden = !(scrollOverride.m_X == -1 && scrollOverride.m_Y == -1);
 
-    // Overridden scroll position
-    if (scrollOverridden)
-    {
-        offsetX = scrollOverride.GetFloorIntX();
-        offsetY = scrollOverride.GetFloorIntY();
+	// Overridden scroll position
+	if (scrollOverridden) {
+		offsetX = scrollOverride.GetFloorIntX();
+		offsetY = scrollOverride.GetFloorIntY();
     }
     // Regular scroll
     else
