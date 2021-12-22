@@ -117,6 +117,7 @@ void SceneMan::Clear()
 	m_CleanTimer.Reset();
 
 	m_pOrphanSearchBitmap = std::make_unique<Surface>();
+	m_pOrphanSearchBitmap->Create(MAXORPHANRADIUS, MAXORPHANRADIUS, BitDepth::Indexed8);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -133,7 +134,6 @@ int SceneMan::Create(std::string readerFile)
 	Serializable::Create(*reader);
 	delete reader;
 
-	m_pOrphanSearchBitmap->Create(MAXORPHANRADIUS, MAXORPHANRADIUS, BitDepth::Indexed8);
 
 	return 0;
 }
@@ -3484,7 +3484,7 @@ void SceneMan::Update(int screen)
     // Apply offsets to SceneLayer:s
 
     m_pMOColorLayer->SetOffset(m_Offset[screen]);
-    m_pMOIDLayer->SetOffset(m_Offset[screen]);
+    // m_pMOIDLayer->SetOffset(m_Offset[screen]);
 
     if (m_pDebugLayer) { m_pDebugLayer->SetOffset(m_Offset[screen]); }
 
@@ -3563,7 +3563,7 @@ void SceneMan::Draw(RenderTarget* renderer, std::shared_ptr<GLTexture> pGUITextu
             pTerrain->Draw(renderer, targetBox);
             break;
         case g_LayerMOID:
-            m_pMOIDLayer->Draw(renderer, targetBox);
+            // m_pMOIDLayer->Draw(renderer, targetBox);
             break;
         // Draw normally
         default:
@@ -3597,9 +3597,9 @@ void SceneMan::Draw(RenderTarget* renderer, std::shared_ptr<GLTexture> pGUITextu
 
 			// Actor and gameplay HUDs and GUIs
 			g_MovableMan.DrawHUD(renderer, targetPos, m_LastUpdatedScreen);
-			std::shared_ptr<RenderTexture> guiRenderer = std::make_shared<RenderTexture>();
-			guiRenderer->SetTexture(pGUITexture);
-			g_PrimitiveMan.DrawPrimitives(m_LastUpdatedScreen, guiRenderer.get(), targetPos);
+			// std::shared_ptr<RenderTexture> guiRenderer = std::make_shared<RenderTexture>();	
+			//guiRenderer->SetTexture(pGUITexture);
+			g_PrimitiveMan.DrawPrimitives(m_LastUpdatedScreen, renderer, targetPos);
 			//            g_ActivityMan.GetActivity()->Draw(pTargetBitmap, targetPos, m_LastUpdatedScreen);
 			g_ActivityMan.GetActivity()->DrawGUI(renderer, targetPos, m_LastUpdatedScreen);
 
