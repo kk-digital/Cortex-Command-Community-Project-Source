@@ -123,6 +123,9 @@ namespace RTE {
 
 
 		m_CurrentPalette = m_DefaultPalette = m_PaletteFile.GetAsPalette();
+		(*m_DefaultPalette)[0].a = 0;
+		m_DefaultPalette->Update();
+		m_DefaultPalette->Bind();
 
 		// m_MatPaletteFile.Create("Base.rte/palettemat.bmp");
 		// m_MatPalette = m_MatPaletteFile.GetAsTexture();
@@ -132,15 +135,34 @@ namespace RTE {
 		m_ShaderFill8 = std::make_shared<Shader>("Base.rte/Shaders/Base.vert", "Base.rte/Shaders/Indexed8Fill.frag");
 
 		m_ShaderBase8->Use();
+		m_ShaderBase8->SetVector4f(m_ShaderBase8->GetColorUniform(), glm::vec4(1.0f));
+		m_ShaderBase8->SetMatrix4f(m_ShaderBase8->GetTransformUniform(), glm::mat4(1.0f));
+		m_ShaderBase8->SetMatrix4f(m_ShaderBase8->GetProjectionUniform(), glm::mat4(1.0f));
+		m_ShaderBase8->SetInt(m_ShaderBase8->GetTextureUniform(), 0);
 		m_ShaderBase8->SetInt(m_ShaderBase8->GetUniformLocation("rtePalette"), 1);
+
 		m_ShaderFill8->Use();
+		m_ShaderFill8->SetVector4f(m_ShaderFill8->GetColorUniform(), glm::vec4(1.0f));
+		m_ShaderFill8->SetMatrix4f(m_ShaderFill8->GetTransformUniform(), glm::mat4(1.0f));
+		m_ShaderFill8->SetMatrix4f(m_ShaderFill8->GetProjectionUniform(), glm::mat4(1.0f));
+		m_ShaderFill8->SetInt(m_ShaderFill8->GetTextureUniform(), 0);
 		m_ShaderFill8->SetInt(m_ShaderFill8->GetUniformLocation("rtePalette"), 1);
 
-		glCheck(glUseProgram(0));
-
 		m_ShaderBase32 = std::make_shared<Shader>("Base.rte/Shaders/Base.vert", "Base.rte/Shaders/Rgba32Base.frag");
-		m_ShaderFill32 = std::make_shared<Shader>("Base.rte/Shaders/Base.vert", "Base.rte/Shaders/Rgba32Fill.frag");
+		m_ShaderBase32->Use();
+		m_ShaderBase32->SetVector4f(m_ShaderBase32->GetColorUniform(), glm::vec4(1.0f));
+		m_ShaderBase32->SetMatrix4f(m_ShaderBase32->GetTransformUniform(), glm::mat4(1.0f));
+		m_ShaderBase32->SetMatrix4f(m_ShaderBase32->GetProjectionUniform(), glm::mat4(1.0f));
+		m_ShaderBase32->SetInt(m_ShaderBase32->GetTextureUniform(), 0);
 
+		m_ShaderFill32 = std::make_shared<Shader>("Base.rte/Shaders/Base.vert", "Base.rte/Shaders/Rgba32Fill.frag");
+		m_ShaderFill32->Use();
+		m_ShaderFill32->SetVector4f(m_ShaderFill32->GetColorUniform(), glm::vec4(1.0f));
+		m_ShaderFill32->SetMatrix4f(m_ShaderFill32->GetTransformUniform(), glm::mat4(1.0f));
+		m_ShaderFill32->SetMatrix4f(m_ShaderFill32->GetProjectionUniform(), glm::mat4(1.0f));
+		m_ShaderFill32->SetInt(m_ShaderFill32->GetTextureUniform(), 0);
+
+		glCheck(glUseProgram(0));
 		m_ColorShader = std::make_shared<Shader>("Base.rte/Shaders/Base.vert", "Base.rte/Shaders/Rgba32VertexColor.frag");
 		m_ColorShader->Use();
 
