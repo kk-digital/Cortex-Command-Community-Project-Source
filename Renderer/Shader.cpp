@@ -49,6 +49,8 @@ namespace RTE {
 			return false;
 		}
 
+		ApplyDefaultUniforms();
+
 		return true;
 	}
 
@@ -129,5 +131,14 @@ namespace RTE {
 		glCheck(glDeleteShader(fragShader));
 
 		return true;
+	}
+
+	void Shader::ApplyDefaultUniforms(){
+		Use();
+		SetInt("rteTexture", 0);
+		SetInt("rtePalette", 1);
+		SetVector4f("rteColor", glm::vec4(1));
+		SetMatrix4f("rteTransform", glm::mat4(1));
+		SetMatrix4f("rteProjection", glm::mat4(1));
 	}
 } // namespace RTE

@@ -217,6 +217,7 @@ namespace RTE {
 
 		bool compileShader(uint32_t shaderID, const std::string &data, std::string &error);
 		bool Link(uint32_t vtxShader, uint32_t fragShader);
+		void ApplyDefaultUniforms();
 
 		int m_TextureUniform; //!< Location of the texture uniform (sampler2d rteTexture).
 		int m_ColorUniform; //!< Location of the colormod uniform (vec4 rteColor).
