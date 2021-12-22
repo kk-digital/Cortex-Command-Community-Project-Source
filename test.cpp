@@ -4,6 +4,8 @@
 
 #include "RTERenderer.h"
 #include "GL/glew.h"
+#include "ContentFile.h"
+
 
 using namespace RTE;
 
@@ -39,9 +41,9 @@ int main() {
 	SDL_Event e;
 	std::shared_ptr<VertexArray> va;
 	std::vector<Vertex> tri;
-	tri.emplace_back(0.0f, 0.0f, glm::u8vec4(255));
-	tri.emplace_back(1.0f, 0.0f, glm::u8vec4(255));
-	tri.emplace_back(0.0f, 1.0f, glm::u8vec4(255, 255, 0, 255));
+	tri.emplace_back(glm::vec2{0.0f, -1.0f}, glm::vec2(0.0f, 0.0f));
+	tri.emplace_back(glm::vec2{1.0f, -1.0f}, glm::vec2(1.0f, 0.0f));
+	tri.emplace_back(glm::vec2{0.0f, 0.0f}, glm::vec2(1.0f, 1.0f));
 	va = std::make_shared<VertexArray>(std::move(tri));
 	std::cout << va->GetVertexCount() << ": " << va->GetVAO() << std::endl;
 	std::shared_ptr<Shader> color = std::make_shared<Shader>();
@@ -49,15 +51,68 @@ int main() {
 		quit = true;
 	}
 	color->Use();
-	color->SetVector4f(color->GetColorUniform(), glm::vec4(1.0));
+	color->SetVector4f(color->GetColorUniform(), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
 	color->SetMatrix4f(color->GetProjectionUniform(), glm::mat4(1));
 	color->SetMatrix4f(color->GetTransformUniform(), glm::mat4(1));
+
+	g_FrameMan.GetTextureShader(BitDepth::BPP32)->Use();
+	g_FrameMan.GetTextureShader(BitDepth::BPP32)->SetInt(g_FrameMan.GetTextureShader(BitDepth::BPP32)->GetTextureUniform(), 0);
+	g_FrameMan.GetTextureShader(BitDepth::BPP32)->SetVector4f(g_FrameMan.GetTextureShader(BitDepth::BPP32)->GetColorUniform(), glm::vec4(1.0f));
+
+	std::shared_ptr<GLTexture> moo = ContentFile("Base.rte/Scenes/Terrains/Tutorial.png").GetAsTexture(ColorConvert::Preserve);
+
+	std::cout << moo->GetBitDepth() << std::endl;
+	glEnable(GL_BLEND);
+	glBlendEquation(GL_FUNC_ADD);
+	glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	Palette& pal = *g_FrameMan.GetDefaultPalette();
+	for(size_t i = 0; i< Palette::PALETTESIZE; ++i) {
+		std::cout << i << ": " << std::hex << (int)pal[i].r << " " <<(int) pal[i].g << " " << (int)pal[i].b << " " << (int)pal[i].a << std::endl;;
+	}
+	float time = 0.0;
+
+	GLuint fbo;
+	glGenFramebuffers(1, &fbo);
+	g_FrameMan.GetDefaultPalette()->Bind();
+	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+	glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, g_FrameMan.GetDefaultPalette()->GetTextureID(), 0);
+
+	std::vector<uint32_t> pixels;
+	pixels.resize(512);
+	glReadPixels(0, 0, 256,1,GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, pixels.data());
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	for(size_t i = 0; i < 256; ++i){
+		std::cout << std::dec << i << ": " << std::hex << pixels[i] << "\n";
+	}
+	std::cout << std::dec << std::endl;
+
 	while (!quit) {
 		SDL_PollEvent(&e);
-		color->Use();
+		// color->Use();
+		BlendModes::Blend.Enable();
+		glBlendEquation(GL_FUNC_ADD);
+		glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		g_FrameMan.GetTextureShader(BitDepth::Indexed8)->Use();
+		moo->Bind();
 		va->Bind();
+		g_FrameMan.GetDefaultPalette()->Bind();
 		glDrawArrays(GL_TRIANGLES, 0, va->GetVertexCount());
 		glBindVertexArray(0);
+
+		g_FrameMan.GetTextureShader(BitDepth::BPP32)->Use();
+		g_FrameMan.GetTextureShader(BitDepth::BPP32)->SetFloat("time",  time);
+		time += 1;
+
+		moo->setBlendMode(BlendModes::Blend);
+		moo->render(g_FrameMan.GetRenderer(), {0,0});
+
+		// RenderState state(glm::vec4(1.0f), va, glm::mat4(1.0f));
+		// state.m_Shader = color;
+		// state.m_BlendMode = BlendModes::None;
+		// g_FrameMan.GetRenderer()->Draw(state);
+
 		g_FrameMan.RenderPresent();
 		g_FrameMan.RenderClear();
 
