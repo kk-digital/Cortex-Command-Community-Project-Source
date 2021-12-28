@@ -7,7 +7,7 @@ namespace RTE {
 	// TODO: Look into not using distinctive types for IDs.
 	typedef uint_fast32_t MOID; //!< Distinctive type definition for MovableObject IDs.
 	// TODO Use MIDs everywhere for materials
-	typedef uint_fast8_t MID; //!< Distinctive type definition for Material IDs.
+	typedef unsigned char MID; //!< Distinctive type definition for Material IDs.
 #pragma endregion
 
 #pragma region Game Version
@@ -38,15 +38,15 @@ namespace RTE {
 
 	//! ColorKeys in ARGB8888 (0xAARRGGBB)
 	enum ColorKeys : unsigned long {
-		g_MaskColor = 0xFFFF00FF, //!< Mask color for all 8bpp bitmaps (palette index 0 (255,0,255)). This color is fully transparent.
+		g_MaskColor = 0, //!< Mask color for all 8bpp bitmaps (palette index 0 (255,0,255)). This color is fully transparent.
 		//g_MOIDMaskColor = 0, //!< Mask color for 8bpp MOID layer bitmaps (palette index 0 (255,0,255)). This color is fully transparent.
 		g_MOIDMaskColor = 0xFFFF00FF, //!< Mask color for 16bpp MOID layer bitmaps (255,0,255). This color is fully transparent.
 		g_AlphaZero = 0x0,
 		//g_MOIDMaskColor = 0xFFFF00FF, //!< Mask color for 32bpp MOID layer bitmaps (255,0,255). This color is fully transparent.
-		g_BlackColor = 0xFF000000,
-		g_WhiteColor = 0xFFFFFFFF,
-		g_RedColor = 0xFFEA1507,
-		g_YellowGlowColor = 0xFFF9F338,
+		g_BlackColor = 245,
+		g_WhiteColor = 254,
+		g_RedColor = 13,
+		g_YellowGlowColor = 117,
 		g_NoMOID = 0xff
 	};
 
