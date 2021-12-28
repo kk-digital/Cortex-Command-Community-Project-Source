@@ -175,7 +175,7 @@ namespace RTE {
 
 		for (const std::pair<int, Vector> &pieceListEntry : piecesToPlace) {
 			// Draw the color sprite onto the terrain color layer.
-			m_Textures[pieceListEntry.first]->blit(terrain->GetFGColorTexture()->GetTexture(), pieceListEntry.second.m_X, pieceListEntry.second.m_Y);
+			m_Textures[pieceListEntry.first]->blit(terrain->GetFGColorTexture()->GetTexture(), pieceListEntry.second);
 
 			m_Textures[pieceListEntry.first]->blitMasked(terrain->GetMaterialTexture()->GetTexture(), m_Material.GetIndex(), pieceListEntry.second.m_X, pieceListEntry.second.m_Y);
 		}
