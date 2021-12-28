@@ -4,7 +4,7 @@
 
 namespace RTE {
 	void BlendMode::Enable() const {
-		if(!glIsEnabled(GL_BLEND))
+		if (!glIsEnabled(GL_BLEND))
 			glEnable(GL_BLEND);
 		GLenum srcBlendFunc;
 		GLenum dstBlendFunc;
@@ -39,4 +39,6 @@ namespace RTE {
 		glCheck(glBlendEquationSeparate(srcBlendFunc, dstBlendFunc));
 		glCheck(glBlendFuncSeparate(static_cast<GLenum>(m_SrcColor), static_cast<GLenum>(m_DestColor), static_cast<GLenum>(m_SrcAlpha), static_cast<GLenum>(m_DestAlpha)));
 	}
+
+
 } // namespace RTE

@@ -33,6 +33,15 @@ namespace RTE {
 
 		void Enable() const;
 
+		constexpr bool operator==(const BlendMode &rhs) const {
+			return (m_SrcBlendFunc == rhs.m_SrcBlendFunc) &&
+			       (m_DestBlendFunc == rhs.m_DestBlendFunc) &&
+			       (m_SrcColor == rhs.m_SrcColor) &&
+			       (m_DestColor == rhs.m_DestColor) &&
+			       (m_SrcAlpha == rhs.m_SrcAlpha) &&
+			       (m_DestAlpha == rhs.m_DestAlpha);
+		}
+
 	private:
 		BlendFunc m_SrcBlendFunc = BlendFunc::Add;
 		BlendFunc m_DestBlendFunc = BlendFunc::Add;
