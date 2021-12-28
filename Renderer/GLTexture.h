@@ -64,7 +64,7 @@ namespace RTE {
 
 		glm::vec3 getColorMod() const { return m_ColorMod.rgb(); }
 
-		void setAlphaMod(float alphaMod) { m_ColorMod.a = alphaMod; }
+		void setAlphaMod(float alphaMod) { m_ColorMod.a = alphaMod/255.0f; }
 
 		float getAlphaMod() const { return m_ColorMod.a; }
 
