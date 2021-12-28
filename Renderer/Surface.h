@@ -179,21 +179,21 @@ namespace RTE {
 		/// </param>
 		void ClearColor(uint32_t color = 0);
 
-		void setBlendMode(BlendMode blendMode) { m_BlendMode = blendMode; }
+		void setBlendMode(BlendMode blendMode);
 		BlendMode getBlendMode() const { return m_BlendMode; }
 
 		int GetBitDepth() const { return m_BPP; }
 
 		std::shared_ptr<Palette> GetPalette() { return m_Palette; }
 
-		void blit(std::shared_ptr<Surface> target, int x, int y, double angle = 0, float scaleX = 1.0f, float scaleY = 1.0f) const;
+		void blit(std::shared_ptr<Surface> target, int x, int y, double angle = 0, float scaleX = 1.0f, float scaleY = 1.0f);
 
 		void blit(std::shared_ptr<Surface> target, glm::mat4 model);
 
-		void blit(std::shared_ptr<Surface> target, glm::vec2 position) const;
-		void blit(std::shared_ptr<Surface> target, std::optional<glm::vec4> srcRect, glm::vec4 destRect) const;
+		void blit(std::shared_ptr<Surface> target, glm::vec2 position);
+		void blit(std::shared_ptr<Surface> target, std::optional<glm::vec4> srcRect, glm::vec4 destRect);
 
-		void blitMasked(std::shared_ptr<Surface> target, uint32_t color, int x, int y, double angle = 0, float scaleX = 1.0f, float scaleY = 1.0f) const;
+		void blitMasked(std::shared_ptr<Surface> target, uint32_t color, int x, int y, double angle = 0, float scaleX = 1.0f, float scaleY = 1.0f);
 		void blitMasked(std::shared_ptr<Surface> target, uint32_t color, glm::mat4 model);
 
 		void fillRect(glm::vec4 rect, uint32_t color);

@@ -31,9 +31,15 @@ namespace RTE {
 		if (m_BPP == 8) {
 			if (palette)
 				m_Palette = *palette;
-			else
+			else {
 				m_Palette = std::make_shared<Palette>(std::array<glm::u8vec4, Palette::PALETTESIZE>());
+			}
+
 			SDL_SetSurfacePalette(m_Pixels.get(), m_Palette->GetAsPalette());
+		}
+		setBlendMode(BlendModes::Blend);
+		if (m_Pixels) {
+			SDL_SetSurfaceBlendMode(m_Pixels.get(), SDL_BLENDMODE_NONE);
 		}
 		return m_Pixels.get();
 	}
@@ -47,7 +53,7 @@ namespace RTE {
 		m_Width = m_Pixels->w;
 		m_Height = m_Pixels->h;
 
-		m_BlendMode = BlendModes::Blend;
+		setBlendMode(BlendModes::Blend);
 
 		return static_cast<bool>(m_Pixels);
 	}
@@ -97,16 +103,20 @@ namespace RTE {
 	}
 
 	void Surface::ClearColor(uint32_t color) {
-		if(m_BPP == 8) {
-			std::fill(static_cast<unsigned char*>(m_Pixels->pixels), static_cast<unsigned char*>(m_Pixels->pixels) + (m_Pixels->pitch * m_Pixels->h), static_cast<unsigned char>(color));
+		if (m_BPP == 8) {
+			std::fill(static_cast<unsigned char *>(m_Pixels->pixels), static_cast<unsigned char *>(m_Pixels->pixels) + (m_Pixels->pitch * m_Pixels->h), static_cast<unsigned char>(color));
 		} else {
-			std::fill(static_cast<uint32_t*>(m_Pixels->pixels), static_cast<uint32_t*>(m_Pixels->pixels) + (m_Pixels->pitch * m_Pixels->h), color);
+			std::fill(static_cast<uint32_t *>(m_Pixels->pixels), static_cast<uint32_t *>(m_Pixels->pixels) + (m_Pixels->pitch * m_Pixels->h), color);
 		}
 	}
+	void Surface::setBlendMode(BlendMode blendMode) {
+		m_BlendMode = blendMode;
+	}
 
-	void Surface::blit(std::shared_ptr<Surface> target, int x, int y, double angle, float scaleX, float scaleY) const {
+	void Surface::blit(std::shared_ptr<Surface> target, int x, int y, double angle, float scaleX, float scaleY) {
 		SDL_Surface *rotateScaled = rotozoomSurfaceXY(m_Pixels.get(), angle, scaleX, scaleY, SMOOTHING_OFF);
 		SDL_Rect dest{x, y, rotateScaled->w, rotateScaled->h};
+
 		SDL_BlitSurface(rotateScaled, nullptr, target->GetPixels(), &dest);
 		SDL_FreeSurface(rotateScaled);
 	}
@@ -124,7 +134,7 @@ namespace RTE {
 		blit(target, translation.x, translation.y, angle, scale.x, scale.y);
 	}
 
-	void Surface::blit(std::shared_ptr<Surface> target, glm::vec2 position) const {
+	void Surface::blit(std::shared_ptr<Surface> target, glm::vec2 position) {
 		assert(target.get());
 		assert(target->GetPixels());
 
@@ -132,7 +142,7 @@ namespace RTE {
 		SDL_BlitSurface(m_Pixels.get(), nullptr, target->GetPixels(), &dest);
 	}
 
-	void Surface::blit(std::shared_ptr<Surface> target, std::optional<glm::vec4> srcRect, glm::vec4 destRect) const {
+	void Surface::blit(std::shared_ptr<Surface> target, std::optional<glm::vec4> srcRect, glm::vec4 destRect) {
 		SDL_Rect src{0, 0, m_Width, m_Height};
 		if (srcRect) {
 			src.x = srcRect->x;
@@ -142,46 +152,47 @@ namespace RTE {
 		}
 
 		SDL_Rect dest{static_cast<int>(destRect.x), static_cast<int>(destRect.y), static_cast<int>(destRect.z), static_cast<int>(destRect.w)};
-
 		SDL_BlitScaled(m_Pixels.get(), &src, target->GetPixels(), &dest);
 	}
 
-	void Surface::blitMasked(std::shared_ptr<Surface> target, uint32_t color, int x, int y, double angle, float scaleX, float scaleY) const {
+	void Surface::blitMasked(std::shared_ptr<Surface> target, uint32_t color, int x, int y, double angle, float scaleX, float scaleY) {
 		SDL_Surface *masked = nullptr;
+		uint32_t maskColor{};
+		SDL_GetColorKey(m_Pixels.get(), &maskColor);
+		std::vector<unsigned char> maskedPixels8;
+		std::vector<uint32_t> maskedPixels32;
 
 		if (m_BPP == 8) {
-			std::vector<unsigned char> maskedPixels;
-			maskedPixels.resize(m_Pixels->pitch * m_Pixels->h);
-			for (size_t i = 0; i < m_Pixels->pitch * m_Pixels->h; ++i) {
-				maskedPixels[i] = static_cast<unsigned char *>(m_Pixels->pixels)[i] == 0 ? 0 : color;
+			maskedPixels8.resize(m_Pixels->pitch * m_Pixels->h);
+			for (long i = 0; i < m_Pixels->pitch * m_Pixels->h; ++i) {
+				maskedPixels8[i] = static_cast<unsigned char *>(m_Pixels->pixels)[i] == maskColor ? maskColor : color;
 			}
 
-			masked = SDL_CreateRGBSurfaceWithFormatFrom(static_cast<void *>(maskedPixels.data()), m_Width, m_Height, m_BPP, m_Pixels->pitch, m_Pixels->format->format);
+			assert(m_Pixels->format->format == SDL_PIXELFORMAT_INDEX8);
 
-			SDL_Surface *rotateScaled = rotozoomSurfaceXY(masked, angle, scaleX, scaleY, SMOOTHING_OFF);
-
-			SDL_Rect dest{x, y, rotateScaled->w, rotateScaled->h};
-			SDL_BlitSurface(rotateScaled, nullptr, target->GetPixels(), &dest);
-			SDL_FreeSurface(rotateScaled);
+			masked = SDL_CreateRGBSurfaceWithFormatFrom(static_cast<void *>(maskedPixels8.data()), m_Width, m_Height, m_BPP, m_Pixels->pitch, m_Pixels->format->format);
+			SDL_SetSurfacePalette(masked, m_Pixels->format->palette);
 		} else {
 			assert(m_Pixels->format->BitsPerPixel == 32);
+			maskedPixels32.resize(m_Pixels->w * m_Pixels->h);
 
-			std::vector<uint32_t> maskedPixels(m_Pixels->pitch * m_Pixels->h);
-
-			for (int i = 0; i < m_Pixels->pitch * m_Pixels->h; ++i) {
-				maskedPixels[i] = (static_cast<uint32_t *>(m_Pixels->pixels)[i] & m_Pixels->format->Amask) == 0 ? 0 : color;
+			for (int i = 0; i < m_Pixels->w * m_Pixels->h; ++i) {
+				maskedPixels32[i] = (static_cast<uint32_t *>(m_Pixels->pixels)[i] & m_Pixels->format->Amask) == maskColor ? maskColor : color;
 			}
 
-			masked = SDL_CreateRGBSurfaceWithFormatFrom(static_cast<void *>(maskedPixels.data()), m_Width, m_Height, m_BPP, m_Pixels->pitch, m_Pixels->format->format);
-
-			SDL_Surface *rotateScaled = rotozoomSurfaceXY(masked, angle, scaleX, scaleY, SMOOTHING_OFF);
-
-			SDL_Rect dest{x, y, rotateScaled->w, rotateScaled->h};
-			SDL_BlitSurface(rotateScaled, nullptr, target->GetPixels(), &dest);
-			SDL_FreeSurface(rotateScaled);
+			masked = SDL_CreateRGBSurfaceWithFormatFrom(static_cast<void *>(maskedPixels32.data()), m_Width, m_Height, m_BPP, m_Pixels->pitch, m_Pixels->format->format);
 		}
 
 		if (masked) {
+			SDL_Surface *rotateScaled = rotozoomSurfaceXY(masked, angle, scaleX, scaleY, SMOOTHING_OFF);
+			SDL_SetColorKey(rotateScaled, SDL_TRUE, maskColor);
+
+			SDL_SetSurfaceBlendMode(rotateScaled, SDL_BLENDMODE_NONE);
+
+			SDL_Rect dest{x, y, rotateScaled->w, rotateScaled->h};
+			SDL_BlitSurface(rotateScaled, nullptr, target->GetPixels(), &dest);
+
+			SDL_FreeSurface(rotateScaled);
 			SDL_FreeSurface(masked);
 		}
 	}
