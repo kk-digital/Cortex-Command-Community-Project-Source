@@ -257,6 +257,7 @@ int SLTerrain::LoadData() {
 
 	RTEAssert(m_pFGColor, "Terrain's foreground layer not instantiated before trying to load its data!");
 	RTEAssert(m_pBGColor, "Terrain's background layer not instantiated before trying to load its data!");
+	RTEAssert(m_pMainTexture->GetTexture()->GetBitDepth() == 8, "Terrain's material layer is not indexed color!");
 
 	// Check if our color layers' BITMAP data is also to be loaded from disk, and not be generated from the material bitmap!
 	if (m_pFGColor->IsFileData() && m_pBGColor->IsFileData()) {
@@ -298,7 +299,7 @@ int SLTerrain::LoadData() {
 
 	// Structural integrity calc buffer bitmap
 	m_pStructural = std::make_unique<Surface>();
-	m_pStructural->Create(m_pMainTexture->GetW(), m_pMainTexture->GetH(), BitDepth::Indexed8);
+	m_pStructural->Create(m_pMainTexture->GetW(), m_pMainTexture->GetH(), BitDepth::Indexed8, g_FrameMan.GetDefaultPalette());
 	RTEAssert(m_pStructural.get(), "Failed to allocate BITMAP in Terrain::Create");
 
 	///////////////////////////////////////////////
@@ -325,10 +326,7 @@ int SLTerrain::LoadData() {
 	std::shared_ptr<GLTexture> bgColor{m_pBGColor->GetTexture()->GetTexture()};
 	std::shared_ptr<GLTexture> matLayer{m_pMainTexture->GetTexture()};
 
-	// Create list of materials
-	GLTexture *materialTexture{nullptr};
-
-	unsigned char materialColor(0);
+	std::cout << apMaterials[g_MaterialAir]->GetColor().GetIndex() << std::endl;
 
 	// Go through each pixel on the main bitmap, which contains all the material pixels loaded from the bitmap
 	// Place texture pixels on the FG layer corresponding to the materials on the main material bitmap
@@ -357,14 +355,14 @@ int SLTerrain::LoadData() {
 			}
 
 			// If actually no texture for the material, then use the material's solid color instead
-			if (!materialTexture) {
+			if (!apMatTextures[matIndex]) {
 				// Use the color
-				pixelColor = materialColor;
+				pixelColor = apMatColors[matIndex];
 			}
 			// Use the texture's color
 			else {
 				//                acquire_bitmap(apTexTextures[matIndex]);
-				pixelColor = materialTexture->GetPixel(xPos % materialTexture->GetW(), yPos % materialTexture->GetH());
+				pixelColor = apMatTextures[matIndex]->GetPixel(xPos % apMatTextures[matIndex]->GetW(), yPos % apMatTextures[matIndex]->GetH());
 			}
 
 			// Draw the correct color pixel on the foreground
@@ -390,8 +388,9 @@ int SLTerrain::LoadData() {
 	for (list<TerrainFrosting>::iterator tfItr = m_TerrainFrostings.begin(); tfItr != m_TerrainFrostings.end(); ++tfItr) {
 		targetId = (*tfItr).GetTargetMaterial().GetIndex();
 		frostingId = (*tfItr).GetFrostingMaterial().GetIndex();
-		if (materialMappings[frostingId])
+		if (materialMappings[frostingId]) {
 			frostingId = materialMappings[frostingId];
+		}
 		// Try to get the color texture of the frosting material. If fail, we'll use the color isntead
 		pFrostingTex = (*tfItr).GetFrostingMaterial().GetTexture();
 
@@ -419,10 +418,11 @@ int SLTerrain::LoadData() {
 				// If time to put down frosting pixels, then do so IF there is air, OR we're set to ignore what we're overwriting
 				if (applyingFrosting && (matIndex == g_MaterialAir || !(*tfItr).InAirOnly()) && thickness <= thicknessGoal) {
 					// Get the color either from the frosting material's texture or the solid color
-					if (pFrostingTex)
+					if (pFrostingTex) {
 						pixelColor = pFrostingTex->GetPixel(xPos % pFrostingTex->GetW(), yPos % pFrostingTex->GetH());
-					else
+					} else {
 						pixelColor = (*tfItr).GetFrostingMaterial().GetColor().GetIndex();
+					}
 
 					// Put the frosting pixel color on the FG color layer
 					fgColor->SetPixel8(xPos, yPos, pixelColor);
@@ -431,8 +431,9 @@ int SLTerrain::LoadData() {
 
 					// Keep track of the applied thickness
 					thickness++;
-				} else
+				} else {
 					applyingFrosting = false;
+				}
 			}
 		}
 	}
@@ -455,6 +456,10 @@ int SLTerrain::LoadData() {
 	// Release all involved bitmaps
 
 	InitScrollRatios();
+
+	m_pMainTexture->GetTexture()->Update();
+	m_pFGColor->GetTexture()->GetTexture()->Update();
+	m_pBGColor->GetTexture()->GetTexture()->Update();
 
 	return 0;
 }
