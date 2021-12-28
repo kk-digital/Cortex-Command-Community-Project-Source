@@ -14,8 +14,8 @@ namespace RTE {
 	RenderTarget::RenderTarget() {
 		std::vector<Vertex> quad{
 		    {0.0f, 1.0f, 0.0f, 1.0f},
-		    {1.0f, 1.0f, 1.0f, 1.0f},
 		    {0.0f, 0.0f, 0.0f, 0.0f},
+		    {1.0f, 1.0f, 1.0f, 1.0f},
 		    {1.0f, 0.0f, 1.0f, 0.0f}};
 		m_DefaultQuad = std::make_shared<VertexArray>(std::move(quad));
 	}
