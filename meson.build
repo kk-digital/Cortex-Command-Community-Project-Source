@@ -125,16 +125,28 @@ subdir('external')
 main = 'Main.cpp'
 
 #### Target Definitions ####
-executable(
-  elfname, [main, sources], include_directories:[source_inc_dirs, external_inc_dirs_common, external_inc_dirs_platform], cpp_pch:pch, # Sources options
+objects = static_library('game_objects'
+  , [main, sources], include_directories:[source_inc_dirs, external_inc_dirs_common, external_inc_dirs_platform], cpp_pch:pch, # Sources options
   link_with:external_libs, objects:[external_objects], dependencies:[deps],                                # Link options
+  cpp_args:[extra_args, preprocessor_flags], link_args:link_args, build_rpath:build_rpath,               # Compiler setup
+  build_by_default:true, # Meson options
+)
+executable(
+  elfname, [main], include_directories:[source_inc_dirs, external_inc_dirs_common, external_inc_dirs_platform], cpp_pch:pch, # Sources options
+  link_with:[objects, external_libs], objects:[external_objects], dependencies:[deps],                                # Link options
   cpp_args:[extra_args, preprocessor_flags], link_args:link_args, build_rpath:build_rpath,               # Compiler setup
   name_suffix:suffix,   # Executable name options
   build_by_default:true, # Meson options
   gui_app:true,
 )
 
-executable('test_gl', ['test.cpp', sources], include_directories:[source_inc_dirs, external_inc_dirs_common, external_inc_dirs_platform], cpp_pch:pch, link_with: external_libs, objects:[external_objects], dependencies:[deps], build_by_default: true, link_args:link_args, build_rpath:build_rpath)
+executable(
+  'test_gl', ['test.cpp'], include_directories:[source_inc_dirs, external_inc_dirs_common, external_inc_dirs_platform], cpp_pch:pch, # Sources options
+  link_with:[objects, external_libs], objects:[external_objects], dependencies:[deps],                                # Link options
+  cpp_args:[extra_args, preprocessor_flags], link_args:link_args, build_rpath:build_rpath,               # Compiler setup
+  build_by_default:true, # Meson options
+  gui_app:true,
+)
 
 # disable appimage target unless option appimage_enabbled is set
 appimage_disable = get_option('enable_appimage') or disabler()
