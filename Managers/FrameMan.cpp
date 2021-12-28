@@ -248,6 +248,7 @@ namespace RTE {
 	}
 
 	void FrameMan::Draw() {
+		m_CurrentPalette->Bind();
 		// Count how many split screens we'll need
 		int screenCount = (m_HSplit ? 2 : 1) * (m_VSplit ? 2 : 1);
 		// RTEAssert(screenCount <= 1 || m_PlayerScreen,
