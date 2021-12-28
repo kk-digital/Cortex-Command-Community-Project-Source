@@ -85,7 +85,7 @@ int SceneLayer::Create(ContentFile textureFile,
 
 	// Load the Texture file from disk requesting streaming access
 	m_pMainTexture = std::make_shared<RenderTexture>();
-	m_pMainTexture->SetTexture(m_TextureFile.GetAsTexture(ColorConvert::Indexed8, false));
+	m_pMainTexture->SetTexture(m_TextureFile.GetAsTexture(ColorConvert::Preserve, false));
 	RTEAssert(m_pMainTexture->HasTexture(), "Failed to load SDL_Texture in SceneLayer::Create");
 
 	Create(m_pMainTexture, drawTrans, offset, wrapX, wrapY, scrollInfo);
@@ -558,10 +558,8 @@ void SceneLayer::Draw(RenderTarget * renderer, Box& targetBox, const Vector &scr
 {
 
 	RTEAssert(m_pMainTexture.get(), "Data of this SceneLayer has not been loaded before trying to draw!");
-	RenderState overrideVerts{glm::vec4(1), m_SceneVertices, glm::mat4(1)};
-	m_pMainTexture->GetTexture()->render(renderer, static_cast<glm::vec2>(targetBox.m_Corner), overrideVerts);
-	SDL_Rect source;
-	SDL_Rect dest;
+	glm::vec4 source;
+	glm::vec4 dest;
 	list<SLDrawBox> drawList;
 
 	glm::vec2 viewport = renderer->GetSize();
@@ -603,49 +601,49 @@ void SceneLayer::Draw(RenderTarget * renderer, Box& targetBox, const Vector &scr
 	// See if this SceneLayer is wider AND higher than the target bitmap; then use simple wrapping logic - oterhwise need to tile
     if (m_pMainTexture->GetW() >= viewport.x && m_pMainTexture->GetH() >= viewport.y)
     {
-		// source.x = offsetX;
-		// source.y = offsetY;
-		// source.w = m_pMainTexture->GetW() -offsetX;
-		// source.h = m_pMainTexture->GetH() - offsetY;
+		source.x = offsetX;
+		source.y = offsetY;
+		source.z = m_pMainTexture->GetW() -offsetX;
+		source.w = m_pMainTexture->GetH() - offsetY;
 
-		// dest.x = targetBox.GetCorner().m_X;
-		// dest.y = targetBox.GetCorner().m_Y;
-		// dest.w = source.w;
-		// dest.h = source.h;
+		dest.x = targetBox.GetCorner().m_X;
+		dest.y = targetBox.GetCorner().m_Y;
+		dest.z = source.z;
+		dest.w = source.w;
 
-		// m_pMainTexture->render(renderer, source, dest);
+		m_pMainTexture->GetTexture()->render(renderer, source, dest);
 
-		// source.x = 0;
-		// source.y = offsetY;
-		// source.w = offsetX;
-		// source.h = m_pMainTexture->GetH() - offsetY;
+		source.x = 0;
+		source.y = offsetY;
+		source.z = offsetX;
+		source.w = m_pMainTexture->GetH() - offsetY;
 
-        // dest.x       = targetBox.GetCorner().m_X + m_pMainTexture->GetW() - offsetX;
-        // dest.y       = targetBox.GetCorner().m_Y;
-		// dest.w = source.w;
-		// dest.h = source.h;
+		dest.x = targetBox.GetCorner().m_X + m_pMainTexture->GetW() - offsetX;
+		dest.y = targetBox.GetCorner().m_Y;
+		dest.z = source.z;
+		dest.w = source.w;
 
-		// m_pMainTexture->render(renderer, source, dest);
+		m_pMainTexture->GetTexture()->render(renderer, source, dest);
 
-        // source.x     = offsetX;
-        // source.y     = 0;
-        // source.w     = m_pMainTexture->GetW() - offsetX;
-        // source.h     = offsetY;
-        // dest.x       = targetBox.GetCorner().m_X;
-        // dest.y       = targetBox.GetCorner().m_Y + m_pMainTexture->GetH() - offsetY;
-		// dest.w = source.w;
-		// dest.h = source.h;
-		// m_pMainTexture->render(renderer, source, dest);
+		source.x     = offsetX;
+		source.y     = 0;
+		source.z     = m_pMainTexture->GetW() - offsetX;
+		source.w     = offsetY;
+		dest.x       = targetBox.GetCorner().m_X;
+		dest.y       = targetBox.GetCorner().m_Y + m_pMainTexture->GetH() - offsetY;
+		dest.z = source.z;
+		dest.w = source.w;
+		m_pMainTexture->GetTexture()->render(renderer, source, dest);
 
-        // source.x     = 0;
-        // source.y     = 0;
-        // source.w     = offsetX;
-        // source.h     = offsetY;
-        // dest.x       = targetBox.GetCorner().m_X + m_pMainTexture->GetW() - offsetX;
-        // dest.y       = targetBox.GetCorner().m_Y + m_pMainTexture->GetH() - offsetY;
-		// dest.w = source.w;
-		// dest.h = source.h;
-		// m_pMainTexture->render(renderer, source, dest);
+		source.x     = 0;
+		source.y     = 0;
+		source.z     = offsetX;
+		source.w     = offsetY;
+		dest.x       = targetBox.GetCorner().m_X + m_pMainTexture->GetW() - offsetX;
+		dest.y       = targetBox.GetCorner().m_Y + m_pMainTexture->GetH() - offsetY;
+		dest.z = source.z;
+		dest.w = source.w;
+		m_pMainTexture->GetTexture()->render(renderer, source, dest);
     }
     // Target bitmap is larger in some dimension, so need to draw this tiled as many times as necessary to cover the whole target
     else
@@ -673,18 +671,18 @@ void SceneLayer::Draw(RenderTarget * renderer, Box& targetBox, const Vector &scr
             // X tiling
             do
             {
-                // source.x     = 0;
-                // source.y     = 0;
-                // source.w     = m_pMainTexture->GetW();
-                // source.h     = m_pMainTexture->GetH();
-                // // If the unwrapped and untiled direction can't cover the target area, place it in the middle of the target bitmap, and leave the excess perimeter on each side untouched
-                // dest.x       = (!m_WrapX && screenLargerThanSceneX) ? ((viewport.x / 2) - (m_pMainTexture->GetW() / 2)) : (targetBox.GetCorner().m_X + tiledOffsetX - offsetX);
-                // dest.y       = (!m_WrapY && screenLargerThanSceneY) ? ((viewportDimensions.h / 2) - (m_pMainTexture->GetH() / 2)) : (targetBox.GetCorner().m_Y + tiledOffsetY - offsetY);
-				// dest.w = source.w;
-				// dest.h = source.h;
-				// m_pMainTexture->GetTexture()->render(renderer, source, dest);
+							source.x     = 0;
+							source.y     = 0;
+							source.z     = m_pMainTexture->GetW();
+							source.w     = m_pMainTexture->GetH();
+							// If the unwrapped and untiled direction can't cover the target area, place it in the middle of the target bitmap, and leave the excess perimeter on each side untouched
+							dest.x       = (!m_WrapX && screenLargerThanSceneX) ? ((viewport.x / 2) - (m_pMainTexture->GetW() / 2)) : (targetBox.GetCorner().m_X + tiledOffsetX - offsetX);
+							dest.y       = (!m_WrapY && screenLargerThanSceneY) ? ((viewport.y / 2) - (m_pMainTexture->GetH() / 2)) : (targetBox.GetCorner().m_Y + tiledOffsetY - offsetY);
+							dest.z = source.z;
+							dest.w = source.w;
+							m_pMainTexture->GetTexture()->render(renderer, source, dest);
 
-                tiledOffsetX += m_pMainTexture->GetW();
+							tiledOffsetX += m_pMainTexture->GetW();
             }
             // Only tile if we're supposed to wrap widthwise
             while (m_WrapX && toCoverX > tiledOffsetX);
@@ -768,6 +766,7 @@ void SceneLayer::DrawScaled(RenderTarget *renderer, Box &targetBox, const Vector
 
     RTEAssert(m_pMainTexture.get(), "Data of this SceneLayer has not been loaded before trying to draw!");
 
+		std::cout << "moo scaled" << std::endl;
 
 /*
 
