@@ -233,12 +233,11 @@ namespace RTE {
 			returnTexture->m_ShaderFill = g_FrameMan.GetTextureShaderFill(BitDepth::BPP32);
 		} else {
 			if (!tempSurfacePreKey->format->palette) {
-				SDL_PixelFormat *globalFmt = SDL_AllocFormat(SDL_PIXELFORMAT_INDEX8);
-				SDL_PixelFormat pf = *globalFmt;
-				SDL_SetPixelFormatPalette(&pf, g_FrameMan.GetDefaultPalette()->GetAsPalette());
-				SDL_Surface *actualSurface = SDL_ConvertSurface(tempSurfacePreKey.get(), &pf, 0);
+				SDL_PixelFormat *indexedFormat = SDL_AllocFormat(SDL_PIXELFORMAT_INDEX8);
+				SDL_SetPixelFormatPalette(indexedFormat, g_FrameMan.GetDefaultPalette()->GetAsPalette());
+				SDL_Surface *actualSurface = SDL_ConvertSurface(tempSurfacePreKey.get(), indexedFormat, 0);
 				returnTexture->m_Pixels = std::unique_ptr<SDL_Surface, sdl_surface_deleter>(actualSurface);
-				SDL_FreeFormat(globalFmt);
+				SDL_FreeFormat(indexedFormat);
 			} else {
 				SDL_SetSurfacePalette(tempSurfacePreKey.get(), g_FrameMan.GetDefaultPalette()->GetAsPalette());
 				returnTexture->m_Pixels = std::move(tempSurfacePreKey);
@@ -251,6 +250,7 @@ namespace RTE {
 
 		returnTexture->m_Width = returnTexture->m_Pixels->w;
 		returnTexture->m_Height = returnTexture->m_Pixels->h;
+		returnTexture->setBlendMode(BlendModes::Blend);
 		glCheck(glBindTexture(GL_TEXTURE_2D, returnTexture->m_TextureID));
 		glCheck(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
 		glCheck(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
