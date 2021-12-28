@@ -1,11 +1,12 @@
 * PROJ Rendering backend [6/11]
 ** TODO Implement view based camera
 ** TODO Add culling
-	 CLOSED: [2021-12-22 Mi 19:13]
 ** TODO Add SLTerrain to scene blit
    This should infinitely simplify drawing
 *** TODO Implement scene wrapping
 *** TODO remove the messy wrapping logic from SceneLayer
+** TODO Add scene updates if updated
+** TODO
 ** TODO Implement FrameMan with the new OGL stuff
    - State "PROG"       from "TODO"       [2021-10-19 Di 20:11]
 ** TODO Implement RenderTextures
