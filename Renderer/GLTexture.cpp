@@ -50,7 +50,7 @@ namespace RTE {
 		glCheck(glBindTexture(GL_TEXTURE_2D, 0));
 
 		m_ShaderBase = g_FrameMan.GetTextureShader(m_BPP == 8 ? BitDepth::Indexed8 : BitDepth::BPP32);
-		m_ShaderBase = g_FrameMan.GetTextureShaderFill(m_BPP == 8 ? BitDepth::Indexed8 : BitDepth::BPP32);
+		m_ShaderFill = g_FrameMan.GetTextureShaderFill(m_BPP == 8 ? BitDepth::Indexed8 : BitDepth::BPP32);
 
 		return true;
 	}
@@ -63,8 +63,6 @@ namespace RTE {
 		if (InitializeTextureObject(width, height)) {
 			if (Surface::Create(width, height, format, palette)) {
 				Update();
-				m_ShaderBase = g_FrameMan.GetTextureShader(m_BPP == 8 ? BitDepth::Indexed8 : BitDepth::BPP32);
-				m_ShaderBase = g_FrameMan.GetTextureShaderFill(m_BPP == 8 ? BitDepth::Indexed8 : BitDepth::BPP32);
 				return true;
 			}
 		}
@@ -166,8 +164,9 @@ namespace RTE {
 
 	void GLTexture::render(RenderTarget *renderer, glm::vec2 pos, float angle, glm::vec2 center, glm::vec2 scale, std::optional<RenderState> state) {
 		glm::mat4 modelTransform = glm::translate(glm::mat4(1.0f), {pos, 0.0f});
+		modelTransform = glm::translate(modelTransform, glm::vec3{center, 0.0f});
 		modelTransform = glm::rotate(modelTransform, glm::radians(angle), {0.0f, 0.0f, 1.0f});
-		modelTransform = glm::translate(modelTransform, {center, 0.0f});
+		modelTransform = glm::translate(modelTransform, -glm::vec3{center, 0.0f});
 		modelTransform = glm::scale(modelTransform, {scale * GetSize(), 1.0f});
 		RenderState render(shared_from_this(), modelTransform, GetCurrentShader(), m_BlendMode, m_ColorMod);
 		if (state) {
@@ -195,6 +194,8 @@ namespace RTE {
 		modelTransform = glm::scale(modelTransform, {dest.zw(), 1.0f});
 
 		RenderState render(shared_from_this(), modelTransform, GetCurrentShader(), m_BlendMode, m_ColorMod);
+		render.m_PrimitiveType = PrimitiveType::TriangleStrip;
+
 		if (state) {
 			if (state->m_Vertices) {
 				render.m_Vertices = state->m_Vertices;
