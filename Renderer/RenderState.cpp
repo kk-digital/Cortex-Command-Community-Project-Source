@@ -11,7 +11,7 @@ namespace RTE {
 	    m_Color(1.0f),
 	    m_ModelTransform(1.0f),
 	    m_BlendMode(BlendModes::Blend),
-	    m_PrimitiveType(PrimitiveType::Triangle),
+	    m_PrimitiveType(PrimitiveType::TriangleStrip),
 	    m_Shader(nullptr),
 		m_FBO(0){}
 
@@ -21,7 +21,7 @@ namespace RTE {
 	    m_Color(colorMod),
 	    m_ModelTransform(modelTransform),
 	    m_BlendMode(blendMode),
-	    m_PrimitiveType(PrimitiveType::Triangle),
+	    m_PrimitiveType(PrimitiveType::TriangleStrip),
 	    m_Shader(shader),
 		m_FBO(0) {}
 
@@ -31,7 +31,7 @@ namespace RTE {
 	    m_Color(color),
 	    m_ModelTransform(modelTransform),
 	    m_BlendMode(BlendModes::Blend),
-	    m_PrimitiveType(PrimitiveType::Triangle),
+	    m_PrimitiveType(PrimitiveType::TriangleStrip),
 	    m_Shader(nullptr),
 		m_FBO(0) {}
 } // namespace RTE
