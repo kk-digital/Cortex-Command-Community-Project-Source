@@ -64,7 +64,7 @@ namespace RTE {
 		m_Width = width;
 		m_Height = height;
 		m_Texture = MakeTexture();
-		m_Texture->Create(width, height, BitDepth::Indexed8);
+		m_Texture->Create(width, height, BitDepth::Indexed8, g_FrameMan.GetDefaultPalette());
 		m_Texture->ClearColor();
 
 		return 1;
@@ -127,6 +127,9 @@ namespace RTE {
 
 		if (!trans)
 			m_Texture->setBlendMode(BlendModes::None);
+		std::cout << "guitexture render. w: " << m_Width << " h: " << m_Height << " tw: " << m_Texture->GetW() << " th: " << m_Texture->GetH() << " dw: " << dest.z << " dh: " << dest.w << std::endl;
+
+		m_Texture->setColorMod(0, 255, 255);
 
 		m_Texture->render(g_FrameMan.GetRenderer(), src, dest);
 		if (!trans)
@@ -140,6 +143,7 @@ namespace RTE {
 		glm::vec4 dest{x, y, width, height};
 		if (!trans)
 			m_Texture->setBlendMode(BlendModes::None);
+		m_Texture->setColorMod(0, 255, 255);
 		m_Texture->render(g_FrameMan.GetRenderer(), dest);
 		if (!trans)
 			m_Texture->setBlendMode(BlendModes::None);
@@ -149,26 +153,26 @@ namespace RTE {
 	void SDLGUITexture::Blit(GUIBitmap *pDestBitmap, int x, int y, GUIRect *pRect, bool trans) {
 		RTEAssert(m_Texture.get(), "Tried drawing the screen to another bitmap.");
 		SDLGUITexture *temp = dynamic_cast<SDLGUITexture *>(pDestBitmap);
-		RTEAssert(temp, "GUIBitmap passed to SDLGUITexture Draw");
+		RTEAssert(temp, "Invalid GUIBitmap passed to SDLGUITexture Draw!");
 
 		if (!(temp->GetTexture())) {
 			Render(x, y, pRect, trans, temp->m_ClipRect);
 			return;
 		}
 		temp->Lock();
-		// SDL_Rect src;
-		// if (pRect) {
-		// 	src = {pRect->x, pRect->y, pRect->w, pRect->h};
-		// 	if (m_ClipRect) {
-		// 		SDL_IntersectRect(&src, m_ClipRect, &src);
-		// 	}
-		// } else {
-		// 	src = {0, 0, m_Width, m_Height};
-		// }
+		Box src;
+		Box dest({static_cast<float>(x), static_cast<float>(y)}, m_Width, m_Height);
+		if (pRect) {
+			src = {static_cast<float>(pRect->x), static_cast<float>(pRect->y), static_cast<float>(pRect->w), static_cast<float>(pRect->h)};
+			if (m_ClipRect) {
+				src = src.GetIntersection(*m_ClipRect);
+			}
+		} else {
+			src = {0, 0, static_cast<float>(m_Width), static_cast<float>(m_Height)};
+		}
 
 		// SDL_Rect dest{x, y, 0, 0};
-
-		m_Texture->blit(temp->GetTexture(), glm::vec2(x,y));
+		m_Texture->blit(temp->GetTexture(), src, dest);
 		// if (!trans)
 		// 	SDL_SetSurfaceBlendMode(srcSurface.get(), SDL_BLENDMODE_NONE);
 
@@ -266,12 +270,12 @@ namespace RTE {
 	void SDLGUITexture::AddClipRect(GUIRect *rect) {
 		if (!rect)
 			return;
-		if (!m_ClipRect){
+		if (!m_ClipRect) {
 			m_ClipRect = glm::vec4(0);
 			return;
 		}
 		Box tempRect(Vector(rect->x, rect->y), rect->w, rect->h);
-		Box clipRect(Vector(m_ClipRect->xy()), m_ClipRect->z, m_ClipRect->w);
+		Box clipRect(*m_ClipRect);
 		if (tempRect.IntersectsBox(clipRect))
 			m_ClipRect = tempRect.GetIntersection(clipRect);
 		else
