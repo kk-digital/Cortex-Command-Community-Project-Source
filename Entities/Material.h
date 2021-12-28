@@ -7,6 +7,8 @@
 
 namespace RTE {
 
+	typedef unsigned char MID;
+
 	/// <summary>
 	/// Represents a material and holds all the relevant data.
 	/// </summary>
@@ -56,15 +58,13 @@ namespace RTE {
 		/// Gets the index of this Material in the material palette.
 		/// </summary>
 		/// <returns>The index of this Material in the material palette. 0 - 255.</returns>
-		uint32_t GetIndex() const { return m_Index; }
+		MID GetIndex() const { return m_Index; }
 
 		/// <summary>
 		/// Sets the index of this Material in the material palette to the next specified value.
 		/// </summary>
 		/// <param name="newIndex">The new index of this Material in the material palette. 0 - 255.</param>
-		void SetIndex(uint32_t newIndex) { m_Index = newIndex; }
-
-		void SetIndex(uint32_t a, uint32_t b, uint32_t c) {m_Index = ((a<<16)&0xff)|((b<<8)&0xff)|((c)&0xff)|0xFF000000;}
+		void SetIndex(MID newIndex) { m_Index = newIndex; }
 
 		/// <summary>
 		/// Gets the drawing priority of this Material. The higher the number, the higher chances that a pixel of this material will be drawn on top of others.
@@ -112,7 +112,7 @@ namespace RTE {
 		/// If this material transforms into something else when settling into the terrain, this will return that different material index. If not, it will just return the regular index of this material.
 		/// </summary>
 		/// <returns>The settling material index of this or the regular index.</returns>
-		unsigned long GetSettleMaterial() const { return (m_SettleMaterialIndex != 0) ? m_SettleMaterialIndex : m_Index; }
+		MID GetSettleMaterial() const { return (m_SettleMaterialIndex != 0) ? m_SettleMaterialIndex : m_Index; }
 
 		/// <summary>
 		/// Gets the material index to spawn instead of this one for special effects.
