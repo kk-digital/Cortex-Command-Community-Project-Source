@@ -5,7 +5,10 @@
 #include "RTERenderer.h"
 #include "GL/glew.h"
 #include "ContentFile.h"
+#include "MOSRotating.h"
 
+#include "Constants.h"
+#include "GraphicalPrimitive.h"
 
 using namespace RTE;
 
@@ -60,6 +63,13 @@ int main() {
 	g_FrameMan.GetTextureShader(BitDepth::BPP32)->SetVector4f(g_FrameMan.GetTextureShader(BitDepth::BPP32)->GetColorUniform(), glm::vec4(1.0f));
 
 	std::shared_ptr<GLTexture> moo = ContentFile("Base.rte/Scenes/Terrains/Tutorial.png").GetAsTexture(ColorConvert::Preserve);
+	std::shared_ptr<GLTexture> bran = ContentFile("Base.rte/Actors/Brains/Brainbot/MobileBrain000.png").GetAsTexture();
+	std::shared_ptr<GLTexture> booty = ContentFile("Base.rte/Actors/Wildlife/MegaCrab/BigCrabBodyA000.png").GetAsTexture();
+
+	ContentFile mooove("Base.rte/Craft/Dropships/HullA.png");
+	MOSRotating rotate{};
+	rotate.Create(mooove, 1, 100.f, Vector(50.0f, 50.f), Vector(0.f, 0.f), 100000uL);
+
 
 	std::cout << moo->GetBitDepth() << std::endl;
 	glEnable(GL_BLEND);
@@ -87,36 +97,65 @@ int main() {
 		std::cout << std::dec << i << ": " << std::hex << pixels[i] << "\n";
 	}
 	std::cout << std::dec << std::endl;
+	GLint tex1d{};
+
+	g_FrameMan.GetDefaultPalette()->Bind();
+	bool applyPal{false};
+	GLint texMaxSize{};
+	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &texMaxSize);
+	std::cout << "Max texture size " << texMaxSize << std::endl;
 
 	while (!quit) {
 		SDL_PollEvent(&e);
-		// color->Use();
+		color->Use();
 		BlendModes::Blend.Enable();
-		glBlendEquation(GL_FUNC_ADD);
-		glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		g_FrameMan.GetTextureShader(BitDepth::Indexed8)->Use();
-		moo->Bind();
-		va->Bind();
-		g_FrameMan.GetDefaultPalette()->Bind();
-		glDrawArrays(GL_TRIANGLES, 0, va->GetVertexCount());
-		glBindVertexArray(0);
+		// glBlendEquation(GL_FUNC_ADD);
+		// glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		// g_FrameMan.GetTextureShader(BitDepth::Indexed8)->Use();
+		// moo->Bind();
+		// va->Bind();
+		// glDrawArrays(GL_TRIANGLES, 0, va->GetVertexCount());
+		// glBindVertexArray(0);
 
 		g_FrameMan.GetTextureShader(BitDepth::BPP32)->Use();
 		g_FrameMan.GetTextureShader(BitDepth::BPP32)->SetFloat("time",  time);
 		time += 1;
+		bran->setColorMod(glm::vec3(glm::sin(glm::radians(time)), glm::cos(glm::radians(time)), glm::sin(glm::radians(time) + 0.5)));//, glm::cos(time), glm::sin(time + 3.141/2)));
+		bran->render(g_FrameMan.GetRenderer(), glm::vec2{fmod(time * 0.5, g_FrameMan.GetResX()), 10});
+		booty->setAlphaMod(fmod(time, 255));
+		booty->render(g_FrameMan.GetRenderer(), {15 + booty->GetW() * 5, 20 + booty->GetH() * 5}, 8.0 * glm::radians(time), glm::vec2(0.0f), 5.0f * glm::vec2(glm::sin(glm::radians(time)), glm::cos(glm::radians(time))));
 
 		moo->setBlendMode(BlendModes::Blend);
 		moo->render(g_FrameMan.GetRenderer(), {0,0});
+
 
 		// RenderState state(glm::vec4(1.0f), va, glm::mat4(1.0f));
 		// state.m_Shader = color;
 		// state.m_BlendMode = BlendModes::None;
 		// g_FrameMan.GetRenderer()->Draw(state);
 
-		g_FrameMan.RenderPresent();
-		g_FrameMan.RenderClear();
+		rotate.SetRotAngle(glm::radians(-time) * 5);
+		rotate.SetPos(Vector(150.0f, 50.0f));
+		rotate.Draw(g_FrameMan.GetRenderer(), Vector(), g_DrawTrans, true, 192);
+		rotate.SetPos(Vector(150.0f, 150.0f));
+		rotate.SetRotAngle(glm::radians(time) * 5);
+		rotate.Draw(g_FrameMan.GetRenderer(), Vector(), g_DrawWhite, true);
 
-		GLenum err;
+		g_FrameMan.RenderPresent();
+		g_FrameMan.GetRenderer()->DrawClear(glm::vec4(0.0f));
+		if(!applyPal){
+			g_FrameMan.GetDefaultPalette()->Bind();
+			applyPal = true;
+		}
+
+		LinePrimitive(-1, {20.0f, 200.0f}, {150.0f, 200.0f}, g_WhiteColor).Draw(g_FrameMan.GetRenderer());
+		CirclePrimitive(-1, {150.0f, 280.0f}, 50, g_WhiteColor).Draw(g_FrameMan.GetRenderer());
+		CircleFillPrimitive(-1, {150.0f, 280.0f}, 30, g_YellowGlowColor).Draw(g_FrameMan.GetRenderer());
+		CircleFillPrimitive(-1, {150.0f, 280.0f}, 5, 13).Draw(g_FrameMan.GetRenderer());
+		BoxPrimitive(-1, {20.0f, 230.0f}, {130.0f, 280.0f}, 113).Draw(g_FrameMan.GetRenderer());
+		BoxFillPrimitive(-1, {30.0f, 260.0f}, {100.0f, 250.0f}, g_WhiteColor).Draw(g_FrameMan.GetRenderer());
+
+		    GLenum err;
 		while ((err = glGetError()) != GL_NO_ERROR) {
 			std::cout << std::hex << err << std::dec << std::endl;
 		}
