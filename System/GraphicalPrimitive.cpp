@@ -10,10 +10,9 @@
 
 #include "SDLHelper.h"
 
-
 namespace RTE {
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void GraphicalPrimitive::TranslateCoordinates(Vector targetPos, const Vector &scenePos, Vector &drawLeftPos, Vector &drawRightPos) const {
 		drawLeftPos = scenePos;
@@ -21,7 +20,9 @@ namespace RTE {
 
 		if (g_SceneMan.SceneWrapsX()) {
 			float sceneWidth = static_cast<float>(g_SceneMan.GetSceneWidth());
-			if (targetPos.m_X <= sceneWidth && targetPos.m_X > sceneWidth / 2) { targetPos.m_X -= sceneWidth; }
+			if (targetPos.m_X <= sceneWidth && targetPos.m_X > sceneWidth / 2) {
+				targetPos.m_X -= sceneWidth;
+			}
 			drawLeftPos.m_X = (drawLeftPos.m_X > 0) ? (drawLeftPos.m_X -= sceneWidth) : (drawLeftPos.m_X -= sceneWidth + targetPos.m_X);
 		}
 		drawLeftPos.m_X -= targetPos.m_X;
@@ -29,7 +30,9 @@ namespace RTE {
 
 		if (g_SceneMan.SceneWrapsY()) {
 			float sceneHeight = static_cast<float>(g_SceneMan.GetSceneHeight());
-			if (targetPos.m_Y <= sceneHeight && targetPos.m_Y > sceneHeight / 2) { targetPos.m_Y -= sceneHeight; }
+			if (targetPos.m_Y <= sceneHeight && targetPos.m_Y > sceneHeight / 2) {
+				targetPos.m_Y -= sceneHeight;
+			}
 			drawLeftPos.m_Y = (drawLeftPos.m_Y > 0) ? (drawLeftPos.m_Y -= sceneHeight) : (drawLeftPos.m_Y -= sceneHeight + targetPos.m_Y);
 		}
 		drawLeftPos.m_Y -= targetPos.m_Y;
@@ -37,13 +40,13 @@ namespace RTE {
 	}
 
 	void GraphicalPrimitive::Draw(RenderTarget *renderer, const Vector &targetPos, std::optional<RenderState> renderState) {
-		RenderState state;
+		RenderState state{};
 		if (renderState) {
 			state = *renderState;
 		}
 
 		state.m_ModelTransform = glm::mat4(1);
-		glm::translate(state.m_ModelTransform, glm::vec3(static_cast<glm::vec2>(targetPos), 0));
+		// glm::translate(state.m_ModelTransform, glm::vec3(static_cast<glm::vec2>(targetPos), 0));
 		state.m_PrimitiveType = m_DrawType;
 		state.m_Vertices = m_Vertices;
 		state.m_Shader = g_FrameMan.GetColorShader();
@@ -51,7 +54,6 @@ namespace RTE {
 		state.m_Color /= 255.0f;
 
 		renderer->Draw(state);
-
 	}
 
 	PointPrimitive::PointPrimitive(int player, const Vector &position, unsigned char color) {
@@ -101,7 +103,7 @@ namespace RTE {
 		}
 	}
 #endif
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	ArcPrimitive::ArcPrimitive(int player, const Vector &centerPos, float startAngle, float endAngle, int radius, int thickness, unsigned char color) {
 		m_Color = color;
@@ -187,7 +189,7 @@ namespace RTE {
 	}
 #endif
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	SplinePrimitive::SplinePrimitive(int player, const Vector &startPos, const Vector &guideA, const Vector &guideB, const Vector &endPos, unsigned char color) {
 		m_Player = player;
 		m_StartPos = startPos;
@@ -258,7 +260,7 @@ namespace RTE {
 	}
 #endif
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	BoxPrimitive::BoxPrimitive(int player, const Vector &topLeftPos, const Vector &bottomRightPos, unsigned char color) {
 		m_Player = player;
 		m_StartPos = topLeftPos;
@@ -296,7 +298,7 @@ namespace RTE {
 	}
 #endif
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	BoxFillPrimitive::BoxFillPrimitive(int player, const Vector &topLeftPos, const Vector &bottomRightPos, unsigned char color) {
 		m_Player = player;
@@ -336,7 +338,7 @@ namespace RTE {
 	}
 #endif
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	RoundedBoxPrimitive::RoundedBoxPrimitive(int player, const Vector &topLeftPos, const Vector &bottomRightPos, int cornerRadius, unsigned char color) {
 		m_Player = player;
@@ -350,7 +352,7 @@ namespace RTE {
 		vertices.emplace_back(topLeftPos + glm::vec2(cornerRadius, 0));
 		int arcResolution{cornerRadius / 6};
 
-		float startAngle = glm::pi<float>()/2;
+		float startAngle = glm::pi<float>() / 2;
 
 		auto arcVertices = [](auto startAngle, auto endAngle, auto resolution, auto radius, auto center, auto &vertices) {
 			float angleStep = (endAngle - startAngle) / resolution;
@@ -404,7 +406,7 @@ namespace RTE {
 	}
 #endif
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	RoundedBoxFillPrimitive::RoundedBoxFillPrimitive(int player, const Vector &topLeftPos, const Vector &bottomRightPos, int cornerRadius, unsigned char color) {
 		m_Player = player;
@@ -419,7 +421,7 @@ namespace RTE {
 		vertices.emplace_back(topLeftPos + glm::vec2(cornerRadius, 0));
 		int arcResolution{cornerRadius / 6};
 
-		float startAngle = glm::pi<float>()/2;
+		float startAngle = glm::pi<float>() / 2;
 
 		auto arcVertices = [](auto startAngle, auto endAngle, auto resolution, auto radius, auto center, auto &vertices) {
 			float angleStep = (endAngle - startAngle) / resolution;
@@ -476,7 +478,7 @@ namespace RTE {
 	}
 #endif
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	CirclePrimitive::CirclePrimitive(int player, const Vector &centerPos, int radius, unsigned char color) {
 		m_StartPos = centerPos;
@@ -486,7 +488,7 @@ namespace RTE {
 
 		std::vector<Vertex> vertices;
 
-		int resolution{radius / 10};
+		int resolution{std::min(radius, 20)};
 
 		float angleStep{2 * glm::pi<float>() / resolution};
 
@@ -514,7 +516,7 @@ namespace RTE {
 	}
 #endif
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	CircleFillPrimitive::CircleFillPrimitive(int player, const Vector &centerPos, int radius, unsigned char color) {
 		m_StartPos = centerPos;
@@ -525,10 +527,10 @@ namespace RTE {
 		std::vector<Vertex> vertices;
 		vertices.emplace_back(centerPos);
 
-		int resolution{radius / 10};
+		int resolution{std::max(radius, 20)};
 		float angleStep{2 * glm::pi<float>() / resolution};
 
-		for (int i = 0; i < resolution; ++i) {
+		for (int i = 0; i <= resolution; ++i) {
 			glm::vec2 point(radius * glm::cos(i * angleStep), radius * glm::sin(i * angleStep));
 			vertices.emplace_back(point + centerPos);
 		}
@@ -552,7 +554,7 @@ namespace RTE {
 	}
 #endif
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	EllipsePrimitive::EllipsePrimitive(int player, const Vector &centerPos, int horizRadius, int vertRadius, unsigned char color) {
 		m_StartPos = centerPos;
@@ -591,7 +593,7 @@ namespace RTE {
 	}
 #endif
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	EllipseFillPrimitive::EllipseFillPrimitive(int player, const Vector &centerPos, int horizRadius, int vertRadius, unsigned char color) {
 		m_StartPos = centerPos;
 		m_Player = player;
@@ -630,7 +632,7 @@ namespace RTE {
 	}
 #endif
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	TrianglePrimitive::TrianglePrimitive(int player, const Vector &pointA, const Vector &pointB, const Vector &pointC, unsigned char color) {
 		m_Player = player;
@@ -683,7 +685,7 @@ namespace RTE {
 	}
 #endif
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	TriangleFillPrimitive::TriangleFillPrimitive(int player, const Vector &pointA, const Vector &pointB, const Vector &pointC, unsigned char color) {
 		m_Player = player;
@@ -725,9 +727,9 @@ namespace RTE {
 	}
 #endif
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void TextPrimitive::Draw(RenderTarget* renderer, const Vector &targetPos, std::optional<RenderState> renderState) {
+	void TextPrimitive::Draw(RenderTarget *renderer, const Vector &targetPos, std::optional<RenderState> renderState) {
 		if (!g_SceneMan.SceneWrapsX() && !g_SceneMan.SceneWrapsY()) {
 			Vector drawStart = m_StartPos - targetPos;
 			SDLGUITexture playerGUIBitmap;
@@ -754,9 +756,9 @@ namespace RTE {
 		}
 	}
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void BitmapPrimitive::Draw(RenderTarget* renderer, const Vector &targetPos, std::optional<RenderState> renderState) {
+	void BitmapPrimitive::Draw(RenderTarget *renderer, const Vector &targetPos, std::optional<RenderState> renderState) {
 		if (!m_Texture) {
 			return;
 		}
@@ -777,4 +779,4 @@ namespace RTE {
 			m_Texture->render(renderer, drawStartRight, m_RotAngle, flip);
 		}
 	}
-}
+} // namespace RTE
