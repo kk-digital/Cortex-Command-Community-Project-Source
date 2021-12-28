@@ -57,6 +57,8 @@ namespace RTE {
 		/// <param name="reference">A Box object which is passed in by reference.</param>
 		Box(const Box &reference) { Create(reference); }
 
+		Box(const glm::vec4 &reference) {Create(reference.xy(), reference.z, reference.w);}
+
 		/// <summary>
 		/// Makes the Box object ready for use.
 		/// </summary>
