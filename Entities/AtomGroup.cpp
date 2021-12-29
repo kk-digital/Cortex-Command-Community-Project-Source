@@ -1554,7 +1554,7 @@ namespace RTE {
 			bool inside;
 
 			std::unique_ptr<Surface> checkBitmap = std::make_unique<Surface>();
-			checkBitmap->Create(spriteWidth, spriteHeight, BitDepth::Indexed8);
+			checkBitmap->Create(spriteWidth, spriteHeight, BitDepth::Indexed8, g_FrameMan.GetDefaultPalette());
 
 			// If Atoms are to be placed right at (below) the bitmap of the sprite.
 			if (m_Depth <= 0) {
