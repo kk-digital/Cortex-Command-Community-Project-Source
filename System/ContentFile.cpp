@@ -225,7 +225,7 @@ namespace RTE {
 		SharedTexture returnTexture = MakeTexture();
 
 		returnTexture->m_BlendMode = BlendModes::Blend;
-		if (colorConversion == ColorConvert::ARGB32 || (colorConversion == ColorConvert::Preserve && !tempSurfacePreKey->format->palette)) {
+		if (colorConversion == ColorConvert::ARGB32 || (colorConversion == ColorConvert::Preserve && tempSurfacePreKey->format->BitsPerPixel >= 24)) {
 			SDL_Surface *actualSurface = SDL_ConvertSurfaceFormat(tempSurfacePreKey.get(), SDL_PIXELFORMAT_ARGB8888, 0);
 			returnTexture->m_Pixels = std::unique_ptr<SDL_Surface, sdl_surface_deleter>(actualSurface);
 			returnTexture->m_BPP = 32;
