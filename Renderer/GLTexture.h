@@ -25,7 +25,7 @@ namespace RTE {
 	public:
 		virtual ~GLTexture();
 
-		virtual bool Create(int width, int height, BitDepth format = BitDepth::Indexed8, std::optional<std::shared_ptr<Palette>> palette = std::nullopt) override;
+		virtual bool Create(int width, int height, BitDepth format = BitDepth::BPP32, std::optional<std::shared_ptr<Palette>> palette = std::nullopt) override;
 
 		void render(RenderTarget *renderer, float x, float y, std::optional<RenderState> state = std::nullopt);
 
