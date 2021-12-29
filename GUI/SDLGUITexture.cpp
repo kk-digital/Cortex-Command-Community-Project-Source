@@ -52,7 +52,7 @@ namespace RTE {
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	bool SDLGUITexture::Create(const std::string filename) {
 		m_TextureFile.SetDataPath(filename);
-		m_Texture = m_TextureFile.GetAsTexture();
+		m_Texture = m_TextureFile.GetAsTexture(ColorConvert::ARGB32);
 		m_Width = m_Texture->GetW();
 		m_Height = m_Texture->GetH();
 		m_Locked = false;
@@ -64,7 +64,7 @@ namespace RTE {
 		m_Width = width;
 		m_Height = height;
 		m_Texture = MakeTexture();
-		m_Texture->Create(width, height, BitDepth::Indexed8, g_FrameMan.GetDefaultPalette());
+		m_Texture->Create(width, height, BitDepth::BPP32);
 		m_Texture->ClearColor();
 
 		return 1;
