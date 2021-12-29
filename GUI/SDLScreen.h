@@ -4,6 +4,7 @@
 
 namespace RTE {
 	class SDLGUITexture;
+	class RenderTexture;
 	class SDLScreen : public GUIScreen {
 	  public:
 		SDLScreen();
@@ -59,6 +60,7 @@ namespace RTE {
 		                           int targetDepth = 8) override;
 
 	private:
+		RenderTexture* backBuffer; //!< Render Backbuffer Target. Not Owned.
 		std::shared_ptr<SDLGUITexture> m_GUIBitmap;
 
 	};
