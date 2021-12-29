@@ -11,8 +11,6 @@
 //////////////////////////////////////////////////////////////////////////////////////////
 // Inclusions of header files
 
-#include <SDL2/SDL_render.h>
-#include <SDL2/SDL_rect.h>
 #ifdef NETWORK_ENABLED
 #include "NetworkServer.h"
 #endif
@@ -116,8 +114,7 @@ void SceneMan::Clear()
 //    m_CalcTimer.Reset();
 	m_CleanTimer.Reset();
 
-	m_pOrphanSearchBitmap = std::make_unique<Surface>();
-	m_pOrphanSearchBitmap->Create(MAXORPHANRADIUS, MAXORPHANRADIUS, BitDepth::Indexed8);
+	m_pOrphanSearchBitmap = nullptr;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -127,6 +124,7 @@ void SceneMan::Clear()
 
 int SceneMan::Create(std::string readerFile)
 {
+
 	Reader *reader = new Reader();
 	if (reader->Create(readerFile.c_str()))
 		g_ConsoleMan.PrintString("ERROR: Could not find Scene definition file!");
@@ -212,7 +210,7 @@ int SceneMan::LoadScene(Scene *pNewScene, bool placeObjects, bool placeUnits) {
 
 	// Re-create the MoveableObject:s color SceneLayer
 	std::shared_ptr<GLTexture> moColorAttachment = MakeTexture();
-	moColorAttachment->Create(GetSceneWidth(), GetSceneHeight());
+	moColorAttachment->Create(GetSceneWidth(), GetSceneHeight(), BitDepth::BPP32);
 	std::shared_ptr<RenderTexture> moColorRenderer = std::make_shared<RenderTexture>();
 	moColorRenderer->SetTexture(moColorAttachment);
 	m_pMOColorLayer = std::make_unique<SceneLayer>();
@@ -1032,6 +1030,11 @@ int SceneMan::RemoveOrphans(int posX, int posY, int radius, int maxArea, bool re
 	if (radius > MAXORPHANRADIUS)
 		radius = MAXORPHANRADIUS;
 
+	if(!m_pOrphanSearchBitmap) {
+		m_pOrphanSearchBitmap = std::make_unique<Surface>();
+		m_pOrphanSearchBitmap->Create(MAXORPHANRADIUS, MAXORPHANRADIUS, BitDepth::Indexed8, g_FrameMan.GetDefaultPalette());
+	}
+
 	m_pOrphanSearchBitmap->ClearColor();
 	int area = RemoveOrphans(posX, posY, posX, posY, 0, radius, maxArea, false);
 	if (remove && area <= maxArea)
@@ -1057,6 +1060,11 @@ int SceneMan::RemoveOrphans(int posX, int posY,
 	int bmpY = 0;
 
 	std::shared_ptr<GLTexture> mat = m_pCurrentScene->GetTerrain()->GetMaterialTexture()->GetTexture();
+
+	if (!m_pOrphanSearchBitmap) {
+		m_pOrphanSearchBitmap = std::make_unique<Surface>();
+		m_pOrphanSearchBitmap->Create(MAXORPHANRADIUS, MAXORPHANRADIUS, BitDepth::Indexed8, g_FrameMan.GetDefaultPalette());
+	}
 
 	if (posX < 0 || posY < 0 || posX >= mat->GetW() || posY >= mat->GetH()) return 0;
 
