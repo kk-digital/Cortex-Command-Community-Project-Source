@@ -29,11 +29,8 @@ namespace RTE {
 		m_Height = height;
 		m_BPP = SDL_BITSPERPIXEL(sdlFormat);
 		if (m_BPP == 8) {
-			if (palette)
-				m_Palette = *palette;
-			else {
-				m_Palette = std::make_shared<Palette>(std::array<glm::u8vec4, Palette::PALETTESIZE>());
-			}
+			assert(palette);
+			m_Palette = *palette;
 
 			SDL_SetSurfacePalette(m_Pixels.get(), m_Palette->GetAsPalette());
 		}
@@ -46,8 +43,11 @@ namespace RTE {
 
 	bool Surface::Create(SDL_Surface *pixels, std::optional<std::shared_ptr<Palette>> palette) {
 		m_Pixels = std::unique_ptr<SDL_Surface, sdl_surface_deleter>(SDL_ConvertSurface(pixels, pixels->format, 0));
-		if (palette)
+		if (pixels->format->palette) {
+			assert(palette);
+			assert(m_Pixels->format->palette);
 			m_Palette = *palette;
+		}
 
 		m_BPP = m_Pixels->format->BitsPerPixel;
 		m_Width = m_Pixels->w;
@@ -106,7 +106,7 @@ namespace RTE {
 		if (m_BPP == 8) {
 			std::fill(static_cast<unsigned char *>(m_Pixels->pixels), static_cast<unsigned char *>(m_Pixels->pixels) + (m_Pixels->pitch * m_Pixels->h), static_cast<unsigned char>(color));
 		} else {
-			std::fill(static_cast<uint32_t *>(m_Pixels->pixels), static_cast<uint32_t *>(m_Pixels->pixels) + (m_Pixels->pitch * m_Pixels->h), color);
+			std::fill(static_cast<uint32_t *>(m_Pixels->pixels), static_cast<uint32_t *>(m_Pixels->pixels) + (m_Pixels->w * m_Pixels->h), color);
 		}
 	}
 	void Surface::setBlendMode(BlendMode blendMode) {
@@ -135,9 +135,6 @@ namespace RTE {
 	}
 
 	void Surface::blit(std::shared_ptr<Surface> target, glm::vec2 position) {
-		assert(target.get());
-		assert(target->GetPixels());
-
 		SDL_Rect dest{static_cast<int>(position.x), static_cast<int>(position.y), m_Width, m_Height};
 		SDL_BlitSurface(m_Pixels.get(), nullptr, target->GetPixels(), &dest);
 	}
@@ -168,12 +165,9 @@ namespace RTE {
 				maskedPixels8[i] = static_cast<unsigned char *>(m_Pixels->pixels)[i] == maskColor ? maskColor : color;
 			}
 
-			assert(m_Pixels->format->format == SDL_PIXELFORMAT_INDEX8);
-
 			masked = SDL_CreateRGBSurfaceWithFormatFrom(static_cast<void *>(maskedPixels8.data()), m_Width, m_Height, m_BPP, m_Pixels->pitch, m_Pixels->format->format);
 			SDL_SetSurfacePalette(masked, m_Pixels->format->palette);
 		} else {
-			assert(m_Pixels->format->BitsPerPixel == 32);
 			maskedPixels32.resize(m_Pixels->w * m_Pixels->h);
 
 			for (int i = 0; i < m_Pixels->w * m_Pixels->h; ++i) {
