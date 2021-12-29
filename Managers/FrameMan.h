@@ -227,8 +227,8 @@ namespace RTE {
 		/// </returns>
 		std::shared_ptr<Shader> GetColorShader();
 
-		RenderTexture* GetPostProcessFramebuffer();
-		RenderTexture* GetGUIFramebuffer();
+		RenderTexture* GetPostProcessFramebuffer() {return m_PostProcessFramebuffer.get();}
+		RenderTexture* GetGUIFramebuffer() {return m_GUIFramebuffer.get();}
 
 		void FadeInPalette();
 
