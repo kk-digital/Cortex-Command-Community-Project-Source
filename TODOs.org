@@ -6,7 +6,7 @@
 *** TODO Implement scene wrapping
 *** TODO remove the messy wrapping logic from SceneLayer
 ** TODO Add scene updates if updated
-** TODO
+** TODO Fix GUItextures bit depth
 ** TODO Implement FrameMan with the new OGL stuff
    - State "PROG"       from "TODO"       [2021-10-19 Di 20:11]
 ** TODO Implement RenderTextures
