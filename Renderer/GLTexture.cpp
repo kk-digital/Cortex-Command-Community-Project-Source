@@ -85,6 +85,7 @@ namespace RTE {
 	void GLTexture::render(RenderTarget *renderer, float x, float y, std::optional<RenderState> state) {
 		render(renderer, {x, y}, state);
 	}
+
 	void GLTexture::render(RenderTarget *renderer, glm::vec2 pos, std::optional<RenderState> state) {
 		glm::mat4 translation = glm::translate(glm::mat4(1.0f), {pos, 0.0f});
 		translation = glm::scale(translation, glm::vec3(GetSize(), 1.0f));
@@ -103,9 +104,11 @@ namespace RTE {
 
 		renderer->Draw(render);
 	}
+
 	void GLTexture::render(RenderTarget *renderer, float x, float y, float angle, std::optional<RenderState> state) {
 		render(renderer, {x, y}, angle, state);
 	}
+
 	void GLTexture::render(RenderTarget *renderer, glm::vec2 pos, float angle, std::optional<RenderState> state) {
 		glm::vec2 size = GetSize();
 		glm::mat4 modelTransform = glm::translate(glm::mat4(1.0f), {pos, 0.0f});
@@ -125,6 +128,7 @@ namespace RTE {
 		}
 		renderer->Draw(render);
 	}
+
 	void GLTexture::render(RenderTarget *renderer, glm::vec2 pos, glm::vec2 scale, std::optional<RenderState> state) {
 		glm::vec2 size = GetSize();
 		glm::mat4 modelTransform = glm::translate(glm::mat4(1.0f), {pos, 0.0f});
@@ -142,6 +146,7 @@ namespace RTE {
 		}
 		renderer->Draw(render);
 	}
+
 	void GLTexture::render(RenderTarget *renderer, glm::vec2 pos, float angle, glm::vec2 scale, std::optional<RenderState> state) {
 		glm::vec2 size = GetSize();
 		glm::mat4 modelTransform = glm::translate(glm::mat4(1.0f), {pos, 0.0f});
