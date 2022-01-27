@@ -36,7 +36,6 @@ namespace RTE {
 			state.m_Vertices->Bind();
 		} else {
 			m_DefaultQuad->Bind();
-			state.m_PrimitiveType = PrimitiveType::TriangleStrip;
 			state.m_Vertices = m_DefaultQuad;
 		}
 
