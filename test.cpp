@@ -10,15 +10,11 @@
 #include "Constants.h"
 #include "GraphicalPrimitive.h"
 
-using namespace RTE;
+#include "imgui.h"
+#include "imgui_impl_sdl.h"
+#include "imgui_impl_opengl3.h"
 
-static bool quit = false;
-int quit_handler(void *quit, SDL_Event *event) {
-	if ((*event).type == SDL_QUIT) {
-		*static_cast<int *>(quit) = true;
-	}
-	return 1;
-}
+using namespace RTE;
 
 void GLAPIENTRY
 MessageCallback(GLenum source,
@@ -35,13 +31,22 @@ MessageCallback(GLenum source,
 
 int main() {
 	SDL_Init(SDL_INIT_EVERYTHING);
-	SDL_AddEventWatch(quit_handler, &quit);
 	g_FrameMan.CreateWindowAndRenderer();
+
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGuiIO &io = ImGui::GetIO();
+	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+
+	ImGui::StyleColorsDark();
+
+	ImGui_ImplSDL2_InitForOpenGL(g_FrameMan.GetWindow(), g_FrameMan.GetContext());
+	ImGui_ImplOpenGL3_Init("#version 330 core");
+
 	System::Initialize();
 	g_FrameMan.Initialize();
 	glEnable(GL_DEBUG_OUTPUT);
 	glDebugMessageCallback(MessageCallback, 0);
-	SDL_Event e;
 	std::shared_ptr<VertexArray> va;
 	std::vector<Vertex> tri;
 	tri.emplace_back(glm::vec2{0.0f, -1.0f}, glm::vec2(0.0f, 0.0f));
@@ -51,7 +56,7 @@ int main() {
 	std::cout << va->GetVertexCount() << ": " << va->GetVAO() << std::endl;
 	std::shared_ptr<Shader> color = std::make_shared<Shader>();
 	if (!color->Compile("Base.rte/Shaders/Base.vert", "Base.rte/Shaders/Rgba32VertexColor.frag")) {
-		quit = true;
+		std::exit(-1);
 	}
 	color->Use();
 	color->SetVector4f(color->GetColorUniform(), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
@@ -70,15 +75,15 @@ int main() {
 	MOSRotating rotate{};
 	rotate.Create(mooove, 1, 100.f, Vector(50.0f, 50.f), Vector(0.f, 0.f), 100000uL);
 
-
 	std::cout << moo->GetBitDepth() << std::endl;
 	glEnable(GL_BLEND);
 	glBlendEquation(GL_FUNC_ADD);
 	glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	Palette& pal = *g_FrameMan.GetDefaultPalette();
-	for(size_t i = 0; i< Palette::PALETTESIZE; ++i) {
-		std::cout << i << ": " << std::hex << (int)pal[i].r << " " <<(int) pal[i].g << " " << (int)pal[i].b << " " << (int)pal[i].a << std::endl;;
+	Palette &pal = *g_FrameMan.GetDefaultPalette();
+	for (size_t i = 0; i < Palette::PALETTESIZE; ++i) {
+		std::cout << i << ": " << std::hex << (int)pal[i].r << " " << (int)pal[i].g << " " << (int)pal[i].b << " " << (int)pal[i].a << std::endl;
+		;
 	}
 	float time = 0.0;
 
@@ -90,10 +95,10 @@ int main() {
 
 	std::vector<uint32_t> pixels;
 	pixels.resize(512);
-	glReadPixels(0, 0, 256,1,GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, pixels.data());
+	glReadPixels(0, 0, 256, 1, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, pixels.data());
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-	for(size_t i = 0; i < 256; ++i){
+	for (size_t i = 0; i < 256; ++i) {
 		std::cout << std::dec << i << ": " << std::hex << pixels[i] << "\n";
 	}
 	std::cout << std::dec << std::endl;
@@ -105,8 +110,20 @@ int main() {
 	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &texMaxSize);
 	std::cout << "Max texture size " << texMaxSize << std::endl;
 
+	bool quit{false};
+	bool showDemoWindow{true};
+	int resolutionMultiplier { 50 };
 	while (!quit) {
-		SDL_PollEvent(&e);
+		SDL_Event e;
+		while (SDL_PollEvent(&e)) {
+			ImGui_ImplSDL2_ProcessEvent(&e);
+			if (e.type == SDL_QUIT)
+				quit = true;
+		}
+
+
+		g_FrameMan.GetRenderer()->DrawClear(glm::vec4(0.0f));
+
 		color->Use();
 		BlendModes::Blend.Enable();
 		// glBlendEquation(GL_FUNC_ADD);
@@ -118,16 +135,15 @@ int main() {
 		// glBindVertexArray(0);
 
 		g_FrameMan.GetTextureShader(BitDepth::BPP32)->Use();
-		g_FrameMan.GetTextureShader(BitDepth::BPP32)->SetFloat("time",  time);
+		g_FrameMan.GetTextureShader(BitDepth::BPP32)->SetFloat("time", time);
 		time += 1;
-		bran->setColorMod(glm::vec3(glm::sin(glm::radians(time)), glm::cos(glm::radians(time)), glm::sin(glm::radians(time) + 0.5)));//, glm::cos(time), glm::sin(time + 3.141/2)));
+		bran->setColorMod(glm::vec3(glm::sin(glm::radians(time)), glm::cos(glm::radians(time)), glm::sin(glm::radians(time) + 0.5))); //, glm::cos(time), glm::sin(time + 3.141/2)));
 		bran->render(g_FrameMan.GetRenderer(), glm::vec2{fmod(time * 0.5, g_FrameMan.GetResX()), 10});
 		booty->setAlphaMod(fmod(time, 255));
 		booty->render(g_FrameMan.GetRenderer(), {15 + booty->GetW() * 5, 20 + booty->GetH() * 5}, 8.0 * glm::radians(time), glm::vec2(0.0f), 5.0f * glm::vec2(glm::sin(glm::radians(time)), glm::cos(glm::radians(time))));
 
 		moo->setBlendMode(BlendModes::Blend);
-		moo->render(g_FrameMan.GetRenderer(), {0,0});
-
+		moo->render(g_FrameMan.GetRenderer(), {0, 0});
 
 		// RenderState state(glm::vec4(1.0f), va, glm::mat4(1.0f));
 		// state.m_Shader = color;
@@ -141,9 +157,8 @@ int main() {
 		rotate.SetRotAngle(glm::radians(time) * 5);
 		rotate.Draw(g_FrameMan.GetRenderer(), Vector(), g_DrawWhite, true);
 
-		g_FrameMan.RenderPresent();
-		g_FrameMan.GetRenderer()->DrawClear(glm::vec4(0.0f));
-		if(!applyPal){
+
+		if (!applyPal) {
 			g_FrameMan.GetDefaultPalette()->Bind();
 			applyPal = true;
 		}
@@ -155,10 +170,27 @@ int main() {
 		BoxPrimitive(-1, {20.0f, 230.0f}, {130.0f, 280.0f}, 113).Draw(g_FrameMan.GetRenderer());
 		BoxFillPrimitive(-1, {30.0f, 260.0f}, {100.0f, 250.0f}, g_WhiteColor).Draw(g_FrameMan.GetRenderer());
 
-		    GLenum err;
+		GLenum err;
 		while ((err = glGetError()) != GL_NO_ERROR) {
 			std::cout << std::hex << err << std::dec << std::endl;
 		}
+
+		ImGui_ImplOpenGL3_NewFrame();
+		ImGui_ImplSDL2_NewFrame();
+		ImGui::NewFrame();
+		{
+			ImGui::Begin("Info");
+
+			ImGui::End();
+		}
+
+		if(showDemoWindow)
+			ImGui::ShowDemoWindow(&showDemoWindow);
+
+		ImGui::Render();
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+		g_FrameMan.RenderPresent();
 	}
 	g_FrameMan.Destroy();
 	SDL_Quit();
