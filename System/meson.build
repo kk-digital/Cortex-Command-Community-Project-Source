@@ -29,3 +29,5 @@ sources += files(
 'Writer.cpp',
 'Serializable.cpp',
 )
+
+subdir('imgui')

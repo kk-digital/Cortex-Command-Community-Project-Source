@@ -37,7 +37,7 @@ if compiler.get_argument_syntax()== 'gcc' # used for gcc compatible compilers
 
   build_rpath = '$ORIGIN:$ORIGIN/../external/lib/linux/x86_64' # Set RUNPATH so that CCCP can find libfmod.so without needing to set LD_LIBRARY_PATH
   suffix = 'x86_64'
-  link_args += ['-Wl,--enable-new-dtags'] # Set RUNPATH instead of RPATH
+  link_args += ['-Wl,--enable-new-dtags', '-ldl'] # Set RUNPATH instead of RPATH
 
   # Set preprocessor flags and cpp arguments according to build options
   buildtype_debug = get_option('debug')
@@ -103,7 +103,9 @@ source_inc_dirs = include_directories(
   'Managers',
   'Menus',
   'Renderer',
-  'System')
+  'System',
+  'System/imgui'
+)
 
 subdir('Activities')
 subdir('Entities')
