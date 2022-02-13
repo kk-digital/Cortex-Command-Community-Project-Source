@@ -185,6 +185,8 @@ namespace RTE {
 		/// </returns>
 		RenderTarget *GetRenderer() { return m_Renderer.get(); }
 
+		void * GetContext() {return m_Context.get();}
+
 		void RenderClear();
 
 		/// <summary>

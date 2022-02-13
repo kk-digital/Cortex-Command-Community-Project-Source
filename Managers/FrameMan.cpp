@@ -11,6 +11,7 @@
 #include "ConsoleMan.h"
 #include "SettingsMan.h"
 #include "UInputMan.h"
+#include "DebugMan.h"
 
 #include "Renderer/RenderTarget.h"
 #include "Renderer/RenderTexture.h"
@@ -40,15 +41,11 @@ namespace RTE {
 	void sdl_window_deleter::operator()(SDL_Window *p) { SDL_DestroyWindow(p); }
 	void sdl_context_deleter::operator()(void *p) { SDL_GL_DeleteContext(p); }
 
-	FrameMan::FrameMan() { Clear(); }
+	FrameMan::FrameMan() { Clear();}
 
 	FrameMan::~FrameMan() { Destroy(); }
 
 	void FrameMan::Clear() {
-		m_Window = nullptr;
-		m_Renderer = nullptr;
-		m_Context = nullptr;
-
 		m_NumScreens = SDL_GetNumVideoDisplays();
 		m_ScreenRes = std::make_unique<SDL_Rect>(SDL_Rect{0, 0, 0, 0});
 		SDL_GetDisplayUsableBounds(0, m_ScreenRes.get());
@@ -99,6 +96,7 @@ namespace RTE {
 
 		RTEAssert(err == GLEW_OK, "Failed to initialize GLEW: \n\t" + std::string(reinterpret_cast<const char*>(glewGetErrorString(err))));
 		m_Renderer = std::make_unique<RenderTarget>();
+		std::cout << SDL_GL_SetSwapInterval(0) << std::endl;
 
 		return static_cast<bool>(m_Window && m_Renderer);
 	}
@@ -403,6 +401,8 @@ namespace RTE {
 		LinePrimitive(-1, {0,0}, {0, 1.0f * g_SceneMan.GetSceneHeight()}, 5).Draw(m_Renderer.get());
 #endif
 
+		g_DebugMan.Draw();
+
 		// Reset the frame timer so we can measure how much it takes until next
 		// frame being drawn
 		g_PerformanceMan.ResetFrameTimer();
@@ -612,7 +612,7 @@ namespace RTE {
 				default:
 					break;
 			}
-			g_PerformanceMan.Draw(playerGUIBitmap);
+			// g_PerformanceMan.Draw(playerGUIBitmap);
 
 		} else {
 			// If superfluous screen (as in a three-player match), make the fourth the Observer one
