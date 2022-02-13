@@ -5,6 +5,7 @@
 #include "ConsoleMan.h"
 #include "PresetMan.h"
 #include "PerformanceMan.h"
+#include "DebugMan.h"
 #include "GUIInput.h"
 #include "Icon.h"
 #include "GameActivity.h"
@@ -449,6 +450,7 @@ namespace RTE {
 
 		SDL_Event e;
 		while (SDL_PollEvent(&e)) {
+			g_DebugMan.UpdateImGuiInput(&e);
 			if (e.type == SDL_QUIT)
 				System::SetQuit();
 			else if (e.type == SDL_KEYDOWN) {
