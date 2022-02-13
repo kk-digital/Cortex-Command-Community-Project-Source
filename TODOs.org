@@ -13,7 +13,7 @@
    - State "PROG"       from "TODO"       [2021-10-19 Di 20:12]
    need to implement framebuffer textures, and add them to SceneLayer(?)
 ** DONE Replace primitives drawing with vertex based primitives
-*** TODO Add vertex cache (DO NOT upload vertices every frame)
+*** TODO Add vertex cache (reuse vertices)
 ** DONE Add Texture blitting
 	 CLOSED: [2021-12-22 Mi 19:13]
 ** DONE Implement Surface blit
@@ -31,7 +31,7 @@
 ** TODO Finish UInputMan implementation
 ** TODO Add all platform gamepad hotplug
 
-* PROJ GUI backend [0/3]
+* PROJ GUI backend [0/4]
 ** TODO Implement RMLUi
    (librocket-rmlui subTODObTODOh)
 *** Recreate all GUIs in rml
@@ -39,6 +39,15 @@
 ** TODO Implemnt gib editor zoom
 ** TODO recheck editor implementations
 ** Loading screen text box
+** Add Debbuging UI (Dear ImGui)
+*** TODO Add Debug Menu [1/4]
+**** TODO Add Texture viewer
+**** TODO Add Actor Viewer
+**** DONE Add Scenario Select
+     CLOSED: [2022-02-13 So 23:04]
+**** TODO Add Entity Viewer/Select + Place
+*** DONE Add ImGui
+    CLOSED: [2022-02-13 So 23:03]
 
 * PROJ Performance [0/4]
 ** Fix Collisions
