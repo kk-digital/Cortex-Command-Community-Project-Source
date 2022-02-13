@@ -63,7 +63,7 @@ namespace RTE {
 		/// </summary>
 		/// <param name="whichScreen">Which player screen to draw on.</param>
 		/// <param name="whichScreenGUIBitmap">The GUI bitmap to draw to.</param>
-		void Draw(SDLGUITexture &bitmapToDrawTo);
+		void Draw(/* SDLGUITexture &bitmapToDrawTo */);
 
 		/// <summary>
 		/// Draws the current ping value to the screen.

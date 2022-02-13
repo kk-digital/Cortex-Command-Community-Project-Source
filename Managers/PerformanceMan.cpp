@@ -7,6 +7,8 @@
 #include "GUI.h"
 #include "SDLGUITexture.h"
 
+#include "imgui.h"
+
 namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -116,7 +118,7 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void PerformanceMan::Draw(SDLGUITexture &bitmapToDrawTo) {
+	void PerformanceMan::Draw(/* SDLGUITexture &bitmapToDrawTo */) {
 		if (m_ShowPerfStats) {
 			// Time and store the milliseconds per frame reading of the drawing frame to the buffer, and trim the buffer as needed
 
@@ -135,48 +137,42 @@ namespace RTE {
 
 			char str[128];
 
-			// Calculate the fps from the average
 			double fps = 1.0 / (static_cast<double>(m_MSPFAverage.count()) / 1000000.0);
-			std::snprintf(str, sizeof(str), "FPS: %.0f", fps);
-			g_FrameMan.GetLargeFont()->DrawAligned(&bitmapToDrawTo, c_StatsOffsetX, c_StatsHeight, str, GUIFont::Left);
-
-			// Display the average
-			std::snprintf(str, sizeof(str), "uSPF: %zi", m_MSPFAverage.count());
-			g_FrameMan.GetLargeFont()->DrawAligned(&bitmapToDrawTo, c_StatsOffsetX, c_StatsHeight + 10, str, GUIFont::Left);
-
-			std::snprintf(str, sizeof(str), "Time Scale: x%.2f ([1]-, [2]+)", g_TimerMan.IsOneSimUpdatePerFrame() ? g_TimerMan.GetSimSpeed() : g_TimerMan.GetTimeScale());
-			g_FrameMan.GetLargeFont()->DrawAligned(&bitmapToDrawTo, c_StatsOffsetX, c_StatsHeight + 20, str, GUIFont::Left);
-
-			std::snprintf(str, sizeof(str), "Real to Sim Cap: %.2f ms ([3]-, [4]+)", g_TimerMan.GetRealToSimCap() * 1000.0F);
-			g_FrameMan.GetLargeFont()->DrawAligned(&bitmapToDrawTo, c_StatsOffsetX, c_StatsHeight + 30, str, GUIFont::Left);
-
 			float deltaTime = g_TimerMan.GetDeltaTimeMS();
-			std::snprintf(str, sizeof(str), "DeltaTime: %.2f ms ([5]-, [6]+)", deltaTime);
-			g_FrameMan.GetLargeFont()->DrawAligned(&bitmapToDrawTo, c_StatsOffsetX, c_StatsHeight + 40, str, GUIFont::Left);
-
-			std::snprintf(str, sizeof(str), "Particles: %li", g_MovableMan.GetParticleCount());
-			g_FrameMan.GetLargeFont()->DrawAligned(&bitmapToDrawTo, c_StatsOffsetX, c_StatsHeight + 50, str, GUIFont::Left);
-
-			std::snprintf(str, sizeof(str), "Objects: %i", g_MovableMan.GetKnownObjectsCount());
-			g_FrameMan.GetLargeFont()->DrawAligned(&bitmapToDrawTo, c_StatsOffsetX, c_StatsHeight + 60, str, GUIFont::Left);
-
-			std::snprintf(str, sizeof(str), "MOIDs: %i", g_MovableMan.GetMOIDCount());
-			g_FrameMan.GetLargeFont()->DrawAligned(&bitmapToDrawTo, c_StatsOffsetX, c_StatsHeight + 70, str, GUIFont::Left);
-
-			std::snprintf(str, sizeof(str), "Sim Updates Since Last Drawn: %i", g_TimerMan.SimUpdatesSinceDrawn());
-			g_FrameMan.GetLargeFont()->DrawAligned(&bitmapToDrawTo, c_StatsOffsetX, c_StatsHeight + 80, str, GUIFont::Left);
-
-			if (g_TimerMan.IsOneSimUpdatePerFrame()) { g_FrameMan.GetLargeFont()->DrawAligned(&bitmapToDrawTo, c_StatsOffsetX, c_StatsHeight + 90, "ONE Sim Update Per Frame!", GUIFont::Left); }
-
-			int totalPlayingChannelCount;
-			int realPlayingChannelCount;
-			if (g_AudioMan.GetPlayingChannelCount(&totalPlayingChannelCount, &realPlayingChannelCount)) {
-				std::snprintf(str, sizeof(str), "Sound Channels: %d / %d Real | %d / %d Virtual", realPlayingChannelCount, g_AudioMan.GetTotalRealChannelCount(), totalPlayingChannelCount - realPlayingChannelCount, g_AudioMan.GetTotalVirtualChannelCount());
+			ImGui::Begin("Performance");
+			ImGui::Text("FPS: %.0f", fps);
+			ImGui::Text("uiFPS: %.0f", ImGui::GetIO().Framerate);
+			ImGui::Text("uSPF: %zi", m_MSPFAverage.count());
+			ImGui::Text("Time Scale: x%.2f ([1]-, [2]+)", g_TimerMan.IsOneSimUpdatePerFrame() ? g_TimerMan.GetSimSpeed() : g_TimerMan.GetTimeScale());
+			ImGui::Text("Real to Sim Cap: %.2f ms ([3]-, [4]+)", g_TimerMan.GetRealToSimCap() * 1000.0F);
+			ImGui::Text("DeltaTime: %.2f ms ([5]-, [6]+)", deltaTime);
+			ImGui::Text("Particles: %li", g_MovableMan.GetParticleCount());
+			ImGui::Text("Objects: %i", g_MovableMan.GetKnownObjectsCount());
+			ImGui::Text("MOIDs: %i", g_MovableMan.GetMOIDCount());
+			ImGui::Text("Sim Updates Since Last Drawn: %i", g_TimerMan.SimUpdatesSinceDrawn());
+			if (g_TimerMan.IsOneSimUpdatePerFrame()) {
+				ImGui::Text("ONE Sim Update Per Frame!");
 			}
-			g_FrameMan.GetLargeFont()->DrawAligned(&bitmapToDrawTo, c_StatsOffsetX, c_StatsHeight + 100, str, GUIFont::Left);
 
-			// If in split screen mode don't draw graphs because they don't fit anyway.
-			if (m_AdvancedPerfStats && g_FrameMan.GetScreenCount() == 1) { DrawPeformanceGraphs(bitmapToDrawTo); }
+			std::vector<float> perfCounters(c_MaxSamples);
+			for (size_t pc = 0; pc < PerformanceCounters::PerfCounterCount; ++pc) {
+				for (size_t sample = 0; sample < m_PerfData.size(); ++sample){
+					perfCounters[sample] = m_PerfData.at(pc).at(sample).count();
+				}
+				ImGui::PlotLines(m_PerfCounterNames.at(pc).c_str(), perfCounters.data(), perfCounters.size());
+			}
+
+			ImGui::End();
+
+			// int totalPlayingChannelCount;
+			// int realPlayingChannelCount;
+			// if (g_AudioMan.GetPlayingChannelCount(&totalPlayingChannelCount, &realPlayingChannelCount)) {
+			// 	std::snprintf(str, sizeof(str), "Sound Channels: %d / %d Real | %d / %d Virtual", realPlayingChannelCount, g_AudioMan.GetTotalRealChannelCount(), totalPlayingChannelCount - realPlayingChannelCount, g_AudioMan.GetTotalVirtualChannelCount());
+			// }
+			// g_FrameMan.GetLargeFont()->DrawAligned(&bitmapToDrawTo, c_StatsOffsetX, c_StatsHeight + 100, str, GUIFont::Left);
+
+			// // If in split screen mode don't draw graphs because they don't fit anyway.
+			// if (m_AdvancedPerfStats && g_FrameMan.GetScreenCount() == 1) { DrawPeformanceGraphs(bitmapToDrawTo); }
 		}
 	}
 
