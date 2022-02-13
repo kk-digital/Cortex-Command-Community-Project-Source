@@ -17,5 +17,6 @@ sources += files(
 'SceneMan.cpp',
 'SettingsMan.cpp',
 'TimerMan.cpp',
-'UInputMan.cpp'
+'UInputMan.cpp',
+'DebugMan.cpp'
 )

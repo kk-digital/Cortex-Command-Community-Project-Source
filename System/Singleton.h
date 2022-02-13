@@ -21,7 +21,7 @@ namespace RTE {
 		/// <summary>
 		/// Destructor method used to clean up a Singleton object before deletion.
 		/// </summary>
-		~Singleton() = default;
+		virtual ~Singleton() = default;
 
 		/// <summary>
 		/// Returns the sole instance of this Singleton. If there isn't one yet, constructs it.

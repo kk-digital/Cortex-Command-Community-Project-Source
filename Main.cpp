@@ -36,6 +36,7 @@
 #include "PerformanceMan.h"
 #include "MetaMan.h"
 #include "FrameMan.h"
+#include "DebugMan.h"
 #ifdef NETWORK_ENABLED
 #include "NetworkServer.h"
 #endif
@@ -67,6 +68,7 @@ namespace RTE {
 		g_TimerMan.Initialize();
 		g_PerformanceMan.Initialize();
 		g_FrameMan.Initialize();
+		g_DebugMan.Initialize();
 		g_PostProcessMan.Initialize();
 
 		if (g_AudioMan.Initialize()) { g_GUISound.Initialize(); }
@@ -102,6 +104,7 @@ namespace RTE {
 		g_AudioMan.Destroy();
 		g_PresetMan.Destroy();
 		g_UInputMan.Destroy();
+		g_DebugMan.Destroy();
 		g_FrameMan.Destroy();
 		g_TimerMan.Destroy();
 		g_LuaMan.Destroy();
@@ -171,6 +174,7 @@ namespace RTE {
 		g_AudioMan.StopAll();
 
 		while (!System::IsSetToQuit()) {
+			g_FrameMan.RenderClear();
 			g_UInputMan.Update();
 			g_TimerMan.Update();
 			g_TimerMan.UpdateSim();
@@ -183,13 +187,16 @@ namespace RTE {
 				// g_FrameMan.DestroyTempBackBuffers();
 			}
 
-			if (g_MenuMan.Update()) {
+			if (g_MenuMan.Update() || g_DebugMan.IsStartActivity()) {
 				break;
 			}
+
+
 			g_ConsoleMan.Update();
 
 			g_MenuMan.Draw();
 			g_ConsoleMan.Draw(g_FrameMan.GetRenderer());
+			g_DebugMan.Draw();
 			g_FrameMan.RenderPresent();
 		}
 	}
