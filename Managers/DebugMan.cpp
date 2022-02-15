@@ -33,6 +33,7 @@ namespace RTE {
 		/* Scenario select */
 		m_CurrentActivity = -1;
 		m_CurrentScene = -1;
+		m_StartingActivity = false;
 		m_GameDifficulty = Activity::DifficultySetting::MediumDifficulty;
 		m_Gold = 3000.f;
 		return true;
@@ -112,7 +113,7 @@ namespace RTE {
 			if (ImGui::BeginCombo("Activity", currentActivity.c_str())) {
 				for (size_t n = 0; n < m_Activites.size(); ++n) {
 					bool isSelected = (m_CurrentActivity == n);
-					if (ImGui::Selectable(m_Activites.at(m_CurrentActivity)->GetPresetName().c_str(), isSelected)) {
+					if (ImGui::Selectable(m_Activites.at(n)->GetPresetName().c_str(), isSelected)) {
 						m_CurrentActivity = n;
 						m_CurrentScene = -1;
 					}
@@ -143,6 +144,7 @@ namespace RTE {
 			ImGui::SliderInt("Starting Gold", &m_Gold, 0, 10000);
 
 			if (ImGui::Button("Start")) {
+				m_StartingActivity = true;
 				GameActivity *gameActivity = dynamic_cast<GameActivity *>(m_Activites.at(m_CurrentActivity)->Clone());
 
 				gameActivity->SetDifficulty(m_GameDifficulty);
@@ -171,6 +173,7 @@ namespace RTE {
 	bool DebugMan::IsStartActivity() {
 		if (m_StartingActivity) {
 			m_StartingActivity = false;
+			g_ActivityMan.SetRestartActivity();
 			return true;
 		}
 		return false;
