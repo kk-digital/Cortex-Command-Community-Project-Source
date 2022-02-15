@@ -457,9 +457,9 @@ int SLTerrain::LoadData() {
 
 	InitScrollRatios();
 
-	m_pMainTexture->GetTexture()->Update();
-	m_pFGColor->GetTexture()->GetTexture()->Update();
-	m_pBGColor->GetTexture()->GetTexture()->Update();
+	m_pMainTexture->GetTexture()->Upload();
+	m_pFGColor->GetTexture()->GetTexture()->Upload();
+	m_pBGColor->GetTexture()->GetTexture()->Upload();
 
 	return 0;
 }

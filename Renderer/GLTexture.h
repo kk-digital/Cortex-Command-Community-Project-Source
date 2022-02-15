@@ -44,7 +44,7 @@ namespace RTE {
 		void render(RenderTarget *renderer, glm::vec4 src, glm::vec4 dest, std::optional<RenderState> state = std::nullopt);
 		void render(RenderTarget *renderer, glm::vec4 dest, std::optional<RenderState> state = std::nullopt);
 
-		void Update(std::optional<glm::vec4> region = std::nullopt);
+		void Upload(std::optional<glm::vec4> region = std::nullopt);
 
 		void setShading(Shading shader) { m_Shading = shader; }
 

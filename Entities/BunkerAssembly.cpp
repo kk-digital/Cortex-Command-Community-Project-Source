@@ -112,10 +112,10 @@ void BunkerAssembly::AddPlacedObject(SceneObject * pSO)
 			newPlacer.SetOffset(newPlacer.GetOffset() + pTObject->GetPos() + m_TextureOffset);
 			m_ChildObjects.push_back(newPlacer);
 		}
-		m_pPresentationBitmap->Update();
-		m_pFGColor->Update();
-		m_pBGColor->Update();
-		m_pMaterial->Update();
+		m_pPresentationBitmap->Upload();
+		m_pFGColor->Upload();
+		m_pBGColor->Upload();
+		m_pMaterial->Upload();
 	}
 }
 

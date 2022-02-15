@@ -62,7 +62,7 @@ namespace RTE {
 		m_BPP = format == BitDepth::BPP32 ? 32 : 8;
 		if (InitializeTextureObject(width, height)) {
 			if (Surface::Create(width, height, format, palette)) {
-				Update();
+				Upload();
 				return true;
 			}
 		}
@@ -220,7 +220,7 @@ namespace RTE {
 		render(renderer, dest.xy(), {dest.z / GetW(), dest.w / GetH()}, state);
 	}
 
-	void GLTexture::Update(std::optional<glm::vec4> region) {
+	void GLTexture::Upload(std::optional<glm::vec4> region) {
 		if (region) {}
 
 		Bind();
@@ -242,7 +242,7 @@ namespace RTE {
 
 	void GLTexture::ClearColor(uint32_t color) {
 		Surface::ClearColor(color);
-		Update();
+		Upload();
 	}
 
 	void GLTexture::Bind() {
