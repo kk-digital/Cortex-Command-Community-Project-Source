@@ -27,19 +27,17 @@ namespace RTE {
 
 		SDLGUITexture(const SDLGUITexture &reference);
 
-		SDLGUITexture(int width, int height, bool renderer = false);
-
 		/// <summary>
 		/// Destructor method to clean up the SDLBitmap object
 		/// </summary>
-		~SDLGUITexture() override;
+		virtual ~SDLGUITexture() override;
 
 		/// <summary>
 		/// Create a new texture from a fileName
 		/// </summary>
 		/// <param name="filename">File to create texture from</param>
 		/// <returns> True if the Texture was successfully loaded</returns>
-		bool Create(const std::string filename);
+		bool Create(const std::string &filename);
 
 		/// <summary>
 		/// Create an empty texture
@@ -50,24 +48,12 @@ namespace RTE {
 		/// Unused, all textures will be created to match the screen colordepth
 		/// </param>
 		/// <returns> True if the texture was successfully created </returns>
-		bool Create(int width, int height, int) { Create(width, height, false); }
-
-		bool Create(int width, int height, bool renderer);
+		bool Create(int width, int height, int);
 
 		/// <summary>
 		/// Destroys and resets the SDLTexture object.
 		/// </summary>
 		void Destroy() override;
-
-		void Lock();
-
-		void Unlock();
-
-		void Render(int x, int y, GUIRect *pRect, bool trans = true, std::optional<glm::vec4> clip = std::nullopt);
-		void RenderScaled(int x, int y, int width, int height, bool trans = true);
-
-		void Blit(GUIBitmap *pDestBitmap, int x, int y, GUIRect *pRect, bool trans = true);
-		void BlitScaled(GUIBitmap *pDestBitmap, int x, int y, int width, int height, bool trans = true);
 
 		/// <summary>
 		/// Draw the SDLBitmap to the destination bitmap
@@ -76,7 +62,7 @@ namespace RTE {
 		/// <param name="x">x position on the target</param>
 		/// <param name="y">y position on the target</param>
 		/// <param name="pRect">Destination size</param>
-		void Draw(GUIBitmap *pDestBitmap, int x, int y, GUIRect *pRect) override { pDestBitmap ? Blit(pDestBitmap, x, y, pRect, false) : Render(x, y, pRect, false); }
+		void Draw(GUIBitmap *pDestBitmap, int x, int y, GUIRect *pRect) override;
 
 		/// <summary>
 		/// Draw the Bitmap with transparency (SDL doesn't distinguish this
@@ -86,7 +72,7 @@ namespace RTE {
 		/// <param name="x">x position on the target</param>
 		/// <param name="y">y position on the target</parma>
 		/// <param name="pRect">Destination size</param>
-		void DrawTrans(GUIBitmap *pDestBitmap, int x, int y, GUIRect *pRect) override { pDestBitmap ? Blit(pDestBitmap, x, y, pRect) : Render(x, y, pRect); }
+		void DrawTrans(GUIBitmap *pDestBitmap, int x, int y, GUIRect *pRect) override;
 
 		/// <summary>
 		/// Draw transparent Bitmap with Scaling
@@ -96,8 +82,7 @@ namespace RTE {
 		/// <param name="y">y position on the target</param>
 		/// <param name="width">width to scale to</param>
 		/// <param name="height">height to scale to</param>
-		void DrawTransScaled(GUIBitmap *pDestBitmap, int x, int y, int width, int height) override { pDestBitmap ? BlitScaled(pDestBitmap, x, y, width, height) : RenderScaled(x, y, width, height); }
-
+		void DrawTransScaled(GUIBitmap *pDestBitmap, int x, int y, int width, int height) override;
 		/// <summary>
 		/// Draw a Line on the Bitmap
 		/// </summary>
@@ -118,13 +103,12 @@ namespace RTE {
 		void DrawRectangle(int x, int y, int width, int height, unsigned long color, bool filled) override;
 
 		/// <summary>
-		/// Get the color of the pixel at coordinates (x,y).
-		/// For this the texture needs to be locked.
+		/// Get the color of the pixel at coordinates (x,y). Updates Texture if needed.
 		/// </summary>
 		/// <param name="x">x coordinate</param>
 		/// <param name="y">y coordinate</param>
 		/// <returns> Color of the Pixel at coordinate (x,y)</returns>
-		unsigned long GetPixel(int x, int y) const override;
+		unsigned long GetPixel(int x, int y) override;
 
 		/// <summary>
 		/// Set the Color of the pixel at coordinates (x,y).
@@ -185,24 +169,22 @@ namespace RTE {
 		/// </summary>
 		SharedTexture GetTexture() const override { return m_Texture; }
 
-		void SetBitmap(SharedTexture) override {}
+		void SetBitmap(SharedTexture newTexture) override;
 
 		void SetColorKey(unsigned long key) override { m_ColorKey = key; }
 
 	private:
 		ContentFile m_TextureFile;
+		bool m_ServerUpdated; //!< Texture updated serverside (GL).
+		bool m_ClientUpdated; //!< Texture updated clientside (GL).
 
 		uint32_t m_ColorKey;
 
 		SharedTexture m_Texture;
 
-		bool m_Locked;
-
-		std::optional<glm::vec4> m_ClipRect;
+		std::unique_ptr<GUIRect> m_ClipRect;
 		int m_Width;
 		int m_Height;
-
-	public:
 	};
 } // namespace RTE
 #endif

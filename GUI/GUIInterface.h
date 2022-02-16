@@ -77,7 +77,7 @@ namespace RTE {
 		/// <param name="posX">X position on bitmap.</param>
 		/// <param name="posY">Y position on bitmap.</param>
 		/// <returns>The color of the pixel at the specified point.</returns>
-		virtual unsigned long GetPixel(int posX, int posY) const = 0;
+		virtual unsigned long GetPixel(int posX, int posY) = 0;
 
 		/// <summary>
 		/// Sets the color of a pixel at a specific point on the bitmap.
