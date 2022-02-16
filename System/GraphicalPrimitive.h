@@ -22,7 +22,7 @@ namespace RTE {
 		Vector m_EndPos; //!< End position of the primitive.
 		std::shared_ptr<VertexArray> m_Vertices;
 		PrimitiveType m_DrawType;
-		unsigned char m_Color; //!< Color to draw this primitive with.
+		unsigned long m_Color; //!< Color to draw this primitive with.
 		int m_Player; //!< Player screen to draw this primitive on.
 
 		/// <summary>
@@ -52,6 +52,7 @@ namespace RTE {
 		/// </summary>
 		/// <param name="drawScreen">Bitmap to draw on.</param>
 		/// <param name="targetPos">Position of graphical primitive.</param>
+		/// <param name="renderState">GL State to be passed to the render target. If not given, m_Color is assumed to be indexed color. Overrides Vertices, ModelMatrix, PrimitiveType.</param>
 		virtual void Draw(RenderTarget *renderer, const Vector &targetPos = {0,0}, std::optional<RenderState> renderState = std::nullopt);
 	};
 #pragma endregion
@@ -59,7 +60,7 @@ namespace RTE {
 #pragma region Point Primitive
 	class PointPrimitive : public GraphicalPrimitive {
 	public:
-		PointPrimitive(int player, const Vector &position, unsigned char color);
+		PointPrimitive(int player, const Vector &position, unsigned long color);
 	};
 #pragma endregion
 
@@ -77,7 +78,7 @@ namespace RTE {
 		/// <param name="startPos">Start position of the primitive.</param>
 		/// <param name="end">End position of the primitive.</param>
 		/// <param name="color">Color to draw this primitive with.</param>
-		LinePrimitive(int player, const Vector &startPos, const Vector &endPos, unsigned char color); /* {
+		LinePrimitive(int player, const Vector &startPos, const Vector &endPos, unsigned long color); /* {
 			m_DrawType = PrimitiveType::Line;
 			m_StartPos = startPos;
 			m_EndPos = endPos;
@@ -103,7 +104,7 @@ namespace RTE {
 		/// <param name="endAngle">The angle at which the arc drawing ends.</param>
 		/// <param name="radius">Radius of the arc primitive.</param>
 		/// <param name="color">Color to draw this primitive with.</param>
-		ArcPrimitive(int player, const Vector &centerPos, float startAngle, float endAngle, int radius, int thickness, unsigned char color);
+		ArcPrimitive(int player, const Vector &centerPos, float startAngle, float endAngle, int radius, int thickness, unsigned long color);
 		// 	{
 		// 	m_StartPos = centerPos;
 		// 	m_Color = color;
@@ -131,7 +132,7 @@ namespace RTE {
 		/// <param name="guideB">The second guide point that controls the curve of the spline. The spline won't necessarily pass through this point, but it will affect it's shape.</param>
 		/// <param name="endPos">End position of the primitive.</param>
 		/// <param name="color">Color to draw this primitive with.</param>
-		SplinePrimitive(int player, const Vector &startPos, const Vector &guideA, const Vector &guideB, const Vector &endPos, unsigned char color);
+		SplinePrimitive(int player, const Vector &startPos, const Vector &guideA, const Vector &guideB, const Vector &endPos, unsigned long color);
 		// 	m_GuidePointAPos(guideA), m_GuidePointBPos(guideB) {
 		// 	m_StartPos = startPos;
 		// 	m_EndPos = endPos;
@@ -155,7 +156,7 @@ namespace RTE {
 		/// <param name="topLeftPos">Start position of the primitive. Top left corner.</param>
 		/// <param name="bottomRightPos">End position of the primitive. Bottom right corner.</param>
 		/// <param name="color">Color to draw this primitive with.</param>
-		BoxPrimitive(int player, const Vector &topLeftPos, const Vector &bottomRightPos, unsigned char color);
+		BoxPrimitive(int player, const Vector &topLeftPos, const Vector &bottomRightPos, unsigned long color);
 	};
 #pragma endregion
 
@@ -173,7 +174,7 @@ namespace RTE {
 		/// <param name="topLeftPos">Start position of the primitive. Top left corner.</param>
 		/// <param name="bottomRightPos">End position of the primitive. Bottom right corner.</param>
 		/// <param name="color">Color to draw this primitive with.</param>
-		BoxFillPrimitive(int player, const Vector &topLeftPos, const Vector &bottomRightPos, unsigned char color);
+		BoxFillPrimitive(int player, const Vector &topLeftPos, const Vector &bottomRightPos, unsigned long color);
 	};
 #pragma endregion
 
@@ -194,7 +195,7 @@ namespace RTE {
 		/// <param name="bottomRightPos">End position of the primitive. Bottom right corner.</param>
 		/// <param name="cornerRadius">The radius of the corners of the box. Smaller radius equals sharper corners.</param>
 		/// <param name="color">Color to draw this primitive with.</param>
-		RoundedBoxPrimitive(int player, const Vector &topLeftPos, const Vector &bottomRightPos, int cornerRadius, unsigned char color);
+		RoundedBoxPrimitive(int player, const Vector &topLeftPos, const Vector &bottomRightPos, int cornerRadius, unsigned long color);
 	};
 #pragma endregion
 
@@ -213,7 +214,7 @@ namespace RTE {
 		/// <param name="bottomRightPos">End position of the primitive. Bottom right corner.</param>
 		/// <param name="cornerRadius">The radius of the corners of the box. Smaller radius equals sharper corners.</param>
 		/// <param name="color">Color to draw this primitive with.</param>
-		RoundedBoxFillPrimitive(int player, const Vector &topLeftPos, const Vector &bottomRightPos, int cornerRadius, unsigned char color);
+		RoundedBoxFillPrimitive(int player, const Vector &topLeftPos, const Vector &bottomRightPos, int cornerRadius, unsigned long color);
 	};
 #pragma endregion
 
@@ -231,7 +232,7 @@ namespace RTE {
 		/// <param name="centerPos">Position of this primitive's center.</param>
 		/// <param name="radius">Radius of the circle primitive.</param>
 		/// <param name="color">Color to draw this primitive with.</param>
-		CirclePrimitive(int player, const Vector &centerPos, int radius, unsigned char color);
+		CirclePrimitive(int player, const Vector &centerPos, int radius, unsigned long color);
 	};
 #pragma endregion
 
@@ -249,7 +250,7 @@ namespace RTE {
 		/// <param name="centerPos">Position of this primitive's center.</param>
 		/// <param name="radius">Radius of the circle primitive.</param>
 		/// <param name="color">Color to draw this primitive with.</param>
-		CircleFillPrimitive(int player, const Vector &centerPos, int radius, unsigned char color);
+		CircleFillPrimitive(int player, const Vector &centerPos, int radius, unsigned long color);
 	};
 #pragma endregion
 
@@ -268,7 +269,7 @@ namespace RTE {
 		/// <param name="horizRadius">Horizontal radius of the ellipse primitive.</param>
 		/// <param name="vertRadius">Vertical radius of the ellipse primitive.</param>
 		/// <param name="color">Color to draw this primitive with.</param>
-		EllipsePrimitive(int player, const Vector &centerPos, int horizRadius, int vertRadius, unsigned char color);
+		EllipsePrimitive(int player, const Vector &centerPos, int horizRadius, int vertRadius, unsigned long color);
 	};
 #pragma endregion
 
@@ -286,7 +287,7 @@ namespace RTE {
 		/// <param name="centerPos">Position of this primitive's center.</param>
 		/// <param name="radius">Radius of the circle primitive.</param>
 		/// <param name="color">Color to draw this primitive with.</param>
-		EllipseFillPrimitive(int player, const Vector &centerPos, int horizRadius, int vertRadius, unsigned char color);
+		EllipseFillPrimitive(int player, const Vector &centerPos, int horizRadius, int vertRadius, unsigned long color);
 	};
 #pragma endregion
 
@@ -305,7 +306,7 @@ namespace RTE {
 		/// <param name="pointB">Position of the second point of the triangle</param>
 		/// <param name="pointC">Position of the third point of the triangle</param>
 		/// <param name="color">Color to draw this primitive with.</param>
-		TrianglePrimitive(int player, const Vector &pointA, const Vector &pointB, const Vector &pointC, unsigned char color);
+		TrianglePrimitive(int player, const Vector &pointA, const Vector &pointB, const Vector &pointC, unsigned long color);
 	};
 #pragma endregion
 
@@ -324,7 +325,7 @@ namespace RTE {
 		/// <param name="pointB">Position of the second point of the triangle</param>
 		/// <param name="pointC">Position of the third point of the triangle</param>
 		/// <param name="color">Color to draw this primitive with.</param>
-		TriangleFillPrimitive(int player, const Vector &pointA, const Vector &pointB, const Vector &pointC, unsigned char color);
+		TriangleFillPrimitive(int player, const Vector &pointA, const Vector &pointB, const Vector &pointC, unsigned long color);
 	};
 #pragma endregion
 

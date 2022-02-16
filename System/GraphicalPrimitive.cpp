@@ -43,20 +43,21 @@ namespace RTE {
 		RenderState state{};
 		if (renderState) {
 			state = *renderState;
+		} else {
+			state.m_Shader = g_FrameMan.GetColorShader();
+			state.m_Color = g_FrameMan.GetDefaultPalette()->at(m_Color);
+			state.m_Color /= 255.0f;
 		}
 
 		state.m_ModelTransform = glm::mat4(1);
 		// glm::translate(state.m_ModelTransform, glm::vec3(static_cast<glm::vec2>(targetPos), 0));
 		state.m_PrimitiveType = m_DrawType;
 		state.m_Vertices = m_Vertices;
-		state.m_Shader = g_FrameMan.GetColorShader();
-		state.m_Color = g_FrameMan.GetDefaultPalette()->at(m_Color);
-		state.m_Color /= 255.0f;
 
 		renderer->Draw(state);
 	}
 
-	PointPrimitive::PointPrimitive(int player, const Vector &position, unsigned char color) {
+	PointPrimitive::PointPrimitive(int player, const Vector &position, unsigned long color) {
 		m_Vertices = std::make_shared<VertexArray>(std::vector<Vertex>{{static_cast<glm::vec2>(m_StartPos)}});
 		m_Color = color;
 		m_StartPos = position;
@@ -65,7 +66,7 @@ namespace RTE {
 	}
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	LinePrimitive::LinePrimitive(int player, const Vector &startPos, const Vector &endPos, unsigned char color) {
+	LinePrimitive::LinePrimitive(int player, const Vector &startPos, const Vector &endPos, unsigned long color) {
 		m_StartPos = startPos;
 		m_EndPos = endPos;
 		m_Player = player;
@@ -105,7 +106,7 @@ namespace RTE {
 #endif
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	ArcPrimitive::ArcPrimitive(int player, const Vector &centerPos, float startAngle, float endAngle, int radius, int thickness, unsigned char color) {
+	ArcPrimitive::ArcPrimitive(int player, const Vector &centerPos, float startAngle, float endAngle, int radius, int thickness, unsigned long color) {
 		m_Color = color;
 		m_StartPos = centerPos;
 		m_Player = player;
@@ -190,7 +191,7 @@ namespace RTE {
 #endif
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	SplinePrimitive::SplinePrimitive(int player, const Vector &startPos, const Vector &guideA, const Vector &guideB, const Vector &endPos, unsigned char color) {
+	SplinePrimitive::SplinePrimitive(int player, const Vector &startPos, const Vector &guideA, const Vector &guideB, const Vector &endPos, unsigned long color) {
 		m_Player = player;
 		m_StartPos = startPos;
 		m_EndPos = endPos;
@@ -261,7 +262,7 @@ namespace RTE {
 #endif
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	BoxPrimitive::BoxPrimitive(int player, const Vector &topLeftPos, const Vector &bottomRightPos, unsigned char color) {
+	BoxPrimitive::BoxPrimitive(int player, const Vector &topLeftPos, const Vector &bottomRightPos, unsigned long color) {
 		m_Player = player;
 		m_StartPos = topLeftPos;
 		m_EndPos = bottomRightPos;
@@ -300,7 +301,7 @@ namespace RTE {
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	BoxFillPrimitive::BoxFillPrimitive(int player, const Vector &topLeftPos, const Vector &bottomRightPos, unsigned char color) {
+	BoxFillPrimitive::BoxFillPrimitive(int player, const Vector &topLeftPos, const Vector &bottomRightPos, unsigned long color) {
 		m_Player = player;
 		m_StartPos = topLeftPos;
 		m_EndPos = bottomRightPos;
@@ -340,7 +341,7 @@ namespace RTE {
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	RoundedBoxPrimitive::RoundedBoxPrimitive(int player, const Vector &topLeftPos, const Vector &bottomRightPos, int cornerRadius, unsigned char color) {
+	RoundedBoxPrimitive::RoundedBoxPrimitive(int player, const Vector &topLeftPos, const Vector &bottomRightPos, int cornerRadius, unsigned long color) {
 		m_Player = player;
 		m_StartPos = topLeftPos;
 		m_EndPos = bottomRightPos;
@@ -408,7 +409,7 @@ namespace RTE {
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	RoundedBoxFillPrimitive::RoundedBoxFillPrimitive(int player, const Vector &topLeftPos, const Vector &bottomRightPos, int cornerRadius, unsigned char color) {
+	RoundedBoxFillPrimitive::RoundedBoxFillPrimitive(int player, const Vector &topLeftPos, const Vector &bottomRightPos, int cornerRadius, unsigned long color) {
 		m_Player = player;
 		m_StartPos = topLeftPos;
 		m_EndPos = bottomRightPos;
@@ -480,7 +481,7 @@ namespace RTE {
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	CirclePrimitive::CirclePrimitive(int player, const Vector &centerPos, int radius, unsigned char color) {
+	CirclePrimitive::CirclePrimitive(int player, const Vector &centerPos, int radius, unsigned long color) {
 		m_StartPos = centerPos;
 		m_Player = player;
 		m_Color = color;
@@ -518,7 +519,7 @@ namespace RTE {
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	CircleFillPrimitive::CircleFillPrimitive(int player, const Vector &centerPos, int radius, unsigned char color) {
+	CircleFillPrimitive::CircleFillPrimitive(int player, const Vector &centerPos, int radius, unsigned long color) {
 		m_StartPos = centerPos;
 		m_Player = player;
 		m_Color = color;
@@ -556,7 +557,7 @@ namespace RTE {
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	EllipsePrimitive::EllipsePrimitive(int player, const Vector &centerPos, int horizRadius, int vertRadius, unsigned char color) {
+	EllipsePrimitive::EllipsePrimitive(int player, const Vector &centerPos, int horizRadius, int vertRadius, unsigned long color) {
 		m_StartPos = centerPos;
 		m_Player = player;
 		m_Color = color;
@@ -594,7 +595,7 @@ namespace RTE {
 #endif
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	EllipseFillPrimitive::EllipseFillPrimitive(int player, const Vector &centerPos, int horizRadius, int vertRadius, unsigned char color) {
+	EllipseFillPrimitive::EllipseFillPrimitive(int player, const Vector &centerPos, int horizRadius, int vertRadius, unsigned long color) {
 		m_StartPos = centerPos;
 		m_Player = player;
 		m_Color = color;
@@ -634,7 +635,7 @@ namespace RTE {
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	TrianglePrimitive::TrianglePrimitive(int player, const Vector &pointA, const Vector &pointB, const Vector &pointC, unsigned char color) {
+	TrianglePrimitive::TrianglePrimitive(int player, const Vector &pointA, const Vector &pointB, const Vector &pointC, unsigned long color) {
 		m_Player = player;
 		m_Color = color;
 		m_StartPos = pointA;
@@ -687,7 +688,7 @@ namespace RTE {
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	TriangleFillPrimitive::TriangleFillPrimitive(int player, const Vector &pointA, const Vector &pointB, const Vector &pointC, unsigned char color) {
+	TriangleFillPrimitive::TriangleFillPrimitive(int player, const Vector &pointA, const Vector &pointB, const Vector &pointC, unsigned long color) {
 		m_Player = player;
 		m_Color = color;
 		m_StartPos = pointA;
