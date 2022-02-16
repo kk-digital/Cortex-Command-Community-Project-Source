@@ -46,6 +46,8 @@ namespace RTE {
 
 		void Upload(std::optional<glm::vec4> region = std::nullopt);
 
+		void Download(std::optional<glm::vec4> region = std::nullopt);
+
 		void setShading(Shading shader) { m_Shading = shader; }
 
 		Shading getShading() const { return m_Shading; }

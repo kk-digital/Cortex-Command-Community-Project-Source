@@ -224,7 +224,20 @@ namespace RTE {
 		if (region) {}
 
 		Bind();
+		glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
 		glCheck(glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_Width, m_Height, m_BPP == 8 ? GL_RED : GL_BGRA, GL_UNSIGNED_BYTE, GetPixels()->pixels));
+	}
+
+	void GLTexture::Download(std::optional<glm::vec4> region) {
+		Bind();
+		GLint texW;
+		GLint texH;
+		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &texW);
+		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &texH);
+		assert(texW == m_Width);
+		assert(texH == m_Height);
+		glPixelStorei(GL_PACK_ALIGNMENT, 4);
+		glCheck(glGetTexImage(GL_TEXTURE_2D, 0, m_BPP == 8 ? GL_RED : GL_BGRA, GL_UNSIGNED_BYTE, GetPixels()->pixels));
 	}
 
 	void GLTexture::setColorMod(uint32_t rgb) {
