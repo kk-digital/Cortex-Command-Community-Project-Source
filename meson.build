@@ -9,6 +9,7 @@ if host_machine.system() in ['linux', 'osx']
     dependency('SDL2_image'),
     dependency('flac'),
     dependency('luajit'),
+    dependency('lua52'),
     dependency('minizip'),
     dependency('threads'),
     dependency('liblz4'),
