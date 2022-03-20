@@ -3596,9 +3596,9 @@ void AHuman::Update()
             float FGArmProg = m_Paths[FGROUND][CLIMB].GetRegularProgress();
             float BGArmProg = m_Paths[BGROUND][CLIMB].GetRegularProgress();
 
-			// TODO: Figure out what this comment means, and then rephrase it better!
-            // Slightly negative BGArmProg makes sense because any progress on the starting segments are reported as negative,
-            // and there's many starting segments on properly formed climbing paths
+			// Check BGArmProg > 0.1F since it will have a negative progress when it first hits a segment
+            // When climbing ladders, there's very many small segments, so this check improves behaviour
+            // TODO: Consider a more generalized and less hacky solution?
 			if (climbing) {
 				if (m_pFGArm && !(m_Paths[FGROUND][CLIMB].PathEnded() && BGArmProg > 0.1F)) {	// < 0.5F
 					m_ArmClimbing[FGROUND] = true;
@@ -3634,9 +3634,9 @@ void AHuman::Update()
 			// TODO: Consider incrementing 1.1F or even checking if the actor is missing legs instead of disabling?
             /* else if (m_StrideTimer.IsPastSimMS(static_cast<double>(m_Paths[FGROUND][WALK].GetTotalPathTime() * 1.1F))) {
 				// Reset the walking stride if it's taking longer than it should.
-                //m_StrideStart = true;
-                //m_Paths[FGROUND][WALK].Terminate();
-                //m_Paths[BGROUND][WALK].Terminate();
+                m_StrideStart = true;
+                m_Paths[FGROUND][WALK].Terminate();
+                m_Paths[BGROUND][WALK].Terminate();
             }*/
 		} else if (m_MoveState == CRAWL) {
 			// Start crawling only once we are fully prone.
