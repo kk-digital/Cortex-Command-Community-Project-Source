@@ -214,7 +214,7 @@ int BunkerAssemblyScheme::ReadProperty(const std::string_view &propName, Reader 
 
 		// Print scheme name
 		GUIFont *pSmallFont = g_FrameMan.GetSmallFont();
-		SDLGUITexture guiBitmap;
+		SDLGUITexture guiBitmap(m_pPresentationBitmap);
 		pSmallFont->DrawAligned(&guiBitmap, 4, 4, m_PresetName, GUIFont::Left);
 
 		// Calculate bitmap offset
