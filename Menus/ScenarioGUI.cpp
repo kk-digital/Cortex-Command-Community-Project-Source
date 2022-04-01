@@ -104,7 +104,7 @@ namespace RTE {
 		m_DefaultScenePreview.SetSpriteAnimDuration(200);
 		m_DefaultScenePreview.SetPos(Vector(static_cast<float>(m_ScenePreviewImageBox->GetXPos() + (m_ScenePreviewImageBox->GetWidth() / 2)), static_cast<float>(m_ScenePreviewImageBox->GetYPos() + (m_ScenePreviewImageBox->GetHeight() / 2))));
 
-		m_ScenePreviewBitmap = std::make_unique<SDLGUITexture>(c_ScenePreviewWidth, c_ScenePreviewHeight, true);
+		m_ScenePreviewBitmap = std::make_unique<SDLGUITexture>(c_ScenePreviewWidth, c_ScenePreviewHeight);
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
