@@ -27,7 +27,6 @@ namespace RTE{
 		void ActorSelect();
 		void BuyMenu();
 
-		void PerformanceMetrics();
 
 		bool m_ShowDemoWindow;
 

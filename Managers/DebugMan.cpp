@@ -73,12 +73,6 @@ namespace RTE {
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 	}
 
-	void DebugMan::PerformanceMetrics() {
-		ImGui::Begin("Performance");
-		ImGui::Text("%f", ImGui::GetIO().Framerate);
-		ImGui::End();
-	}
-
 	void DebugMan::ScenarioSelect() {
 		if (m_Activites.empty()) {
 			std::list<Entity *> presetList;
