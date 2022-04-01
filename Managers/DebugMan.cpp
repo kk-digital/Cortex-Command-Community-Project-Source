@@ -15,6 +15,9 @@
 #include "Scene.h"
 #include "PresetMan.h"
 
+#include "RTERenderer.h"
+#include "SDLGUITexture.h"
+
 namespace RTE {
 	DebugMan::DebugMan() = default;
 	DebugMan::~DebugMan() = default;
@@ -59,6 +62,7 @@ namespace RTE {
 		ImGui::NewFrame();
 
 		g_PerformanceMan.Draw();
+		DebugInfo();
 
 		if (!g_ActivityMan.IsInActivity()) {
 			ScenarioSelect();
@@ -171,5 +175,14 @@ namespace RTE {
 			return true;
 		}
 		return false;
+	}
+
+
+
+	void DebugMan::DebugInfo() {
+		ImGui::Begin("Info");
+		ImGui::Text("guitexcount: %d", SDLGUITexture::guicount);
+		ImGui::Text("texturecount: %d", GLTexture::texturecount);
+		ImGui::End();
 	}
 } // namespace RTE

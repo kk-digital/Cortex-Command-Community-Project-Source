@@ -27,7 +27,6 @@ namespace RTE{
 		void ActorSelect();
 		void BuyMenu();
 
-
 		bool m_ShowDemoWindow;
 
 		/// Scenario Selection ///
@@ -43,6 +42,10 @@ namespace RTE{
 
 
 		/// Debug Menu ///
+
+
+		/// Debug Info ///
+		void DebugInfo();
 	};
 }
 #endif
