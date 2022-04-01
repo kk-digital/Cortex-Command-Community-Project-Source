@@ -38,6 +38,7 @@ namespace RTE {
 				m_TextureUniform = GetUniformLocation("rteTexture");
 				m_ColorUniform = GetUniformLocation("rteColor");
 				m_TransformUniform = GetUniformLocation("rteTransform");
+				m_UVTransformUniform = GetUniformLocation("rteUVTransform");
 				m_ProjectionUniform = GetUniformLocation("rteProjection");
 			} else {
 			}

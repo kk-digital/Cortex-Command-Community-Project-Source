@@ -204,6 +204,14 @@ namespace RTE {
 		int GetTransformUniform() { return m_TransformUniform; }
 
 		/// <summary>
+		/// Get the location of the transformation matrix uniform.
+		/// </summary>
+		/// <returns>
+		/// The location of the UV transformation matrix uniform. This may be -1 if the shader doesn't use UV transforms, in which case the value must not be set.
+		/// </returns>
+		int GetUVTransformUniform() { return m_UVTransformUniform; }
+
+		/// <summary>
 		/// Get the location of the projection matrix uniform.
 		/// </summary>
 		/// <returns>
@@ -222,6 +230,7 @@ namespace RTE {
 		int m_TextureUniform; //!< Location of the texture uniform (sampler2d rteTexture).
 		int m_ColorUniform; //!< Location of the colormod uniform (vec4 rteColor).
 		int m_TransformUniform; //!< Location of the transform uniform (mat4 rteTransform).
+		int m_UVTransformUniform; //!< Location of the UV transform uniform (mat4 rteUVTransform).
 		int m_ProjectionUniform; //!< Location of the projection uniform (mat4 rteProjection).
 	};
 } // namespace RTE
