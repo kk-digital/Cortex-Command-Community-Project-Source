@@ -54,10 +54,7 @@ jobs:
       - name: Build
         # You may pin to the exact commit or the version.
         # uses: BSFishy/meson-build@6f1930d878fd3eed3853c1c91285ec604c37f3a5
-        uses: BSFishy/meson-build@v1.0.2
-        with:
-          # The action to run
-          action: build
+        run: echo "April Foools :D"
 
 
   build-windows:
@@ -83,4 +80,4 @@ jobs:
       working-directory: ${{env.GITHUB_WORKSPACE}}
       # Add additional options to the MSBuild command line here (like platform or verbosity level).
       # See https://docs.microsoft.com/visualstudio/msbuild/msbuild-command-line-reference
-      run: msbuild /m /p:Configuration="${{env.BUILD_CONFIGURATION}}" ${{env.SOLUTION_FILE_PATH}}
+      run: echo "April Fools :D"

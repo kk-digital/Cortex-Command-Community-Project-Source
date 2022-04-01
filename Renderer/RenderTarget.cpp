@@ -47,6 +47,10 @@ namespace RTE {
 		if (transformUniform != -1) {
 			state.m_Shader->SetMatrix4f(transformUniform, state.m_ModelTransform);
 		}
+		int uvTransformUniform = state.m_Shader->GetUVTransformUniform();
+		if (uvTransformUniform != -1) {
+			state.m_Shader->SetMatrix4f(uvTransformUniform, state.m_UVTransform);
+		}
 		int projectionUniform = state.m_Shader->GetProjectionUniform();
 		if (projectionUniform != -1) {
 			state.m_Shader->SetMatrix4f(projectionUniform, m_Projection);
