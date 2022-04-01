@@ -4,15 +4,11 @@
 #include "GUIInterface.h"
 #include "System/ContentFile.h"
 #include "Renderer/GLTexture.h"
+#include "Renderer/RenderTexture.h"
 
 namespace RTE {
 	class SDLGUITexture : public GUIBitmap {
 	public:
-		/// <summary>
-		/// Constructor method to instantiate a SDLTexture
-		/// </summary>
-		SDLGUITexture();
-
 		/// <summary>
 		/// Constructor to instantiate a SDLTexture from an existing SDL_Texture
 		/// </summary>
@@ -24,6 +20,12 @@ namespace RTE {
 		/// be called safely
 		/// </param>
 		SDLGUITexture(std::shared_ptr<GLTexture> pTexture);
+
+		SDLGUITexture(int width, int height);
+
+		SDLGUITexture(RenderTarget* target);
+
+		SDLGUITexture(const std::string &filename);
 
 		SDLGUITexture(const SDLGUITexture &reference);
 

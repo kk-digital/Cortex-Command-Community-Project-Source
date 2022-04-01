@@ -9,15 +9,25 @@
 #include "FrameMan.h"
 
 namespace RTE {
-	SDLGUITexture::SDLGUITexture() = default;
-
-	SDLGUITexture::SDLGUITexture(std::shared_ptr<GLTexture> pTexture) {
+	int SDLGUITexture::guicount = 0;
+	SDLGUITexture::SDLGUITexture(std::shared_ptr<GLTexture> pTexture) : m_ServerUpdated(false), m_ClientUpdated(false) {
 		assert(pTexture);
 		m_Texture = pTexture;
 		m_ClipRect = nullptr;
 
 		m_Width = pTexture->GetW();
 		m_Height = pTexture->GetH();
+		guicount++;
+	}
+
+	SDLGUITexture::SDLGUITexture(int width, int height) : m_ServerUpdated(false), m_ClientUpdated(false) {
+		m_Texture = MakeTexture();
+		m_Texture->Create(width, height);
+
+		m_Width = width;
+		m_Height = height;
+		m_ClipRect = nullptr;
+		guicount++;
 	}
 
 	SDLGUITexture::SDLGUITexture(const SDLGUITexture &ref) {
@@ -30,7 +40,11 @@ namespace RTE {
 		SetRect(m_ClipRect.get(), 0, 0, m_Width, m_Height);
 	}
 
-	SDLGUITexture::~SDLGUITexture() = default;
+	SDLGUITexture::SDLGUITexture(const std::string &filename) { Create(filename); }
+
+	SDLGUITexture::~SDLGUITexture() {
+		guicount--;
+	};
 
 	void SDLGUITexture::SetBitmap(std::shared_ptr<GLTexture> newTexture) {
 		assert(newTexture);
