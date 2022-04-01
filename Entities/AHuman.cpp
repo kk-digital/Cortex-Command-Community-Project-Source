@@ -4519,7 +4519,7 @@ void AHuman::DrawHUD(RenderTarget* renderer, const Vector &targetPos, int whichS
     // Only show extra HUD if this guy is controlled by the same player that this screen belongs to
     if (m_Controller.IsPlayerControlled() && g_ActivityMan.GetActivity()->ScreenOfPlayer(m_Controller.GetPlayer()) == whichScreen && pSmallFont && pSymbolFont)
     {
-        SDLGUITexture allegroBitmap{};
+        SDLGUITexture allegroBitmap(renderer->GetSize().x, renderer->GetSize().y);
 		glm::vec2 viewport = renderer->GetViewport();
 /*
         // Device aiming reticule
@@ -4726,12 +4726,13 @@ void AHuman::DrawHUD(RenderTarget* renderer, const Vector &targetPos, int whichS
             }
         }
 */
+		allegroBitmap.GetTexture()->render(renderer, 0,0);
     }
 
     // AI mode state debugging
 #ifdef DEBUG_BUILD
 
-    SDLGUITexture guiBitmap;
+    SDLGUITexture guiBitmap(renderer->GetSize().x, renderer->GetSize().y);
     Vector drawPos = m_Pos - targetPos;
 
     // Dig state
@@ -4790,6 +4791,7 @@ void AHuman::DrawHUD(RenderTarget* renderer, const Vector &targetPos, int whichS
         std::snprintf(str, sizeof(str), "UNSTABLE");
     pSmallFont->DrawAligned(&guiBitmap, drawPos.m_X + 2, drawPos.m_Y + m_HUDStack + 3, str, GUIFont::Centre);
     m_HUDStack += -9;
+	guiBitmap.GetTexture()->render(renderer, 0,0);
 
 #endif
 

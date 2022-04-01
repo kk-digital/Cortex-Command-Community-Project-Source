@@ -2185,7 +2185,7 @@ void GameActivity::DrawGUI(RenderTarget *renderer, const Vector &targetPos, int 
 	glm::vec2 viewport = renderer->GetSize();
 
 	Box screenBox(targetPos, viewport.x, viewport.y);
-	SDLGUITexture pBitmapInt;
+	SDLGUITexture pBitmapInt(renderer->GetSize().x, renderer->GetSize().y);
 
 	int frame = ((int)m_CursorTimer.GetElapsedSimTimeMS() % 1000) / 250;
 
@@ -2489,6 +2489,8 @@ void GameActivity::DrawGUI(RenderTarget *renderer, const Vector &targetPos, int 
 	// Draw Banners
 	m_pBannerRed[PoS]->Draw(renderer);
 	m_pBannerYellow[PoS]->Draw(renderer);
+
+	pBitmapInt.GetTexture()->render(renderer, 0,0);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -2510,7 +2512,7 @@ void GameActivity::DrawDeliveryCursors(RenderTarget *renderer,
 
 	GUIFont *pLargeFont = g_FrameMan.GetLargeFont();
 	GUIFont *pSmallFont = g_FrameMan.GetSmallFont();
-	SDLGUITexture pBitmapInt;
+	SDLGUITexture pBitmapInt(renderer->GetSize().x, renderer->GetSize().y);
 	Vector landZone;
 
 	int team = Teams::NoTeam;
@@ -2602,6 +2604,7 @@ void GameActivity::DrawDeliveryCursors(RenderTarget *renderer,
 			}
 		}
 	}
+	pBitmapInt.GetTexture()->render(renderer, 0, 0);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -2842,7 +2845,7 @@ void GameActivity::ObjectivePoint::Draw(RenderTarget* renderer, std::shared_ptr<
     if (!renderer || !pArrowTexture)
         return;
 
-    SDLGUITexture sdlGUITexture;
+    SDLGUITexture sdlGUITexture(renderer->GetSize().x, renderer->GetSize().y);
     int x = arrowPoint.GetFloorIntX();
     int y = arrowPoint.GetFloorIntY();
 
@@ -2906,6 +2909,7 @@ void GameActivity::ObjectivePoint::Draw(RenderTarget* renderer, std::shared_ptr<
 		pArrowTexture->render(renderer, x - halfWidth, y, -128.0);
         g_FrameMan.GetLargeFont()->DrawAligned(&sdlGUITexture, x, y + pArrowTexture->GetH() + textSpace, m_Description, GUIFont::Centre, GUIFont::Top);
     }
+	sdlGUITexture.GetTexture()->render(renderer, 0,0);
 }
 
 std::string & GameActivity::GetNetworkPlayerName(int player)

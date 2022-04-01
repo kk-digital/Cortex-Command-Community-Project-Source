@@ -2879,7 +2879,7 @@ void ACrab::DrawHUD(RenderTarget* renderer, const Vector &targetPos, int whichSc
     // Only show extra HUD if this guy is controlled by the same player that this screen belongs to
     if (m_Controller.IsPlayerControlled() && g_ActivityMan.GetActivity()->ScreenOfPlayer(m_Controller.GetPlayer()) == whichScreen && pSmallFont && pSymbolFont)
     {
-        SDLGUITexture targetTexture;
+        SDLGUITexture targetTexture(renderer->GetSize().x, renderer->GetSize().y);
 
         Vector drawPos = m_Pos - targetPos;
 
@@ -3016,6 +3016,8 @@ void ACrab::DrawHUD(RenderTarget* renderer, const Vector &targetPos, int whichSc
             }
         }
 */
+
+		targetTexture.GetTexture()->render(renderer, 0,0);
     }
 }
 

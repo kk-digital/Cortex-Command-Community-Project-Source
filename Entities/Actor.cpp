@@ -1736,7 +1736,7 @@ void Actor::DrawHUD(RenderTarget* renderer, const Vector &targetPos, int whichSc
 
 	if (pSmallFont && pSymbolFont)
     {
-        SDLGUITexture bitmapInt;
+        SDLGUITexture bitmapInt(renderer->GetSize().x, renderer->GetSize().y);
 
         if (!m_Controller.IsState(PIE_MENU_ACTIVE))
         {
@@ -1843,6 +1843,7 @@ void Actor::DrawHUD(RenderTarget* renderer, const Vector &targetPos, int whichSc
             }
 */
         }
+		bitmapInt.GetTexture()->render(renderer, 0, 0);
     }
 
     // AI mode state debugging
