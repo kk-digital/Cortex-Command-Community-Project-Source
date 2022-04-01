@@ -1,6 +1,5 @@
 external_inc_dirs_common = include_directories(
   'include/common',
-  'include/common/GL',
   'include/common/RakNet',
   'include/common/boost_1_75',
   'include/common/fmod',
