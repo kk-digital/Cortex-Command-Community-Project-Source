@@ -731,9 +731,9 @@ namespace RTE {
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void TextPrimitive::Draw(RenderTarget *renderer, const Vector &targetPos, std::optional<RenderState> renderState) {
+		SDLGUITexture playerGUIBitmap(renderer->GetSize().x, renderer->GetSize().y);
 		if (!g_SceneMan.SceneWrapsX() && !g_SceneMan.SceneWrapsY()) {
 			Vector drawStart = m_StartPos - targetPos;
-			SDLGUITexture playerGUIBitmap;
 
 			if (m_IsSmall) {
 				g_FrameMan.GetSmallFont()->DrawAligned(&playerGUIBitmap, drawStart.GetFloorIntX(), drawStart.GetFloorIntY(), m_Text, m_Alignment);
@@ -746,7 +746,6 @@ namespace RTE {
 
 			TranslateCoordinates(targetPos, m_StartPos, drawStartLeft, drawStartRight);
 
-			SDLGUITexture playerGUIBitmap;
 			if (m_IsSmall) {
 				g_FrameMan.GetSmallFont()->DrawAligned(&playerGUIBitmap, drawStartLeft.GetFloorIntX(), drawStartLeft.GetFloorIntY(), m_Text, m_Alignment);
 				g_FrameMan.GetSmallFont()->DrawAligned(&playerGUIBitmap, drawStartRight.GetFloorIntX(), drawStartRight.GetFloorIntY(), m_Text, m_Alignment);
@@ -755,6 +754,7 @@ namespace RTE {
 				g_FrameMan.GetLargeFont()->DrawAligned(&playerGUIBitmap, drawStartRight.GetFloorIntX(), drawStartRight.GetFloorIntY(), m_Text, m_Alignment);
 			}
 		}
+		playerGUIBitmap.GetTexture()->render(renderer, 0, 0);
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

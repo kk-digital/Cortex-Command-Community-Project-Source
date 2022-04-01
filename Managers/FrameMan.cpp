@@ -267,7 +267,7 @@ namespace RTE {
 
 			glm::vec2 renderSize = renderer->GetSize();
 
-			SDLGUITexture playerGUIBitmap;
+			SDLGUITexture playerGUIBitmap(guiBuffer->GetTexture());
 			screenRelativeEffects.clear();
 			screenRelativeGlowBoxes.clear();
 			// TODO Multiplayer

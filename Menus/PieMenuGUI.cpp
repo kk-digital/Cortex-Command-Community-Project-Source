@@ -623,7 +623,7 @@ namespace RTE {
 		s_CursorBitmap->render(renderer, drawPos.GetFloorIntX() + cursorPos.GetFloorIntX(), drawPos.GetFloorIntY() + cursorPos.GetFloorIntY(), (m_CursorAngle / c_PI));
 
 		// Align text center, left or right respectively, based on which side of the menu the hovered slice is on.
-		SDLGUITexture sdlBitmap;
+		SDLGUITexture sdlBitmap(renderer->GetSize().x, renderer->GetSize().y);
 		Vector textPos = Vector(static_cast<float>(m_InnerRadius + m_BackgroundThickness + m_LargeFont->GetFontHeight()) * 0.5F, 0.0F).RadRotate(m_HoveredSlice->GetMidAngle()) - Vector(0.0F, static_cast<float>(m_LargeFont->GetFontHeight()) * 0.45F);
 		if (m_HoveredSlice == &m_UpSlice || m_HoveredSlice == &m_DownSlice) {
 			m_LargeFont->DrawAligned(&sdlBitmap, drawPos.GetFloorIntX() + textPos.GetFloorIntX(), drawPos.GetFloorIntY() + textPos.GetFloorIntY(), m_HoveredSlice->GetDescription().c_str(), GUIFont::Centre);
@@ -632,6 +632,7 @@ namespace RTE {
 		} else {
 			m_LargeFont->DrawAligned(&sdlBitmap, drawPos.GetFloorIntX() + textPos.GetFloorIntX(), drawPos.GetFloorIntY() + textPos.GetFloorIntY(), m_HoveredSlice->GetDescription().c_str(), GUIFont::Right);
 		}
+		sdlBitmap.GetTexture()->render(renderer, 0, 0);
 	}
 
 

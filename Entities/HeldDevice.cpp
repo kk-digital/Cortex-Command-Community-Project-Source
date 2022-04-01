@@ -585,7 +585,7 @@ void HeldDevice::DrawHUD(RenderTarget* renderer, const Vector &targetPos, int wh
         GUIFont *pSymbolFont = g_FrameMan.GetLargeFont();
         GUIFont *pTextFont = g_FrameMan.GetSmallFont();
         if (pSymbolFont && pTextFont) {
-            SDLGUITexture pBitmapInt{};
+            SDLGUITexture pBitmapInt(renderer->GetSize().x, renderer->GetSize().y);
             if (m_BlinkTimer.GetElapsedSimTimeMS() < 300) {
                 str[0] = -42;
                 str[1] = 0;
@@ -607,8 +607,9 @@ void HeldDevice::DrawHUD(RenderTarget* renderer, const Vector &targetPos, int wh
             pSymbolFont->DrawAligned(&pBitmapInt, drawPos.m_X - 1, drawPos.m_Y - 20, str, GUIFont::Centre);
             std::snprintf(str, sizeof(str), "%s", m_PresetName.c_str());
             pTextFont->DrawAligned(&pBitmapInt, drawPos.m_X + 0, drawPos.m_Y - 29, str, GUIFont::Centre);
-        }
-    }
+			pBitmapInt.GetTexture()->render(renderer, 0, 0);
+		}
+	}
 }
 
 } // namespace RTE

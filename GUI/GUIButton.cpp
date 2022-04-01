@@ -53,7 +53,7 @@ void GUIButton::Create(const std::string &Name, int X, int Y, int Width, int Hei
 		m_Text->SetEnabled(false);
 		GUIPanel::AddChild(m_Text.get());
 	}
-	if (!m_Icon) { m_Icon = std::make_unique<SDLGUITexture>(); }
+	if (!m_Icon) { m_Icon = std::make_unique<SDLGUITexture>(0,0); }
 	if (!m_BorderSizes) { m_BorderSizes = std::make_unique<GUIRect>(); }
 }
 
@@ -86,7 +86,7 @@ void GUIButton::Create(GUIProperties *Props) {
 		m_Text->SetEnabled(false);
 		GUIPanel::AddChild(m_Text.get());
 	}
-	if (!m_Icon) { m_Icon = std::make_unique<SDLGUITexture>(); }
+	if (!m_Icon) { m_Icon = std::make_unique<SDLGUITexture>(0,0); }
 	if (!m_BorderSizes) { m_BorderSizes = std::make_unique<GUIRect>(); }
 
 	// Load the values
