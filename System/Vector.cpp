@@ -51,14 +51,14 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	Vector & Vector::ClampMagnitude(float upperLimit, float lowerLimit) {
-		if (upperLimit < lowerLimit) { std::swap(upperLimit, lowerLimit); }
-		if (upperLimit == 0 && lowerLimit == 0) {
+	Vector & Vector::ClampMagnitude(float lowerMagnitudeLimit, float upperMagnitudeLimit) {
+		if (upperMagnitudeLimit < lowerMagnitudeLimit) { std::swap(upperMagnitudeLimit, lowerMagnitudeLimit); }
+		if (upperMagnitudeLimit == 0 && lowerMagnitudeLimit == 0) {
 			Reset();
-		} else if (GetMagnitude() > upperLimit) {
-			SetMagnitude(upperLimit);
-		} else if (GetMagnitude() < lowerLimit) {
-			SetMagnitude(lowerLimit);
+		} else if (GetMagnitude() < lowerMagnitudeLimit) {
+			SetMagnitude(lowerMagnitudeLimit);
+		} else if (GetMagnitude() > upperMagnitudeLimit) {
+			SetMagnitude(upperMagnitudeLimit);
 		}
 		return *this;
 	}
@@ -72,7 +72,7 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	Vector Vector::GetRadRotated(const float angle) {
+	Vector Vector::GetRadRotatedCopy(const float angle) {
 		Vector returnVector = *this;
 		const float adjustedAngle = -angle;
 		returnVector.m_X = m_X * std::cos(adjustedAngle) - m_Y * std::sin(adjustedAngle);

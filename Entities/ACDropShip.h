@@ -30,9 +30,7 @@ class Attachable;
 // Parent(s):       ACraft.
 // Class history:   12/13/2006 ACDropShip created.
 
-class ACDropShip:
-    public ACraft
-{
+class ACDropShip : public ACraft {
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -42,9 +40,9 @@ public:
 
 
 // Concrete allocation and cloning definitions
-EntityAllocation(ACDropShip)
-SerializableOverrideMethods
-ClassInfoGetters
+EntityAllocation(ACDropShip);
+SerializableOverrideMethods;
+ClassInfoGetters;
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Constructor:     ACDropShip
@@ -250,17 +248,6 @@ ClassInfoGetters
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
-// Virtual method:  ResetEmissionTimers
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Reset the timers of all emissions so they will start/stop at the 
-//                  correct relative offsets from now.
-// Arguments:       None.
-// Return value:    None.
-
-    void ResetEmissionTimers() override;
-
-
-//////////////////////////////////////////////////////////////////////////////////////////
 // Virtual method:  GetMaxEngineAngle
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Get max engine rotation angle in degrees.
@@ -309,6 +296,18 @@ ClassInfoGetters
 
 	float GetLateralControl() const { return m_LateralControl; }
 
+	/// <summary>
+	/// Gets the modifier for height at which this ACDropship should hover above terrain.
+	/// </summary>
+	/// <returns>The modifier for height at which this ACDropship should hover above terrain.</returns>
+	float GetHoverHeightModifier() const { return m_HoverHeightModifier; }
+
+	/// <summary>
+	/// Sets the modifier for height at which this ACDropship should hover above terrain.
+	/// </summary>
+	/// <param name="newHoverHeightModifier">The new modifier for height at which this ACDropship should hover above terrain.</param>
+	void SetHoverHeightModifier(float newHoverHeightModifier) { m_HoverHeightModifier = newHoverHeightModifier; }
+
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Protected member variable and method declarations
@@ -342,11 +341,11 @@ protected:
 
     // Automatically stabilize the craft with the upper thrusters? Defaults to yes.
     int m_AutoStabilize;
-    // The craft explodes if it has been on its side for more than this many MS (default 4000). Disable by setting to -1.
-    float m_ScuttleIfFlippedTime;
 
 	// Maximum engine rotation in degrees
 	float m_MaxEngineAngle;
+
+	float m_HoverHeightModifier; //!< The modifier for the height at which this ACDropShip should hover above terrain when releasing its cargo. Used in cpp and Lua AI.
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Private member variable and method declarations

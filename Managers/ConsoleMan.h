@@ -77,6 +77,18 @@ namespace RTE {
 		/// </summary>
 		/// <param name="screenRatio">The ratio of the screen to cover. 0 - 1.0.</param>
 		void SetConsoleScreenSize(float screenRatio = 0.3F);
+
+		/// <summary>
+		/// Gets whether the console text is using the monospace font or the regular proportional one.
+		/// </summary>
+		/// <returns>Whether the console text is using the monospace font or the regular proportional one.</returns>
+		bool GetConsoleUseMonospaceFont() const { return m_ConsoleUseMonospaceFont; }
+
+		/// <summary>
+		/// Sets whether the console text is using the monospace font and changes to the appropriate skin to apply the setting.
+		/// </summary>
+		/// <param name="useFont">Whether to use the monospace font or not.</param>
+		void SetConsoleUseMonospaceFont(bool useFont);
 #pragma endregion
 
 #pragma region Logging
@@ -98,7 +110,7 @@ namespace RTE {
 		/// Writes the entire loading warning log to a file.
 		/// </summary>
 		/// <param name="filePath">The filename of the file to write to.</param>
-		void SaveLoadWarningLog(const std::string &filePath) const;
+		void SaveLoadWarningLog(const std::string &filePath);
 
 		/// <summary>
 		/// Writes all the input strings to a log in the order they were entered.
@@ -110,7 +122,7 @@ namespace RTE {
 		/// Writes the entire console buffer to a file.
 		/// </summary>
 		/// <param name="filePath">The filename of the file to write to.</param>
-		void SaveAllText(const std::string &filePath) const;
+		void SaveAllText(const std::string &filePath);
 
 		/// <summary>
 		/// Clears all previous input.
@@ -123,7 +135,7 @@ namespace RTE {
 		/// Prints a string into the console.
 		/// </summary>
 		/// <param name="stringToPrint">The string to print.</param>
-		void PrintString(const std::string &stringToPrint) const;
+		void PrintString(const std::string &stringToPrint);
 
 		/// <summary>
 		/// Opens the console and prints the shortcut help text.
@@ -160,16 +172,19 @@ namespace RTE {
 		GUILabel *m_ConsoleText; //!< The label which presents the console output.
 		GUITextBox *m_InputTextBox; //!< The TextBox which the user types in the edited line.
 
+		int m_ConsoleTextMaxNumLines; //!< Maximum number of lines to display in the console text label.
+
+		std::deque<std::string> m_OutputLog; //!< Log of all strings outputted by the console.
 		std::deque<std::string> m_InputLog; //!< Log of previously entered input strings.
 		std::deque<std::string>::iterator m_InputLogPosition; //!< Iterator to the current position in the log.
-		std::unordered_set<std::string> m_LoadWarningLog; //!< Log for non-fatal errors produced during loading (e.g. used .bmp file extension to load a .png file). 
+		std::unordered_set<std::string> m_LoadWarningLog; //!< Log for non-fatal errors produced during loading (e.g. used .bmp file extension to load a .png file).
 
 		std::string m_LastInputString; //!< Place to save the last worked on input string before deactivating the console.
 		short m_LastLogMove; //!< The last direction the log marker was moved. Needed so that changing directions won't need double tapping.
 
-		std::string m_ConsoleTextBackup; //!< A copy of the whole console text at the time of destruction. Used to restore console text when ConsoleMan is re-created after a resolution change.
-
 	private:
+
+		bool m_ConsoleUseMonospaceFont; //!< Whether the console text is using the monospace font.
 
 		/// <summary>
 		/// Sets the console to read-only mode and enables it.

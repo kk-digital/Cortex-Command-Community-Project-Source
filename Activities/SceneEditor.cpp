@@ -24,30 +24,28 @@
 #include "HeldDevice.h"
 #include "Scene.h"
 #include "DataModule.h"
+#include "SLBackground.h"
 
-#include "GUI/GUI.h"
-#include "GUI/GUIFont.h"
-#include "GUI/AllegroScreen.h"
-#include "GUI/AllegroBitmap.h"
-#include "GUI/AllegroInput.h"
-#include "GUI/GUIControlManager.h"
-#include "GUI/GUICollectionBox.h"
-#include "GUI/GUITab.h"
-#include "GUI/GUIListBox.h"
-#include "GUI/GUITextBox.h"
-#include "GUI/GUIButton.h"
-#include "GUI/GUILabel.h"
-#include "GUI/GUIComboBox.h"
+#include "GUI.h"
+#include "GUIFont.h"
+#include "AllegroScreen.h"
+#include "AllegroBitmap.h"
+#include "AllegroInput.h"
+#include "GUIControlManager.h"
+#include "GUICollectionBox.h"
+#include "GUITab.h"
+#include "GUIListBox.h"
+#include "GUITextBox.h"
+#include "GUIButton.h"
+#include "GUILabel.h"
+#include "GUIComboBox.h"
 
 #include "SceneEditorGUI.h"
-#include "PieMenuGUI.h"
-#include "GABaseDefense.h"
-
-extern bool g_ResetActivity;
+#include "GameActivity.h"
 
 namespace RTE {
 
-ConcreteClassInfo(SceneEditor, EditorActivity, 0)
+ConcreteClassInfo(SceneEditor, EditorActivity, 0);
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -324,26 +322,26 @@ void SceneEditor::Update()
     m_NeedSave = m_pEditorGUI->EditMade() || m_NeedSave;
 
     // Get any mode change commands that the user gave the Editor GUI
-    if (m_pEditorGUI->GetActivatedPieSlice() == PieMenuGUI::PSI_NEW && m_EditorMode != NEWDIALOG)
+    if (m_pEditorGUI->GetActivatedPieSlice() == PieSlice::SliceType::EditorNew && m_EditorMode != NEWDIALOG)
     {
         m_pEditorGUI->SetEditorGUIMode(SceneEditorGUI::INACTIVE);
         m_EditorMode = EditorActivity::NEWDIALOG;
         m_ModeChange = true;
     }
-    else if (m_pEditorGUI->GetActivatedPieSlice() == PieMenuGUI::PSI_LOAD && m_EditorMode != LOADDIALOG)
+    else if (m_pEditorGUI->GetActivatedPieSlice() == PieSlice::SliceType::EditorLoad && m_EditorMode != LOADDIALOG)
     {
         m_pEditorGUI->SetEditorGUIMode(SceneEditorGUI::INACTIVE);
         m_EditorMode = EditorActivity::LOADDIALOG;
         m_ModeChange = true;
     }
-    else if (m_pEditorGUI->GetActivatedPieSlice() == PieMenuGUI::PSI_SAVE && m_EditorMode != SAVEDIALOG)
+    else if (m_pEditorGUI->GetActivatedPieSlice() == PieSlice::SliceType::EditorSave && m_EditorMode != SAVEDIALOG)
     {
         m_pEditorGUI->SetEditorGUIMode(SceneEditorGUI::INACTIVE);
         m_EditorMode = EditorActivity::SAVEDIALOG;
         m_ModeChange = true;
     }
-    // Test the scene by starting a GABaseDefense with it, after saving
-    else if (m_pEditorGUI->GetActivatedPieSlice() == PieMenuGUI::PSI_DONE || m_EditorMode == TESTINGOBJECT)
+    // Test the scene by starting a Skirmish Defense with it, after saving
+    else if (m_pEditorGUI->GetActivatedPieSlice() == PieSlice::SliceType::EditorDone || m_EditorMode == TESTINGOBJECT)
     {
         m_pEditorGUI->SetEditorGUIMode(SceneEditorGUI::INACTIVE);
 
@@ -367,7 +365,6 @@ void SceneEditor::Update()
         {
 			g_SceneMan.SetSceneToLoad(g_SceneMan.GetScene()->GetPresetName(), Scene::PLACEONLOAD);
 
-			//Start a scripted 'Skirmish Defense' activity instead of obsolete GABaseDefense because it simply don't work
 			const Activity *pActivityPreset = dynamic_cast<const Activity *>(g_PresetMan.GetEntityPreset("GAScripted", "Skirmish Defense"));
 			Activity * pActivity = dynamic_cast<Activity *>(pActivityPreset->Clone());
 			GameActivity *pTestGame = dynamic_cast<GameActivity *>(pActivity);
@@ -378,17 +375,7 @@ void SceneEditor::Update()
 			pTestGame->SetFogOfWarEnabled(false);
             pTestGame->SetDifficulty(DifficultySetting::MediumDifficulty);
             g_ActivityMan.SetStartActivity(pTestGame);
-            g_ResetActivity = true;
-
-
-            /*GABaseDefense *pTestGame = dynamic_cast<GABaseDefense *>(g_PresetMan.GetEntityPreset("GABaseDefense", "Test Activity")->Clone());
-            RTEAssert(pTestGame, "Couldn't find the \"Skirmish Defense\" GABaseDefense Activity! Has it been defined?");
-            pTestGame->SetTeamOfPlayer(0, 0);
-            pTestGame->SetCPUTeam(1);
-            pTestGame->SetDifficulty(GameActivity::MaxDifficulty);
-            pTestGame->Create();
-            g_ActivityMan.SetStartActivity(pTestGame);
-            g_ResetActivity = true;*/
+			g_ActivityMan.SetRestartActivity();
         }
     }
 
@@ -431,22 +418,22 @@ void SceneEditor::Update()
                     pItem = m_pNewBG1Combo->GetItem(m_pNewBG1Combo->GetSelectedIndex());
                     if (pItem && !pItem->m_Name.empty())
                     {
-                        SceneLayer *pNewLayer = dynamic_cast<SceneLayer *>(g_PresetMan.GetEntityPreset("SceneLayer", pItem->m_Name, m_ModuleSpaceID)->Clone());
-                        RTEAssert(pNewLayer, "No SceneLayer of the name set as BG1 is defined!");
+						SLBackground *pNewLayer = dynamic_cast<SLBackground *>(g_PresetMan.GetEntityPreset("SLBackground", pItem->m_Name, m_ModuleSpaceID)->Clone());
+                        RTEAssert(pNewLayer, "No SLBackground of the name set as BG1 is defined!");
                         pNewScene->GetBackLayers().push_back(pNewLayer);
                     }
                     pItem = m_pNewBG2Combo->GetItem(m_pNewBG2Combo->GetSelectedIndex());
                     if (pItem && !pItem->m_Name.empty())
                     {
-                        SceneLayer *pNewLayer = dynamic_cast<SceneLayer *>(g_PresetMan.GetEntityPreset("SceneLayer", pItem->m_Name, m_ModuleSpaceID)->Clone());
-                        RTEAssert(pNewLayer, "No SceneLayer of the name set as BG2 is defined!");
+						SLBackground *pNewLayer = dynamic_cast<SLBackground *>(g_PresetMan.GetEntityPreset("SLBackground", pItem->m_Name, m_ModuleSpaceID)->Clone());
+                        RTEAssert(pNewLayer, "No SLBackground of the name set as BG2 is defined!");
                         pNewScene->GetBackLayers().push_back(pNewLayer);
                     }
                     pItem = m_pNewBG3Combo->GetItem(m_pNewBG3Combo->GetSelectedIndex());
                     if (pItem && !pItem->m_Name.empty())
                     {
-                        SceneLayer *pNewLayer = dynamic_cast<SceneLayer *>(g_PresetMan.GetEntityPreset("SceneLayer", pItem->m_Name, m_ModuleSpaceID)->Clone());
-                        RTEAssert(pNewLayer, "No SceneLayer of the name set as BG3 is defined!");
+						SLBackground *pNewLayer = dynamic_cast<SLBackground *>(g_PresetMan.GetEntityPreset("SLBackground", pItem->m_Name, m_ModuleSpaceID)->Clone());
+                        RTEAssert(pNewLayer, "No SLBackground of the name set as BG3 is defined!");
                         pNewScene->GetBackLayers().push_back(pNewLayer);
                     }
 
@@ -809,21 +796,21 @@ void SceneEditor::UpdateNewDialog()
 
     // Get the list of all read in NEAR background layers
     list<Entity *> bgList;
-    g_PresetMan.GetAllOfGroupInModuleSpace(bgList, "Near Backdrops", "SceneLayer", selectedModuleID);
+    g_PresetMan.GetAllOfGroupInModuleSpace(bgList, "Near Backdrops", "SLBackground", selectedModuleID);
     // Go through the list and add their names to the combo box
     for (list<Entity *>::iterator itr = bgList.begin(); itr != bgList.end(); ++itr)
         m_pNewBG1Combo->AddItem((*itr)->GetPresetName());
 
     // Get the list of all read in MID background layers
     bgList.clear();
-    g_PresetMan.GetAllOfGroupInModuleSpace(bgList, "Mid Backdrops", "SceneLayer", selectedModuleID);
+    g_PresetMan.GetAllOfGroupInModuleSpace(bgList, "Mid Backdrops", "SLBackground", selectedModuleID);
     // Go through the list and add their names to the combo box
     for (list<Entity *>::iterator itr = bgList.begin(); itr != bgList.end(); ++itr)
         m_pNewBG2Combo->AddItem((*itr)->GetPresetName());
 
     // Get the list of all read in FAR background layers
     bgList.clear();
-    g_PresetMan.GetAllOfGroupInModuleSpace(bgList, "Far Backdrops", "SceneLayer", selectedModuleID);
+    g_PresetMan.GetAllOfGroupInModuleSpace(bgList, "Far Backdrops", "SLBackground", selectedModuleID);
     // Go through the list and add their names to the combo box
     for (list<Entity *>::iterator itr = bgList.begin(); itr != bgList.end(); ++itr)
         m_pNewBG3Combo->AddItem((*itr)->GetPresetName());

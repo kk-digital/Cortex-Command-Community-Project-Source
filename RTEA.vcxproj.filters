@@ -25,6 +25,9 @@
     <Filter Include="Activities">
       <UniqueIdentifier>{4d361173-4982-4e1b-8967-8ab53105dc7f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Lua">
+      <UniqueIdentifier>{ac503e37-087b-40b8-b1b8-427ab55a4f9e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="System\Box.h">
@@ -204,9 +207,6 @@
     <ClInclude Include="GUI\GUIUtil.h">
       <Filter>GUI</Filter>
     </ClInclude>
-    <ClInclude Include="GUI\WinUtil.h">
-      <Filter>GUI</Filter>
-    </ClInclude>
     <ClInclude Include="Entities\ACDropShip.h">
       <Filter>Entities</Filter>
     </ClInclude>
@@ -336,12 +336,6 @@
     <ClInclude Include="Activities\EditorActivity.h">
       <Filter>Activities</Filter>
     </ClInclude>
-    <ClInclude Include="Activities\GABaseDefense.h">
-      <Filter>Activities</Filter>
-    </ClInclude>
-    <ClInclude Include="Activities\GABrainMatch.h">
-      <Filter>Activities</Filter>
-    </ClInclude>
     <ClInclude Include="Activities\GameActivity.h">
       <Filter>Activities</Filter>
     </ClInclude>
@@ -381,8 +375,8 @@
     <ClInclude Include="Menus\ObjectPickerGUI.h">
       <Filter>Menus</Filter>
     </ClInclude>
-    <ClInclude Include="Menus\PieMenuGUI.h">
-      <Filter>Menus</Filter>
+    <ClInclude Include="Entities\PieMenu.h">
+      <Filter>Entities</Filter>
     </ClInclude>
     <ClInclude Include="Menus\ScenarioGUI.h">
       <Filter>Menus</Filter>
@@ -419,12 +413,6 @@
     </ClInclude>
     <ClInclude Include="System\RTEError.h">
       <Filter>System</Filter>
-    </ClInclude>
-    <ClInclude Include="GUI\Interface.h">
-      <Filter>GUI</Filter>
-    </ClInclude>
-    <ClInclude Include="Menus\LoadingGUI.h">
-      <Filter>Menus</Filter>
     </ClInclude>
     <ClInclude Include="System\Constants.h">
       <Filter>System</Filter>
@@ -481,6 +469,81 @@
       <Filter>Entities</Filter>
     </ClInclude>
     <ClInclude Include="System\GraphicalPrimitive.h">
+      <Filter>System</Filter>
+    </ClInclude>
+    <ClInclude Include="Menus\TitleScreen.h">
+      <Filter>Menus</Filter>
+    </ClInclude>
+    <ClInclude Include="Managers\MenuMan.h">
+      <Filter>Managers</Filter>
+    </ClInclude>
+    <ClInclude Include="Menus\LoadingScreen.h">
+      <Filter>Menus</Filter>
+    </ClInclude>
+    <ClInclude Include="Menus\ModManagerGUI.h">
+      <Filter>Menus</Filter>
+    </ClInclude>
+    <ClInclude Include="Menus\SettingsGUI.h">
+      <Filter>Menus</Filter>
+    </ClInclude>
+    <ClInclude Include="Menus\SettingsAudioGUI.h">
+      <Filter>Menus</Filter>
+    </ClInclude>
+    <ClInclude Include="Menus\SettingsVideoGUI.h">
+      <Filter>Menus</Filter>
+    </ClInclude>
+    <ClInclude Include="Menus\SettingsInputGUI.h">
+      <Filter>Menus</Filter>
+    </ClInclude>
+    <ClInclude Include="Menus\SettingsGameplayGUI.h">
+      <Filter>Menus</Filter>
+    </ClInclude>
+    <ClInclude Include="Menus\SettingsMiscGUI.h">
+      <Filter>Menus</Filter>
+    </ClInclude>
+    <ClInclude Include="Menus\SettingsInputMappingGUI.h">
+      <Filter>Menus</Filter>
+    </ClInclude>
+    <ClInclude Include="Menus\SettingsInputMappingWizardGUI.h">
+      <Filter>Menus</Filter>
+    </ClInclude>
+    <ClInclude Include="Menus\ScenarioActivityConfigGUI.h">
+      <Filter>Menus</Filter>
+    </ClInclude>
+    <ClInclude Include="Entities\PieSlice.h">
+      <Filter>Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="Menus\InventoryMenuGUI.h">
+      <Filter>Menus</Filter>
+    </ClInclude>
+    <ClInclude Include="Lua\LuaBindDefinitions.h">
+      <Filter>Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="Lua\LuaBindingRegisterDefinitions.h">
+      <Filter>Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="GUI\GUIInterface.h">
+      <Filter>GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="GUI\GUIReader.h">
+      <Filter>GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="GUI\GUIWriter.h">
+      <Filter>GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="Lua\LuaAdaptersEntities.h">
+      <Filter>Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="Lua\LuaAdapters.h">
+      <Filter>Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="Entities\TerrainFrosting.h">
+      <Filter>Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="Entities\SLBackground.h">
+      <Filter>Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="System\PieQuadrant.h">
       <Filter>System</Filter>
     </ClInclude>
     <ClInclude Include="System\BitmapToPolygonHelper.h" />
@@ -655,9 +718,6 @@
     <ClCompile Include="GUI\GUIUtil.cpp">
       <Filter>GUI</Filter>
     </ClCompile>
-    <ClCompile Include="GUI\WinUtil.cpp">
-      <Filter>GUI</Filter>
-    </ClCompile>
     <ClCompile Include="Entities\ACDropShip.cpp">
       <Filter>Entities</Filter>
     </ClCompile>
@@ -787,12 +847,6 @@
     <ClCompile Include="Activities\EditorActivity.cpp">
       <Filter>Activities</Filter>
     </ClCompile>
-    <ClCompile Include="Activities\GABaseDefense.cpp">
-      <Filter>Activities</Filter>
-    </ClCompile>
-    <ClCompile Include="Activities\GABrainMatch.cpp">
-      <Filter>Activities</Filter>
-    </ClCompile>
     <ClCompile Include="Activities\GameActivity.cpp">
       <Filter>Activities</Filter>
     </ClCompile>
@@ -832,8 +886,8 @@
     <ClCompile Include="Menus\ObjectPickerGUI.cpp">
       <Filter>Menus</Filter>
     </ClCompile>
-    <ClCompile Include="Menus\PieMenuGUI.cpp">
-      <Filter>Menus</Filter>
+    <ClCompile Include="Entities\PieMenu.cpp">
+      <Filter>Entities</Filter>
     </ClCompile>
     <ClCompile Include="Menus\ScenarioGUI.cpp">
       <Filter>Menus</Filter>
@@ -872,9 +926,6 @@
     <ClCompile Include="System\RTEError.cpp">
       <Filter>System</Filter>
     </ClCompile>
-    <ClCompile Include="Menus\LoadingGUI.cpp">
-      <Filter>Menus</Filter>
-    </ClCompile>
     <ClCompile Include="System\Controller.cpp">
       <Filter>System</Filter>
     </ClCompile>
@@ -893,7 +944,7 @@
     <ClCompile Include="Entities\SoundContainer.cpp">
       <Filter>Entities</Filter>
     </ClCompile>
-	  <ClCompile Include="Entities\SoundSet.cpp">
+    <ClCompile Include="Entities\SoundSet.cpp">
       <Filter>Entities</Filter>
     </ClCompile>
     <ClCompile Include="System\Atom.cpp">
@@ -921,6 +972,87 @@
       <Filter>Entities</Filter>
     </ClCompile>
     <ClCompile Include="System\GraphicalPrimitive.cpp">
+      <Filter>System</Filter>
+    </ClCompile>
+    <ClCompile Include="Menus\TitleScreen.cpp">
+      <Filter>Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="Managers\MenuMan.cpp">
+      <Filter>Managers</Filter>
+    </ClCompile>
+    <ClCompile Include="Menus\LoadingScreen.cpp">
+      <Filter>Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="Menus\ModManagerGUI.cpp">
+      <Filter>Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="Menus\SettingsGUI.cpp">
+      <Filter>Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="Menus\SettingsAudioGUI.cpp">
+      <Filter>Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="Menus\SettingsVideoGUI.cpp">
+      <Filter>Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="Menus\SettingsInputGUI.cpp">
+      <Filter>Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="Menus\SettingsGameplayGUI.cpp">
+      <Filter>Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="Menus\SettingsMiscGUI.cpp">
+      <Filter>Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="Menus\SettingsInputMappingGUI.cpp">
+      <Filter>Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="Menus\SettingsInputMappingWizardGUI.cpp">
+      <Filter>Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="Menus\ScenarioActivityConfigGUI.cpp">
+      <Filter>Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="Entities\PieSlice.cpp">
+      <Filter>Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="Menus\InventoryMenuGUI.cpp">
+      <Filter>Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="System\Serializable.cpp">
+      <Filter>System</Filter>
+    </ClCompile>
+    <ClCompile Include="GUI\GUIReader.cpp">
+      <Filter>GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="GUI\GUIWriter.cpp">
+      <Filter>GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="Lua\LuaBindingsMisc.cpp">
+      <Filter>Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="Lua\LuaBindingsActivities.cpp">
+      <Filter>Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="Lua\LuaBindingsEntities.cpp">
+      <Filter>Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="Lua\LuaBindingsGUI.cpp">
+      <Filter>Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="Lua\LuaBindingsManagers.cpp">
+      <Filter>Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="Lua\LuaBindingsSystem.cpp">
+      <Filter>Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="Entities\TerrainFrosting.cpp">
+      <Filter>Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="Entities\SLBackground.cpp">
+      <Filter>Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="System\PieQuadrant.cpp">
       <Filter>System</Filter>
     </ClCompile>
     <ClCompile Include="System\BitmapToPolygonHelper.cpp" />

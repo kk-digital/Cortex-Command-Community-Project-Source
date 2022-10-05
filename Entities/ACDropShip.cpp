@@ -16,10 +16,11 @@
 #include "Controller.h"
 #include "Matrix.h"
 #include "AEmitter.h"
+#include "PresetMan.h"
 
 namespace RTE {
 
-ConcreteClassInfo(ACDropShip, ACraft, 10)
+ConcreteClassInfo(ACDropShip, ACraft, 10);
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -42,8 +43,8 @@ void ACDropShip::Clear()
     m_LateralControl = 0;
 	m_LateralControlSpeed = 6.0f;
 	m_AutoStabilize = 1;
-    m_ScuttleIfFlippedTime = 4000;
 	m_MaxEngineAngle = 20.0f;
+	m_HoverHeightModifier = 0;
 }
 
 
@@ -71,31 +72,21 @@ int ACDropShip::Create()
 // Description:     Creates a ACDropShip to be identical to another, by deep copy.
 
 int ACDropShip::Create(const ACDropShip &reference) {
-    if (reference.m_pRThruster) {
-        m_ReferenceHardcodedAttachableUniqueIDs.insert(reference.m_pRThruster->GetUniqueID());
-        SetRightThruster(dynamic_cast<AEmitter *>(reference.m_pRThruster->Clone()));
-    }
-    if (reference.m_pLThruster) {
-        m_ReferenceHardcodedAttachableUniqueIDs.insert(reference.m_pLThruster->GetUniqueID());
-        SetLeftThruster(dynamic_cast<AEmitter *>(reference.m_pLThruster->Clone()));
-    }
-    if (reference.m_pURThruster) {
-        m_ReferenceHardcodedAttachableUniqueIDs.insert(reference.m_pURThruster->GetUniqueID());
-        SetURightThruster(dynamic_cast<AEmitter *>(reference.m_pURThruster->Clone()));
-    }
-    if (reference.m_pULThruster) {
-        m_ReferenceHardcodedAttachableUniqueIDs.insert(reference.m_pULThruster->GetUniqueID());
-        SetULeftThruster(dynamic_cast<AEmitter *>(reference.m_pULThruster->Clone()));
-    }
-    if (reference.m_pRHatch) {
-        m_ReferenceHardcodedAttachableUniqueIDs.insert(reference.m_pRHatch->GetUniqueID());
-        SetRightHatch(dynamic_cast<Attachable *>(reference.m_pRHatch->Clone()));
-    }
-    if (reference.m_pLHatch) {
-        m_ReferenceHardcodedAttachableUniqueIDs.insert(reference.m_pLHatch->GetUniqueID());
-        SetLeftHatch(dynamic_cast<Attachable *>(reference.m_pLHatch->Clone()));
-    }
+    if (reference.m_pRThruster) { m_ReferenceHardcodedAttachableUniqueIDs.insert(reference.m_pRThruster->GetUniqueID()); }
+    if (reference.m_pLThruster) { m_ReferenceHardcodedAttachableUniqueIDs.insert(reference.m_pLThruster->GetUniqueID()); }
+    if (reference.m_pURThruster) { m_ReferenceHardcodedAttachableUniqueIDs.insert(reference.m_pURThruster->GetUniqueID()); }
+    if (reference.m_pULThruster) { m_ReferenceHardcodedAttachableUniqueIDs.insert(reference.m_pULThruster->GetUniqueID()); }
+    if (reference.m_pRHatch) { m_ReferenceHardcodedAttachableUniqueIDs.insert(reference.m_pRHatch->GetUniqueID()); }
+    if (reference.m_pLHatch) { m_ReferenceHardcodedAttachableUniqueIDs.insert(reference.m_pLHatch->GetUniqueID()); }
+
     ACraft::Create(reference);
+
+    if (reference.m_pRThruster) { SetRightThruster(dynamic_cast<AEmitter *>(reference.m_pRThruster->Clone())); }
+    if (reference.m_pLThruster) { SetLeftThruster(dynamic_cast<AEmitter *>(reference.m_pLThruster->Clone())); }
+    if (reference.m_pURThruster) { SetURightThruster(dynamic_cast<AEmitter *>(reference.m_pURThruster->Clone())); }
+    if (reference.m_pULThruster) { SetULeftThruster(dynamic_cast<AEmitter *>(reference.m_pULThruster->Clone())); }
+    if (reference.m_pRHatch) { SetRightHatch(dynamic_cast<Attachable *>(reference.m_pRHatch->Clone())); }
+    if (reference.m_pLHatch) { SetLeftHatch(dynamic_cast<Attachable *>(reference.m_pLHatch->Clone())); }
 
     m_pBodyAG = dynamic_cast<AtomGroup *>(reference.m_pBodyAG->Clone());
     m_pBodyAG->SetOwner(this);
@@ -105,9 +96,10 @@ int ACDropShip::Create(const ACDropShip &reference) {
     m_LateralControl = reference.m_LateralControl;
     m_LateralControlSpeed = reference.m_LateralControlSpeed;
     m_AutoStabilize = reference.m_AutoStabilize;
-    m_ScuttleIfFlippedTime = reference.m_ScuttleIfFlippedTime;
 
 	m_MaxEngineAngle = reference.m_MaxEngineAngle;
+
+	m_HoverHeightModifier = reference.m_HoverHeightModifier;
 
 	return 0;
 }
@@ -122,40 +114,28 @@ int ACDropShip::Create(const ACDropShip &reference) {
 //                  false is returned, and the reader's position is untouched.
 
 int ACDropShip::ReadProperty(const std::string_view &propName, Reader &reader) {
-    if (propName == "RThruster") {
-        m_pRThruster = new AEmitter;
-        reader >> m_pRThruster;
-        SetRightThruster(m_pRThruster);
-    } else if (propName == "LThruster") {
-        m_pLThruster = new AEmitter;
-        reader >> m_pLThruster;
-        SetLeftThruster(m_pLThruster);
-    } else if (propName == "URThruster") {
-        m_pURThruster = new AEmitter;
-        reader >> m_pURThruster;
-        SetURightThruster(m_pURThruster);
-    } else if (propName == "ULThruster") {
-        m_pULThruster = new AEmitter;
-        reader >> m_pULThruster;
-        SetULeftThruster(m_pULThruster);
-    } else if (propName == "RHatchDoor") {
-        m_pRHatch = new Attachable;
-        reader >> m_pRHatch;
-        SetRightHatch(m_pRHatch);
-    } else if (propName == "LHatchDoor") {
-        m_pLHatch = new Attachable;
-        reader >> m_pLHatch;
-        SetLeftHatch(m_pLHatch);
+    if (propName == "RThruster" || propName == "RightThruster" || propName == "RightEngine") {
+        SetRightThruster(dynamic_cast<AEmitter *>(g_PresetMan.ReadReflectedPreset(reader)));
+    } else if (propName == "LThruster" || propName == "LeftThruster" || propName == "LeftEngine") {
+        SetLeftThruster(dynamic_cast<AEmitter *>(g_PresetMan.ReadReflectedPreset(reader)));
+    } else if (propName == "URThruster" || propName == "UpRightThruster") {
+        SetURightThruster(dynamic_cast<AEmitter *>(g_PresetMan.ReadReflectedPreset(reader)));
+    } else if (propName == "ULThruster" || propName == "UpLeftThruster") {
+        SetULeftThruster(dynamic_cast<AEmitter *>(g_PresetMan.ReadReflectedPreset(reader)));
+    } else if (propName == "RHatchDoor" || propName == "RightHatchDoor") {
+        SetRightHatch(dynamic_cast<Attachable *>(g_PresetMan.ReadReflectedPreset(reader)));
+    } else if (propName == "LHatchDoor" || propName == "LeftHatchDoor") {
+        SetLeftHatch(dynamic_cast<Attachable *>(g_PresetMan.ReadReflectedPreset(reader)));
     } else if (propName == "HatchDoorSwingRange") {
         reader >> m_HatchSwingRange;
     } else if (propName == "AutoStabilize") {
         reader >> m_AutoStabilize;
-    } else if (propName == "ScuttleIfFlippedTime") {
-        reader >> m_ScuttleIfFlippedTime;
     } else if (propName == "MaxEngineAngle") {
         reader >> m_MaxEngineAngle;
-    } else if (propName == "LateralControlSpeed") {
-        reader >> m_LateralControlSpeed;
+	} else if (propName == "LateralControlSpeed") {
+		reader >> m_LateralControlSpeed;
+	} else if (propName == "HoverHeightModifier") {
+		reader >> m_HoverHeightModifier;
     } else {
         return ACraft::ReadProperty(propName, reader);
     }
@@ -190,12 +170,11 @@ int ACDropShip::Save(Writer &writer) const
     writer << m_HatchSwingRange;
     writer.NewProperty("AutoStabilize");
     writer << m_AutoStabilize;
-    writer.NewProperty("ScuttleIfFlippedTime");
-    writer << m_ScuttleIfFlippedTime;
 	writer.NewProperty("MaxEngineAngle");
 	writer << m_MaxEngineAngle;
 	writer.NewProperty("LateralControlSpeed");
 	writer << m_LateralControlSpeed;
+	writer.NewPropertyWithValue("HoverHeightModifier", m_HoverHeightModifier);
 
     return 0;
 }
@@ -340,7 +319,7 @@ void ACDropShip::UpdateAI()
     float angle = m_Rotation.GetRadAngle();
 
     // This is the altitude at which the craft will hover and unload its cargo
-    float hoverAltitude = m_CharHeight * 2;
+    float hoverAltitude = m_CharHeight * 2 + m_HoverHeightModifier;
     // The gutter range threshold for how much above and below the hovering altitude is ok to stay in
     float hoverRange = m_CharHeight / 4;
     // Get the altitude reading, within 25 pixels precision
@@ -694,82 +673,15 @@ void ACDropShip::Update()
 	/////////////////////////////////////////////////
 	// Update MovableObject, adds on the forces etc, updated viewpoint
 	ACraft::Update();
-
-    ///////////////////////////////////
-    // Explosion logic
-
-    if (m_Status == DEAD)
-        GibThis();
-
-    ////////////////////////////////////////
-    // Balance stuff
-
-    // Get the rotation in radians.
-    float rot = m_Rotation.GetRadAngle();
-/* If the dropship starts rolling, it's over man
-    // Eliminate full rotations
-    while (fabs(rot) > c_TwoPI)
-        rot -= rot > 0 ? c_TwoPI : -c_TwoPI;
-
-    // Eliminate rotations over half a turn
-    if (fabs(rot) > c_PI)
-        rot = (rot > 0 ? -c_PI : c_PI) + (rot - (rot > 0 ? c_PI : -c_PI));
-*/
-    // If tipped too far for too long, die
-    if (rot < c_HalfPI && rot > -c_HalfPI)
-    {
-        m_FlippedTimer.Reset();
-    }
-    // Start death process if tipped over for too long
-    else if (m_ScuttleIfFlippedTime >= 0 && m_FlippedTimer.IsPastSimMS(m_ScuttleIfFlippedTime) && m_Status != DYING) // defult is 4s
-    {
-        m_Status = DYING;
-        m_DeathTmr.Reset();
-    }
-
-    // Flash if dying, warning of impending explosion
-    if (m_Status == DYING)
-    {
-        if (m_DeathTmr.IsPastSimMS(500) && m_DeathTmr.AlternateSim(100))
-            FlashWhite(10);
-    }
-
-/*
-//        rot = fabs(rot) < c_QuarterPI ? rot : (rot > 0 ? c_QuarterPI : -c_QuarterPI);
-
-    // Rotational balancing spring calc
-    if (m_Status == STABLE) {
-        // Break the spring if close to target angle.
-        if (fabs(rot) > 0.1)
-            m_AngularVel -= rot * fabs(rot);
-        else if (fabs(m_AngularVel) > 0.1)
-            m_AngularVel *= 0.5;
-    }
-    // Unstable, or without balance
-    else if (m_Status == DYING) {
-//        float rotTarget = rot > 0 ? c_HalfPI : -c_HalfPI;
-        float rotTarget = c_HalfPI;
-        float rotDiff = rotTarget - rot;
-        if (fabs(rotDiff) > 0.1)
-            m_AngularVel += rotDiff * rotDiff;
-        else
-            m_Status = DEAD;
-
-//        else if (fabs(m_AngularVel) > 0.1)
-//            m_AngularVel *= 0.5;
-    }
-    m_Rotation.SetRadAngle(rot);
-*/
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void ACDropShip::SetRightThruster(AEmitter *newThruster) {
+    if (m_pRThruster && m_pRThruster->IsAttached()) { RemoveAndDeleteAttachable(m_pRThruster); }
     if (newThruster == nullptr) {
-        if (m_pRThruster && m_pRThruster->IsAttached()) { RemoveAttachable(m_pRThruster); }
         m_pRThruster = nullptr;
     } else {
-        if (m_pRThruster && m_pRThruster->IsAttached()) { RemoveAttachable(m_pRThruster); }
         m_pRThruster = newThruster;
         AddAttachable(newThruster);
 
@@ -787,11 +699,10 @@ void ACDropShip::SetRightThruster(AEmitter *newThruster) {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void ACDropShip::SetLeftThruster(AEmitter *newThruster) {
+    if (m_pLThruster && m_pLThruster->IsAttached()) { RemoveAndDeleteAttachable(m_pLThruster); }
     if (newThruster == nullptr) {
-        if (m_pLThruster && m_pLThruster->IsAttached()) { RemoveAttachable(m_pLThruster); }
         m_pLThruster = nullptr;
     } else {
-        if (m_pLThruster && m_pLThruster->IsAttached()) { RemoveAttachable(m_pLThruster); }
         m_pLThruster = newThruster;
         AddAttachable(newThruster);
 
@@ -809,11 +720,10 @@ void ACDropShip::SetLeftThruster(AEmitter *newThruster) {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void ACDropShip::SetURightThruster(AEmitter *newThruster) {
+    if (m_pURThruster && m_pURThruster->IsAttached()) { RemoveAndDeleteAttachable(m_pURThruster); }
     if (newThruster == nullptr) {
-        if (m_pURThruster && m_pURThruster->IsAttached()) { RemoveAttachable(m_pURThruster); }
         m_pURThruster = nullptr;
     } else {
-        if (m_pURThruster && m_pURThruster->IsAttached()) { RemoveAttachable(m_pURThruster); }
         m_pURThruster = newThruster;
         AddAttachable(newThruster);
 
@@ -830,11 +740,10 @@ void ACDropShip::SetURightThruster(AEmitter *newThruster) {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void ACDropShip::SetULeftThruster(AEmitter *newThruster) {
+    if (m_pULThruster && m_pULThruster->IsAttached()) { RemoveAndDeleteAttachable(m_pULThruster); }
     if (newThruster == nullptr) {
-        if (m_pULThruster && m_pULThruster->IsAttached()) { RemoveAttachable(m_pULThruster); }
         m_pULThruster = nullptr;
     } else {
-        if (m_pULThruster && m_pULThruster->IsAttached()) { RemoveAttachable(m_pULThruster); }
         m_pULThruster = newThruster;
         AddAttachable(newThruster);
 
@@ -851,11 +760,10 @@ void ACDropShip::SetULeftThruster(AEmitter *newThruster) {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void ACDropShip::SetRightHatch(Attachable *newHatch) {
+    if (m_pRHatch && m_pRHatch->IsAttached()) { RemoveAndDeleteAttachable(m_pRHatch); }
     if (newHatch == nullptr) {
-        if (m_pRHatch && m_pRHatch->IsAttached()) { RemoveAttachable(m_pRHatch); }
         m_pRHatch = nullptr;
     } else {
-        if (m_pRHatch && m_pRHatch->IsAttached()) { RemoveAttachable(m_pRHatch); }
         m_pRHatch = newHatch;
         AddAttachable(newHatch);
 
@@ -871,11 +779,10 @@ void ACDropShip::SetRightHatch(Attachable *newHatch) {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void ACDropShip::SetLeftHatch(Attachable *newHatch) {
+    if (m_pLHatch && m_pLHatch->IsAttached()) { RemoveAndDeleteAttachable(m_pLHatch); }
     if (newHatch == nullptr) {
-        if (m_pLHatch && m_pLHatch->IsAttached()) { RemoveAttachable(m_pLHatch); }
         m_pLHatch = nullptr;
     } else {
-        if (m_pLHatch && m_pLHatch->IsAttached()) { RemoveAttachable(m_pLHatch); }
         m_pLHatch = newHatch;
         AddAttachable(newHatch);
 
@@ -888,27 +795,4 @@ void ACDropShip::SetLeftHatch(Attachable *newHatch) {
     }
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-//////////////////////////////////////////////////////////////////////////////////////////
-// Method:          ResetEmissionTimers
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Reset the timers of all emissions so they will start/stop at the 
-//                  correct relative offsets from now.
-
-void ACDropShip::ResetEmissionTimers()
-{
-    if (m_pRThruster && m_pRThruster->IsAttached())
-        m_pRThruster->ResetEmissionTimers();
-
-    if (m_pLThruster && m_pLThruster->IsAttached())
-        m_pLThruster->ResetEmissionTimers();
-
-    if (m_pURThruster && m_pURThruster->IsAttached())
-        m_pURThruster->ResetEmissionTimers();
-
-    if (m_pULThruster && m_pULThruster->IsAttached())
-        m_pULThruster->ResetEmissionTimers();
-}
 } // namespace RTE

@@ -16,33 +16,39 @@ namespace RTE {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void SettingsMan::Clear() {
+		m_SettingsPath = "Base.rte/Settings.ini";
 		m_SettingsNeedOverwrite = false;
 
 		m_FlashOnBrainDamage = true;
 		m_BlipOnRevealUnseen = true;
-		m_EndlessMode = false;
-		m_EnableHats = false;
+		m_UnheldItemsHUDDisplayRange = 25 * c_PPM;
+		m_AlwaysDisplayUnheldItemsInStrategicMode = true;
+		m_EndlessMetaGameMode = false;
 		m_EnableCrabBombs = false;
 		m_CrabBombThreshold = 42;
+		m_ShowEnemyHUD = true;
+		m_EnableSmartBuyMenuNavigation = true;
 
 		m_NetworkServerAddress = "127.0.0.1:8000";
 		m_PlayerNetworkName = "Dummy";
 		m_NATServiceAddress = "127.0.0.1:61111";
 		m_NATServerName = "DefaultServerName";
 		m_NATServerPassword = "DefaultServerPassword";
+		m_UseExperimentalMultiplayerSpeedBoosts = true;
 
 		m_AllowSavingToBase = false;
 		m_ShowForeignItems = true;
 		m_ShowMetaScenes = false;
 
 		m_RecommendedMOIDCount = 240;
-
-		m_LaunchIntoActivity = false;
+		m_SimplifiedCollisionDetection = false;
+		m_SceneBackgroundAutoScaleMode = 1;
+		m_DisableFactionBuyMenuThemes = false;
 
 		m_SkipIntro = false;
-		m_ToolTips = true;
-		m_DisableLoadingScreen = true;
-		m_LoadingScreenReportPrecision = 100;
+		m_ShowToolTips = true;
+		m_DisableLoadingScreenProgressReport = true;
+		m_LoadingScreenProgressReportPrecision = 100;
 		m_MenuTransitionDurationMultiplier = 1.0F;
 
 		m_DrawAtomGroupVisualizations = false;
@@ -50,30 +56,38 @@ namespace RTE {
 		m_DrawLimbPathVisualizations = false;
 		m_PrintDebugInfo = false;
 		m_MeasureModuleLoadTime = false;
+
+		m_DisabledMods.clear();
+		m_EnabledGlobalScripts.clear();
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	int SettingsMan::Initialize(Reader &reader, bool checkType, bool doCreate) {
-		if (reader.ReaderOK()) {
-			return Serializable::Create(reader, checkType);
+	int SettingsMan::Initialize() {
+		if (const char *settingsTempPath = std::getenv("CCCP_SETTINGSPATH")) { m_SettingsPath = std::string(settingsTempPath); }
+
+		Reader settingsReader(m_SettingsPath, false, nullptr, true);
+
+		if (!settingsReader.ReaderOK()) {
+			Writer settingsWriter(m_SettingsPath);
+			RTEAssert(settingsWriter.WriterOK(), "After failing to open the " + m_SettingsPath + ", could not then even create a new one to save settings to!\nAre you trying to run the game from a read-only disk?\nYou need to install the game to a writable area before running it!");
+
+			// Settings file doesn't need to be populated with anything right now besides this manager's ClassName for serialization. It will be overwritten with the full list of settings with default values from all the managers before modules start loading.
+			settingsWriter.ObjectStart(GetClassName());
+			settingsWriter.EndWrite();
+
+			m_SettingsNeedOverwrite = true;
+
+			Reader newSettingsReader(m_SettingsPath);
+			return Serializable::Create(newSettingsReader);
 		}
-
-		// Couldn't find the settings file, so create a new one with all the good defaults!
-		Writer settingsWriter("Base.rte/Settings.ini");
-		RTEAssert(settingsWriter.WriterOK(), "After failing to open the Base.rte/Settings.ini, could not then even create a new one to save settings to!\nAre you trying to run the game from a read-only disk?\nYou need to install the game to a writable area before running it!");
-
-		WriteDefaultSettings(settingsWriter);
-		settingsWriter.EndWrite();
-
-		Reader settingsReader("Base.rte/Settings.ini");
-		return Serializable::Create(settingsReader, true, doCreate);
+		return Serializable::Create(settingsReader);
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void SettingsMan::UpdateSettingsFile() const {
-		Writer settingsWriter("Base.rte/Settings.ini");
+		Writer settingsWriter(m_SettingsPath);
 		g_SettingsMan.Save(settingsWriter);
 	}
 
@@ -84,26 +98,30 @@ namespace RTE {
 			reader >> g_FrameMan.m_PaletteFile;
 		} else if (propName == "ResolutionX") {
 			reader >> g_FrameMan.m_ResX;
-			g_FrameMan.m_NewResX = g_FrameMan.m_ResX;
 		} else if (propName == "ResolutionY") {
 			reader >> g_FrameMan.m_ResY;
-			g_FrameMan.m_NewResY = g_FrameMan.m_ResY;
 		} else if (propName == "ResolutionMultiplier") {
 			reader >> g_FrameMan.m_ResMultiplier;
 		} else if (propName == "DisableMultiScreenResolutionValidation") {
 			reader >> g_FrameMan.m_DisableMultiScreenResolutionValidation;
-		} else if (propName == "HSplitScreen") {
-			reader >> g_FrameMan.m_HSplitOverride;
-		} else if (propName == "VSplitScreen") {
-			reader >> g_FrameMan.m_VSplitOverride;
 		} else if (propName == "ForceVirtualFullScreenGfxDriver") {
 			reader >> g_FrameMan.m_ForceVirtualFullScreenGfxDriver;
 		} else if (propName == "ForceDedicatedFullScreenGfxDriver") {
 			reader >> g_FrameMan.m_ForceDedicatedFullScreenGfxDriver;
-		} else if (propName == "SoundVolume") {
-			g_AudioMan.SetSoundsVolume(std::stof(reader.ReadPropValue()) / 100.0F);
+		} else if (propName == "TwoPlayerSplitscreenVertSplit") {
+			reader >> g_FrameMan.m_TwoPlayerVSplit;
+		} else if (propName == "MasterVolume") {
+			g_AudioMan.SetMasterVolume(std::stof(reader.ReadPropValue()) / 100.0F);
+		} else if (propName == "MuteMaster") {
+			reader >> g_AudioMan.m_MuteMaster;
 		} else if (propName == "MusicVolume") {
 			g_AudioMan.SetMusicVolume(std::stof(reader.ReadPropValue()) / 100.0F);
+		} else if (propName == "MuteMusic") {
+			reader >> g_AudioMan.m_MuteMusic;
+		} else if (propName == "SoundVolume") {
+			g_AudioMan.SetSoundsVolume(std::stof(reader.ReadPropValue()) / 100.0F);
+		} else if (propName == "MuteSounds") {
+			reader >> g_AudioMan.m_MuteSounds;
 		} else if (propName == "SoundPanningEffectStrength") {
 			reader >> g_AudioMan.m_SoundPanningEffectStrength;
 
@@ -123,28 +141,42 @@ namespace RTE {
 			reader >> m_BlipOnRevealUnseen;
 		} else if (propName == "MaxUnheldItems") {
 			reader >> g_MovableMan.m_MaxDroppedItems;
+		} else if (propName == "UnheldItemsHUDDisplayRange") {
+			SetUnheldItemsHUDDisplayRange(std::stof(reader.ReadPropValue()));
+		} else if (propName == "AlwaysDisplayUnheldItemsInStrategicMode") {
+			reader >> m_AlwaysDisplayUnheldItemsInStrategicMode;
 		} else if (propName == "SloMoThreshold") {
 			reader >> g_MovableMan.m_SloMoThreshold;
 		} else if (propName == "SloMoDurationMS") {
 			reader >> g_MovableMan.m_SloMoDuration;
 		} else if (propName == "EndlessMode") {
-			reader >> m_EndlessMode;
-		} else if (propName == "EnableHats") {
-			reader >> m_EnableHats;
+			reader >> m_EndlessMetaGameMode;
 		} else if (propName == "EnableCrabBombs") {
 			reader >> m_EnableCrabBombs;
 		} else if (propName == "CrabBombThreshold") {
 			reader >> m_CrabBombThreshold;
+		} else if (propName == "ShowEnemyHUD") {
+			reader >> m_ShowEnemyHUD;
+		} else if (propName == "SmartBuyMenuNavigation") {
+			reader >> m_EnableSmartBuyMenuNavigation;
 		} else if (propName == "LaunchIntoActivity") {
-			reader >> m_LaunchIntoActivity;
+			reader >> g_ActivityMan.m_LaunchIntoActivity;
 		} else if (propName == "DefaultActivityType") {
 			reader >> g_ActivityMan.m_DefaultActivityType;
 		} else if (propName == "DefaultActivityName") {
 			reader >> g_ActivityMan.m_DefaultActivityName;
 		} else if (propName == "DefaultSceneName") {
 			reader >> g_SceneMan.m_DefaultSceneName;
+		} else if (propName == "DisableLuaJIT") {
+			reader >> g_LuaMan.m_DisableLuaJIT;
 		} else if (propName == "RecommendedMOIDCount") {
 			reader >> m_RecommendedMOIDCount;
+		} else if (propName == "SimplifiedCollisionDetection") {
+			reader >> m_SimplifiedCollisionDetection;
+		} else if (propName == "SceneBackgroundAutoScaleMode") {
+			SetSceneBackgroundAutoScaleMode(std::stoi(reader.ReadPropValue()));
+		} else if (propName == "DisableFactionBuyMenuThemes") {
+			reader >> m_DisableFactionBuyMenuThemes;
 		} else if (propName == "EnableParticleSettling") {
 			reader >> g_MovableMan.m_SettlingEnabled;
 		} else if (propName == "EnableMOSubtraction") {
@@ -159,17 +191,21 @@ namespace RTE {
 			reader >> m_ShowMetaScenes;
 		} else if (propName == "SkipIntro") {
 			reader >> m_SkipIntro;
-		} else if (propName == "ToolTips") {
-			reader >> m_ToolTips;
-		} else if (propName == "DisableLoadingScreen") {
-			reader >> m_DisableLoadingScreen;
-		} else if (propName == "LoadingScreenReportPrecision") {
-			reader >> m_LoadingScreenReportPrecision;
+		} else if (propName == "ShowToolTips") {
+			reader >> m_ShowToolTips;
+		} else if (propName == "CaseSensitiveFilePaths") {
+			System::EnableFilePathCaseSensitivity(std::stoi(reader.ReadPropValue()));
+		} else if (propName == "DisableLoadingScreenProgressReport") {
+			reader >> m_DisableLoadingScreenProgressReport;
+		} else if (propName == "LoadingScreenProgressReportPrecision") {
+			reader >> m_LoadingScreenProgressReportPrecision;
 		} else if (propName == "ConsoleScreenRatio") {
 			g_ConsoleMan.SetConsoleScreenSize(std::stof(reader.ReadPropValue()));
+		} else if (propName == "ConsoleUseMonospaceFont") {
+			reader >> g_ConsoleMan.m_ConsoleUseMonospaceFont;
 		} else if (propName == "AdvancedPerformanceStats") {
 			reader >> g_PerformanceMan.m_AdvancedPerfStats;
-		} else if (propName == "MenuTransitionDuration") {
+		} else if (propName == "MenuTransitionDurationMultiplier") {
 			SetMenuTransitionDurationMultiplier(std::stof(reader.ReadPropValue()));
 		} else if (propName == "DrawAtomGroupVisualizations") {
 			reader >> m_DrawAtomGroupVisualizations;
@@ -197,6 +233,8 @@ namespace RTE {
 			reader >> m_NATServerName;
 		} else if (propName == "NATServerPassword") {
 			reader >> m_NATServerPassword;
+		} else if (propName == "UseExperimentalMultiplayerSpeedBoosts") {
+			reader >> m_UseExperimentalMultiplayerSpeedBoosts;
 		} else if (propName == "ClientInputFps") {
 			reader >> g_NetworkClient.m_ClientInputFps;
 		} else if (propName == "ServerTransmitAsBoxes") {
@@ -224,15 +262,16 @@ namespace RTE {
 		} else if (propName == "VisibleAssemblyGroup") {
 			m_VisibleAssemblyGroupsList.push_back(reader.ReadPropValue());
 		} else if (propName == "DisableMod") {
-			DisableMod(reader.ReadPropValue());
-		} else if (propName == "EnableScript") {
-			EnableScript(reader.ReadPropValue());
+			m_DisabledMods.try_emplace(reader.ReadPropValue(), true);
+		} else if (propName == "EnableGlobalScript") {
+			m_EnabledGlobalScripts.try_emplace(reader.ReadPropValue(), true);
 		} else if (propName == "MouseSensitivity") {
 			reader >> g_UInputMan.m_MouseSensitivity;
 		} else if (propName == "Player1Scheme" || propName == "Player2Scheme" || propName == "Player3Scheme" || propName == "Player4Scheme") {
 			for (int player = Players::PlayerOne; player < Players::MaxPlayerCount; player++) {
 				std::string playerNum = std::to_string(player + 1);
 				if (propName == "Player" + playerNum + "Scheme") {
+					g_UInputMan.m_ControlScheme[player].Reset();
 					reader >> g_UInputMan.m_ControlScheme[player];
 					break;
 				}
@@ -252,21 +291,24 @@ namespace RTE {
 		writer.NewLineString("// Display Settings", false);
 		writer.NewLine(false);
 		writer.NewPropertyWithValue("PaletteFile", g_FrameMan.m_PaletteFile);
-		writer.NewPropertyWithValue("ResolutionX", g_FrameMan.m_NewResX);
-		writer.NewPropertyWithValue("ResolutionY", g_FrameMan.m_NewResY);
+		writer.NewPropertyWithValue("ResolutionX", g_FrameMan.m_ResX);
+		writer.NewPropertyWithValue("ResolutionY", g_FrameMan.m_ResY);
 		writer.NewPropertyWithValue("ResolutionMultiplier", g_FrameMan.m_ResMultiplier);
 		writer.NewPropertyWithValue("DisableMultiScreenResolutionValidation", g_FrameMan.m_DisableMultiScreenResolutionValidation);
-		writer.NewPropertyWithValue("HSplitScreen", g_FrameMan.m_HSplitOverride);
-		writer.NewPropertyWithValue("VSplitScreen", g_FrameMan.m_VSplitOverride);
 		writer.NewPropertyWithValue("ForceVirtualFullScreenGfxDriver", g_FrameMan.m_ForceVirtualFullScreenGfxDriver);
 		writer.NewPropertyWithValue("ForceDedicatedFullScreenGfxDriver", g_FrameMan.m_ForceDedicatedFullScreenGfxDriver);
+		writer.NewPropertyWithValue("TwoPlayerSplitscreenVertSplit", g_FrameMan.m_TwoPlayerVSplit);
 
 		writer.NewLine(false, 2);
 		writer.NewDivider(false);
 		writer.NewLineString("// Audio Settings", false);
 		writer.NewLine(false);
-		writer.NewPropertyWithValue("SoundVolume", g_AudioMan.m_SoundsVolume * 100);
+		writer.NewPropertyWithValue("MasterVolume", g_AudioMan.m_MasterVolume * 100);
+		writer.NewPropertyWithValue("MuteMaster", g_AudioMan.m_MuteMaster);
 		writer.NewPropertyWithValue("MusicVolume", g_AudioMan.m_MusicVolume * 100);
+		writer.NewPropertyWithValue("MuteMusic", g_AudioMan.m_MuteMusic);
+		writer.NewPropertyWithValue("SoundVolume", g_AudioMan.m_SoundsVolume * 100);
+		writer.NewPropertyWithValue("MuteSounds", g_AudioMan.m_MuteSounds);
 		writer.NewPropertyWithValue("SoundPanningEffectStrength", g_AudioMan.m_SoundPanningEffectStrength);
 
 		//////////////////////////////////////////////////
@@ -283,18 +325,21 @@ namespace RTE {
 		writer.NewPropertyWithValue("FlashOnBrainDamage", m_FlashOnBrainDamage);
 		writer.NewPropertyWithValue("BlipOnRevealUnseen", m_BlipOnRevealUnseen);
 		writer.NewPropertyWithValue("MaxUnheldItems", g_MovableMan.m_MaxDroppedItems);
+		writer.NewPropertyWithValue("UnheldItemsHUDDisplayRange", m_UnheldItemsHUDDisplayRange);
+		writer.NewPropertyWithValue("AlwaysDisplayUnheldItemsInStrategicMode", m_AlwaysDisplayUnheldItemsInStrategicMode);
 		writer.NewPropertyWithValue("SloMoThreshold", g_MovableMan.m_SloMoThreshold);
 		writer.NewPropertyWithValue("SloMoDurationMS", g_MovableMan.m_SloMoDuration);
-		writer.NewPropertyWithValue("EndlessMode", m_EndlessMode);
-		writer.NewPropertyWithValue("EnableHats", m_EnableHats);
+		writer.NewPropertyWithValue("EndlessMetaGameMode", m_EndlessMetaGameMode);
 		writer.NewPropertyWithValue("EnableCrabBombs", m_EnableCrabBombs);
 		writer.NewPropertyWithValue("CrabBombThreshold", m_CrabBombThreshold);
+		writer.NewPropertyWithValue("ShowEnemyHUD", m_ShowEnemyHUD);
+		writer.NewPropertyWithValue("SmartBuyMenuNavigation", m_EnableSmartBuyMenuNavigation);
 
 		writer.NewLine(false, 2);
 		writer.NewDivider(false);
 		writer.NewLineString("// Default Activity Settings", false);
 		writer.NewLine(false);
-		writer.NewPropertyWithValue("LaunchIntoActivity", m_LaunchIntoActivity);
+		writer.NewPropertyWithValue("LaunchIntoActivity", g_ActivityMan.m_LaunchIntoActivity);
 		writer.NewPropertyWithValue("DefaultActivityType", g_ActivityMan.m_DefaultActivityType);
 		writer.NewPropertyWithValue("DefaultActivityName", g_ActivityMan.m_DefaultActivityName);
 		writer.NewPropertyWithValue("DefaultSceneName", g_SceneMan.m_DefaultSceneName);
@@ -303,7 +348,11 @@ namespace RTE {
 		writer.NewDivider(false);
 		writer.NewLineString("// Engine Settings", false);
 		writer.NewLine(false);
+		writer.NewPropertyWithValue("DisableLuaJIT", g_LuaMan.m_DisableLuaJIT);
 		writer.NewPropertyWithValue("RecommendedMOIDCount", m_RecommendedMOIDCount);
+		writer.NewPropertyWithValue("SimplifiedCollisionDetection", m_SimplifiedCollisionDetection);
+		writer.NewPropertyWithValue("SceneBackgroundAutoScaleMode", m_SceneBackgroundAutoScaleMode);
+		writer.NewPropertyWithValue("DisableFactionBuyMenuThemes", m_DisableFactionBuyMenuThemes);
 		writer.NewPropertyWithValue("EnableParticleSettling", g_MovableMan.m_SettlingEnabled);
 		writer.NewPropertyWithValue("EnableMOSubtraction", g_MovableMan.m_MOSubtractionEnabled);
 		writer.NewPropertyWithValue("DeltaTime", g_TimerMan.GetDeltaTimeSecs());
@@ -321,12 +370,14 @@ namespace RTE {
 		writer.NewLineString("// Misc Settings", false);
 		writer.NewLine(false);
 		writer.NewPropertyWithValue("SkipIntro", m_SkipIntro);
-		writer.NewPropertyWithValue("ToolTips", m_ToolTips);
-		writer.NewPropertyWithValue("DisableLoadingScreen", m_DisableLoadingScreen);
-		writer.NewPropertyWithValue("LoadingScreenReportPrecision", m_LoadingScreenReportPrecision);
+		writer.NewPropertyWithValue("ShowToolTips", m_ShowToolTips);
+		writer.NewPropertyWithValue("CaseSensitiveFilePaths", System::FilePathsCaseSensitive());
+		writer.NewPropertyWithValue("DisableLoadingScreenProgressReport", m_DisableLoadingScreenProgressReport);
+		writer.NewPropertyWithValue("LoadingScreenProgressReportPrecision", m_LoadingScreenProgressReportPrecision);
 		writer.NewPropertyWithValue("ConsoleScreenRatio", g_ConsoleMan.m_ConsoleScreenRatio);
+		writer.NewPropertyWithValue("ConsoleUseMonospaceFont", g_ConsoleMan.m_ConsoleUseMonospaceFont);
 		writer.NewPropertyWithValue("AdvancedPerformanceStats", g_PerformanceMan.m_AdvancedPerfStats);
-		writer.NewPropertyWithValue("MenuTransitionDuration", m_MenuTransitionDurationMultiplier);
+		writer.NewPropertyWithValue("MenuTransitionDurationMultiplier", m_MenuTransitionDurationMultiplier);
 
 		writer.NewLine(false, 2);
 		writer.NewDivider(false);
@@ -350,6 +401,7 @@ namespace RTE {
 		writer.NewPropertyWithValue("NATServiceAddress", m_NATServiceAddress);
 		writer.NewPropertyWithValue("NATServerName", m_NATServerName);
 		writer.NewPropertyWithValue("NATServerPassword", m_NATServerPassword);
+		writer.NewPropertyWithValue("UseExperimentalMultiplayerSpeedBoosts", m_UseExperimentalMultiplayerSpeedBoosts);
 
 		writer.NewLine(false, 2);
 		writer.NewDivider(false);
@@ -383,18 +435,18 @@ namespace RTE {
 			writer.NewDivider(false);
 			writer.NewLineString("// Disabled Mods", false);
 			writer.NewLine(false);
-			for (const std::pair<std::string, bool> &disabledMod : m_DisabledMods) {
-				if (disabledMod.second) { writer.NewPropertyWithValue("DisableMod", disabledMod.first); }
+			for (const auto &[modPath, modDisabled] : m_DisabledMods) {
+				if (modDisabled) { writer.NewPropertyWithValue("DisableMod", modPath); }
 			}
 		}
 
-		if (!m_EnabledScripts.empty()) {
+		if (!m_EnabledGlobalScripts.empty()) {
 			writer.NewLine(false, 2);
 			writer.NewDivider(false);
 			writer.NewLineString("// Enabled Global Scripts", false);
 			writer.NewLine(false);
-			for (const std::pair<std::string, bool> &enabledScript : m_EnabledScripts) {
-				if (enabledScript.second) { writer.NewPropertyWithValue("EnableScript", enabledScript.first); }
+			for (const auto &[scriptPresetName, scriptEnabled] : m_EnabledGlobalScripts) {
+				if (scriptEnabled) { writer.NewPropertyWithValue("EnableGlobalScript", scriptPresetName); }
 			}
 		}
 
@@ -405,8 +457,8 @@ namespace RTE {
 		writer.NewPropertyWithValue("MouseSensitivity", g_UInputMan.m_MouseSensitivity);
 
 		writer.NewLine(false);
-		writer.NewLineString("// Input Devices:  0 = Keyboard Only, 1 = Mouse + Keyboard, 2 = Joystick One, 3 = Joystick Two, , 4 = Joystick Three, 5 = Joystick Four");
-		writer.NewLineString("// Scheme Presets: 0 = No Preset, 1 = WASD, 2 = Cursor Keys, 3 = XBox 360 Controller");
+		writer.NewLineString("// Input Devices:  0 = Keyboard Only, 1 = Mouse + Keyboard, 2 = Gamepad One, 3 = Gamepad Two, , 4 = Gamepad Three, 5 = Gamepad Four");
+		writer.NewLineString("// Scheme Presets: 0 = No Preset, 1 = Arrow Keys, 2 = WASD Keys, 3 = Mouse + WASD Keys, 4 = Generic DPad, 5 = Generic Dual Analog, 6 = SNES, 7 = DualShock 4, 8 = XBox 360");
 
 		for (int player = Players::PlayerOne; player < Players::MaxPlayerCount; player++) {
 			std::string playerNum = std::to_string(player + 1);
@@ -420,48 +472,5 @@ namespace RTE {
 		writer.ObjectEnd();
 
 		return 0;
-	}
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-	int SettingsMan::WriteDefaultSettings(Writer &writer) {
-		if (!writer.WriterOK()) {
-			return -1;
-		}
-		writer.ObjectStart(GetClassName());
-
-		writer.NewPropertyWithValue("PaletteFile", ContentFile("Base.rte/palette.bmp"));
-		writer.NewPropertyWithValue("ResolutionX", 960);
-		writer.NewPropertyWithValue("ResolutionY", 540);
-		writer.NewPropertyWithValue("ResolutionMultiplier", true);
-		writer.NewPropertyWithValue("DisableMultiScreenResolutionValidation", false);
-		writer.NewPropertyWithValue("SoundVolume", 40);
-		writer.NewPropertyWithValue("MusicVolume", 60);
-
-		writer.ObjectEnd();
-
-		m_SettingsNeedOverwrite = true;
-
-		return 0;
-	}
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-	bool SettingsMan::IsModDisabled(std::string modModule) {
-		std::transform(modModule.begin(), modModule.end(), modModule.begin(), ::tolower);
-		if (m_DisabledMods.find(modModule) != m_DisabledMods.end()) {
-			return m_DisabledMods[modModule];
-		}
-		return false;
-	}
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-	bool SettingsMan::IsScriptEnabled(std::string scriptName) {
-		std::transform(scriptName.begin(), scriptName.end(), scriptName.begin(), ::tolower);
-		if (m_EnabledScripts.find(scriptName) != m_EnabledScripts.end()) {
-			return m_EnabledScripts[scriptName];
-		}
-		return false;
 	}
 }

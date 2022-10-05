@@ -4,7 +4,7 @@
 
 namespace RTE {
 
-	ConcreteClassInfo(MOPixel, MovableObject, 2000)
+	ConcreteClassInfo(MOPixel, MovableObject, 2000);
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -134,6 +134,18 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+	int MOPixel::GetTrailLength() const {
+		return m_Atom->GetTrailLength();
+	}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	void MOPixel::SetTrailLength(int trailLength) {
+		m_Atom->SetTrailLength(trailLength);
+	}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 	void MOPixel::Travel() {
 		MovableObject::Travel();
 
@@ -150,7 +162,8 @@ namespace RTE {
 			}
 		}
 		// Do static particle bounce calculations.
-		int hitCount = m_Atom->Travel(g_TimerMan.GetDeltaTimeSecs(), true, g_SceneMan.SceneIsLocked());
+		int hitCount = 0;
+		if (!IsTooFast()) { hitCount = m_Atom->Travel(g_TimerMan.GetDeltaTimeSecs(), true, g_SceneMan.SceneIsLocked()); }
 
 		m_Atom->ClearMOIDIgnoreList();
 	}
@@ -196,10 +209,15 @@ namespace RTE {
 			if (m_DistanceTraveled > m_LethalRange) {
 				if (m_Sharpness < m_LethalSharpness) {
 					m_Sharpness = std::max(m_Sharpness * (1.0F - (20.0F * g_TimerMan.GetDeltaTimeSecs())) - 0.1F, 0.0F);
+					if (m_LethalRange > 0) {
+						float randomNum = RandomNum(0.0F, 0.5F);
+						m_Atom->SetTrailLength(static_cast<int>(static_cast<float>(m_Atom->GetTrailLength()) * (1.0F - randomNum)));
+						m_Lifetime -= static_cast<unsigned long>(static_cast<float>(m_Lifetime - static_cast<int>(m_AgeTimer.GetElapsedSimTimeMS())) * randomNum);
+						m_HitsMOs = RandomNum() < 0.5F;
+					}
 				} else {
 					m_Sharpness *= 1.0F - (10.0F * g_TimerMan.GetDeltaTimeSecs());
 				}
-				if (m_LethalRange > 0) { m_HitsMOs = false; }
 			}
 		}
 	}
@@ -217,12 +235,6 @@ namespace RTE {
 		switch (mode) {
 			case g_DrawMaterial:
 				drawColor = m_Atom->GetMaterial()->GetSettleMaterial();
-				break;
-			case g_DrawAir:
-				drawColor = g_MaterialAir;
-				break;
-			case g_DrawMask:
-				drawColor = g_MaskColor;
 				break;
 			case g_DrawMOID:
 				drawColor = m_MOID;

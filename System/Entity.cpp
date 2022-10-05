@@ -54,18 +54,7 @@ namespace RTE {
 			if (preset) {
 				preset->Clone(this);
 			} else {
-				if (className == "AtomGroup" || className == "Attachable" || className == "AEmitter") {
-					reader.ReportError("The PresetName to be copied was not found in data modules.");
-				}
-				// If we couldn't find the preset to copy from, read it as an original but report the problem in the console
-				g_ConsoleMan.PrintString("ERROR: Couldn't find the preset '" + refName + "' accessed in " + reader.GetCurrentFilePath() + " at line " + reader.GetCurrentFileLine());
-				// Preset name might have "[ModuleName]/" preceding it, detect it here and select proper module!
-				int slashPos = refName.find_first_of('/');
-				m_PresetName = (slashPos != std::string::npos) ? refName.substr(slashPos + 1) : refName;
-				// Mark this so that the derived class knows it should be added to the PresetMan when it's done reading all properties.
-				m_IsOriginalPreset = true;
-				// Indicate where this was read from
-				m_DefinedInModule = reader.GetReadModuleID();
+				reader.ReportError("Couldn't find the preset \"" + refName + "\" of type \"" + className + "\" when trying to do CopyOf.");
 			}
 		} else if (propName == "PresetName" || propName == "InstanceName") {
 			SetPresetName(reader.ReadPropValue());
@@ -156,6 +145,17 @@ namespace RTE {
 			return GetPresetName();
 		}
 		return dataModule->GetFileName() + "/" + GetPresetName();
+	}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	std::string Entity::GetModuleName() const {
+		if (m_DefinedInModule > 0) {
+			if (const DataModule *dataModule = g_PresetMan.GetDataModule(m_DefinedInModule)) {
+				return dataModule->GetFileName();
+			}
+		}
+		return "";
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -286,6 +286,17 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+	bool Entity::ClassInfo::IsClassOrChildClassOf(const ClassInfo *classInfoToCheck) const {
+		if (GetName() == classInfoToCheck->GetName()) {
+			return true;
+		} else if (m_ParentInfo) {
+			return m_ParentInfo->IsClassOrChildClassOf(classInfoToCheck);
+		}
+		return false;
+	}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 	void * Entity::ClassInfo::GetPoolMemory() {
 		RTEAssert(IsConcrete(), "Trying to get pool memory of an abstract Entity class!");
 
@@ -320,9 +331,9 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void Entity::ClassInfo::DumpPoolMemoryInfo(Writer &fileWriter) {
-		for (const ClassInfo *itr = s_ClassHead; itr != 0; itr = itr->m_NextClass) {
-			if (itr->IsConcrete()) { fileWriter << itr->GetName() << ": " << itr->m_InstancesInUse << "\n"; }
+	void Entity::ClassInfo::DumpPoolMemoryInfo(const Writer &fileWriter) {
+		for (const ClassInfo *itr = s_ClassHead; itr != nullptr; itr = itr->m_NextClass) {
+			if (itr->IsConcrete()) { fileWriter.NewLineString(itr->GetName() + ": " + std::to_string(itr->m_InstancesInUse), false); }
 		}
 	}
 }

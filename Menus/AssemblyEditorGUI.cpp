@@ -20,6 +20,7 @@
 #include "SceneEditor.h"
 #include "UInputMan.h"
 
+#include "Deployment.h"
 #include "Controller.h"
 #include "SceneObject.h"
 #include "MOSprite.h"
@@ -31,7 +32,6 @@
 #include "ACrab.h"
 #include "SLTerrain.h"
 #include "ObjectPickerGUI.h"
-#include "PieMenuGUI.h"
 #include "Scene.h"
 #include "SettingsMan.h"
 
@@ -64,7 +64,7 @@ void AssemblyEditorGUI::Clear()
     m_RepeatTimer.Reset();
     m_RevealTimer.Reset();
     m_RevealIndex = 0;
-    m_pPieMenu = 0;
+	m_PieMenu = nullptr;
     m_pPicker = 0;
     m_NativeTechModule = 0;
     m_ForeignCostMult = 4.0;
@@ -98,15 +98,9 @@ int AssemblyEditorGUI::Create(Controller *pController, FeatureSets featureSet, i
 
     m_FeatureSet = featureSet;
 
-    // Allocate and (re)create the Editor GUIs
-    if (!m_pPieMenu)
-        m_pPieMenu = new PieMenuGUI();
-    else
-        m_pPieMenu->Destroy();
-    m_pPieMenu->Create(pController);
-
-    // Init the pie menu
-    UpdatePieMenu();
+	if (m_PieMenu) { m_PieMenu = nullptr; }
+	m_PieMenu = std::unique_ptr<PieMenu>(dynamic_cast<PieMenu *>(g_PresetMan.GetEntityPreset("PieMenu", "Assembly Editor Pie Menu")->Clone()));
+	m_PieMenu->SetMenuController(pController);
 
     // Update the brain path
     UpdateBrainPath();
@@ -115,7 +109,7 @@ int AssemblyEditorGUI::Create(Controller *pController, FeatureSets featureSet, i
     if (!m_pPicker)
         m_pPicker = new ObjectPickerGUI();
     else
-        m_pPicker->Destroy();
+        m_pPicker->Reset();
     m_pPicker->Create(pController, whichModuleSpace);
 
     m_NativeTechModule = nativeTechModule;
@@ -168,7 +162,6 @@ int AssemblyEditorGUI::Create(Controller *pController, FeatureSets featureSet, i
 
 void AssemblyEditorGUI::Destroy()
 {
-    delete m_pPieMenu;
     delete m_pPicker;
     delete m_pCurrentObject;
 	delete m_pCurrentScheme;
@@ -186,7 +179,7 @@ void AssemblyEditorGUI::Destroy()
 void AssemblyEditorGUI::SetController(Controller *pController)
 {
     m_pController = pController;
-    m_pPieMenu->SetController(pController);
+	m_PieMenu->SetMenuController(pController);
     m_pPicker->SetController(pController);
 }
 
@@ -244,9 +237,8 @@ bool AssemblyEditorGUI::SetCurrentObject(SceneObject *pNewObject)
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Gets any Pie menu slice command activated last update.
 
-int AssemblyEditorGUI::GetActivatedPieSlice()
-{
-    return m_pPieMenu->GetPieCommand();
+PieSlice::SliceType AssemblyEditorGUI::GetActivatedPieSlice() const {
+    return m_PieMenu->GetPieCommand();
 }
 
 
@@ -382,34 +374,37 @@ void AssemblyEditorGUI::Update()
     /////////////////////////////////////////////
     // PIE MENU
 
-    m_pPieMenu->Update();
+	m_PieMenu->Update();
 
     // Show the pie menu only when the secondary button is held down
-    if (m_pController->IsState(PRESS_SECONDARY) && m_EditorGUIMode != INACTIVE && m_EditorGUIMode != PICKINGOBJECT)
-    {
-        m_pPieMenu->SetEnabled(true);
-        m_pPieMenu->SetPos(m_GridSnapping ? g_SceneMan.SnapPosition(m_CursorPos) : m_CursorPos);
+    if (m_pController->IsState(PRESS_SECONDARY) && m_EditorGUIMode != INACTIVE && m_EditorGUIMode != PICKINGOBJECT) {
+		m_PieMenu->SetPos(m_GridSnapping ? g_SceneMan.SnapPosition(m_CursorPos) : m_CursorPos);
+		m_PieMenu->SetEnabled(true);
+
+		PieSlice *saveSlice = m_PieMenu->GetFirstPieSliceByType(PieSlice::SliceType::EditorSave);
+		if (saveSlice) {
+			saveSlice->SetEnabled(m_pCurrentScheme != nullptr);
+			saveSlice->SetDescription(m_pCurrentScheme != nullptr ? "Save Assembly" : "Can't Save Assembly, Scheme Not Selected!");
+		}
     }
 
-    if (!m_pController->IsState(PIE_MENU_ACTIVE) || m_EditorGUIMode == INACTIVE || m_EditorGUIMode == PICKINGOBJECT)
-        m_pPieMenu->SetEnabled(false);
+	if (!m_pController->IsState(PIE_MENU_ACTIVE) || m_EditorGUIMode == INACTIVE || m_EditorGUIMode == PICKINGOBJECT) { m_PieMenu->SetEnabled(false); }
 
     ///////////////////////////////////////
     // Handle pie menu selections
 
-    if (m_pPieMenu->GetPieCommand() != PieMenuGUI::PSI_NONE)
-    {
-        if (m_pPieMenu->GetPieCommand() == PieMenuGUI::PSI_PICK)
-            m_EditorGUIMode = PICKINGOBJECT;
-        else if (m_pPieMenu->GetPieCommand() == PieMenuGUI::PSI_MOVE)
-            m_EditorGUIMode = MOVINGOBJECT;
-        else if (m_pPieMenu->GetPieCommand() == PieMenuGUI::PSI_REMOVE)
-            m_EditorGUIMode = DELETINGOBJECT;
-        else if (m_pPieMenu->GetPieCommand() == PieMenuGUI::PSI_DONE)
-            m_EditorGUIMode = DONEEDITING;
+    if (m_PieMenu->GetPieCommand() != PieSlice::SliceType::NoType) {
+		if (m_PieMenu->GetPieCommand() == PieSlice::SliceType::EditorPick) {
+			m_EditorGUIMode = PICKINGOBJECT;
+		} else if (m_PieMenu->GetPieCommand() == PieSlice::SliceType::EditorMove) {
+			m_EditorGUIMode = MOVINGOBJECT;
+		} else if (m_PieMenu->GetPieCommand() == PieSlice::SliceType::EditorRemove) {
+			m_EditorGUIMode = DELETINGOBJECT;
+		} else if (m_PieMenu->GetPieCommand() == PieSlice::SliceType::EditorDone) {
+			m_EditorGUIMode = DONEEDITING;
+		}
 
         UpdateBrainPath();
-        UpdatePieMenu();
         m_ModeChanged = true;
     }
 
@@ -442,7 +437,6 @@ void AssemblyEditorGUI::Update()
             {
                 m_EditorGUIMode = ADDINGOBJECT;
                 UpdateBrainPath();
-                UpdatePieMenu();
                 m_ModeChanged = true;
             }
         }
@@ -456,7 +450,7 @@ void AssemblyEditorGUI::Update()
     /////////////////////////////////////
     // ADDING OBJECT MODE
 
-    if (m_EditorGUIMode == ADDINGOBJECT && !m_pPieMenu->IsEnabled())
+    if (m_EditorGUIMode == ADDINGOBJECT && !m_PieMenu->IsEnabled())
     {
         if (m_ModeChanged)
         {
@@ -504,7 +498,7 @@ void AssemblyEditorGUI::Update()
         m_CursorInAir = g_SceneMan.GetTerrMatter(snappedPos.GetFloorIntX(), snappedPos.GetFloorIntY()) == g_MaterialAir;
 
         // Mousewheel is used as shortcut for getting next and prev items in teh picker's object list
-        if (m_pController->IsState(SCROLL_UP))
+        if (m_pController->IsState(SCROLL_UP) || m_pController->IsState(ControlState::ACTOR_NEXT))
         {
             // Assign a copy of the next picked object to be the currently held one.
             const SceneObject *pNewObject = m_pPicker->GetPrevObject();
@@ -515,7 +509,7 @@ void AssemblyEditorGUI::Update()
                     m_pCurrentObject->Update();
             }
         }
-        else if (m_pController->IsState(SCROLL_DOWN))
+        else if (m_pController->IsState(SCROLL_DOWN) || m_pController->IsState(ControlState::ACTOR_PREV))
         {
             // Assign a copy of the next picked object to be the currently held one.
             const SceneObject *pNewObject = m_pPicker->GetNextObject();
@@ -534,7 +528,6 @@ void AssemblyEditorGUI::Update()
             m_EditorGUIMode = PLACINGOBJECT;
             m_PreviousMode = ADDINGOBJECT;
             m_ModeChanged = true;
-            UpdatePieMenu();
             g_GUISound.PlacementBlip()->Play();
         }
 
@@ -620,14 +613,12 @@ void AssemblyEditorGUI::Update()
         {
             m_EditorGUIMode = m_PreviousMode;
             m_ModeChanged = true;
-            UpdatePieMenu();
         }
         // If previous mode was moving, tear the gib loose if the button is released to soo
         else if (m_PreviousMode == MOVINGOBJECT && m_pController->IsState(RELEASE_PRIMARY) && !m_BlinkTimer.IsPastRealMS(150))
         {
             m_EditorGUIMode = ADDINGOBJECT;
             m_ModeChanged = true;
-            UpdatePieMenu();
         }
         // Only place if the picker and pie menus are completely out of view, to avoid immediate placing after picking
         else if (m_pCurrentObject && m_pController->IsState(RELEASE_PRIMARY) && !m_pPicker->IsVisible())
@@ -821,7 +812,6 @@ void AssemblyEditorGUI::Update()
             // Go back to previous mode
             m_EditorGUIMode = m_PreviousMode;
             m_ModeChanged = true;
-            UpdatePieMenu();
         }
 
         // Set the facing of AHumans based on right/left cursor movements
@@ -838,7 +828,7 @@ void AssemblyEditorGUI::Update()
     /////////////////////////////////////////////////////////////
     // POINTING AT MODES
 
-    else if ((m_EditorGUIMode == MOVINGOBJECT || m_EditorGUIMode == DELETINGOBJECT) && !m_pPieMenu->IsEnabled())
+    else if ((m_EditorGUIMode == MOVINGOBJECT || m_EditorGUIMode == DELETINGOBJECT) && !m_PieMenu->IsEnabled())
     {
         m_DrawCurrentObject = false;
 
@@ -891,7 +881,6 @@ void AssemblyEditorGUI::Update()
                     m_EditorGUIMode = PLACINGOBJECT;
                     m_PreviousMode = MOVINGOBJECT;
                     m_ModeChanged = true;
-                    UpdatePieMenu();
                     m_BlinkTimer.Reset();
                     g_GUISound.PlacementBlip()->Play();
                     g_GUISound.PlacementGravel()->Play();
@@ -1048,44 +1037,7 @@ void AssemblyEditorGUI::Draw(BITMAP *pTargetBitmap, const Vector &targetPos) con
     m_pPicker->Draw(pTargetBitmap);
 
     // Draw the pie menu
-    m_pPieMenu->Draw(pTargetBitmap, targetPos);
-}
-
-
-//////////////////////////////////////////////////////////////////////////////////////////
-// Method:          UpdatePieMenu
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Updates the PieMenu config based ont eh current editor state.
-
-void AssemblyEditorGUI::UpdatePieMenu()
-{
-    m_pPieMenu->ResetSlices();
-
-    // Add pie menu slices and align them
-    if (m_FeatureSet == ONLOADEDIT)
-    {
-		PieMenuGUI::Slice loadSceneSlice("Load Scene", PieMenuGUI::PSI_LOAD, PieMenuGUI::Slice::UP);
-		m_pPieMenu->AddSlice(loadSceneSlice);
-		
-        PieMenuGUI::Slice moveObjectsSlice("Move Objects", PieMenuGUI::PSI_MOVE, PieMenuGUI::Slice::LEFT);
-		m_pPieMenu->AddSlice(moveObjectsSlice);
-		
-		PieMenuGUI::Slice removeObjectsSlice("Remove Objects", PieMenuGUI::PSI_REMOVE, PieMenuGUI::Slice::LEFT);
-        m_pPieMenu->AddSlice(removeObjectsSlice);
-		PieMenuGUI::Slice addNewSlice("Add New Object", PieMenuGUI::PSI_PICK, PieMenuGUI::Slice::RIGHT);
-		m_pPieMenu->AddSlice(addNewSlice);
-		
-		if (!m_pCurrentScheme)
-		{
-			PieMenuGUI::Slice saveSceneSlice("Can's save, scheme not selected", PieMenuGUI::PSI_SAVE, PieMenuGUI::Slice::DOWN);
-			saveSceneSlice.m_Enabled = false;
-			m_pPieMenu->AddSlice(saveSceneSlice);
-		} else {
-			PieMenuGUI::Slice saveSceneSlice("Save Assembly", PieMenuGUI::PSI_SAVE, PieMenuGUI::Slice::DOWN);
-			m_pPieMenu->AddSlice(saveSceneSlice);
-		}
-    }
-    m_pPieMenu->RealignSlices();
+	m_PieMenu->Draw(pTargetBitmap, targetPos);
 }
 
 

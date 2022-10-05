@@ -15,12 +15,12 @@
 #include "PresetMan.h"
 #include "FrameMan.h"
 
-#include "GUI/GUI.h"
-#include "GUI/AllegroBitmap.h"
+#include "GUI.h"
+#include "AllegroBitmap.h"
 
 namespace RTE {
 
-ConcreteClassInfo(BunkerAssemblyScheme, SceneObject, 0)
+ConcreteClassInfo(BunkerAssemblyScheme, SceneObject, 0);
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -292,7 +292,7 @@ void BunkerAssemblyScheme::Destroy(bool notInherited)
 // Description:     Gets a bitmap showing a good identifyable icon of this, for use in
 //                  GUI lists etc.
 
-BITMAP * BunkerAssemblyScheme::GetGraphicalIcon()
+BITMAP * BunkerAssemblyScheme::GetGraphicalIcon() const
 {
 	return m_pIconBitmap;
 }
@@ -400,8 +400,6 @@ void BunkerAssemblyScheme::Draw(BITMAP *pTargetBitmap, const Vector &targetPos, 
         if (mode == g_DrawColor)
             masked_blit(m_pPresentationBitmap, pTargetBitmap, 0, 0, aDrawPos[i].GetFloorIntX(), aDrawPos[i].GetFloorIntY(), m_pPresentationBitmap->w, m_pPresentationBitmap->h);
         else if (mode == g_DrawMaterial)
-            masked_blit(m_pPresentationBitmap, pTargetBitmap, 0, 0, aDrawPos[i].GetFloorIntX(), aDrawPos[i].GetFloorIntY(), m_pPresentationBitmap->w, m_pPresentationBitmap->h);
-        else if (mode == g_DrawLess)
             masked_blit(m_pPresentationBitmap, pTargetBitmap, 0, 0, aDrawPos[i].GetFloorIntX(), aDrawPos[i].GetFloorIntY(), m_pPresentationBitmap->w, m_pPresentationBitmap->h);
         else if (mode == g_DrawTrans)
             draw_trans_sprite(pTargetBitmap, m_pPresentationBitmap, aDrawPos[i].GetFloorIntX(), aDrawPos[i].GetFloorIntY());

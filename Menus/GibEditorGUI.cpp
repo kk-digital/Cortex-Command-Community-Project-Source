@@ -26,7 +26,6 @@
 #include "AHuman.h"
 #include "SLTerrain.h"
 #include "ObjectPickerGUI.h"
-#include "PieMenuGUI.h"
 
 using namespace RTE;
 
@@ -50,7 +49,7 @@ void GibEditorGUI::Clear()
     m_BlinkMode = NOBLINK;
     m_RepeatStartTimer.Reset();
     m_RepeatTimer.Reset();
-    m_pPieMenu = 0;
+	m_PieMenu = nullptr;
     m_pPicker = 0;
     m_GridSnapping = false;
     m_pZoomSource = 0;
@@ -77,21 +76,15 @@ int GibEditorGUI::Create(Controller *pController, int whichModuleSpace)
     RTEAssert(pController, "No controller sent to GibEditorGUI on creation!");
     m_pController = pController;
 
-    // Allocate and (re)create the Editor GUIs
-    if (!m_pPieMenu)
-        m_pPieMenu = new PieMenuGUI();
-    else
-        m_pPieMenu->Destroy();
-    m_pPieMenu->Create(pController);
-
-    // Init the pie menu
-    UpdatePieMenu();
+	if (m_PieMenu) { m_PieMenu = nullptr; }
+	m_PieMenu = std::unique_ptr<PieMenu>(dynamic_cast<PieMenu *>(g_PresetMan.GetEntityPreset("PieMenu", "Gib Editor Pie Menu")->Clone()));
+	m_PieMenu->SetMenuController(pController);
 
     // Allocate and (re)create the Editor GUIs
     if (!m_pPicker)
         m_pPicker = new ObjectPickerGUI();
     else
-        m_pPicker->Destroy();
+        m_pPicker->Reset();
     // Only show MovableObject:s as valid gibs to be placed
     m_pPicker->Create(pController, whichModuleSpace, "MovableObject");
 
@@ -120,7 +113,6 @@ int GibEditorGUI::Create(Controller *pController, int whichModuleSpace)
 
 void GibEditorGUI::Destroy()
 {
-    delete m_pPieMenu;
     delete m_pPicker;
 
     destroy_bitmap(m_pZoomSource);
@@ -143,7 +135,7 @@ void GibEditorGUI::Destroy()
 void GibEditorGUI::SetController(Controller *pController)
 {
     m_pController = pController;
-    m_pPieMenu->SetController(pController);
+	m_PieMenu->SetMenuController(pController);
     m_pPicker->SetController(pController);
 }
 
@@ -166,9 +158,8 @@ void GibEditorGUI::SetPosOnScreen(int newPosX, int newPosY)
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Gets any Pie menu slice command activated last update.
 
-int GibEditorGUI::GetActivatedPieSlice()
-{
-    return m_pPieMenu->GetPieCommand();
+PieSlice::SliceType GibEditorGUI::GetActivatedPieSlice() const {
+    return m_PieMenu->GetPieCommand();
 }
 
 
@@ -268,53 +259,51 @@ void GibEditorGUI::Update()
     /////////////////////////////////////////////
     // PIE MENU
 
-    m_pPieMenu->Update();
+	m_PieMenu->Update();
+
+	if (PieSlice *zoomInSlice = m_PieMenu->GetFirstPieSliceByType(PieSlice::SliceType::EditorZoomIn)) { zoomInSlice->SetEnabled(m_ZoomFactor < MAXZOOMFACTOR); }
+	if (PieSlice *zoomOutSlice = m_PieMenu->GetFirstPieSliceByType(PieSlice::SliceType::EditorZoomOut)) { zoomOutSlice->SetEnabled(m_ZoomFactor > MINZOOMFACTOR); }
 
     // Show the pie menu only when the secondary button is held down
-    if (m_pController->IsState(PRESS_SECONDARY) && m_EditorGUIMode != INACTIVE && m_EditorGUIMode != PICKINGGIB)
-    {
-        m_pPieMenu->SetEnabled(true);
-        m_pPieMenu->SetPos(m_GridSnapping ? g_SceneMan.SnapPosition(m_CursorPos) : m_CursorPos);
+    if (m_pController->IsState(PRESS_SECONDARY) && m_EditorGUIMode != INACTIVE && m_EditorGUIMode != PICKINGGIB) {
+		m_PieMenu->SetPos(m_GridSnapping ? g_SceneMan.SnapPosition(m_CursorPos) : m_CursorPos);
+		m_PieMenu->SetEnabled(true);
+
+		std::array<PieSlice *, 2> infrontAndBehindPieSlices = { m_PieMenu->GetFirstPieSliceByType(PieSlice::SliceType::EditorInFront), m_PieMenu->GetFirstPieSliceByType(PieSlice::SliceType::EditorBehind) };
+		for (PieSlice *pieSlice : infrontAndBehindPieSlices) {
+			if (pieSlice) { pieSlice->SetEnabled(m_EditorGUIMode == ADDINGGIB); }
+		}
     }
 
-    if (!m_pController->IsState(PIE_MENU_ACTIVE) || m_EditorGUIMode == INACTIVE || m_EditorGUIMode == PICKINGGIB)
-        m_pPieMenu->SetEnabled(false);
+	if (!m_pController->IsState(PIE_MENU_ACTIVE) || m_EditorGUIMode == INACTIVE || m_EditorGUIMode == PICKINGGIB) { m_PieMenu->SetEnabled(false); }
 
     ///////////////////////////////////////
     // Handle pie menu selections
 
-    if (m_pPieMenu->GetPieCommand() != PieMenuGUI::PSI_NONE)
-    {
-        if (m_pPieMenu->GetPieCommand() == PieMenuGUI::PSI_PICK)
-            m_EditorGUIMode = PICKINGGIB;
-        else if (m_pPieMenu->GetPieCommand() == PieMenuGUI::PSI_LOAD)
-        {
+    if (m_PieMenu->GetPieCommand() != PieSlice::SliceType::NoType) {
+		if (m_PieMenu->GetPieCommand() == PieSlice::SliceType::EditorPick) {
+			m_EditorGUIMode = PICKINGGIB;
+		} else if (m_PieMenu->GetPieCommand() == PieSlice::SliceType::EditorLoad) {
             // Set up the picker to pick an MOSRotating to load
             m_EditorGUIMode = PICKOBJECTTOLOAD;
             m_pPicker->ShowOnlyType("MOSRotating");
-        }
-        else if (m_pPieMenu->GetPieCommand() == PieMenuGUI::PSI_MOVE)
-            m_EditorGUIMode = MOVINGGIB;
-        else if (m_pPieMenu->GetPieCommand() == PieMenuGUI::PSI_REMOVE)
-            m_EditorGUIMode = DELETINGGIB;
-        else if (m_pPieMenu->GetPieCommand() == PieMenuGUI::PSI_DONE)
-            m_EditorGUIMode = DONEEDITING;
-        else if (m_pPieMenu->GetPieCommand() == PieMenuGUI::PSI_ZOOMIN && m_ZoomFactor < MAXZOOMFACTOR)
-            m_ZoomFactor++;
-        else if (m_pPieMenu->GetPieCommand() == PieMenuGUI::PSI_ZOOMOUT && m_ZoomFactor > MINZOOMFACTOR)
-            m_ZoomFactor--;
-        else if (m_pPieMenu->GetPieCommand() == PieMenuGUI::PSI_INFRONT)
-        {
+		} else if (m_PieMenu->GetPieCommand() == PieSlice::SliceType::EditorMove) {
+			m_EditorGUIMode = MOVINGGIB;
+		} else if (m_PieMenu->GetPieCommand() == PieSlice::SliceType::EditorRemove) {
+			m_EditorGUIMode = DELETINGGIB;
+		} else if (m_PieMenu->GetPieCommand() == PieSlice::SliceType::EditorDone) {
+			m_EditorGUIMode = DONEEDITING;
+		} else if (m_PieMenu->GetPieCommand() == PieSlice::SliceType::EditorZoomIn && m_ZoomFactor < MAXZOOMFACTOR) {
+			m_ZoomFactor++;
+		} else if (m_PieMenu->GetPieCommand() == PieSlice::SliceType::EditorZoomOut && m_ZoomFactor > MINZOOMFACTOR) {
+			m_ZoomFactor--;
+		} else if (m_PieMenu->GetPieCommand() == PieSlice::SliceType::EditorInFront) {
             m_PreviousMode = m_EditorGUIMode;
             m_EditorGUIMode = PLACEINFRONT;
-        }
-        else if (m_pPieMenu->GetPieCommand() == PieMenuGUI::PSI_BEHIND)
-        {
+        } else if (m_PieMenu->GetPieCommand() == PieSlice::SliceType::EditorBehind) {
             m_PreviousMode = m_EditorGUIMode;
             m_EditorGUIMode = PLACEBEHIND;
         }
-        
-        UpdatePieMenu();
     }
 
     //////////////////////////////////////////
@@ -367,7 +356,6 @@ void GibEditorGUI::Update()
                 if (m_pPicker->DonePicking())
                 {
                     m_EditorGUIMode = ADDINGGIB;
-                    UpdatePieMenu();
                 }
             }
         }
@@ -379,7 +367,7 @@ void GibEditorGUI::Update()
     /////////////////////////////////////
     // ADDING GIB MODE
 
-    if (m_EditorGUIMode == ADDINGGIB && !m_pPieMenu->IsEnabled())
+    if (m_EditorGUIMode == ADDINGGIB && !m_PieMenu->IsEnabled())
     {
         g_FrameMan.SetScreenText("Click to ADD a new gib to the edited object - Drag to place with precision", 0);
 
@@ -422,7 +410,7 @@ void GibEditorGUI::Update()
         m_CursorInAir = g_SceneMan.GetTerrMatter(snappedPos.GetFloorIntX(), snappedPos.GetFloorIntY()) == g_MaterialAir;
 
         // Mousewheel is used as shortcut for getting next and prev items in teh picker's object list
-        if (m_pController->IsState(SCROLL_UP))
+        if (m_pController->IsState(SCROLL_UP) || m_pController->IsState(ControlState::ACTOR_NEXT))
         {
             // Assign a copy of the next picked object to be the currently held one.
             const SceneObject *pNewObject = m_pPicker->GetPrevObject();
@@ -438,7 +426,7 @@ void GibEditorGUI::Update()
                 m_pCurrentGib->Update();
             }
         }
-        else if (m_pController->IsState(SCROLL_DOWN))
+        else if (m_pController->IsState(SCROLL_DOWN) || m_pController->IsState(ControlState::ACTOR_PREV))
         {
             // Assign a copy of the next picked object to be the currently held one.
             const SceneObject *pNewObject = m_pPicker->GetNextObject();
@@ -461,7 +449,6 @@ void GibEditorGUI::Update()
             m_BlinkTimer.Reset();
             m_EditorGUIMode = PLACINGGIB;
             m_PreviousMode = ADDINGGIB;
-            UpdatePieMenu();
             g_GUISound.PlacementBlip()->Play();
         }
     }
@@ -529,13 +516,11 @@ void GibEditorGUI::Update()
         if (m_pController->IsState(PRESS_SECONDARY) || m_pController->IsState(PIE_MENU_ACTIVE))
         {
             m_EditorGUIMode = m_PreviousMode;
-            UpdatePieMenu();
         }
         // If previous mode was moving, tear the gib loose if the button is released to soo
         else if (m_PreviousMode == MOVINGGIB && m_pController->IsState(RELEASE_PRIMARY) && !m_BlinkTimer.IsPastRealMS(150))
         {
             m_EditorGUIMode = ADDINGGIB;
-            UpdatePieMenu();
         }
         // Only place if the picker and pie menus are completely out of view, to avoid immediate placing after picking
         else if (m_pCurrentGib && m_pController->IsState(RELEASE_PRIMARY) && !m_pPicker->IsVisible())
@@ -556,7 +541,6 @@ void GibEditorGUI::Update()
 // TEMP REMOVE ABOVE
             // Go back to previous mode
             m_EditorGUIMode = m_PreviousMode;
-            UpdatePieMenu();
         }
 
         // Set the facing of AHumans based on right/left cursor movements
@@ -568,7 +552,7 @@ void GibEditorGUI::Update()
     /////////////////////////////////////////////////////////////
     // POINTING AT MODES
 
-    else if ((m_EditorGUIMode == MOVINGGIB || m_EditorGUIMode == DELETINGGIB || m_EditorGUIMode == PLACEINFRONT || m_EditorGUIMode == PLACEBEHIND) && !m_pPieMenu->IsEnabled())
+    else if ((m_EditorGUIMode == MOVINGGIB || m_EditorGUIMode == DELETINGGIB || m_EditorGUIMode == PLACEINFRONT || m_EditorGUIMode == PLACEBEHIND) && !m_PieMenu->IsEnabled())
     {
         m_DrawCurrentGib = false;
 
@@ -615,7 +599,6 @@ void GibEditorGUI::Update()
                     // Go to placing mode to move it around
                     m_EditorGUIMode = PLACINGGIB;
                     m_PreviousMode = MOVINGGIB;
-                    UpdatePieMenu();
                     m_BlinkTimer.Reset();
                     g_GUISound.PlacementBlip()->Play();
                     g_GUISound.PlacementGravel()->Play();
@@ -676,7 +659,6 @@ void GibEditorGUI::Update()
 
                     // Go back to previous mode
                     m_EditorGUIMode = m_PreviousMode;
-                    UpdatePieMenu();
                 }
                 else
                     g_GUISound.UserErrorSound()->Play();
@@ -809,49 +791,7 @@ void GibEditorGUI::Draw(BITMAP *pTargetBitmap, const Vector &targetPos) const
     m_pPicker->Draw(pTargetBitmap);
 
     // Draw the pie menu
-    m_pPieMenu->Draw(pTargetBitmap, targetPos);
-}
-
-
-//////////////////////////////////////////////////////////////////////////////////////////
-// Method:          UpdatePieMenu
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Updates the PieMenu config based ont eh current editor state.
-
-void GibEditorGUI::UpdatePieMenu()
-{
-    m_pPieMenu->ResetSlices();
-
-    // Add pie menu slices and align them
-//    m_pPieMenu->AddSlice(PieMenuGUI::Slice("New Object", PieMenuGUI::PSI_NEW, PieMenuGUI::Slice::UP));
-	PieMenuGUI::Slice loadObjectSlice("Load Object", PieMenuGUI::PSI_LOAD, PieMenuGUI::Slice::UP);
-    m_pPieMenu->AddSlice(loadObjectSlice);
-    PieMenuGUI::Slice testGibSlice("Test Gib Object", PieMenuGUI::PSI_DONE, PieMenuGUI::Slice::UP);
-	m_pPieMenu->AddSlice(testGibSlice);
-	
-	PieMenuGUI::Slice moveGibSlice("(Re)Move Gibs", PieMenuGUI::PSI_MOVE, PieMenuGUI::Slice::LEFT);
-    m_pPieMenu->AddSlice(moveGibSlice);
-    PieMenuGUI::Slice deleteGibSlice("Delete Gibs", PieMenuGUI::PSI_REMOVE, PieMenuGUI::Slice::LEFT);
-	m_pPieMenu->AddSlice(deleteGibSlice);
-	
-	PieMenuGUI::Slice addGibSlice("Add New Gib", PieMenuGUI::PSI_PICK, PieMenuGUI::Slice::RIGHT);
-    m_pPieMenu->AddSlice(addGibSlice);
-    PieMenuGUI::Slice zoomInSlice("Zoom In", PieMenuGUI::PSI_ZOOMIN, PieMenuGUI::Slice::RIGHT, m_ZoomFactor < MAXZOOMFACTOR);
-	m_pPieMenu->AddSlice(zoomInSlice);
-	
-	PieMenuGUI::Slice zoomOutSlice("Zoom Out", PieMenuGUI::PSI_ZOOMOUT, PieMenuGUI::Slice::RIGHT, m_ZoomFactor > MINZOOMFACTOR);
-    m_pPieMenu->AddSlice(zoomOutSlice);
-    PieMenuGUI::Slice saveObjectSlice("Save Object", PieMenuGUI::PSI_SAVE, PieMenuGUI::Slice::DOWN);
-	m_pPieMenu->AddSlice(saveObjectSlice);
-    if (m_EditorGUIMode == ADDINGGIB)
-    {
-		PieMenuGUI::Slice inFrontSlice("Put In Front Of", PieMenuGUI::PSI_INFRONT, PieMenuGUI::Slice::LEFT);
-        m_pPieMenu->AddSlice(inFrontSlice);
-        PieMenuGUI::Slice behindSlice("Put Behind Of", PieMenuGUI::PSI_BEHIND, PieMenuGUI::Slice::LEFT);
-		m_pPieMenu->AddSlice(behindSlice);
-    }
-
-    m_pPieMenu->RealignSlices();
+	m_PieMenu->Draw(pTargetBitmap, targetPos);
 }
 
 

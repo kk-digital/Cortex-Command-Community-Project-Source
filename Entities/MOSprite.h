@@ -31,9 +31,7 @@ class AEmitter;
 // Parent(s):       MovableObject.
 // Class history:   03/18/2001 MOSprite created.
 
-class MOSprite:
-    public MovableObject
-{
+class MOSprite : public MovableObject {
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -41,22 +39,8 @@ class MOSprite:
 
 public:
 
-	SerializableOverrideMethods
-	ClassInfoGetters
-
-    enum SpriteAnimMode
-    {
-        NOANIM = 0,
-        ALWAYSLOOP,
-        ALWAYSRANDOM,
-        ALWAYSPINGPONG,
-        LOOPWHENMOVING,
-        LOOPWHENOPENCLOSE,
-        PINGPONGOPENCLOSE,
-		OVERLIFETIME,
-		ONCOLLIDE,
-        SpriteAnimModeCount
-    };
+	SerializableOverrideMethods;
+	ClassInfoGetters;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -266,6 +250,11 @@ public:
 
 	float GetRotAngle() const override { return m_Rotation.GetRadAngle(); }
 
+	/// <summary>
+	/// Gets the previous rotational angle of this MOSprite, prior to this frame.
+	/// </summary>
+	/// <returns>The previous rotational angle in radians.</returns>
+	float GetPrevRotAngle() const { return m_PrevRotation.GetRadAngle(); }
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          GetAngularVel
@@ -384,16 +373,23 @@ public:
 	void SetAngularVel(float newRotVel) override { m_AngularVel = newRotVel; }
 
 
-//////////////////////////////////////////////////////////////////////////////////////////
-// Method:          GetGraphicalIcon
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Gets a bitmap showing a good identifyable icon of this, for use in
-//                  GUI lists etc.
-// Arguments:       None.
-// Return value:    A good identifyable graphical representation of this in a BITMAP, if
-//                  available. If not, 0 is returned. Ownership is NOT TRANSFERRED!
+	/// <summary>
+	/// Gets the GUI representation of this MOSprite, either based on the first frame of its sprite or separately defined icon file.
+	/// </summary>
+	/// <returns>The graphical representation of this MOSprite as a BITMAP.</returns>
+	BITMAP * GetGraphicalIcon() const override { return m_GraphicalIcon != nullptr ? m_GraphicalIcon : m_aSprite[0]; }
 
-    BITMAP * GetGraphicalIcon() override { return m_aSprite[0]; }
+	/// <summary>
+	/// Gets the width of this MOSprite's GUI icon.
+	/// </summary>
+	/// <returns>The width of the GUI icon bitmap.</returns>
+	int GetIconWidth() const { return GetGraphicalIcon()->w; }
+
+	/// <summary>
+	/// Gets the height of this MOSprite's GUI icon.
+	/// </summary>
+	/// <returns>The height of the GUI icon bitmap.</returns>
+	int GetIconHeight() const { return GetGraphicalIcon()->h; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -458,7 +454,7 @@ public:
     /// </summary>
     /// <param name="angle">The input angle in radians.</param>
     /// <returns>The output angle in radians, which will be unaltered if this MOSprite is not flipped.</returns>
-    float FacingAngle(float angle) const { return (m_HFlipped ? c_PI : 0) + (angle * static_cast<float>(GetFlipFactor())); }
+    float FacingAngle(float angle) const { return (m_HFlipped ? c_PI : 0) + (angle * GetFlipFactor()); }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -551,7 +547,7 @@ public:
 // Arguments:       None.
 // Return value:    1 for not flipped, -1 for flipped.
 
-	int GetFlipFactor() const { return m_HFlipped ? -1 : 1; }
+	float GetFlipFactor() const { return m_HFlipped ? -1.0F : 1.0F; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -567,8 +563,10 @@ protected:
     float m_AngularVel; // The angular velocity by which this MovableObject rotates, in radians per second (r/s).
     float m_PrevAngVel; // Previous frame's angular velocity.
     ContentFile m_SpriteFile;
-    // Array of pointers to BITMAP:s representing the multiple frames of this sprite
-    BITMAP **m_aSprite;
+    // Vector of pointers to BITMAPs representing the multiple frames of this sprite.
+    std::vector<BITMAP *> m_aSprite;
+	ContentFile m_IconFile;	//!< The file containing the GUI icon.
+	BITMAP *m_GraphicalIcon;	//!< The GUI representation of this MOSprite as a BITMAP.
     // Number of frames, or elements in the m_aSprite array.
     unsigned int m_FrameCount;
     Vector m_SpriteOffset;

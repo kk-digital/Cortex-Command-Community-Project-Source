@@ -7,7 +7,7 @@
 
 namespace RTE {
 
-	ConcreteClassInfo(Attachable, MOSRotating, 0)
+	ConcreteClassInfo(Attachable, MOSRotating, 0);
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -35,12 +35,18 @@ namespace RTE {
 
 		m_InheritsHFlipped = 1;
 		m_InheritsRotAngle = true;
-		m_InheritedRotAngleOffset = 0.0F;
+		m_InheritedRotAngleOffset = 0;
+		m_InheritsFrame = false;
 
 		m_AtomSubgroupID = -1L;
 		m_CollidesWithTerrainWhileAttached = true;
 
-		m_PrevRotAngleOffset = 0.0F;
+		m_PieSlices.clear();
+
+		m_PrevParentOffset.Reset();
+		m_PrevJointOffset.Reset();
+		m_PrevRotAngleOffset = 0;
+		m_PreUpdateHasRunThisFrame = false;
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -81,9 +87,14 @@ namespace RTE {
 		m_InheritsHFlipped = reference.m_InheritsHFlipped;
 		m_InheritsRotAngle = reference.m_InheritsRotAngle;
 		m_InheritedRotAngleOffset = reference.m_InheritedRotAngleOffset;
+		m_InheritsFrame = reference.m_InheritsFrame;
 
 		m_AtomSubgroupID = GetUniqueID();
 		m_CollidesWithTerrainWhileAttached = reference.m_CollidesWithTerrainWhileAttached;
+
+		for (const std::unique_ptr<PieSlice> &pieSlice : reference.m_PieSlices) {
+			m_PieSlices.emplace_back(std::unique_ptr<PieSlice>(dynamic_cast<PieSlice *>(pieSlice->Clone())));
+		}
 
 		m_PrevRotAngleOffset = reference.m_PrevRotAngleOffset;
 
@@ -108,11 +119,14 @@ namespace RTE {
 		} else if (propName == "JointStrength" || propName == "Strength") {
 			reader >> m_JointStrength;
 		} else if (propName == "JointStiffness" || propName == "Stiffness") {
-			reader >> m_JointStiffness;
+			float jointStiffness = 0;
+			reader >> jointStiffness;
+			SetJointStiffness(jointStiffness);
 		} else if (propName == "JointOffset") {
 			reader >> m_JointOffset;
 		} else if (propName == "BreakWound") {
 			m_BreakWound = dynamic_cast<const AEmitter *>(g_PresetMan.GetEntityPreset(reader));
+			if (!m_ParentBreakWound) { m_ParentBreakWound = m_BreakWound; }
 		} else if (propName == "ParentBreakWound") {
 			m_ParentBreakWound = dynamic_cast<const AEmitter *>(g_PresetMan.GetEntityPreset(reader));
 		} else if (propName == "InheritsHFlipped") {
@@ -124,8 +138,12 @@ namespace RTE {
 			reader >> m_InheritedRotAngleOffset;
 		} else if (propName == "InheritedRotAngleDegOffset") {
 			m_InheritedRotAngleOffset = DegreesToRadians(std::stof(reader.ReadPropValue()));
+		} else if (propName == "InheritsFrame") {
+			reader >> m_InheritsFrame;
 		} else if (propName == "CollidesWithTerrainWhileAttached") {
 			reader >> m_CollidesWithTerrainWhileAttached;
+		} else if (propName == "AddPieSlice") {
+			m_PieSlices.emplace_back(std::unique_ptr<PieSlice>(dynamic_cast<PieSlice *>(g_PresetMan.ReadReflectedPreset(reader))));
 		} else {
 			return MOSRotating::ReadProperty(propName, reader);
 		}
@@ -138,36 +156,27 @@ namespace RTE {
 	int Attachable::Save(Writer &writer) const {
 		MOSRotating::Save(writer);
 
-		writer.NewProperty("ParentOffset");
-		writer << m_ParentOffset;
-		writer.NewProperty("DrawAfterParent");
-		writer << m_DrawAfterParent;
-		writer.NewProperty("DeleteWhenRemovedFromParent");
-		writer << m_DeleteWhenRemovedFromParent;
-		writer.NewProperty("ApplyTransferredForcesAtOffset");
-		writer << m_ApplyTransferredForcesAtOffset;
+		writer.NewPropertyWithValue("ParentOffset", m_ParentOffset);
+		writer.NewPropertyWithValue("DrawAfterParent", m_DrawAfterParent);
+		writer.NewPropertyWithValue("DeleteWhenRemovedFromParent", m_DeleteWhenRemovedFromParent);
+		writer.NewPropertyWithValue("ApplyTransferredForcesAtOffset", m_ApplyTransferredForcesAtOffset);
 
-		writer.NewProperty("JointStrength");
-		writer << m_JointStrength;
-		writer.NewProperty("JointStiffness");
-		writer << m_JointStiffness;
-		writer.NewProperty("JointOffset");
-		writer << m_JointOffset;
+		writer.NewPropertyWithValue("JointStrength", m_JointStrength);
+		writer.NewPropertyWithValue("JointStiffness", m_JointStiffness);
+		writer.NewPropertyWithValue("JointOffset", m_JointOffset);
 
-		writer.NewProperty("BreakWound");
-		writer << m_BreakWound;
-		writer.NewProperty("ParentBreakWound");
-		writer << m_ParentBreakWound;
+		writer.NewPropertyWithValue("BreakWound", m_BreakWound);
+		writer.NewPropertyWithValue("ParentBreakWound", m_ParentBreakWound);
 
-		writer.NewProperty("InheritsHFlipped");
-		writer << ((m_InheritsHFlipped == 0 || m_InheritsHFlipped == 1) ? m_InheritsHFlipped : 2);
-		writer.NewProperty("InheritsRotAngle");
-		writer << m_InheritsRotAngle;
-		writer.NewProperty("InheritedRotAngleOffset");
-		writer << m_InheritedRotAngleOffset;
+		writer.NewPropertyWithValue("InheritsHFlipped", ((m_InheritsHFlipped == 0 || m_InheritsHFlipped == 1) ? m_InheritsHFlipped : 2));
+		writer.NewPropertyWithValue("InheritsRotAngle", m_InheritsRotAngle);
+		writer.NewPropertyWithValue("InheritedRotAngleOffset", m_InheritedRotAngleOffset);
 
-		writer.NewProperty("CollidesWithTerrainWhileAttached");
-		writer << m_CollidesWithTerrainWhileAttached;
+		writer.NewPropertyWithValue("CollidesWithTerrainWhileAttached", m_CollidesWithTerrainWhileAttached);
+
+		for (const std::unique_ptr<PieSlice> &pieSlice : m_PieSlices) {
+			writer.NewPropertyWithValue("AddPieSlice", pieSlice.get());
+		}
 
 		return 0;
 	}
@@ -183,8 +192,8 @@ namespace RTE {
 		}
 
 		Vector totalForce;
-		for (const std::pair<Vector, Vector> &force : m_Forces) {
-			totalForce += force.first;
+		for (const auto &[force, forceOffset] : m_Forces) {
+			totalForce += force;
 		}
 
 		jointForces += totalForce;
@@ -204,35 +213,35 @@ namespace RTE {
 		jointStiffnessValueToUse = jointStiffnessValueToUse > 0 ? jointStiffnessValueToUse : m_JointStiffness;
 		jointStrengthValueToUse = jointStrengthValueToUse > 0 ? jointStrengthValueToUse : m_JointStrength;
 		gibImpulseLimitValueToUse = gibImpulseLimitValueToUse > 0 ? gibImpulseLimitValueToUse : m_GibImpulseLimit;
+		if (jointStrengthValueToUse == 0) { gibImpulseLimitValueToUse = 0; }
 		if (gibImpulseLimitValueToUse > 0) { gibImpulseLimitValueToUse = std::max(gibImpulseLimitValueToUse, jointStrengthValueToUse); }
 
 		Vector totalImpulseForce;
-		for (const std::pair<Vector, Vector> &impulseForce : m_ImpulseForces) {
-			totalImpulseForce += impulseForce.first;
+		for (const auto &[impulseForce, impulseForceOffset] : m_ImpulseForces) {
+			totalImpulseForce += impulseForce;
 		}
 		totalImpulseForce *= jointStiffnessValueToUse;
 
-		if (gibImpulseLimitValueToUse > 0 && totalImpulseForce.GetMagnitude() > gibImpulseLimitValueToUse) {
+		// Rough explanation of what this is doing:
+		// The first part is getting the Dot/Scalar product of the perpendicular of the offset vector for the force onto the force vector itself (dot product is the amount two vectors are pointing in the same direction).
+		// The second part is dividing that Dot product by the moment of inertia, i.e. the torque needed to make it turn. All of this is multiplied by 1 - JointStiffness, because max stiffness joints transfer all force to parents (leaving none to affect the Attachable) and min stiffness transfer none.
+		if (!m_InheritsRotAngle) {
+			for (const auto &[impulseForce, impulseForceOffset] : m_ImpulseForces) {
+				if (!impulseForceOffset.IsZero()) { m_AngularVel += (impulseForceOffset.GetPerpendicular().Dot(impulseForce) / m_pAtomGroup->GetMomentOfInertia()) * (1.0F - std::clamp(jointStiffnessValueToUse, 0.0F, 1.0F)); }
+			}
+		}
+
+		float totalImpulseForceMagnitude = totalImpulseForce.GetMagnitude();
+		if (gibImpulseLimitValueToUse > 0 && totalImpulseForceMagnitude > gibImpulseLimitValueToUse) {
 			jointImpulses += totalImpulseForce.SetMagnitude(gibImpulseLimitValueToUse);
 			GibThis();
 			return false;
-		} else if (jointStrengthValueToUse > 0 && totalImpulseForce.GetMagnitude() > jointStrengthValueToUse) {
+		} else if (jointStrengthValueToUse > 0 && totalImpulseForceMagnitude > jointStrengthValueToUse) {
 			jointImpulses += totalImpulseForce.SetMagnitude(jointStrengthValueToUse);
 			m_Parent->RemoveAttachable(this, true, true);
 			return false;
 		} else {
 			jointImpulses += totalImpulseForce;
-		}
-
-		// Rough explanation of what this is doing:
-		// The first part is getting the Dot/Scalar product of the perpendicular of the offset vector for the force onto the force vector itself (dot product is the amount two vectors are pointing in the same direction).
-		// The second part is dividing that Dot product by the moment of inertia, i.e. the torque needed to make it turn. All of this is multiplied by 1 - JointStiffness, because max stiffness joints transfer all force to parents and min stiffness transfer none.
-		if (!m_InheritsRotAngle) {
-			for (const std::pair<Vector, Vector> &impulseForce : m_ImpulseForces) {
-				if (!impulseForce.second.IsZero()) {
-					m_AngularVel += (impulseForce.second.GetPerpendicular().Dot(impulseForce.first) / m_pAtomGroup->GetMomentOfInertia()) * (1.0F - jointStiffnessValueToUse);
-				}
-			}
 		}
 
 		m_ImpulseForces.clear();
@@ -274,8 +283,7 @@ namespace RTE {
 
 	bool Attachable::CanCollideWithTerrain() const {
 		if (m_CollidesWithTerrainWhileAttached && IsAttached() && GetParent() != GetRootParent()) {
-			const Attachable *parentAsAttachable = dynamic_cast<const Attachable *>(GetParent());
-			if (parentAsAttachable) { return parentAsAttachable->CanCollideWithTerrain(); }
+			if (const Attachable *parentAsAttachable = dynamic_cast<const Attachable *>(GetParent())) { return parentAsAttachable->CanCollideWithTerrain(); }
 		}
 		return m_CollidesWithTerrainWhileAttached;
 	}
@@ -285,19 +293,22 @@ namespace RTE {
 	bool Attachable::ParticlePenetration(HitData &hd) {
 		bool penetrated = MOSRotating::ParticlePenetration(hd);
 
-		if (hd.Body[HITOR]->DamageOnCollision() != 0) { AddDamage(hd.Body[HITOR]->DamageOnCollision()); }
+		if (m_Parent) {
+			MovableObject *hitor = hd.Body[HITOR];
+			float damageToAdd = hitor->DamageOnCollision();
+			damageToAdd += penetrated ? hitor->DamageOnPenetration() : 0;
+			if (hitor->GetApplyWoundDamageOnCollision()) { damageToAdd += m_pEntryWound->GetEmitDamage() * hitor->WoundDamageMultiplier(); }
+			if (hitor->GetApplyWoundBurstDamageOnCollision()) { damageToAdd += m_pEntryWound->GetBurstDamage() * hitor->WoundDamageMultiplier(); }
 
-		if (penetrated && m_Parent) {
-			if (hd.Body[HITOR]->DamageOnPenetration() != 0) { AddDamage(hd.Body[HITOR]->DamageOnPenetration()); }
-
-			// If the parent is an actor, generate an alarm point for them, moving it slightly away from the body (in the direction they got hit from) to get a good reaction.
-			Actor *parentAsActor = dynamic_cast<Actor *>(GetRootParent());
-			if (parentAsActor) {
-				Vector extruded(hd.HitVel[HITOR]);
-				extruded.SetMagnitude(parentAsActor->GetHeight());
-				extruded = m_Pos - extruded;
-				g_SceneMan.WrapPosition(extruded);
-				parentAsActor->AlarmPoint(extruded);
+			if (damageToAdd != 0) { AddDamage(damageToAdd); }
+			if (penetrated || damageToAdd != 0) {
+				if (Actor *parentAsActor = dynamic_cast<Actor *>(GetRootParent()); parentAsActor && parentAsActor->GetPerceptiveness() > 0) {
+					Vector extruded(hd.HitVel[HITOR]);
+					extruded.SetMagnitude(parentAsActor->GetHeight());
+					extruded = m_Pos - extruded;
+					g_SceneMan.WrapPosition(extruded);
+					parentAsActor->AlarmPoint(extruded);
+				}
 			}
 		}
 
@@ -307,8 +318,8 @@ namespace RTE {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void Attachable::GibThis(const Vector &impactImpulse, MovableObject *movableObjectToIgnore) {
-		MOSRotating::GibThis(impactImpulse, movableObjectToIgnore);
 		if (m_Parent) { m_Parent->RemoveAttachable(this, true, true); }
+		MOSRotating::GibThis(impactImpulse, movableObjectToIgnore);
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -324,19 +335,15 @@ namespace RTE {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void Attachable::Update() {
+		if (!m_PreUpdateHasRunThisFrame) { PreUpdate(); }
 		if (m_Parent) {
-			if (InheritsHFlipped() != 0) { m_HFlipped = m_InheritsHFlipped == 1 ? m_Parent->IsHFlipped() : !m_Parent->IsHFlipped(); }
-			if (InheritsRotAngle()) {
-				SetRotAngle(m_Parent->GetRotAngle() + m_InheritedRotAngleOffset * static_cast<float>(m_Parent->GetFlipFactor()));
-				m_AngularVel = 0.0F;
-			}
 			UpdatePositionAndJointPositionBasedOnOffsets();
 			if (m_ParentOffset != m_PrevParentOffset || m_JointOffset != m_PrevJointOffset) { m_Parent->HandlePotentialRadiusAffectingAttachable(this); }
-			m_Vel = m_Parent->GetVel();
+			SetVel(m_Parent->GetVel());
 			m_Team = m_Parent->GetTeam();
 
 			MOSRotating *rootParentAsMOSR = dynamic_cast<MOSRotating *>(GetRootParent());
-			float currentRotAngleOffset = (GetRotAngle() * static_cast<float>(GetFlipFactor())) - rootParentAsMOSR->GetRotAngle();
+			float currentRotAngleOffset = (GetRotAngle() * GetFlipFactor()) - rootParentAsMOSR->GetRotAngle();
 			if (rootParentAsMOSR && CanCollideWithTerrain()) {
 				// Note: This safety check exists to ensure the parent's AtomGroup contains this Attachable's Atoms in a subgroup. Hardcoded Attachables need this in order to work, since they're cloned before their parent's AtomGroup exists.
 				if (!rootParentAsMOSR->GetAtomGroup()->ContainsSubGroup(m_AtomSubgroupID)) { AddOrRemoveAtomsFromRootParentAtomGroup(true, false); }
@@ -351,17 +358,37 @@ namespace RTE {
 			}
 			m_DeepCheck = false;
 			m_PrevRotAngleOffset = currentRotAngleOffset;
+		} else {
+			UpdatePositionAndJointPositionBasedOnOffsets();
 		}
 
 		MOSRotating::Update();
 
+		if (m_Parent && m_InheritsFrame) { SetFrame(m_Parent->GetFrame()); }
+
 		// If we're attached to something, MovableMan doesn't own us, and therefore isn't calling our UpdateScripts method (and neither is our parent), so we should here.
-		if (m_Parent != nullptr && GetRootParent()->HasEverBeenAddedToMovableMan()) { UpdateScripts(); }
+		if (m_Parent && GetRootParent()->HasEverBeenAddedToMovableMan()) { UpdateScripts(); }
 
 		m_PrevPos = m_Pos;
 		m_PrevVel = m_Vel;
 		m_PrevParentOffset = m_ParentOffset;
 		m_PrevJointOffset = m_JointOffset;
+		m_PreUpdateHasRunThisFrame = false;
+	}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	void Attachable::PreUpdate() {
+		if (!m_PreUpdateHasRunThisFrame) {
+			if (m_Parent) {
+				if (InheritsHFlipped() != 0) { m_HFlipped = m_InheritsHFlipped == 1 ? m_Parent->IsHFlipped() : !m_Parent->IsHFlipped(); }
+				if (InheritsRotAngle()) {
+					SetRotAngle(m_Parent->GetRotAngle() + m_InheritedRotAngleOffset * m_Parent->GetFlipFactor());
+					m_AngularVel = 0.0F;
+				}
+			}
+			m_PreUpdateHasRunThisFrame = true;
+		}
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -393,11 +420,11 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	bool Attachable::RemoveAttachable(Attachable *attachable, bool addToMovableMan, bool addBreakWounds) {
+	Attachable * Attachable::RemoveAttachable(Attachable *attachable, bool addToMovableMan, bool addBreakWounds) {
 		float previousMassForUpdatingParent = m_Parent ? GetMass() : 0.0F;
-		bool result = MOSRotating::RemoveAttachable(attachable, addToMovableMan, addBreakWounds);
+		Attachable *removedAttachable = MOSRotating::RemoveAttachable(attachable, addToMovableMan, addBreakWounds);
 		if (m_Parent) { m_Parent->UpdateAttachableAndWoundMass(previousMassForUpdatingParent, GetMass()); }
-		return result;
+		return removedAttachable;
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -429,25 +456,33 @@ namespace RTE {
 		//TODO Get rid of the need for calling ResetAllTimers, if something like inventory swapping needs timers reset it should do it itself! This blanket handling probably has side-effects.
 		// Timers are reset here as a precaution, so that if something was sitting in an inventory, it doesn't cause backed up emissions.
 		ResetAllTimers();
-		
+
 		if (newParent) {
 			m_Parent = newParent;
 			m_Team = newParent->GetTeam();
 			if (InheritsHFlipped() != 0) { m_HFlipped = m_InheritsHFlipped == 1 ? m_Parent->IsHFlipped() : !m_Parent->IsHFlipped(); }
 			if (InheritsRotAngle()) {
-				SetRotAngle(m_Parent->GetRotAngle() + m_InheritedRotAngleOffset * static_cast<float>(m_Parent->GetFlipFactor()));
+				SetRotAngle(m_Parent->GetRotAngle() + m_InheritedRotAngleOffset * m_Parent->GetFlipFactor());
 				m_AngularVel = 0.0F;
 			}
 			UpdatePositionAndJointPositionBasedOnOffsets();
 			if (CanCollideWithTerrain()) { AddOrRemoveAtomsFromRootParentAtomGroup(true, true); }
+
+			if (const Actor *rootParentAsActor = dynamic_cast<const Actor *>(GetRootParent())) {
+				if (PieMenu *rootParentAsActorPieMenu = rootParentAsActor->GetPieMenu()) {
+					rootParentAsActorPieMenu->AddWhilePieMenuOpenListener(this, std::bind(&MovableObject::WhilePieMenuOpenListener, this, rootParentAsActorPieMenu));
+					for (const std::unique_ptr<PieSlice> &pieSlice : m_PieSlices) {
+						rootParentAsActorPieMenu->AddPieSlice(dynamic_cast<PieSlice *>(pieSlice.get()->Clone()), this, true);
+					}
+				}
+			}
 		} else {
 			m_RootMOID = m_MOID;
 			m_RestTimer.Reset();
 			m_Team = -1;
 			m_IsWound = false;
 
-			MovableObject *rootParent = GetRootParent();
-			if (rootParent) {
+			if (MovableObject *rootParent = GetRootParent()) {
 				const MovableObject *whichMOToNotHit = GetWhichMOToNotHit();
 				const MovableObject *rootParentMOToNotHit = rootParent->GetWhichMOToNotHit();
 				if ((whichMOToNotHit && whichMOToNotHit != rootParent) || (rootParentMOToNotHit && rootParentMOToNotHit != this)) {
@@ -456,9 +491,17 @@ namespace RTE {
 					m_pMOToNotHit = rootParent;
 					rootParent->SetWhichMOToNotHit(this);
 				}
+
+				if (const Actor *rootParentAsActor = dynamic_cast<const Actor *>(rootParent)) {
+					if (PieMenu *rootParentAsActorPieMenu = rootParentAsActor->GetPieMenu()) {
+						rootParentAsActorPieMenu->RemoveWhilePieMenuOpenListener(this);
+						rootParentAsActorPieMenu->RemovePieSlicesByOriginalSource(this);
+					}
+				}
 			}
 
 			if (CanCollideWithTerrain()) { AddOrRemoveAtomsFromRootParentAtomGroup(false, true); }
+
 			m_Parent = newParent;
 			for (Attachable *attachable : m_Attachables) {
 				if (attachable->m_CollidesWithTerrainWhileAttached) { attachable->AddOrRemoveAtomsFromRootParentAtomGroup(true, true); }

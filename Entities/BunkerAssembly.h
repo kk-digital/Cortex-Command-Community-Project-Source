@@ -14,18 +14,13 @@
 //////////////////////////////////////////////////////////////////////////////////////////
 // Inclusions of header files
 
-#include "RTETools.h"
 #include "TerrainObject.h"
-#include "Vector.h"
-#include "SceneMan.h"
-#include "BunkerAssemblyScheme.h"
-#include "Deployment.h"
-//#include "MovableMan.h"
 
 namespace RTE
 {
 
-class ContentFile;
+class BunkerAssemblyScheme;
+class Deployment;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -36,9 +31,7 @@ class ContentFile;
 // Parent(s):       SceneObject.
 // Class history:   08/23/2002 BunkerAssembly created.
 
-class BunkerAssembly:
-    public TerrainObject
-{
+class BunkerAssembly : public TerrainObject {
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -47,9 +40,9 @@ class BunkerAssembly:
 public:
 
 // Concrete allocation and cloning definitions
-EntityAllocation(BunkerAssembly)
-SerializableOverrideMethods
-ClassInfoGetters
+EntityAllocation(BunkerAssembly);
+SerializableOverrideMethods;
+ClassInfoGetters;
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Constructor:     BunkerAssembly
@@ -202,7 +195,7 @@ ClassInfoGetters
 // Return value:    A good identifyable graphical representation of this in a BITMAP, if
 //                  available. If not, 0 is returned. Ownership is NOT TRANSFERRED!
 
-	BITMAP * GetGraphicalIcon() override { return m_pPresentationBitmap; };
+	BITMAP * GetGraphicalIcon() const override { return m_pPresentationBitmap; };
 
 
 //////////////////////////////////////////////////////////////////////////////////////////

@@ -21,23 +21,9 @@ namespace RTE {
 	public:
 
 		/// <summary>
-		/// Enumeration for the different states an input element or button can be in.
-		/// </summary>
-		enum InputState {
-			Held = 0,
-			Pressed,
-			Released,
-			InputStateCount
-		};
-
-		/// <summary>
 		/// Enumeration for the mouse cursor actions in menus.
 		/// </summary>
-		enum MenuCursorButtons {
-			MENU_PRIMARY = 0,
-			MENU_SECONDARY,
-			MENU_EITHER
-		};
+		enum MenuCursorButtons { MENU_PRIMARY, MENU_SECONDARY, MENU_EITHER };
 
 #pragma region Creation
 		/// <summary>
@@ -66,14 +52,15 @@ namespace RTE {
 
 #pragma region Concrete Methods
 		/// <summary>
-		/// Loads the input device icons from loaded presets. This will be called from LoadingGUI after modules are loaded. Can't do this during Create() because the presets don't exist.
+		/// Workaround for Allegro being unable to detect joystick plugging/unplugging at runtime to enable/disable them accordingly. Uses OS functions to check if the number of connected joysticks changed and reinitializes the joystick handler if necessary.
 		/// </summary>
-		void LoadDeviceIcons();
+		/// <returns>Whether plugging/unplugging was detected and the joystick handler was reinitialized.</returns>
+		bool DetectJoystickHotPlug() const;
 
 		/// <summary>
-		/// Re-initializes the keyboard for when windows regains focus. This is really used to work around an Allegro bug.
+		/// Loads the input device icons from loaded presets. Can't do this during Create() because the presets don't exist so this will be called from MenuMan::Initialize() after modules are loaded.
 		/// </summary>
-		void ReInitKeyboard() { install_keyboard(); }
+		void LoadDeviceIcons();
 
 		/// <summary>
 		/// Updates the state of this UInputMan. Supposed to be done every frame.
@@ -84,33 +71,31 @@ namespace RTE {
 
 #pragma region Control Scheme and Input Mapping Handling
 		/// <summary>
-		/// Sets the input class for use if one is available.
+		/// Sets the GUIInput instance to capture key state from. This is used for better key detection during input mapping input capture.
 		/// </summary>
-		/// <param name="inputClass">The input class to set.</param>
-		void SetInputClass(GUIInput *inputClass) const;
+		/// <param name="guiInputInstance">Pointer to the GUIInput instance to capture key state from, or nullptr if using UInputMan input capture.</param>
+		void SetGUIInputInstanceToCaptureKeyStateFrom(GUIInput *guiInputInstance) const;
 
 		/// <summary>
 		/// Gets the currently used input device of the specified player.
 		/// </summary>
 		/// <param name="whichPlayer">Which player to get input device for.</param>
 		/// <returns>A number value representing the currently used input device of this player. See InputDevice enumeration for values.</returns>
-		int GetInputDevice(int whichPlayer) const { return m_ControlScheme[whichPlayer].GetDevice(); }
+		int GetInputDevice(int whichPlayer) const { return m_ControlScheme.at(whichPlayer).GetDevice(); }
 
 		/// <summary>
 		/// Access a specific player's control scheme.
 		/// </summary>
 		/// <param name="whichPlayer">Which player to get the scheme for.</param>
 		/// <returns>A pointer to the requested player's control scheme. Ownership is NOT transferred!</returns>
-		InputScheme * GetControlScheme(int whichPlayer) { return IsInMultiplayerMode() ? &m_ControlScheme[0] : &m_ControlScheme[whichPlayer]; }
+		InputScheme * GetControlScheme(int whichPlayer) { return IsInMultiplayerMode() ? &m_ControlScheme[Players::PlayerOne] : &m_ControlScheme.at(whichPlayer); }
 
 		/// <summary>
 		/// Get the current device Icon of a specific player's scheme.
 		/// </summary>
 		/// <param name="whichPlayer">Which player to get the scheme device icon of.</param>
 		/// <returns>A const pointer to the requested player's control scheme icon. Ownership is NOT transferred!</returns>
-		const Icon * GetSchemeIcon(int whichPlayer) const {
-			return (whichPlayer < Players::PlayerOne || whichPlayer >= Players::MaxPlayerCount) ? nullptr : m_DeviceIcons[m_ControlScheme[whichPlayer].GetDevice()];
-		}
+		const Icon * GetSchemeIcon(int whichPlayer) const { return (whichPlayer < Players::PlayerOne || whichPlayer >= Players::MaxPlayerCount) ? nullptr : m_DeviceIcons[m_ControlScheme.at(whichPlayer).GetDevice()]; }
 
 		/// <summary>
 		/// Get the current device Icon of a specific device.
@@ -118,88 +103,6 @@ namespace RTE {
 		/// <param name="whichDevice">Which device to get the icon of.</param>
 		/// <returns>A const pointer to the requested device's control scheme icon. Ownership is NOT transferred!</returns>
 		const Icon * GetDeviceIcon(int whichDevice) const { return (whichDevice < InputDevice::DEVICE_KEYB_ONLY || whichDevice > InputDevice::DEVICE_GAMEPAD_4) ? nullptr : m_DeviceIcons[whichDevice]; }
-
-		/// <summary>
-		/// Clears all mappings for a specific input element of a specific player.
-		/// </summary>
-		/// <param name="whichPlayer">Which player to affect.</param>
-		/// <param name="whichInput">Which input element to clear all mappings of.</param>
-		void ClearMapping(int whichPlayer, int whichInput) { m_ControlScheme[whichPlayer].GetInputMappings()[whichInput].Reset(); }
-
-		/// <summary>
-		/// Gets the name of the key/mouse/joystick button/direction that a particular input element is mapped to.
-		/// </summary>
-		/// <param name="whichPlayer">Which player to look up.</param>
-		/// <param name="whichElement">Which input element to look up.</param>
-		/// <returns>A string with the appropriate clear text description of the mapped thing.</returns>
-		std::string GetMappingName(int whichPlayer, int whichElement);
-
-		/// <summary>
-		/// Gets which keyboard key is mapped to a specific input element.
-		/// </summary>
-		/// <param name="whichPlayer">Which player to look up.</param>
-		/// <param name="whichInput">Which input element to look up.</param>
-		/// <returns>Which keyboard key is mapped to the specified player and element.</returns>
-		int GetKeyMapping(int whichPlayer, int whichInput) { return m_ControlScheme[whichPlayer].GetInputMappings()[whichInput].GetKey(); }
-
-		/// <summary>
-		/// Sets a keyboard key mapped to a specific input element.
-		/// </summary>
-		/// <param name="whichPlayer">Which player to do this for.</param>
-		/// <param name="whichInput">Which input element to map to.</param>
-		/// <param name="whichKey">The scancode of which keyboard key to map to above input element.</param>
-		void SetKeyMapping(int whichPlayer, int whichInput, int whichKey) { m_ControlScheme[whichPlayer].GetInputMappings()[whichInput].SetKey(whichKey); }
-
-		/// <summary>
-		/// Gets which joystick button is mapped to a specific input element.
-		/// </summary>
-		/// <param name="whichPlayer">Which player to look up.</param>
-		/// <param name="whichInput">Which input element to look up.</param>
-		/// <returns>Which joystick button is mapped to the specified player and element.</returns>
-		int GetButtonMapping(int whichPlayer, int whichInput) { return m_ControlScheme[whichPlayer].GetInputMappings()[whichInput].GetJoyButton(); }
-
-		/// <summary>
-		/// Sets a joystick button mapped to a specific input element.
-		/// </summary>
-		/// <param name="whichPlayer">Which player to do this for.</param>
-		/// <param name="whichInput">Which input element to map to.</param>
-		/// <param name="whichButton">Which joystick button to map to the specified input element.</param>
-		void SetButtonMapping(int whichPlayer, int whichInput, int whichButton) { m_ControlScheme[whichPlayer].GetInputMappings()[whichInput].SetJoyButton(whichButton); }
-
-		/// <summary>
-		/// Checks for any key press this frame and creates an input mapping for a specific player accordingly.
-		/// </summary>
-		/// <param name="whichPlayer">Which player to create a map for.</param>
-		/// <param name="whichInput">Which input element to map to for that player.</param>
-		/// <returns>Whether there were any key presses this frame and therefore whether a mapping was successfully captured or not.</returns>
-		bool CaptureKeyMapping(int whichPlayer, int whichInput);
-
-		/// <summary>
-		/// Checks for any button press this frame and creates an input mapping for a specific player accordingly.
-		/// </summary>
-		/// <param name="whichPlayer">Which player to create a map for.</param>
-		/// <param name="whichJoy">Which joystick to scan for button presses.</param>
-		/// <param name="whichInput">Which input element to map to for that player.</param>
-		/// <returns>Whether there were any button presses this frame and therefore whether a mapping was successfully captured or not.</returns>
-		bool CaptureButtonMapping(int whichPlayer, int whichJoy, int whichInput);
-
-		/// <summary>
-		/// Checks for any joystick pad or stick direction press this frame and creates an input mapping for a specific player accordingly.
-		/// </summary>
-		/// <param name="whichPlayer">Which player to create a map for.</param>
-		/// <param name="whichJoy">Which joystick to scan for pad and stick direction presses.</param>
-		/// <param name="whichInput">Which input element to map to for that player.</param>
-		/// <returns>Whether there were any direction presses this frame and therefore whether a mapping was successfully captured or not.</returns>
-		bool CaptureDirectionMapping(int whichPlayer, int whichJoy, int whichInput);
-
-		/// <summary>
-		/// Checks for any button or direction press this frame and creates an input mapping for a specific player accordingly.
-		/// </summary>
-		/// <param name="whichPlayer">Which player to do create a map for.</param>
-		/// <param name="whichJoy">Which joystick to scan for button and stick presses.</param>
-		/// <param name="whichInput">Which input element to map to for that player.</param>
-		/// <returns>Whether there were any button or stick presses this frame and therefore whether a mapping was successfully captured or not.</returns>
-		bool CaptureJoystickMapping(int whichPlayer, int whichJoy, int whichInput);
 #pragma endregion
 
 #pragma region General Input Handling
@@ -289,7 +192,7 @@ namespace RTE {
 		/// <summary>
 		/// Gets whether there are any start key/button presses at all. MUST call Update before calling this for it to work properly!
 		/// </summary>
-		/// <param="includeSpacebar">Whether to check for space bar presses or not. 
+		/// <param="includeSpacebar">Whether to check for space bar presses or not.
 		/// <returns>Whether any start buttons or keys have been pressed at all since last frame.</returns>
 		bool AnyStartPress(bool includeSpacebar = true);
 
@@ -384,7 +287,15 @@ namespace RTE {
 		/// Set the mouse's analog emulation output to be of a specific normalized magnitude.
 		/// </summary>
 		/// <param name="magCap">The normalized magnitude, between 0 and 1.0.</param>
-		void SetMouseValueMagnitude(float magCap) { m_AnalogMouseData.CapMagnitude(m_MouseTrapRadius * magCap); }
+		/// <param name="whichPlayer">Which player to set magnitude for. Only relevant when in online multiplayer mode.</param>
+		void SetMouseValueMagnitude(float magCap, int whichPlayer = Players::NoPlayer);
+
+		/// <summary>
+		/// Sets the mouse's analog emulation output to be in a specific direction.
+		/// </summary>
+		/// <param name="angle">The direction, in radians.</param>
+		/// <param name="whichPlayer">Which player to set magnitude for. Only relevant when in online multiplayer mode.</param>
+		void SetMouseValueAngle(float angle, int whichPlayer = Players::NoPlayer);
 
 		/// <summary>
 		/// Sets the absolute screen position of the mouse cursor.
@@ -411,14 +322,7 @@ namespace RTE {
 		/// <param name="whichButton">Which button to check for.</param>
 		/// <param name="whichPlayer">Which player to check for.</param>
 		/// <returns>Whether the mouse button is held or not.</returns>
-		bool MouseButtonHeld(int whichButton, int whichPlayer) const { return GetMouseButtonState(whichPlayer, whichButton, InputState::Held); }
-
-		/// <summary>
-		/// (ONLY FOR LUA BACKWARD COMPATIBILITY) Gets whether a mouse button is being held down right now.
-		/// </summary>
-		/// <param name="whichButton">Which button to check for.</param>
-		/// <returns>Whether the mouse button is held or not.</returns>
-		bool MouseButtonHeld(int whichButton) const { return GetMouseButtonState(Players::PlayerOne, whichButton, InputState::Held); }
+		bool MouseButtonHeld(int whichButton, int whichPlayer = Players::PlayerOne) const { return GetMouseButtonState(whichPlayer, whichButton, InputState::Held); }
 
 		/// <summary>
 		/// Gets whether a mouse button was pressed between the last update and the one previous to it.
@@ -426,14 +330,7 @@ namespace RTE {
 		/// <param name="whichButton">Which button to check for.</param>
 		/// <param name="whichPlayer">Which player to check for.</param>
 		/// <returns>Whether the mouse button is pressed or not.</returns>
-		bool MouseButtonPressed(int whichButton, int whichPlayer) const { return GetMouseButtonState(whichPlayer, whichButton, InputState::Pressed); }
-
-		/// <summary>
-		/// (ONLY FOR LUA BACKWARD COMPATIBILITY) Gets whether a mouse button was pressed between the last update and the one previous to it.
-		/// </summary>
-		/// <param name="whichButton">Which button to check for.</param>
-		/// <returns>Whether the mouse button is pressed or not.</returns>
-		bool MouseButtonPressed(int whichButton) const { return GetMouseButtonState(Players::PlayerOne, whichButton, InputState::Pressed); }
+		bool MouseButtonPressed(int whichButton, int whichPlayer = Players::PlayerOne) const { return GetMouseButtonState(whichPlayer, whichButton, InputState::Pressed); }
 
 		/// <summary>
 		/// Gets whether a mouse button was released between the last update and the one previous to it.
@@ -441,14 +338,7 @@ namespace RTE {
 		/// <param name="whichButton">Which button to check for.</param>
 		/// <param name="whichPlayer">Which player to check for.</param>
 		/// <returns>Whether the mouse button is released or not.</returns>
-		bool MouseButtonReleased(int whichButton, int whichPlayer) const { return GetMouseButtonState(whichPlayer, whichButton, InputState::Released); }
-
-		/// <summary>
-		/// (ONLY FOR LUA BACKWARD COMPATIBILITY) Gets whether a mouse button was released between the last update and the one previous to it.
-		/// </summary>
-		/// <param name="whichButton">Which button to check for.</param>
-		/// <returns>Whether the mouse button is released or not.</returns>
-		bool MouseButtonReleased(int whichButton) const { return GetMouseButtonState(Players::PlayerOne, whichButton, InputState::Released); }
+		bool MouseButtonReleased(int whichButton, int whichPlayer = Players::PlayerOne) const { return GetMouseButtonState(whichPlayer, whichButton, InputState::Released); }
 
 		/// <summary>
 		/// Gets whether the mouse wheel has been moved past the threshold limit in either direction this frame.
@@ -732,7 +622,12 @@ namespace RTE {
 
 	protected:
 
-		static GUIInput* s_InputClass; //!< Current input class if available.
+		/// <summary>
+		/// Enumeration for the different states an input element or button can be in.
+		/// </summary>
+		enum InputState { Held, Pressed, Released, InputStateCount };
+
+		static GUIInput *s_GUIInputInstanceToCaptureKeyStateFrom; //!< Pointer to the GUIInput instance to capture key state from, if any. This is used for better key detection during input mapping input capture.
 
 		static char *s_PrevKeyStates; //!< Key states as they were the previous update.
 		static char *s_ChangedKeyStates; //!< Key states that have changed.
@@ -746,7 +641,7 @@ namespace RTE {
 
 		bool m_OverrideInput; //!< If true then this instance operates in multiplayer mode and the input is overridden by network input.
 
-		InputScheme m_ControlScheme[Players::MaxPlayerCount]; //!< Which control scheme is being used by each player.
+		std::array<InputScheme, Players::MaxPlayerCount> m_ControlScheme; //!< Which control scheme is being used by each player.
 		const Icon *m_DeviceIcons[InputDevice::DEVICE_COUNT]; //!< The Icons representing all different devices.
 
 		Vector m_RawMouseMovement; //!< The raw absolute movement of the mouse between the last two Updates.
@@ -767,13 +662,13 @@ namespace RTE {
 		/// This is to avoid having the window fly away because the user clicked the title bar.
 		/// </summary>
 		bool m_PrepareToEnableMouseMoving;
- 
+
 		bool m_NetworkAccumulatedElementState[InputElements::INPUT_COUNT][InputState::InputStateCount]; //!< The state of an input element during network multiplayer.
 		bool m_NetworkInputElementState[Players::MaxPlayerCount][InputElements::INPUT_COUNT][InputState::InputStateCount]; //!< The state of a player's input element during network multiplayer.
-		bool m_NetworkMouseButtonState[Players::MaxPlayerCount][MouseButtons::MAX_MOUSE_BUTTONS][InputState::InputStateCount]; //!< The state of a player's mouse button during network multiplayer. 
+		bool m_NetworkMouseButtonState[Players::MaxPlayerCount][MouseButtons::MAX_MOUSE_BUTTONS][InputState::InputStateCount]; //!< The state of a player's mouse button during network multiplayer.
 
 		Vector m_NetworkAccumulatedRawMouseMovement[Players::MaxPlayerCount]; //!< The position of the mouse for each player during network multiplayer.
-		Vector m_NetworkAnalogMoveData[Players::MaxPlayerCount]; //!< Mouse analog movement data for each player during network multiplayer. 
+		Vector m_NetworkAnalogMoveData[Players::MaxPlayerCount]; //!< Mouse analog movement data for each player during network multiplayer.
 		int m_NetworkMouseWheelState[Players::MaxPlayerCount]; //!< The position of a player's mouse wheel during network multiplayer.
 
 		bool m_TrapMousePosPerPlayer[Players::MaxPlayerCount]; //!< Whether to trap the mouse position to the middle of the screen for each player during network multiplayer.
@@ -907,6 +802,31 @@ namespace RTE {
 		// Disallow the use of some implicit methods.
 		UInputMan(const UInputMan &reference) = delete;
 		UInputMan & operator=(const UInputMan &rhs) = delete;
+
+#ifdef __unix__
+		int m_AllegroMousePreviousX; //!< Stored mouse x position for the allegro event handler.
+		int m_AllegroMousePreviousY; //!< Stored mouse y position for the allegro event handler.
+
+		/// <summary>
+		/// Necessary static handler method ensuring mouse inputs work well on Linux. Must be applied to _xwin_input_handler when manager is initialized.
+		/// </summary>
+		static void XWinInputHandlerOverride() { g_UInputMan.HandleAllegroMouseInput(); }
+
+		/// <summary>
+		/// Mouse input handler to circumvent the input drops that Allegro does regularly, by replacing and disabling the default warping behavior.
+		/// Motion events that are generated while the handler is working are offset such that the Allegro driver doesn't mess up the mickeys.
+		/// This also handles the centering warp for relative mouse motion. Might not run in the main thread, depending on how Allegro was built.
+		/// </summary>
+		void HandleAllegroMouseInput();
+
+		/// <summary>
+		/// Position the mouse on the screen in window coordinates. Generates MouseMotion events if the requested position is different from the actual mouse position.
+		/// Replaces position_mouse and sets the Allegro internal mouse position to the requested coordinates.
+		/// </summary>
+		/// <param name="x"> The x coordinate to warp to. </param>
+		/// <param name="y"> The y coordinate to warp to. </param>
+		void WarpMouse(int x, int y) const;
+#endif
 	};
 }
 #endif

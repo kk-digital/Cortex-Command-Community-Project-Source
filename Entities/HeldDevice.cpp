@@ -17,13 +17,16 @@
 #include "Arm.h"
 #include "AHuman.h"
 
-#include "GUI/GUI.h"
-#include "GUI/AllegroBitmap.h"
+#include "GameActivity.h"
 
+#include "GUI.h"
+#include "AllegroBitmap.h"
+
+#include "SettingsMan.h"
 
 namespace RTE {
 
-ConcreteClassInfo(HeldDevice, Attachable, 50)
+ConcreteClassInfo(HeldDevice, Attachable, 50);
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          Clear
@@ -45,11 +48,12 @@ void HeldDevice::Clear()
     m_MaxSharpLength = 0;
     m_Supported = false;
     m_SupportOffset.Reset();
+	m_SeenByPlayer.fill(false);
     m_IsUnPickupable = false;
     m_PickupableByPresetNames.clear();
     m_GripStrengthMultiplier = 1.0F;
     m_BlinkTimer.Reset();
-    m_PieSlices.clear();
+	m_BlinkTimer.SetSimTimeLimitMS(1000);
     m_Loudness = -1;
 
     // NOTE: This special override of a parent class member variable avoids needing an extra variable to avoid overwriting INI values.
@@ -149,9 +153,6 @@ int HeldDevice::Create(const HeldDevice &reference)
     m_Supported = reference.m_Supported;
     m_Loudness = reference.m_Loudness;
 
-    for (list<PieMenuGUI::Slice>::const_iterator itr = reference.m_PieSlices.begin(); itr != reference.m_PieSlices.end(); ++itr)
-        m_PieSlices.push_back(*itr);
-
     return 0;
 }
 
@@ -204,13 +205,6 @@ int HeldDevice::ReadProperty(const std::string_view &propName, Reader &reader)
         reader >> m_MaxSharpLength;
     else if (propName == "Loudness")
         reader >> m_Loudness;
-    else if (propName == "AddPieSlice")
-    {
-        PieMenuGUI::Slice newSlice;
-        reader >> newSlice;
-        m_PieSlices.push_back(newSlice);
-		PieMenuGUI::AddAvailableSlice(newSlice);
-    }
     else
         return Attachable::ReadProperty(propName, reader);
 
@@ -247,11 +241,6 @@ int HeldDevice::Save(Writer &writer) const
     writer << m_MaxSharpLength;
     writer.NewProperty("Loudness");
     writer << m_Loudness;
-    for (list<PieMenuGUI::Slice>::const_iterator itr = m_PieSlices.begin(); itr != m_PieSlices.end(); ++itr)
-    {
-        writer.NewProperty("AddPieSlice");
-        writer << *itr;
-    }
 
     return 0;
 }
@@ -281,8 +270,11 @@ void HeldDevice::Destroy(bool notInherited)
 
 Vector HeldDevice::GetStanceOffset() const
 {
-    if (m_SharpAim > 0)
-        return m_SharpStanceOffset.GetXFlipped(m_HFlipped);
+	if (m_SharpAim > 0) {
+		float rotAngleScalar = std::abs(std::sin(GetRootParent()->GetRotAngle()));
+		// Deviate the vertical axis towards regular StanceOffset based on the user's rotation so that sharp aiming doesn't look awkward when prone
+		return Vector(m_SharpStanceOffset.GetX(), m_SharpStanceOffset.GetY() * (1.0F - rotAngleScalar) + m_StanceOffset.GetY() * rotAngleScalar).GetXFlipped(m_HFlipped);
+	}
     else
         return m_StanceOffset.GetXFlipped(m_HFlipped);
 }
@@ -325,21 +317,6 @@ void HeldDevice::RemovePickupableByPresetName(const std::string &actorPresetName
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-//////////////////////////////////////////////////////////////////////////////////////////
-// Virtual method:  AddPieMenuSlices
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Adds all slices this needs on a pie menu.
-
-bool HeldDevice::AddPieMenuSlices(PieMenuGUI *pPieMenu)
-{
-    // Add the custom scripted options of this specific device
-    for (list<PieMenuGUI::Slice>::iterator itr = m_PieSlices.begin(); itr != m_PieSlices.end(); ++itr)
-        pPieMenu->AddSlice(*itr);
-
-    return false;
-}
-
-
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Virtual method:  CollideAtPoint
@@ -361,13 +338,7 @@ bool HeldDevice::CollideAtPoint(HitData &hd)
 
 void HeldDevice::Activate()
 {
-    if (!m_Activated)
-    {
-        m_ActivationTimer.Reset();
-        // Register alarming event!
-        if (m_Loudness > 0)
-            g_MovableMan.RegisterAlarmEvent(AlarmEvent(m_Pos, m_Team, m_Loudness));
-    }
+    if (!m_Activated) { m_ActivationTimer.Reset(); }
     m_Activated = true;
 }
 
@@ -412,8 +383,7 @@ bool HeldDevice::TransferJointImpulses(Vector &jointImpulses, float jointStiffne
     if (parentAsArm && parentAsArm->GetGripStrength() > 0 && jointStrengthValueToUse < 0) {
         jointStrengthValueToUse = parentAsArm->GetGripStrength() * m_GripStrengthMultiplier;
         if (m_Supported) {
-            const AHuman *rootParentAsAHuman = dynamic_cast<AHuman *>(GetRootParent());
-            if (rootParentAsAHuman != nullptr) { jointStrengthValueToUse += rootParentAsAHuman->GetBGArm() ? rootParentAsAHuman->GetBGArm()->GetGripStrength() * m_GripStrengthMultiplier : 0.0F; }
+            if (const AHuman *rootParentAsAHuman = dynamic_cast<AHuman *>(GetRootParent())) { jointStrengthValueToUse += rootParentAsAHuman->GetBGArm() ? rootParentAsAHuman->GetBGArm()->GetGripStrength() * m_GripStrengthMultiplier : 0.0F; }
         }
     }
     bool intact = Attachable::TransferJointImpulses(jointImpulses, jointStiffnessValueToUse, jointStrengthValueToUse, gibImpulseLimitValueToUse);
@@ -461,7 +431,7 @@ void HeldDevice::Update()
 
     if (m_FrameCount > 1)
     {
-        if (m_SpriteAnimMode == LOOPWHENMOVING && m_Activated)
+        if (m_SpriteAnimMode == LOOPWHENACTIVE && m_Activated)
         {
             float cycleTime = ((long)m_SpriteAnimTimer.GetElapsedSimTimeMS()) % m_SpriteAnimDuration;
             m_Frame = std::floor((cycleTime / (float)m_SpriteAnimDuration) * (float)m_FrameCount);
@@ -481,6 +451,8 @@ void HeldDevice::Update()
 //        m_aSprite->SetAngle(m_Rotation);
 //        m_aSprite->SetScale(m_Scale);
     }
+
+	if (m_BlinkTimer.IsPastSimTimeLimit()) { m_BlinkTimer.Reset(); }
 }
 
 
@@ -529,76 +501,82 @@ void HeldDevice::Draw(BITMAP *pTargetBitmap,
 // Description:     Draws this Actor's current graphical HUD overlay representation to a
 //                  BITMAP of choice.
 
-void HeldDevice::DrawHUD(BITMAP *pTargetBitmap, const Vector &targetPos, int whichScreen, bool playerControlled)
-{
-    if (!m_HUDVisible)
-        return;
+void HeldDevice::DrawHUD(BITMAP *pTargetBitmap, const Vector &targetPos, int whichScreen, bool playerControlled) {
+	if (!m_HUDVisible) {
+		return;
+	}
 
     Attachable::DrawHUD(pTargetBitmap, targetPos, whichScreen);
 
-    if (!m_Parent && !IsUnPickupable())
-    {
-        // Only draw if the team viewing this has seen the space where this is located
-        int viewingTeam = g_ActivityMan.GetActivity()->GetTeamOfPlayer(g_ActivityMan.GetActivity()->PlayerOfScreen(whichScreen));
-        if (viewingTeam != Activity::NoTeam)
-        {
-            if (g_SceneMan.IsUnseen(m_Pos.m_X, m_Pos.m_Y, viewingTeam))
-                return;
-        }
+	if (!IsUnPickupable()) {
+		if (m_Parent) {
+			m_SeenByPlayer.fill(false);
+			m_BlinkTimer.Reset();
+		} else {
+			// Only draw if the team viewing this has seen the space where this is located.
+			int viewingPlayer = g_ActivityMan.GetActivity()->PlayerOfScreen(whichScreen);
+			int viewingTeam = g_ActivityMan.GetActivity()->GetTeamOfPlayer(viewingPlayer);
+			if (viewingTeam == Activity::NoTeam || g_SceneMan.IsUnseen(m_Pos.GetFloorIntX(), m_Pos.GetFloorIntY(), viewingTeam)) {
+				return;
+			}
 
-        Vector drawPos = m_Pos - targetPos;
-        // Adjust the draw position to work if drawn to a target screen bitmap that is straddling a scene seam
-        if (!targetPos.IsZero())
-        {
-            // Spans vertical scene seam
-            int sceneWidth = g_SceneMan.GetSceneWidth();
-            if (g_SceneMan.SceneWrapsX() && pTargetBitmap->w < sceneWidth)
-            {
-                if ((targetPos.m_X < 0) && (m_Pos.m_X > (sceneWidth - pTargetBitmap->w)))
-                    drawPos.m_X -= sceneWidth;
-                else if (((targetPos.m_X + pTargetBitmap->w) > sceneWidth) && (m_Pos.m_X < pTargetBitmap->w))
-                    drawPos.m_X += sceneWidth;
-            }
-            // Spans horizontal scene seam
-            int sceneHeight = g_SceneMan.GetSceneHeight();
-            if (g_SceneMan.SceneWrapsY() && pTargetBitmap->h < sceneHeight)
-            {
-                if ((targetPos.m_Y < 0) && (m_Pos.m_Y > (sceneHeight - pTargetBitmap->h)))
-                    drawPos.m_Y -= sceneHeight;
-                else if (((targetPos.m_Y + pTargetBitmap->h) > sceneHeight) && (m_Pos.m_Y < pTargetBitmap->h))
-                    drawPos.m_Y += sceneHeight;
-            }
-        }
+			Vector drawPos = m_Pos - targetPos;
+			// Adjust the draw position to work if drawn to a target screen bitmap that is straddling a scene seam.
+			if (!targetPos.IsZero()) {
+				int sceneWidth = g_SceneMan.GetSceneWidth();
+				if (g_SceneMan.SceneWrapsX() && pTargetBitmap->w < sceneWidth) {
+					if ((targetPos.GetFloorIntX() < 0) && (m_Pos.GetFloorIntX() > (sceneWidth - pTargetBitmap->w))) {
+						drawPos.m_X -= static_cast<float>(sceneWidth);
+					} else if ((targetPos.GetFloorIntX() + pTargetBitmap->w > sceneWidth) && (m_Pos.GetFloorIntX() < pTargetBitmap->w)) {
+						drawPos.m_X += static_cast<float>(sceneWidth);
+					}
+				}
+				int sceneHeight = g_SceneMan.GetSceneHeight();
+				if (g_SceneMan.SceneWrapsY() && pTargetBitmap->h < sceneHeight) {
+					if ((targetPos.GetFloorIntY() < 0) && (m_Pos.GetFloorIntY() > (sceneHeight - pTargetBitmap->h))) {
+						drawPos.m_Y -= static_cast<float>(sceneHeight);
+					} else if ((targetPos.GetFloorIntY() + pTargetBitmap->h > sceneHeight) && (m_Pos.GetFloorIntY() < pTargetBitmap->h)) {
+						drawPos.m_Y += static_cast<float>(sceneHeight);
+					}
+				}
+			}
 
-        char str[64];
-        str[0] = 0;
-        GUIFont *pSymbolFont = g_FrameMan.GetLargeFont();
-        GUIFont *pTextFont = g_FrameMan.GetSmallFont();
-        if (pSymbolFont && pTextFont) {
-            AllegroBitmap pBitmapInt(pTargetBitmap);
-            if (m_BlinkTimer.GetElapsedSimTimeMS() < 300) {
-                str[0] = -42;
-                str[1] = 0;
-            }
-            else if (m_BlinkTimer.GetElapsedSimTimeMS() < 600) {
-                str[0] = -41;
-                str[1] = 0;
-            }
-            else if (m_BlinkTimer.GetElapsedSimTimeMS() < 900) {
-                str[0] = -40;
-                str[1] = 0;
-            }
-            else if (m_BlinkTimer.GetElapsedSimTimeMS() < 1200) {
-                str[0] = 0;
-            }
-            else
-                m_BlinkTimer.Reset();
+			GUIFont *pSymbolFont = g_FrameMan.GetLargeFont();
+			GUIFont *pTextFont = g_FrameMan.GetSmallFont();
+			if (pSymbolFont && pTextFont) {
+				const Activity *activity = g_ActivityMan.GetActivity();
+				float unheldItemDisplayRange = activity->GetActivityState() == Activity::ActivityState::Running ? g_SettingsMan.GetUnheldItemsHUDDisplayRange() : -1.0F;
+				if (g_SettingsMan.AlwaysDisplayUnheldItemsInStrategicMode()) {
+					const GameActivity *gameActivity = dynamic_cast<const GameActivity *>(activity);
+					if (gameActivity && gameActivity->GetViewState(viewingPlayer) == GameActivity::ViewState::ActorSelect) { unheldItemDisplayRange = -1.0F; }
+				}
+				// Note - to avoid item HUDs flickering in and out, we need to add a little leeway when hiding them if they're already displayed.
+				if (m_SeenByPlayer.at(viewingPlayer) && unheldItemDisplayRange > 0) { unheldItemDisplayRange += 3.0F; }
+				m_SeenByPlayer.at(viewingPlayer) = unheldItemDisplayRange < 0 || (unheldItemDisplayRange > 0 && g_SceneMan.ShortestDistance(m_Pos, g_SceneMan.GetScrollTarget(whichScreen), g_SceneMan.SceneWrapsX()).GetMagnitude() < unheldItemDisplayRange);
 
-            pSymbolFont->DrawAligned(&pBitmapInt, drawPos.m_X - 1, drawPos.m_Y - 20, str, GUIFont::Centre);
-            std::snprintf(str, sizeof(str), "%s", m_PresetName.c_str());
-            pTextFont->DrawAligned(&pBitmapInt, drawPos.m_X + 0, drawPos.m_Y - 29, str, GUIFont::Centre);
-        }
-    }
+				if (m_SeenByPlayer.at(viewingPlayer)) {
+					char pickupArrowString[64];
+					pickupArrowString[0] = 0;
+					if (m_BlinkTimer.GetElapsedSimTimeMS() < 250) {
+						pickupArrowString[0] = 0;
+					} else if (m_BlinkTimer.GetElapsedSimTimeMS() < 500) {
+						pickupArrowString[0] = -42;
+						pickupArrowString[1] = 0;
+					} else if (m_BlinkTimer.GetElapsedSimTimeMS() < 750) {
+						pickupArrowString[0] = -41;
+						pickupArrowString[1] = 0;
+					} else if (m_BlinkTimer.GetElapsedSimTimeMS() < 1000) {
+						pickupArrowString[0] = -40;
+						pickupArrowString[1] = 0;
+					}
+
+					AllegroBitmap targetAllegroBitmap(pTargetBitmap);
+					pSymbolFont->DrawAligned(&targetAllegroBitmap, drawPos.GetFloorIntX() - 1, drawPos.GetFloorIntY() - 20, pickupArrowString, GUIFont::Centre);
+					pTextFont->DrawAligned(&targetAllegroBitmap, drawPos.GetFloorIntX(), drawPos.GetFloorIntY() - 29, m_PresetName, GUIFont::Centre);
+				}
+			}
+		}
+	}
 }
 
 } // namespace RTE

@@ -34,8 +34,8 @@ class AEmitter;
 // Parent(s):       Actor.
 // Class history:   10/24/2007 ACrab created.
 
-class ACrab :
-	public Actor {
+class ACrab : public Actor {
+	friend struct EntityLuaBindings;
 
 
 	enum MovementState {
@@ -66,18 +66,19 @@ public:
 
 
 // Concrete allocation and cloning definitions
-	EntityAllocation(ACrab)
-		SerializableOverrideMethods
-		ClassInfoGetters
+	EntityAllocation(ACrab);
+	SerializableOverrideMethods;
+	ClassInfoGetters;
+	DefaultPieMenuNameGetter(HasObjectInGroup("Turrets") ? "Default Turret Pie Menu" : "Default Crab Pie Menu");
 
-		//////////////////////////////////////////////////////////////////////////////////////////
-		// Constructor:     ACrab
-		//////////////////////////////////////////////////////////////////////////////////////////
-		// Description:     Constructor method used to instantiate a ACrab object in system
-		//                  memory. Create() should be called before using the object.
-		// Arguments:       None.
+	//////////////////////////////////////////////////////////////////////////////////////////
+	// Constructor:     ACrab
+	//////////////////////////////////////////////////////////////////////////////////////////
+	// Description:     Constructor method used to instantiate a ACrab object in system
+	//                  memory. Create() should be called before using the object.
+	// Arguments:       None.
 
-		ACrab() { Clear(); }
+	ACrab() { Clear(); }
 
 
 	//////////////////////////////////////////////////////////////////////////////////////////
@@ -236,6 +237,7 @@ public:
 
 	float GetJetTimeTotal() const { return m_JetTimeTotal; }
 
+
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          SetJetTimeTotal
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -245,6 +247,7 @@ public:
 
 	void SetJetTimeTotal(float newValue) { m_JetTimeTotal = newValue; }
 
+
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          GetJetTimeLeft
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -253,6 +256,32 @@ public:
 // Return value:    The amount of time this' jetpack can still fire before running out.
 
 	float GetJetTimeLeft() const { return m_JetTimeLeft; }
+
+
+	/// <summary>
+	/// Gets the rate at which this ACrab's jetpack is replenished during downtime.
+	/// </summary>
+	/// <returns>The rate at which the jetpack is replenished.</returns>
+	float GetJetReplenishRate() const { return m_JetReplenishRate; }
+
+	/// <summary>
+	/// Sets the rate at which this ACrab's jetpack is replenished during downtime.
+	/// </summary>
+	/// <param name="newValue">The rate at which the jetpack is replenished.</param>
+	void SetJetReplenishRate(float newValue) { m_JetReplenishRate = newValue; }
+
+	/// <summary>
+	/// Gets the scalar ratio at which this jetpack's thrust angle follows the aim angle of the user.
+	/// </summary>
+	/// <returns>The ratio at which this jetpack follows the aim angle of the user.</returns>
+	float GetJetAngleRange() const { return m_JetAngleRange; }
+
+
+	/// <summary>
+	/// Sets the scalar ratio at which this jetpack's thrust angle follows the aim angle of the user.
+	/// </summary>
+	/// <param name="newValue">The ratio at which this jetpack follows the aim angle of the user.</param>
+	void SetJetAngleRange(float newValue) { m_JetAngleRange = newValue; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -268,27 +297,12 @@ public:
 
 	bool CollideAtPoint(HitData &hitData) override;
 
-
-//////////////////////////////////////////////////////////////////////////////////////////
-// Virtual method:  AddPieMenuSlices
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Adds all slices this needs on a pie menu.
-// Arguments:       The pie menu to add slices to. Ownership is NOT transferred!
-// Return value:    Whether any slices were added.
-
-	bool AddPieMenuSlices(PieMenuGUI *pPieMenu) override;
-
-
-//////////////////////////////////////////////////////////////////////////////////////////
-// Virtual method:  HandlePieCommand
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Handles and does whatever a specific activated Pie Menu slice does to
-//                  this.
-// Arguments:       The pie menu command to handle. See the PieSliceIndex enum.
-// Return value:    Whetehr any slice was handled. False if no matching slice handler was
-//                  found, or there was no slice currently activated by the pie menu.
-
-	bool HandlePieCommand(int pieSliceIndex) override;
+	/// <summary>
+	/// Tries to handle the activated PieSlice in this object's PieMenu, if there is one, based on its SliceType.
+	/// </summary>
+	/// <param name="pieSliceType">The SliceType of the PieSlice being handled.</param>
+	/// <returns>Whether or not the activated PieSlice SliceType was able to be handled.</returns>
+	bool HandlePieCommand(PieSlice::SliceType pieSliceType) override;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -331,6 +345,12 @@ public:
 
 	bool FirearmNeedsReload() const;
 
+	/// <summary>
+	/// Gets whether or not all of this ACrab's Turret's HDFirearms are full.
+	/// </summary>
+	/// <returns>Whether or not all of this ACrab's Turret's HDFirearms are full. Will return true if there is no Turret or no HDFirearms.</returns>
+	bool FirearmsAreFull() const;
+
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:  FirearmIsSemiAuto
@@ -354,13 +374,13 @@ int FirearmActivationDelay() const;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
-// Method:  ReloadFirearm
+// Method:  ReloadFirearms
 //////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Reloads the currently held firearm, if any.
+// Description:     Reloads the currently held firearms, if any.
 // Arguments:       None.
 // Return value:    None.
 
-	void ReloadFirearm();
+	void ReloadFirearms();
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -399,6 +419,13 @@ int FirearmActivationDelay() const;
 // Return value:    A pointer to the MO seen while looking.
 
 	MovableObject * LookForMOs(float FOVSpread = 45, unsigned char ignoreMaterial = 0, bool ignoreAllTerrain = false);
+
+
+	/// <summary>
+	/// Gets the GUI representation of this ACrab, only defaulting to its Turret or body if no GraphicalIcon has been defined.
+	/// </summary>
+	/// <returns>The graphical representation of this ACrab as a BITMAP.</returns>
+	BITMAP * GetGraphicalIcon() const override;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -495,7 +522,7 @@ int FirearmActivationDelay() const;
 // Method:  GetLimbPathPushForce
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Gets the default force that a limb traveling walking LimbPath can push against
-//                  stuff in the scene with. 
+//                  stuff in the scene with.
 // Arguments:       None.
 // Return value:    The default set force maximum, in kg * m/s^2.
 
@@ -506,12 +533,24 @@ int FirearmActivationDelay() const;
 // Method:  SetLimbPathPushForce
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Sets the default force that a limb traveling walking LimbPath can push against
-//                  stuff in the scene with. 
+//                  stuff in the scene with.
 // Arguments:       The default set force maximum, in kg * m/s^2.
 // Return value:    None
 
 	void SetLimbPathPushForce(float force);
 
+
+	/// <summary>
+	/// Gets this ACrab's stride sound. Ownership is NOT transferred!
+	/// </summary>
+	/// <returns>The SoundContainer for this ACrab's stride sound.</returns>
+	SoundContainer * GetStrideSound() const { return m_StrideSound; }
+
+	/// <summary>
+	/// Sets this ACrab's stride sound. Ownership IS transferred!
+	/// </summary>
+	/// <param name="newSound">The new SoundContainer for this ACrab's stride sound.</param>
+	void SetStrideSound(SoundContainer *newSound) { m_StrideSound = newSound; }
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Protected member variable and method declarations
@@ -543,13 +582,16 @@ protected:
 	AtomGroup *m_pRBGFootGroup;
 	AtomGroup *m_BackupRBGFootGroup;
 	// The sound of the actor taking a step (think robot servo)
-	SoundContainer m_StrideSound;
+	SoundContainer *m_StrideSound;
 	// Jetpack booster.
 	AEmitter *m_pJetpack;
 	// The max total time, in ms, that the jetpack can be used without pause
 	float m_JetTimeTotal;
 	// How much time left the jetpack can go, in ms
 	float m_JetTimeLeft;
+	float m_JetReplenishRate; //!< A multiplier affecting how fast the jetpack fuel will replenish when not in use. 1 means that jet time replenishes at 2x speed in relation to depletion.
+	// Ratio at which the jetpack angle follows aim angle
+	float m_JetAngleRange;
 	// Blink timer
 	Timer m_IconBlinkTimer;
 	// Current movement state.
@@ -637,6 +679,15 @@ protected:
 	Timer m_PatrolTimer;
 	// Timer for how long to be firing the jetpack in a direction
 	Timer m_JumpTimer;
+
+#pragma region Event Handling
+	/// <summary>
+	/// Event listener to be run while this ACrab's PieMenu is opened.
+	/// </summary>
+	/// <param name="pieMenu">The PieMenu this event listener needs to listen to. This will always be this' m_PieMenu and only exists for std::bind.</param>
+	/// <returns>An error return value signaling success or any particular failure. Anything below 0 is an error signal.</returns>
+	int WhilePieMenuOpenListener(const PieMenu *pieMenu) override;
+#pragma endregion
 
 
 //////////////////////////////////////////////////////////////////////////////////////////

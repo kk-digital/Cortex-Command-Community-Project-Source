@@ -29,29 +29,25 @@
 #include "Scene.h"
 #include "DataModule.h"
 
-#include "GUI/GUI.h"
-#include "GUI/GUIFont.h"
-#include "GUI/AllegroScreen.h"
-#include "GUI/AllegroBitmap.h"
-#include "GUI/AllegroInput.h"
-#include "GUI/GUIControlManager.h"
-#include "GUI/GUICollectionBox.h"
-#include "GUI/GUITab.h"
-#include "GUI/GUIListBox.h"
-#include "GUI/GUITextBox.h"
-#include "GUI/GUIButton.h"
-#include "GUI/GUILabel.h"
-#include "GUI/GUIComboBox.h"
+#include "GUI.h"
+#include "GUIFont.h"
+#include "AllegroScreen.h"
+#include "AllegroBitmap.h"
+#include "AllegroInput.h"
+#include "GUIControlManager.h"
+#include "GUICollectionBox.h"
+#include "GUITab.h"
+#include "GUIListBox.h"
+#include "GUITextBox.h"
+#include "GUIButton.h"
+#include "GUILabel.h"
+#include "GUIComboBox.h"
 
 #include "SceneEditorGUI.h"
-#include "PieMenuGUI.h"
-#include "GABaseDefense.h"
-
-extern bool g_ResetActivity;
 
 namespace RTE {
 
-ConcreteClassInfo(BaseEditor, Activity, 0)
+ConcreteClassInfo(BaseEditor, Activity, 0);
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -210,7 +206,7 @@ int BaseEditor::Start()
 //    }
 
     // Kill off any actors not of this player's team.. they're not supposed to be here
-    g_MovableMan.KillAllActors(GetTeamOfPlayer(editingPlayer));
+    g_MovableMan.KillAllEnemyActors(GetTeamOfPlayer(editingPlayer));
 
     //////////////////////////////////////////////
     // Allocate and (re)create the Editor GUI
@@ -325,7 +321,7 @@ void BaseEditor::Update()
 
     // Get any mode change commands that the user gave the Editor GUI
     // Done with editing for now; save and return to campaign screen
-    if (m_pEditorGUI->GetActivatedPieSlice() == PieMenuGUI::PSI_DONE)
+    if (m_pEditorGUI->GetActivatedPieSlice() == PieSlice::SliceType::EditorDone)
     {
         m_pEditorGUI->SetEditorGUIMode(SceneEditorGUI::INACTIVE);
 

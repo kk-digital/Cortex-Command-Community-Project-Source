@@ -15,8 +15,13 @@ namespace RTE {
 
 	public:
 
-		SerializableClassNameGetter
-		SerializableOverrideMethods
+		SerializableClassNameGetter;
+		SerializableOverrideMethods;
+
+		/// <summary>
+		/// Different types of logic for the Gib to use when applying velocity to its GibParticles.
+		/// </summary>
+		enum class SpreadMode { SpreadRandom, SpreadEven, SpreadSpiral };
 
 #pragma region Creation
 		/// <summary>
@@ -41,7 +46,6 @@ namespace RTE {
 		/// <summary>
 		/// Destroys and resets (through Clear()) the Gib object.
 		/// </summary>
-		/// <param name="notInherited">Whether to only destroy the members defined in this derived class, or to destroy all inherited members also.</param>
 		void Destroy() { Clear(); }
 #pragma endregion
 
@@ -94,6 +98,18 @@ namespace RTE {
 		/// </summary>
 		/// <returns>Whether this Gib's GibParticles should inherit the velocity of the gibbing parent.</returns>
 		bool InheritsVelocity() const { return m_InheritsVel; }
+
+		/// <summary>
+		/// Gets whether this Gib's GibParticles should ignore hits with the team of the gibbing parent.
+		/// </summary>
+		/// <returns>Whether this Gib's GibParticles should ignore hits with the team of the gibbing parent.</returns>
+		bool IgnoresTeamHits() const { return m_IgnoresTeamHits; }
+
+		/// <summary>
+		/// Gets this Gib's spread mode, which determines how velocity angles are applied to the GibParticles. 
+		/// </summary>
+		/// <returns>The spread mode of this Gib.</returns>
+		SpreadMode GetSpreadMode() const { return m_SpreadMode; }
 #pragma endregion
 
 	protected:
@@ -106,6 +122,8 @@ namespace RTE {
 		float m_MaxVelocity; //!< The maximum velocity a GibParticle object can have when spawned.
 		float m_LifeVariation; //!< The per-Gib variation in Lifetime, in percentage of the existing Lifetime of the gib.
 		bool m_InheritsVel; //!< Whether this Gib should inherit the velocity of the exploding parent or not.
+		bool m_IgnoresTeamHits; //!< Whether this Gib should ignore hits with the team of the exploding parent or not.
+		SpreadMode m_SpreadMode; //!< Determines what kind of logic is used when applying velocity to the GibParticle objects.
 
 	private:
 

@@ -40,9 +40,7 @@ enum Speed
 // Parent(s):       Entity.
 // Class history:   05/25/2001 LimbPath created.
 
-class LimbPath:
-    public Entity
-{
+class LimbPath : public Entity {
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -52,9 +50,9 @@ public:
 
 
 // Concrete allocation and cloning definitions
-EntityAllocation(LimbPath)
-SerializableOverrideMethods
-ClassInfoGetters
+EntityAllocation(LimbPath);
+SerializableOverrideMethods;
+ClassInfoGetters;
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Constructor:     LimbPath
@@ -449,15 +447,6 @@ ClassInfoGetters
     void SetHFlip(bool hflipped)
     {
         m_HFlipped = hflipped;
-/*
-        if (m_HFlipped != hflipped) {
-            // Gotta flip before restart.
-            m_HFlipped = hflipped;
-            Restart();
-        }
-        else
-            m_HFlipped = hflipped;
-*/
         m_Rotation.SetXFlipped(m_HFlipped);
     }
 

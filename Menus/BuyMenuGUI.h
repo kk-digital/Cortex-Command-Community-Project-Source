@@ -203,14 +203,12 @@ public:
 
 	int GetMetaPlayer() const { return m_MetaPlayer; }
 
-//////////////////////////////////////////////////////////////////////////////////////////
-// Method:          SetNativeTechModule
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Sets which DataModule ID should be treated as the native tech of the
-//                  user of this menu.
-// Arguments:       The module ID to set as the native one. 0 means everything is native.
-// Return value:    None.
 
+    /// <summary>
+    /// Sets which DataModule ID should be treated as the native tech of the user of this menu.
+	/// This will also apply the DataModule's faction BuyMenu theme, if applicable.
+    /// </summary>
+	/// <param name="whichModule">The module ID to set as the native one. 0 means everything is native.</param>
     void SetNativeTechModule(int whichModule);
 
 
@@ -299,14 +297,11 @@ public:
     float GetTotalOrderCost();
 
 
-//////////////////////////////////////////////////////////////////////////////////////////
-// Method:          GetTotalOrderMass
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Return teh total mass of everything listed in the order box.
-// Arguments:       None.
-// Return value:    The total mass in kg.
-
-	float GetTotalOrderMass();
+	/// <summary>
+	/// Return the total mass of all items listed in the order box.
+	/// </summary>
+	/// <returns>The total mass (in kg) of the BuyMenu's cart.</returns>
+	float GetTotalOrderMass() const;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -326,7 +321,13 @@ public:
 // Arguments:       None.
 // Return value:    The total number of passengers.
 
-	int GetTotalOrderPassengers();
+	int GetTotalOrderPassengers() const;
+
+    /// <summary>
+    /// Enable or disable the equipment selection mode for this BuyMenuGUI.
+    /// </summary>
+	/// <param name="enabled">Whether or not equipment selection mode should be enabled.</param>
+    void EnableEquipmentSelection(bool enabled);
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -393,7 +394,7 @@ public:
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:			AddAllowedItem
 //////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Adds an item to the list of allowed items. 
+// Description:     Adds an item to the list of allowed items.
 //					If the list is not empty then everything not in the list is removed from the buy menu
 //					Items will be removed from the buy menu when it's called, category changed or after a ForceRefresh().
 // Arguments:       Full preset name to add.
@@ -404,7 +405,7 @@ public:
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:			RemoveAllowedItem
 //////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Removes an item from the list of allowed items. 
+// Description:     Removes an item from the list of allowed items.
 // Arguments:       Full preset name to remove.
 // Return value:    None.
 
@@ -440,7 +441,7 @@ public:
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:			RemoveAlwaysAllowedItem
 //////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Removes an item from the list of always allowed items. 
+// Description:     Removes an item from the list of always allowed items.
 // Arguments:       Full preset name to remove.
 // Return value:    None.
 
@@ -469,7 +470,7 @@ public:
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:			AddProhibitedItem
 //////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Adds an item prohibited to buy from the buy menu. 
+// Description:     Adds an item prohibited to buy from the buy menu.
 //					The item will be removed from the buy menu when it's called, category changed or after a ForceRefresh().
 // Arguments:       Full preset name to add.
 // Return value:    None.
@@ -519,7 +520,7 @@ public:
 // Arguments:       None.
 // Return value:    None.
 
-	void ClearCartList(); 
+	void ClearCartList();
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:			LoadDefaultLoadoutToCart
@@ -562,7 +563,7 @@ public:
 // Method:			GetOwnedItemsAmount
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Returns the amount of specified items owned in this buy menu
-// Arguments:       Full preset name of item. 
+// Arguments:       Full preset name of item.
 // Return value:    Amount of owned items.
 
 	int GetOwnedItemsAmount(std::string presetName) { if (m_OwnedItems.find(presetName) != m_OwnedItems.end()) return m_OwnedItems[presetName]; else return 0; };
@@ -571,28 +572,24 @@ public:
 // Method:			CommitPurchase
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Deducts 1 piece of owned item and return true if purchase can be made or false if the item is out of stock.
-// Arguments:       Full preset name of item. 
+// Arguments:       Full preset name of item.
 // Return value:    Whether the purchase can be conducted or the item is out of stock.
 
 	bool CommitPurchase(string presetName);
 
-//////////////////////////////////////////////////////////////////////////////////////////
-// Method:			SetHeaderImage
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Changes the header image to the one specified in path
-// Arguments:       Path to image to set as header.
-// Return value:    None.
+#pragma region Faction Theme Handling
+	/// <summary>
+	/// Changes the banner image to the one specified. If none is specified, resets it to the default banner image.
+	/// </summary>
+	/// <param name="imagePath">Path to image to set as banner.</param>
+	void SetBannerImage(const std::string &imagePath);
 
-	void SetHeaderImage(string path);
-
-//////////////////////////////////////////////////////////////////////////////////////////
-// Method:			SetLogoImage
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Changes the logo image to the one specified in path
-// Arguments:       Path to image to set as logo.
-// Return value:    None.
-
-	void SetLogoImage(string path);
+	/// <summary>
+	/// Changes the logo image to the one specified. If none is specified, resets it to the default logo image.
+	/// </summary>
+	/// <param name="imagePath">Path to image to set as logo.</param>
+	void SetLogoImage(const std::string &imagePath);
+#pragma endregion
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Protected member variable and method declarations
@@ -659,11 +656,11 @@ protected:
 // Method:          UpdateTotalMassLabel
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Updates the text of the specified label to reflect the total mass of
-//                  all the items in teh order box.
+//                  all the items in the order box.
 // Arguments:       Craft to read MaxMass from. Label to update.
 // Return value:    None.
 
-	void UpdateTotalMassLabel(const ACraft * pCraft, GUILabel * pLabel);
+	void UpdateTotalMassLabel(const ACraft * pCraft, GUILabel * pLabel) const;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -674,7 +671,7 @@ protected:
 // Arguments:       Craft to read MaxPassengers from. Label to update.
 // Return value:    None.
 
-	void UpdateTotalPassengersLabel(const ACraft * pCraft, GUILabel * pLabel);
+	void UpdateTotalPassengersLabel(const ACraft * pCraft, GUILabel * pLabel) const;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -770,14 +767,26 @@ protected:
     // Measures the interval between input repeats
     Timer m_RepeatTimer;
 
+    bool m_SelectingEquipment; //!< Whether or not the menu is in equipment mode.
+    MenuCategory m_LastVisitedEquipmentTab; //!< The last tab visited while in equipment mode.
+    MenuCategory m_LastVisitedMainTab; //!< The last tab visited while not in equipment mode.
+    int m_LastEquipmentScrollPosition; //!< The last scroll position while in equipment mode.
+    int m_LastMainScrollPosition; //!< The last scroll position while not in equipment mode.
+    MenuCategory m_FirstMainTab; //!< The first enabled tab when not in equipment mode.
+    MenuCategory m_LastMainTab; //!< The last enabled tab when not in equipment mode.
+    MenuCategory m_FirstEquipmentTab; //!< The first enabled tab when in equipment mode.
+    MenuCategory m_LastEquipmentTab; //!< The last enabled tab when in equipment mode.
+
     // Collection box of the buy GUIs
     GUICollectionBox *m_pParentBox;
     // Collection box of the buy popups that contain information about items
     GUICollectionBox *m_pPopupBox;
     // Label displaying the item popup description
     GUILabel *m_pPopupText;
+    // Top banner
+    GUICollectionBox *m_Banner;
     // Logo label that disappears when the sets category is selected
-    GUICollectionBox *m_pLogo;
+    GUICollectionBox *m_Logo;
     // All the radio buttons for the different shop categories
     GUITab *m_pCategoryTabs[CATEGORYCOUNT];
     // The Listbox which lists all the shop's items in the currently selected category
@@ -845,6 +854,14 @@ protected:
 // Private member variable and method declarations
 
 private:
+
+	static const std::string c_DefaultBannerImagePath; //!< Path to the default banner image.
+	static const std::string c_DefaultLogoImagePath; //!< Path to the default logo image.
+
+    /// <summary>
+    /// Refresh tab disabled states, so tabs get properly enabled/disabled based on whether or not equipment selection mode is enabled.
+    /// </summary>
+    void RefreshTabDisabledStates();
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          Clear

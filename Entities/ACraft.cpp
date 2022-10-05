@@ -19,17 +19,16 @@
 #include "AEmitter.h"
 #include "HDFirearm.h"
 #include "Controller.h"
-#include "PieMenuGUI.h"
 #include "SceneMan.h"
 #include "Scene.h"
 #include "SettingsMan.h"
 
-#include "GUI/GUI.h"
-#include "GUI/AllegroBitmap.h"
+#include "GUI.h"
+#include "AllegroBitmap.h"
 
 namespace RTE {
 
-AbstractClassInfo(ACraft, Actor)
+AbstractClassInfo(ACraft, Actor);
 const string ACraft::Exit::c_ClassName = "Exit";
 
 bool ACraft::s_CrabBombInEffect = false;
@@ -263,8 +262,9 @@ void ACraft::Clear()
     m_HatchState = CLOSED;
     m_HatchTimer.Reset();
     m_HatchDelay = 0;
-    m_HatchOpenSound.Reset();
-    m_NewInventory.clear();
+    m_HatchOpenSound = nullptr;
+    m_HatchCloseSound = nullptr;
+    m_CollectedInventory.clear();
     m_Exits.clear();
     m_CurrentExit = m_Exits.begin();
     m_ExitInterval = 1000;
@@ -274,7 +274,7 @@ void ACraft::Clear()
     m_LandingCraft = true;
     m_FlippedTimer.Reset();
     m_CrashTimer.Reset();
-    m_CrashSound.Reset();
+    m_CrashSound = nullptr;
 
     m_DeliveryState = FALL;
     m_AltitudeMoveState = HOVER;
@@ -282,6 +282,8 @@ void ACraft::Clear()
     m_MaxPassengers = -1;
 
 	m_DeliveryDelayMultiplier = 1.0;
+	m_ScuttleIfFlippedTime = 4000;
+	m_ScuttleOnDeath = true;
 }
 
 
@@ -314,16 +316,21 @@ int ACraft::Create(const ACraft &reference)
     m_MoveState = reference.m_MoveState;
     m_HatchState = reference.m_HatchState;
     m_HatchDelay = reference.m_HatchDelay;
-    m_HatchOpenSound = reference.m_HatchOpenSound;
-    for (deque<MovableObject *>::const_iterator niItr = reference.m_NewInventory.begin(); niItr != reference.m_NewInventory.end(); ++niItr)
-        m_NewInventory.push_back(dynamic_cast<MovableObject *>((*niItr)->Clone()));
+	if (reference.m_HatchOpenSound) { m_HatchOpenSound = dynamic_cast<SoundContainer *>(reference.m_HatchOpenSound->Clone()); }
+	if (reference.m_HatchCloseSound) {
+		m_HatchCloseSound = dynamic_cast<SoundContainer *>(reference.m_HatchCloseSound->Clone());
+	} else if (reference.m_HatchOpenSound) {
+		m_HatchCloseSound = dynamic_cast<SoundContainer *>(reference.m_HatchOpenSound->Clone());
+	}
+	for (deque<MovableObject *>::const_iterator niItr = reference.m_CollectedInventory.begin(); niItr != reference.m_CollectedInventory.end(); ++niItr)
+        m_CollectedInventory.push_back(dynamic_cast<MovableObject *>((*niItr)->Clone()));
     for (list<Exit>::const_iterator eItr = reference.m_Exits.begin(); eItr != reference.m_Exits.end(); ++eItr)
         m_Exits.push_back(*eItr);
     m_CurrentExit = m_Exits.begin();
     m_ExitInterval = reference.m_ExitInterval;
     m_HasDelivered = reference.m_HasDelivered;
     m_LandingCraft = reference.m_LandingCraft;
-    m_CrashSound = reference.m_CrashSound;
+	if (reference.m_CrashSound) { m_CrashSound = dynamic_cast<SoundContainer *>(reference.m_CrashSound->Clone()); }
 
     m_DeliveryState = reference.m_DeliveryState;
     m_AltitudeMoveState = reference.m_AltitudeMoveState;
@@ -331,6 +338,8 @@ int ACraft::Create(const ACraft &reference)
     m_MaxPassengers = reference.m_MaxPassengers;
 
 	m_DeliveryDelayMultiplier = reference.m_DeliveryDelayMultiplier;
+	m_ScuttleIfFlippedTime = reference.m_ScuttleIfFlippedTime;
+	m_ScuttleOnDeath = reference.m_ScuttleOnDeath;
 
     return 0;
 }
@@ -348,11 +357,16 @@ int ACraft::ReadProperty(const std::string_view &propName, Reader &reader)
 {
     if (propName == "HatchDelay")
         reader >> m_HatchDelay;
-    else if (propName == "HatchOpenSound")
-        reader >> m_HatchOpenSound;
-    else if (propName == "CrashSound")
-        reader >> m_CrashSound;
-    else if (propName == "AddExit")
+	else if (propName == "HatchOpenSound") {
+		m_HatchOpenSound = new SoundContainer;
+		reader >> m_HatchOpenSound;
+	} else if (propName == "HatchCloseSound") {
+		m_HatchCloseSound = new SoundContainer;
+		reader >> m_HatchCloseSound;
+	} else if (propName == "CrashSound") {
+		m_CrashSound = new SoundContainer;
+		reader >> m_CrashSound;
+	} else if (propName == "AddExit")
     {
         Exit exit;
         reader >> exit;
@@ -366,6 +380,10 @@ int ACraft::ReadProperty(const std::string_view &propName, Reader &reader)
         reader >> m_LandingCraft;
     else if (propName == "MaxPassengers")
         reader >> m_MaxPassengers;
+	else if (propName == "ScuttleIfFlippedTime")
+		reader >> m_ScuttleIfFlippedTime;
+	else if (propName == "ScuttleOnDeath")
+		reader >> m_ScuttleOnDeath;
     else
         return Actor::ReadProperty(propName, reader);
 
@@ -387,6 +405,8 @@ int ACraft::Save(Writer &writer) const
     writer << m_HatchDelay;
     writer.NewProperty("HatchOpenSound");
     writer << m_HatchOpenSound;
+    writer.NewProperty("HatchCloseSound");
+    writer << m_HatchCloseSound;
     for (list<Exit>::const_iterator itr = m_Exits.begin(); itr != m_Exits.end(); ++itr)
     {
         writer.NewProperty("AddExit");
@@ -404,6 +424,10 @@ int ACraft::Save(Writer &writer) const
 
     writer.NewProperty("MaxPassengers");
     writer << m_MaxPassengers;
+	writer.NewProperty("ScuttleIfFlippedTime");
+	writer << m_ScuttleIfFlippedTime;
+	writer.NewProperty("ScuttleOnDeath");
+	writer << m_ScuttleOnDeath;
 
     return 0;
 }
@@ -416,7 +440,9 @@ int ACraft::Save(Writer &writer) const
 
 void ACraft::Destroy(bool notInherited)
 {
-//    g_MovableMan.RemoveEntityPreset(this);
+	delete m_HatchOpenSound;
+	delete m_HatchCloseSound;
+	delete m_CrashSound;
 
     if (!notInherited)
         Actor::Destroy();
@@ -435,7 +461,7 @@ float ACraft::GetTotalValue(int nativeModule, float foreignMult, float nativeMul
     float totalValue = Actor::GetTotalValue(nativeModule, foreignMult, nativeMult);
 
     MOSprite *pItem = 0;
-    for (deque<MovableObject *>::const_iterator itr = m_NewInventory.begin(); itr != m_NewInventory.end(); ++itr)
+    for (deque<MovableObject *>::const_iterator itr = m_CollectedInventory.begin(); itr != m_CollectedInventory.end(); ++itr)
     {
         pItem = dynamic_cast<MOSprite *>(*itr);
         if (pItem)
@@ -457,7 +483,7 @@ bool ACraft::HasObject(string objectName) const
     if (Actor::HasObject(objectName))
         return true;
 
-    for (deque<MovableObject *>::const_iterator itr = m_NewInventory.begin(); itr != m_NewInventory.end(); ++itr)
+    for (deque<MovableObject *>::const_iterator itr = m_CollectedInventory.begin(); itr != m_CollectedInventory.end(); ++itr)
     {
         if ((*itr) && (*itr)->HasObject(objectName))
             return true;
@@ -479,7 +505,7 @@ bool ACraft::HasObjectInGroup(std::string groupName) const
     if (Actor::HasObjectInGroup(groupName))
         return true;
 
-    for (deque<MovableObject *>::const_iterator itr = m_NewInventory.begin(); itr != m_NewInventory.end(); ++itr)
+    for (deque<MovableObject *>::const_iterator itr = m_CollectedInventory.begin(); itr != m_CollectedInventory.end(); ++itr)
     {
         if ((*itr) && (*itr)->HasObjectInGroup(groupName))
             return true;
@@ -500,7 +526,7 @@ void ACraft::SetTeam(int team)
 
     // Also set all actors in the new inventory
     Actor *pActor = 0;
-    for (deque<MovableObject *>::iterator itr = m_NewInventory.begin(); itr != m_NewInventory.end(); ++itr)
+    for (deque<MovableObject *>::iterator itr = m_CollectedInventory.begin(); itr != m_CollectedInventory.end(); ++itr)
     {
         pActor = dynamic_cast<Actor *>(*itr);
         if (pActor)
@@ -508,65 +534,31 @@ void ACraft::SetTeam(int team)
     }
 }
 
-//////////////////////////////////////////////////////////////////////////////////////////
-// Virtual method:  AddPieMenuSlices
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Adds all slices this needs on a pie menu.
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool ACraft::AddPieMenuSlices(PieMenuGUI *pPieMenu)
-{
-	PieMenuGUI::Slice deliverSlice("Deliver Cargo", PieMenuGUI::PSI_DELIVER, PieMenuGUI::Slice::RIGHT);
-    pPieMenu->AddSlice(deliverSlice);
-    PieMenuGUI::Slice returnSlice("Return", PieMenuGUI::PSI_RETURN, PieMenuGUI::Slice::UP);
-	pPieMenu->AddSlice(returnSlice);
-	
-	PieMenuGUI::Slice staySlice("Stay", PieMenuGUI::PSI_STAY, PieMenuGUI::Slice::DOWN);
-    pPieMenu->AddSlice(staySlice);
-    PieMenuGUI::Slice scuttleSlice("Scuttle!", PieMenuGUI::PSI_SCUTTLE, PieMenuGUI::Slice::LEFT);
-	pPieMenu->AddSlice(scuttleSlice);
-
-    Actor::AddPieMenuSlices(pPieMenu);
-
-    return false;
-}
-
-
-//////////////////////////////////////////////////////////////////////////////////////////
-// Virtual method:  HandlePieCommand
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Handles and does whatever a specific activated Pie Menu slice does to
-//                  this.
-
-bool ACraft::HandlePieCommand(int pieSliceIndex)
-{
-    if (pieSliceIndex != PieMenuGUI::PSI_NONE)
-    {
-        if (pieSliceIndex == PieMenuGUI::PSI_DELIVER)
-        {
+bool ACraft::HandlePieCommand(PieSlice::SliceType pieSliceIndex) {
+    if (pieSliceIndex != PieSlice::SliceType::NoType) {
+        if (pieSliceIndex == PieSlice::SliceType::Deliver) {
             m_AIMode = AIMODE_DELIVER;
             m_DeliveryState = FALL;
             m_HasDelivered = false;
-        }
-        else if (pieSliceIndex == PieMenuGUI::PSI_RETURN)
-        {
+        } else if (pieSliceIndex == PieSlice::SliceType::Return) {
             m_AIMode = AIMODE_RETURN;
             m_DeliveryState = LAUNCH;
-        }
-        else if (pieSliceIndex == PieMenuGUI::PSI_STAY)
-        {
+        } else if (pieSliceIndex == PieSlice::SliceType::Stay) {
             m_AIMode = AIMODE_STAY;
             m_DeliveryState = FALL;
-        }
-        else if (pieSliceIndex == PieMenuGUI::PSI_SCUTTLE)
+        } else if (pieSliceIndex == PieSlice::SliceType::Scuttle) {
             m_AIMode = AIMODE_SCUTTLE;
-        else
+        } else {
             return Actor::HandlePieCommand(pieSliceIndex);
-
+        }
         m_StuckTimer.Reset();
     }
-
     return false;
 }
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -584,7 +576,7 @@ void ACraft::OpenHatch()
         m_HatchTimer.Reset();
 
         // PSCHHT
-        m_HatchOpenSound.Play(m_Pos);
+		if (m_HatchOpenSound) { m_HatchOpenSound->Play(m_Pos); }
     }
 }
 
@@ -604,15 +596,15 @@ void ACraft::CloseHatch()
         m_HatchTimer.Reset();
 
         // When closing, move all newly added inventory to the regular inventory list so it'll be ejected next time doors open
-        for (deque<MovableObject *>::const_iterator niItr = m_NewInventory.begin(); niItr != m_NewInventory.end(); ++niItr)
+        for (deque<MovableObject *>::const_iterator niItr = m_CollectedInventory.begin(); niItr != m_CollectedInventory.end(); ++niItr)
             m_Inventory.push_back(*niItr);
 
         // Clear the new inventory hold, it's all been moved to the regular inventory
-        m_NewInventory.clear();
+        m_CollectedInventory.clear();
 
         // PSCHHT
-        m_HatchOpenSound.Play(m_Pos);
-    }
+		if (m_HatchCloseSound) { m_HatchCloseSound->Play(m_Pos); }
+	}
 }
 
 
@@ -630,7 +622,7 @@ void ACraft::AddInventoryItem(MovableObject *pItemToAdd)
         // If the hatch is open, then only add the new item to the intermediate new inventory list
         // so that it doesn't get chucked out right away again
         if (m_HatchState == OPEN || m_HatchState == OPENING)
-            m_NewInventory.push_back(pItemToAdd);
+            m_CollectedInventory.push_back(pItemToAdd);
         // If doors are already closed, it's safe to put the item directly the regular inventory
         else
             m_Inventory.push_back(pItemToAdd);
@@ -740,7 +732,7 @@ void ACraft::DropAllInventory()
                 // Avoid this immediate collisions with it
                 SetWhichMOToNotHit(*exitee, 0.5f);
                 // Add to scene
-                g_MovableMan.AddItem(*exitee);
+                g_MovableMan.AddMO(*exitee);
                 // Remove passenger from inventory
                 m_Inventory.erase(exitee);
                 // Reset timer interval and quit until next one is due
@@ -754,9 +746,8 @@ void ACraft::DropAllInventory()
         {
             m_HasDelivered = true;
 
-            // Kill craft if it is lying down.
-            if (fabs(m_Rotation.GetRadAngle()) > c_QuarterPI && m_Status != DYING)
-            {
+			// Kill craft if it is lying down.
+			if (std::fabs(m_Rotation.GetRadAngle()) > c_HalfPI && m_Status != DYING) {
                 m_Status = DYING;
                 m_DeathTmr.Reset();
             }
@@ -770,14 +761,25 @@ void ACraft::DropAllInventory()
     {
         if (m_HatchState != OPENING)
         {
-            m_HatchOpenSound.Play(m_Pos);
-            g_MovableMan.RegisterAlarmEvent(AlarmEvent(m_Pos, m_Team, 0.4));
+			if (m_HatchOpenSound) { m_HatchOpenSound->Play(m_Pos); }
+			g_MovableMan.RegisterAlarmEvent(AlarmEvent(m_Pos, m_Team, 0.4));
             m_HatchTimer.Reset();
         }
         m_HatchState = OPENING;
     }
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+float ACraft::GetCollectedInventoryMass() const {
+	float inventoryMass = 0.0F;
+	for (const MovableObject *inventoryItem : m_CollectedInventory) {
+		inventoryMass += inventoryItem->GetMass();
+	}
+	return inventoryMass;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Virtual method:  OnMOHit
@@ -811,13 +813,13 @@ bool ACraft::OnMOHit(MovableObject *pOtherMO)
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void ACraft::GibThis(const Vector &impactImpulse, MovableObject *movableObjectToIgnore) {
-	if (g_SettingsMan.EnableCrabBombs() && !s_CrabBombInEffect) {
+	if (g_SettingsMan.CrabBombsEnabled() && !s_CrabBombInEffect) {
 		s_CrabBombInEffect = true;
 		int crabCount = 0;
 		for (const MovableObject *inventoryEntry : m_Inventory) {
 			if (inventoryEntry->GetPresetName() == "Crab") { crabCount++; }
 		}
-		if (crabCount >= g_SettingsMan.CrabBombThreshold()) {
+		if (crabCount >= g_SettingsMan.GetCrabBombThreshold()) {
 			for (int moid = 1; moid < g_MovableMan.GetMOIDCount() - 1; moid++) {
 				Actor *actor = dynamic_cast<Actor *>(g_MovableMan.GetMOFromID(moid));
 				if (actor && actor != this && actor->GetClassName() != "ADoor" && !actor->IsInGroup("Brains")) { actor->GibThis(); }
@@ -828,6 +830,13 @@ void ACraft::GibThis(const Vector &impactImpulse, MovableObject *movableObjectTo
 	Actor::GibThis(impactImpulse, movableObjectToIgnore);
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void ACraft::ResetAllTimers() {
+	MOSRotating::ResetAllTimers();
+
+	m_FlippedTimer.Reset();
+}
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Virtual method:  Update
@@ -847,9 +856,8 @@ void ACraft::Update()
 
     // Set viewpoint based on how we are aiming etc.
     m_ViewPoint = m_Pos.GetFloored();
-    // Add velocity also so the viewpoint moves ahead at high speeds
-    if (m_Vel.GetMagnitude() > 10)
-        m_ViewPoint += m_Vel * 6;
+	// Add velocity also so the viewpoint moves ahead at high speeds
+	if (m_Vel.GetMagnitude() > 10) { m_ViewPoint += m_Vel * std::sqrt(m_Vel.GetMagnitude() * 0.1F); }
 
     ///////////////////////////////////////////////////
     // Crash detection and handling
@@ -860,22 +868,10 @@ void ACraft::Update()
 // TODO: HELLA GHETTO, REWORK
         if (m_CrashTimer.GetElapsedSimTimeMS() > 500)
         {
-            m_CrashSound.Play(m_Pos);
+			if (m_CrashSound) { m_CrashSound->Play(m_Pos); } 
             m_CrashTimer.Reset();
         }
     }
-
-    // Check for death
-    if (m_Health <= 0 && m_Status != DYING && m_Status != DEAD)
-    {
-        m_Status = DYING;
-        m_DeathTmr.Reset();
-        DropAllInventory();
-    }
-/*
-    if (m_Status == DYING && m_DeathTmr.GetElapsedSimTimeMS() > m_HatchDelay * 2)
-        m_Status = DEAD;
-*/
 
     ///////////////////////////////////////////////////
     // Doors open logic
@@ -925,22 +921,12 @@ void ACraft::Update()
         }
     }
 
-/*
-    // Make sure we have ejected everything before actually dying
-    if (m_Status == DEAD && m_HatchState != OPEN)
-    {
-        m_Status = DYING;
-        m_HatchState = OPENING;
-        m_HatchTimer.Reset();
-        m_HatchOpenSound.Play(m_Pos);
-    }
-*/
     /////////////////////////////////////////
     // Check for having gone into orbit
 
     if (m_Pos.m_Y < -m_CharHeight)
     {
-        g_ActivityMan.GetActivity()->EnteredOrbit(this);
+        g_ActivityMan.GetActivity()->HandleCraftEnteringOrbit(this);
         // Play fading away thruster sound
 //        if (m_pMThruster && m_pMThruster->IsEmitting())
 //            m_pMThruster->(pTargetBitmap, targetPos, mode, onlyPhysical);
@@ -953,19 +939,33 @@ void ACraft::Update()
 		{
 			if (m_Pos.m_X < -GetSpriteWidth() || m_Pos.m_X > g_SceneMan.GetSceneWidth() + GetSpriteWidth())
 			{
-				g_ActivityMan.GetActivity()->EnteredOrbit(this);
+				g_ActivityMan.GetActivity()->HandleCraftEnteringOrbit(this);
 				m_ToDelete = true;
 			}
 		}
 	}
 
+	if (m_Status == DEAD) {
+		if (m_ScuttleOnDeath || m_AIMode == AIMODE_SCUTTLE) { GibThis(); }
+	} else if (m_Status == DYING) {
+		if ((m_ScuttleOnDeath || m_AIMode == AIMODE_SCUTTLE) && m_DeathTmr.IsPastSimMS(500) && m_DeathTmr.AlternateSim(100)) { FlashWhite(10); }
+	}  else if (m_Health <= 0 || m_AIMode == AIMODE_SCUTTLE || (m_ScuttleIfFlippedTime >= 0 && m_FlippedTimer.IsPastSimMS(m_ScuttleIfFlippedTime))) {
+		m_Status = DYING;
+		m_DeathTmr.Reset();
+		DropAllInventory();
+	}
 
-    // Only make the death happen after the user lets go tf the AI menu
-    if (m_Status != DEAD && m_AIMode == AIMODE_SCUTTLE)
-    {
-        DropAllInventory();
-        m_Status = DYING;
-    }
+	// Get the rotation in radians.
+	float rot = m_Rotation.GetRadAngle();
+
+	// Eliminate rotations over half a turn.
+	if (std::abs(rot) > c_PI) {
+		rot += (rot > 0) ? -c_TwoPI : c_TwoPI;
+		m_Rotation.SetRadAngle(rot);
+	}
+	if (rot < c_HalfPI && rot > -c_HalfPI) {
+		m_FlippedTimer.Reset();
+	}
 
     /////////////////////////////////////////
     // Misc.
@@ -980,22 +980,21 @@ void ACraft::Update()
 // Description:     Draws this Actor's current graphical HUD overlay representation to a
 //                  BITMAP of choice.
 
-void ACraft::DrawHUD(BITMAP *pTargetBitmap, const Vector &targetPos, int whichScreen, bool playerControlled)
-{
+void ACraft::DrawHUD(BITMAP *pTargetBitmap, const Vector &targetPos, int whichScreen, bool playerControlled) {
+	m_HUDStack = -m_CharHeight / 2;
+
     if (!m_HUDVisible)
         return;
 
     // Only do HUD if on a team
     if (m_Team < 0)
         return;
-
-    // Only draw if the team viewing this is on the same team OR has seen the space where this is located
-    int viewingTeam = g_ActivityMan.GetActivity()->GetTeamOfPlayer(g_ActivityMan.GetActivity()->PlayerOfScreen(whichScreen));
-    if (viewingTeam != m_Team && viewingTeam != Activity::NoTeam)
-    {
-        if (g_SceneMan.IsUnseen(m_Pos.m_X, m_Pos.m_Y, viewingTeam))
-            return;
-    }
+	
+	// Only draw if the team viewing this is on the same team OR has seen the space where this is located.
+	int viewingTeam = g_ActivityMan.GetActivity()->GetTeamOfPlayer(g_ActivityMan.GetActivity()->PlayerOfScreen(whichScreen));
+	if (viewingTeam != m_Team && viewingTeam != Activity::NoTeam && (!g_SettingsMan.ShowEnemyHUD() || g_SceneMan.IsUnseen(m_Pos.GetFloorIntX(), m_Pos.GetFloorIntY(), viewingTeam))) {
+		return;
+	}
 
     Actor::DrawHUD(pTargetBitmap, targetPos, whichScreen);
 

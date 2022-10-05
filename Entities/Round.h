@@ -14,9 +14,9 @@ namespace RTE {
 
 	public:
 
-		EntityAllocation(Round)
-		SerializableOverrideMethods
-		ClassInfoGetters
+		EntityAllocation(Round);
+		SerializableOverrideMethods;
+		ClassInfoGetters;
 
 #pragma region Creation
 		/// <summary>
@@ -88,10 +88,22 @@ namespace RTE {
 		float GetFireVel() const { return m_FireVel; }
 
 		/// <summary>
+		/// Gets whether or not this Round should inherit velocity from its firer.
+		/// </summary>
+		/// <returns>Whether or not this Round should inherit velocity from its firer.</returns>
+		bool GetInheritsFirerVelocity() const { return m_InheritsFirerVelocity; }
+
+		/// <summary>
 		/// Gets the separation of particles in this round.
 		/// </summary>
 		/// <returns>A float with the separation range in pixels.</returns>
 		float GetSeparation() const { return m_Separation; }
+
+		/// <summary>
+		/// Gets the variation in lifetime of the fired particles in this Round.
+		/// </summary>
+		/// <returns>A float with the life variation scalar.</returns>
+		float GetLifeVariation() const { return m_LifeVariation; }
 
 		/// <summary>
 		/// Gets the shell casing preset of this Round. Ownership IS NOT transferred!
@@ -100,9 +112,9 @@ namespace RTE {
 		const MovableObject * GetShell() const { return m_Shell; }
 
 		/// <summary>
-		/// Gets the velocity at which this round's shell is to be ejected.
+		/// Gets the maximum velocity at which this round's shell is to be ejected.
 		/// </summary>
-		/// <returns>A float with the shell velocity in m/s.</returns>
+		/// <returns>A float with the maximum shell velocity in m/s.</returns>
 		float GetShellVel() const { return m_ShellVel; }
 
 		/// <summary>
@@ -145,10 +157,12 @@ namespace RTE {
 		const MovableObject *m_Particle; //!< Round particle MovableObject preset instance.
 		int m_ParticleCount; //!< How many particle copies there are in this Round.
 		float m_FireVel; //!< The velocity with which this Round is fired.
+		bool m_InheritsFirerVelocity; //!< Whether or not this Round should inherit velocity from its firer.
 		float m_Separation; //!< The range of separation between particles in this Round, in pixels.
+		float m_LifeVariation; //!< The random variation in life time of each fired particle, in percentage of their life time.
 
 		const MovableObject *m_Shell; //!< Shell particle MovableObject preset instance.
-		float m_ShellVel; //!< The velocity with which this Round's shell/casing is launched.
+		float m_ShellVel; //!< The maximum velocity with which this Round's shell/casing is launched.
 
 		SoundContainer m_FireSound; //!< The extra firing audio of this Round being fired.
 

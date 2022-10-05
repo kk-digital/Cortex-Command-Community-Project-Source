@@ -29,9 +29,7 @@ class HeldDevice;
 // Parent(s):       Attachable.
 // Class history:   05/30/2002 Arm created.
 
-class Arm:
-    public Attachable
-{
+class Arm : public Attachable {
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -41,9 +39,9 @@ public:
 
 
 // Concrete allocation and cloning definitions
-EntityAllocation(Arm)
-SerializableOverrideMethods
-ClassInfoGetters
+EntityAllocation(Arm);
+SerializableOverrideMethods;
+ClassInfoGetters;
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Constructor:     Arm
@@ -182,6 +180,18 @@ ClassInfoGetters
     /// <param name="newGripStrength">The new grip strength for this Arm to use.</param>
     void SetGripStrength(float newGripStrength) { m_GripStrength = newGripStrength; }
 
+    /// <summary>
+    /// Gets the the strength with which this Arm will throw a ThrownDevice.
+    /// </summary>
+    /// <returns>The throw strength of this Arm.</returns>
+    float GetThrowStrength() const { return m_ThrowStrength; }
+
+    /// <summary>
+    /// Sets the strength with which this Arm will throw a ThrownDevice.
+    /// </summary>
+    /// <param name="newThrowStrength">The new throw strength for this Arm to use.</param>
+    void SetThrowStrength(float newThrowStrength) { m_ThrowStrength = newThrowStrength; }
+
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          GetMaxLength
@@ -205,7 +215,7 @@ ClassInfoGetters
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Replaces the MovableObject currently held by this Arm with a new
 //                  one. Ownership IS transferred. The currently held MovableObject
-//                  (if there is one) will be dropped and become a detached MovableObject,
+//                  (if there is one) will be deleted.
 // Arguments:       A pointer to the new MovableObject to hold. Ownership IS transferred.
 // Return value:    None.
 
@@ -358,6 +368,11 @@ ClassInfoGetters
 
     bool HoldsSomething() { return m_pHeldMO != 0; }
 
+	/// <summary>
+	/// Does stuff that needs to be done after Update().
+	/// </summary>
+	void PostTravel() override { if (IsAttached()) { m_AngularVel = 0; } MOSRotating::PostTravel(); }
+
     /// <summary>
     /// Updates this Arm. Supposed to be done every frame.
     /// </summary>
@@ -412,6 +427,7 @@ protected:
     // Whether or not this arm is currently supporting something held in another hand
     bool m_Supporting;
     float m_GripStrength; //!< The strength with which this Arm will grip its HeldDevice. Effectively supercedes the HeldDevice's JointStrength.
+    float m_ThrowStrength; //!< The strength with which this Arm will throw a ThrownDevice. Effectively supercedes the ThrownDevice's ThrowVelocity values.
     // The file containing the hand bitmap.
     ContentFile m_HandFile;
     // The small bitmap holding the hand bitmap.

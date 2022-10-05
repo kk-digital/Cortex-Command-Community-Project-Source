@@ -54,12 +54,6 @@ namespace RTE {
 		long long GetAbsoluteTime() const;
 
 		/// <summary>
-		/// Enables or disables the averaging of time measurements done each Update(). These help smooth out and prevent choppy animation.
-		/// </summary>
-		/// <param name="enable">Whether or not to enable the averaging.</param>
-		void EnableAveraging(bool enable = true) { m_AveragingEnabled = enable; }
-
-		/// <summary>
 		/// Sets the sim to be paused, ie no real time ticks will be transferred to the sim accumulator while this is set to true.
 		/// </summary>
 		/// <param name="pause">Whether the sim should be paused or not.</param>
@@ -143,12 +137,6 @@ namespace RTE {
 		/// </summary>
 		/// <returns>The number of ticks per second.</returns>
 		long long GetTicksPerSecond() const { return m_TicksPerSecond; }
-
-		/// <summary>
-		/// Gets the number of ticks per second. Lua can't handle int64 (or long long apparently) so we'll expose this specialized function.
-		/// </summary>
-		/// <returns>The number of ticks per second.</returns>
-		double GetTicksPerSecondInLua() const { return static_cast<double>(m_TicksPerSecond); }
 
 		/// <summary>
 		/// Gets a current global real time measured in ticks from the start of the simulation up to the last Update of this TimerMan. Use TickFrequency to determine how many ticks go in a second.
@@ -244,7 +232,6 @@ namespace RTE {
 		float m_SimSpeed; //!< The simulation speed over real time.
 		float m_TimeScale; //!< The relationship between the real world actual time and the simulation time. A value of 2.0 means simulation runs twice as fast as normal, as perceived by a player.
 
-		bool m_AveragingEnabled; //!< Whether calculated delta time averaging is enabled.
 		bool m_SimPaused; //!< Simulation paused; no real time ticks will go to the sim accumulator.
 		bool m_OneSimUpdatePerFrame; //!< Whether to force this to artificially make time for only one single sim update for the graphics frame. Useful for debugging or profiling.
 		bool m_SimSpeedLimited; //!< Whether the simulation is limited to going at 1.0x and not faster.

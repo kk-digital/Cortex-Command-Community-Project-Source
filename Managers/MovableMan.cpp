@@ -22,6 +22,7 @@
 #include "Controller.h"
 #include "AtomGroup.h"
 #include "Actor.h"
+#include "HeldDevice.h"
 #include "ADoor.h"
 #include "Atom.h"
 
@@ -530,9 +531,9 @@ Actor * MovableMan::GetPrevTeamActor(int team, Actor *pBeforeThis)
 // Description:     Get a pointer to an Actor in the internal Actor list that is of a
 //                  specifc team and closest to a specific scene point.
 
-Actor * MovableMan::GetClosestTeamActor(int team, int player, const Vector &scenePoint, int maxRadius, float &getDistance, const Actor *pExcludeThis)
+Actor * MovableMan::GetClosestTeamActor(int team, int player, const Vector &scenePoint, int maxRadius, Vector &getDistance, const Actor *pExcludeThis)
 {
-    if (team < Activity::NoTeam || team >= Activity::MaxTeamCount || m_Actors.empty() ||  m_ActorRoster[team].empty())
+    if (team < Activity::NoTeam || team >= Activity::MaxTeamCount || m_Actors.empty() || m_ActorRoster[team].empty())
         return 0;
 
     Activity *pActivity = g_ActivityMan.GetActivity();
@@ -566,9 +567,9 @@ Actor * MovableMan::GetClosestTeamActor(int team, int player, const Vector &scen
     {
         for (list<Actor *>::iterator aIt = m_ActorRoster[team].begin(); aIt != m_ActorRoster[team].end(); ++aIt)
         {
-            if ((*aIt) == pExcludeThis || (*aIt)->GetController()->IsPlayerControlled(player) || (pActivity && pActivity->IsOtherPlayerBrain(*aIt, player)))
-                continue;
-
+			if ((*aIt) == pExcludeThis || (player != NoPlayer && ((*aIt)->GetController()->IsPlayerControlled(player) || (pActivity && pActivity->IsOtherPlayerBrain(*aIt, player))))) {
+				continue;
+			}
             distanceVec = g_SceneMan.ShortestDistance((*aIt)->GetPos(), scenePoint);
             distance = distanceVec.GetMagnitude();
 
@@ -577,11 +578,11 @@ Actor * MovableMan::GetClosestTeamActor(int team, int player, const Vector &scen
             {
                 shortestDistance = distance;
                 pClosestActor = *aIt;
+				getDistance.SetXY(distanceVec.GetX(), distanceVec.GetY());
             }
         }
     }
 
-    getDistance = shortestDistance;
     return pClosestActor;
 }
 
@@ -594,7 +595,7 @@ Actor * MovableMan::GetClosestTeamActor(int team, int player, const Vector &scen
 
 Actor * MovableMan::GetClosestEnemyActor(int team, const Vector &scenePoint, int maxRadius, Vector &getDistance)
 {
-    if (team < Activity::NoTeam || team >= Activity::MaxTeamCount || m_Actors.empty() ||  m_ActorRoster[team].empty())
+    if (team < Activity::NoTeam || team >= Activity::MaxTeamCount || m_Actors.empty())
         return 0;
     
     Activity *pActivity = g_ActivityMan.GetActivity();
@@ -631,7 +632,7 @@ Actor * MovableMan::GetClosestEnemyActor(int team, const Vector &scenePoint, int
 // Description:     Get a pointer to an Actor in the internal Actor list that is closest
 //                  to a specific scene point.
 
-Actor * MovableMan::GetClosestActor(Vector &scenePoint, int maxRadius, float &getDistance, const Actor *pExcludeThis)
+Actor * MovableMan::GetClosestActor(const Vector &scenePoint, int maxRadius, Vector &getDistance, const Actor *pExcludeThis)
 {
     if (m_Actors.empty())
         return 0;
@@ -656,10 +657,10 @@ Actor * MovableMan::GetClosestActor(Vector &scenePoint, int maxRadius, float &ge
         {
             shortestDistance = distance;
             pClosestActor = *aIt;
+			getDistance.SetXY(distanceVec.GetX(), distanceVec.GetY());
         }
     }
 
-    getDistance = shortestDistance;
     return pClosestActor;
 }
 
@@ -763,158 +764,86 @@ Actor * MovableMan::GetUnassignedBrain(int team) const
     return 0;
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-//////////////////////////////////////////////////////////////////////////////////////////
-// Method:          AddMO
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Adds a MovableObject to this, after it is determined what it is and the
-//                  best way to add it is. E.g. if it's an Actor, it will be added as such.
-//                  Ownership IS transferred!
-
-bool MovableMan::AddMO(MovableObject *pMOToAdd) {
-    if (!pMOToAdd) {
+bool MovableMan::AddMO(MovableObject *movableObjectToAdd) {
+    if (!movableObjectToAdd) {
         return false;
     }
 
-    pMOToAdd->SetAsAddedToMovableMan();
+    if (Actor *actorToAdd = dynamic_cast<Actor *>(movableObjectToAdd)) {
+        AddActor(actorToAdd);
+        return true;
+    } else if (HeldDevice *heldDeviceToAdd = dynamic_cast<HeldDevice *>(movableObjectToAdd)) {
+        AddItem(heldDeviceToAdd);
+        return true;
+    }
+    AddParticle(movableObjectToAdd);
 
-    // Find out what kind it is and apply accordingly
-    if (Actor *pActor = dynamic_cast<Actor *>(pMOToAdd)) {
-        AddActor(pActor);
-        return true;
-    } else if (HeldDevice *pHeldDevice = dynamic_cast<HeldDevice *>(pMOToAdd)) {
-        AddItem(pHeldDevice);
-        return true;
-    } else {
-        AddParticle(pMOToAdd);
-        return true;
-    }
-/*
-// TODO: sort out helddevices too?
-    else if (MovableObject *pMO = dynamic_cast<MovableObject *>(pMOToAdd))
-    {
-        AddParticle(pMO);
-        return true;
-    }
-    // Weird type, get rid of since we have ownership
-    else
-    {
-        delete pMOToAdd;
-        pMOToAdd = 0;
-    }
-*/
-    return false;
+    return true;
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-//////////////////////////////////////////////////////////////////////////////////////////
-// Method:          AddActor
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Adds an Actor to the internal list of MO:s. Destruction and 
-//                  deletion will be taken care of automatically. Do NOT delete the passed
-//                  MO after adding it here!
+void MovableMan::AddActor(Actor *actorToAdd) {
+	if (actorToAdd) {
+		actorToAdd->SetAsAddedToMovableMan();
+		actorToAdd->CorrectAttachableAndWoundPositionsAndRotations();
 
-void MovableMan::AddActor(Actor *pActorToAdd)
-{
-    if (pActorToAdd)
-    {
-//        pActorToAdd->SetPrevPos(pActorToAdd->GetPos());
-//        pActorToAdd->Update();
-//        pActorToAdd->PostTravel();
-        pActorToAdd->SetAsAddedToMovableMan();
-
-        // Filter out stupid fast objects
-        if (pActorToAdd->IsTooFast())
-            pActorToAdd->SetToDelete(true);
-        else
-        {
-            // Should not be done to doors, which will get jolted around when they shouldn't!
-            if (!dynamic_cast<ADoor *>(pActorToAdd))
-                pActorToAdd->MoveOutOfTerrain(g_MaterialGrass);
-            if (pActorToAdd->IsStatus(Actor::INACTIVE))
-                pActorToAdd->SetStatus(Actor::STABLE);
-            pActorToAdd->NotResting();
-            pActorToAdd->NewFrame();
-            pActorToAdd->SetAge(0);
+		if (actorToAdd->IsTooFast()) {
+			actorToAdd->SetToDelete(true);
+		} else {
+			if (!dynamic_cast<ADoor *>(actorToAdd)) { actorToAdd->MoveOutOfTerrain(g_MaterialGrass); }
+			if (actorToAdd->IsStatus(Actor::INACTIVE)) { actorToAdd->SetStatus(Actor::STABLE); }
+			actorToAdd->NotResting();
+			actorToAdd->NewFrame();
+			actorToAdd->SetAge(0);
         }
-        m_AddedActors.push_back(pActorToAdd);
 
-		AddActorToTeamRoster(pActorToAdd);
+        m_AddedActors.push_back(actorToAdd);
+		AddActorToTeamRoster(actorToAdd);
     }
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-//////////////////////////////////////////////////////////////////////////////////////////
-// Method:          AddItem
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Adds a pickup-able item to the internal list of items. Destruction and 
-//                  deletion will be taken care of automatically. Do NOT delete the passed
-//                  MO after adding it here! i.e. Ownership IS transferred!
+void MovableMan::AddItem(HeldDevice *itemToAdd) {
+    if (itemToAdd) {
+		itemToAdd->SetAsAddedToMovableMan();
+		itemToAdd->CorrectAttachableAndWoundPositionsAndRotations();
 
-void MovableMan::AddItem(MovableObject *pItemToAdd)
-{
-    if (pItemToAdd)
-    {
-//        pItemToAdd->SetPrevPos(pItemToAdd->GetPos());
-//        pItemToAdd->Update();
-//        pItemToAdd->PostTravel();
-        pItemToAdd->SetAsAddedToMovableMan();
-
-        // Filter out stupid fast objects
-        if (pItemToAdd->IsTooFast())
-            pItemToAdd->SetToDelete(true);
-        else
-        {
-            // Move out so not embedded in terrain - and if we can't, DON'T delete it now, but mark for deletion at the end of frame!$@
-            // Deleting it now causes crashes as it may have had its MOID registered and things collidng withthat MOID area would be led to deleted memory
-// Don't delete; buried stuff is cool, also causes problems becuase it thinks hollowed out material is not air and therefore  makes objects inside bunkers disappear!
-//        if (!pItemToAdd->MoveOutOfTerrain(g_MaterialGrass))
-//            pItemToAdd->SetToDelete();
-            pItemToAdd->MoveOutOfTerrain(g_MaterialGrass);
-
-            pItemToAdd->NotResting();
-            pItemToAdd->NewFrame();
-            pItemToAdd->SetAge(0);
+		if (itemToAdd->IsTooFast()) {
+			itemToAdd->SetToDelete(true);
+		}  else {
+            if (!itemToAdd->IsSetToDelete()) { itemToAdd->MoveOutOfTerrain(g_MaterialGrass); }
+			itemToAdd->NotResting();
+			itemToAdd->NewFrame();
+			itemToAdd->SetAge(0);
         }
-        m_AddedItems.push_back(pItemToAdd);
+        m_AddedItems.push_back(itemToAdd);
     }
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-//////////////////////////////////////////////////////////////////////////////////////////
-// Method:          AddParticle
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Adds a MovableObject to the internal list of MO:s. Destruction and 
-//                  deletion will be taken care of automatically. Do NOT delete the passed
-//                  MO after adding it here! i.e. Ownership IS transferred!
+void MovableMan::AddParticle(MovableObject *particleToAdd){
+    if (particleToAdd) {
+        particleToAdd->SetAsAddedToMovableMan();
+		if (MOSRotating *particleToAddAsMOSRotating = dynamic_cast<MOSRotating *>(particleToAdd)) { particleToAddAsMOSRotating->CorrectAttachableAndWoundPositionsAndRotations(); }
 
-void MovableMan::AddParticle(MovableObject *pMOToAdd)
-{
-    if (pMOToAdd)
-    {
-//        pMOToAdd->SetPrevPos(pMOToAdd->GetPos());
-//        pMOToAdd->Update();
-//        pMOToAdd->Travel();
-//        pMOToAdd->PostTravel();
-        pMOToAdd->SetAsAddedToMovableMan();
-
-        // Filter out stupid fast objects
-        if (pMOToAdd->IsTooFast())
-            pMOToAdd->SetToDelete(true);
-        else
-        {
-            // Move out so not embedded in terrain
-// This is a bit slow to be doing on every particle added!
-//            pMOToAdd->MoveOutOfTerrain(g_MaterialGrass);
-
-            pMOToAdd->NotResting();
-            pMOToAdd->NewFrame();
-            pMOToAdd->SetAge(0);
+		if (particleToAdd->IsTooFast()) {
+			particleToAdd->SetToDelete(true);
+		} else {
+			//TODO consider moving particles out of grass. It's old code that was removed because it's slow to do this for every particle.
+            particleToAdd->NotResting();
+            particleToAdd->NewFrame();
+            particleToAdd->SetAge(0);
         }
-        if (pMOToAdd->IsDevice())
-            m_AddedItems.push_back(pMOToAdd);
-        else
-            m_AddedParticles.push_back(pMOToAdd);
+		if (particleToAdd->IsDevice()) {
+			m_AddedItems.push_back(particleToAdd);
+		} else {
+			m_AddedParticles.push_back(particleToAdd);
+		}
     }
 }
 
@@ -1354,47 +1283,51 @@ bool MovableMan::RemoveMO(MovableObject *pMOToRem)
     return false;
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-//////////////////////////////////////////////////////////////////////////////////////////
-// Method:          KillAllActors
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Kills and destroys all actors of a specific team.
-
-int MovableMan::KillAllActors(int exceptTeam)
-{
+int MovableMan::KillAllTeamActors(int teamToKill) const {
     int killCount = 0;
-    AHuman *pHuman = 0;
 
-    // Kill all regular Actors
-    for (deque<Actor *>::iterator aIt = m_Actors.begin(); aIt != m_Actors.end(); ++aIt)
-    {
-        if ((*aIt)->GetTeam() != exceptTeam)
-        {
-            // Blow up the head of humanoids, for effect
-            if (pHuman = dynamic_cast<AHuman *>(*aIt))
-                pHuman->GetHead()->GibThis();
-            else
-                (*aIt)->GibThis();
-            killCount++;
-        }
-    }
-
-    // Kill all Actors added this frame
-    for (deque<Actor *>::iterator aIt = m_AddedActors.begin(); aIt != m_AddedActors.end(); ++aIt)
-    {
-        if ((*aIt)->GetTeam() != exceptTeam)
-        {
-            // Blow up the head of humanoids, for effect
-            if (pHuman = dynamic_cast<AHuman *>(*aIt))
-                pHuman->GetHead()->GibThis();
-            else
-                (*aIt)->GibThis();
-            killCount++;
+    for (std::deque<Actor *> actorList : { m_Actors, m_AddedActors }) {
+        for (Actor *actor : actorList) {
+            if (actor->GetTeam() == teamToKill) {
+                const AHuman *actorAsHuman = dynamic_cast<AHuman *>(actor);
+                if (actorAsHuman && actorAsHuman->GetHead()) {
+                    actorAsHuman->GetHead()->GibThis();
+                } else {
+                    actor->GibThis();
+                }
+                killCount++;
+            }
         }
     }
 
     return killCount;
 }
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+int MovableMan::KillAllEnemyActors(int teamNotToKill) const {
+    int killCount = 0;
+
+    for (std::deque<Actor *> actorList : { m_Actors, m_AddedActors }) {
+        for (Actor *actor : actorList) {
+            if (actor->GetTeam() != teamNotToKill) {
+                const AHuman *actorAsHuman = dynamic_cast<AHuman *>(actor);
+                if (actorAsHuman && actorAsHuman->GetHead()) {
+                    actorAsHuman->GetHead()->GibThis();
+                } else {
+                    actor->GibThis();
+                }
+                killCount++;
+            }
+        }
+    }
+
+    return killCount;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -1489,78 +1422,40 @@ int MovableMan::GetTeamMOIDCount(int team) const
 		return 0;
 }
 
-//////////////////////////////////////////////////////////////////////////////////////////
-// Method:          OpenAllDoors
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Opens all doors and keeps them open until this is called again with false.
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void MovableMan::OpenAllDoors(bool open, int team)
-{
-    ADoor *pDoor = 0;
-    for (deque<Actor *>::iterator aIt = m_Actors.begin(); aIt != m_Actors.end(); ++aIt)
-    {
-        pDoor = dynamic_cast<ADoor *>(*aIt);
-        if (pDoor && (team == Activity::NoTeam || pDoor->GetTeam() == team))
-        {
-            // Update first so the door attachable piece is in the right position and doesn't take out a werid chunk of the terrain
-            pDoor->Update();
-            if (open)
-                pDoor->OpenDoor();
-            else
-                pDoor->CloseDoor();
-            pDoor->SetClosedByDefault(!open);
-        }
-    }
-    // Also check all doors added this frame
-    for (deque<Actor *>::iterator aIt = m_AddedActors.begin(); aIt != m_AddedActors.end(); ++aIt)
-    {
-        pDoor = dynamic_cast<ADoor *>(*aIt);
-        if (pDoor && (team == Activity::NoTeam || pDoor->GetTeam() == team))
-        {
-            // Update first so the door attachable piece is in the right position and doesn't take out a werid chunk of the terrain
-            pDoor->Update();
-            if (open)
-                pDoor->OpenDoor();
-            else
-                pDoor->CloseDoor();
-            pDoor->SetClosedByDefault(!open);
-        }
-    }
+void MovableMan::OpenAllDoors(bool open, int team) const {
+	for (std::deque<Actor *> actorDeque : { m_Actors, m_AddedActors }) {
+		for (Actor *actor : actorDeque) {
+			if (ADoor *actorAsADoor = dynamic_cast<ADoor *>(actor); actorAsADoor && (team == Activity::NoTeam || actorAsADoor->GetTeam() == team)) {
+				if (actorAsADoor->GetDoorState() != (open ? ADoor::DoorState::OPEN : ADoor::DoorState::CLOSED)) {
+					actorAsADoor->Update();
+					actorAsADoor->SetClosedByDefault(!open);
+				}
+				actorAsADoor->ResetSensorTimer();
+				if (open) {
+					actorAsADoor->OpenDoor();
+				} else {
+					actorAsADoor->CloseDoor();
+				}
+			}
+		}
+	}
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-//////////////////////////////////////////////////////////////////////////////////////////
-// Method:          OverrideMaterialDoors
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Temporarily erases any material door representations of a specific team.
-//                  Used for making pathfinding work better, allowing teammember to navigate
-//                  through friendly bases.
-
-void MovableMan::OverrideMaterialDoors(bool enable, int team)
-{
-    ADoor *pDoor = 0;
-    for (deque<Actor *>::iterator aIt = m_Actors.begin(); aIt != m_Actors.end(); ++aIt)
-    {
-        pDoor = dynamic_cast<ADoor *>(*aIt);
-        if (pDoor && (team == Activity::NoTeam || pDoor->GetTeam() == team))
-        {
-            // Update first so the door attachable piece is in the right position and doesn't take out a werid chunk of the terrain
-            pDoor->Update();
-            pDoor->MaterialDrawOverride(enable);
-        }
-    }
-    // Also check all doors added this frame
-    for (deque<Actor *>::iterator aIt = m_AddedActors.begin(); aIt != m_AddedActors.end(); ++aIt)
-    {
-        pDoor = dynamic_cast<ADoor *>(*aIt);
-        if (pDoor && (team == Activity::NoTeam || pDoor->GetTeam() == team))
-        {
-            // Update first so the door attachable piece is in the right position and doesn't take out a werid chunk of the terrain
-            pDoor->Update();
-            pDoor->MaterialDrawOverride(enable);
-        }
-    }
+void MovableMan::OverrideMaterialDoors(bool eraseDoorMaterial, int team) const {
+	for (std::deque<Actor *> actorDeque : { m_Actors, m_AddedActors }) {
+		for (Actor *actor : actorDeque) {
+			if (ADoor *actorAsDoor = dynamic_cast<ADoor *>(actor); actorAsDoor && (team == Activity::NoTeam || actorAsDoor->GetTeam() == team)) {
+				actorAsDoor->TempEraseOrRedrawDoorMaterial(eraseDoorMaterial);
+			}
+		}
+	}
 }
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -1585,32 +1480,6 @@ void MovableMan::RedrawOverlappingMOIDs(MovableObject *pOverlapsThis)
     {
         (*parIt)->DrawMOIDIfOverlapping(pOverlapsThis);
     }
-}
-
-
-void MovableMan::OnPieMenu(Actor * pActor)
-{
-	deque<Actor *>::iterator aIt;
-	deque<MovableObject *>::iterator iIt;
-	deque<MovableObject *>::iterator parIt;
-
-	for (aIt = m_Actors.begin(); aIt != m_Actors.end(); ++aIt)
-	{
-		if ((*aIt)->ProvidesPieMenuContext())
-			(*aIt)->OnPieMenu(pActor);
-	}
-
-	for (iIt = m_Items.begin(); iIt != m_Items.end(); ++iIt)
-	{
-		if ((*iIt)->ProvidesPieMenuContext())
-			(*iIt)->OnPieMenu(pActor);
-	}
-
-	for (parIt = m_Particles.begin(); parIt != m_Particles.end(); ++parIt)
-	{
-		if ((*parIt)->ProvidesPieMenuContext())
-			(*parIt)->OnPieMenu(pActor);
-	}
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -1941,39 +1810,30 @@ void MovableMan::Update()
 
     // SETTLE PARTICLES //////////////////////////////////////////////////
     // Only settle after all updates and deletions are done
-    if (m_SettlingEnabled)
-    {
-        parIt = partition(m_Particles.begin(), m_Particles.end(), std::not_fn(std::mem_fn(&MovableObject::ToSettle)));
-        midIt = parIt;
+	if (m_SettlingEnabled) {
+		parIt = partition(m_Particles.begin(), m_Particles.end(), std::not_fn(std::mem_fn(&MovableObject::ToSettle)));
+		midIt = parIt;
 
-        while (parIt != m_Particles.end())
-        {
-            Vector parPos((*parIt)->GetPos().GetFloored());
-            Material const * terrMat = g_SceneMan.GetMaterialFromID(g_SceneMan.GetTerrain()->GetMaterialPixel(parPos.m_X, parPos.m_Y));
-            if ((*parIt)->GetDrawPriority() >= terrMat->GetPriority())
-            {
-                // Gold particle special case to avoid compacting of gold
-                if ((*parIt)->GetMaterial()->GetIndex() == c_GoldMaterialID)
-                {
-                    for (int s = 0; terrMat->GetIndex() == c_GoldMaterialID; ++s)
-                    {
-                        if (s % 2 == 0)
-                            parPos.m_Y -= 1.0;
-                        else
-                            parPos.m_X += (RandomNum() >= 0.5F ? 1.0F : -1.0F);
-                        terrMat = g_SceneMan.GetMaterialFromID(g_SceneMan.GetTerrain()->GetMaterialPixel(parPos.m_X, parPos.m_Y));
-                    }
-                    (*parIt)->SetPos(parPos);
-                }
-
-//                (*parIt)->Draw(g_SceneMan.GetTerrain()->GetFGColorBitmap(), Vector(), g_DrawColor, true);
-//                (*parIt)->Draw(g_SceneMan.GetTerrain()->GetMaterialBitmap(), Vector(), g_DrawMaterial, true);
-                g_SceneMan.GetTerrain()->ApplyMovableObject(*parIt);
-            }
-            delete *(parIt++);
-        }
-        m_Particles.erase(midIt, m_Particles.end());
-    }
+		while (parIt != m_Particles.end()) {
+			Vector parPos((*parIt)->GetPos());
+			Material const * terrMat = g_SceneMan.GetMaterialFromID(g_SceneMan.GetTerrain()->GetMaterialPixel(parPos.GetFloorIntX(), parPos.GetFloorIntY()));
+			int piling = (*parIt)->GetMaterial()->GetPiling();
+			if (piling > 0) {
+				for (int s = 0; s < piling && (terrMat->GetIndex() == (*parIt)->GetMaterial()->GetIndex() || terrMat->GetIndex() == (*parIt)->GetMaterial()->GetSettleMaterial()); ++s) {
+					if ((piling - s) % 2 == 0) {
+						parPos.m_Y -= 1.0F;
+					} else {
+						parPos.m_X += (RandomNum() >= 0.5F ? 1.0F : -1.0F);
+					}
+					terrMat = g_SceneMan.GetMaterialFromID(g_SceneMan.GetTerrain()->GetMaterialPixel(parPos.GetFloorIntX(), parPos.GetFloorIntY()));
+				}
+				(*parIt)->SetPos(parPos.GetFloored());
+			}
+			if ((*parIt)->GetDrawPriority() >= terrMat->GetPriority()) { (*parIt)->DrawToTerrain(g_SceneMan.GetTerrain()); }
+			delete *(parIt++);
+		}
+		m_Particles.erase(midIt, m_Particles.end());
+	}
 
     release_bitmap(g_SceneMan.GetTerrain()->GetMaterialBitmap());
 

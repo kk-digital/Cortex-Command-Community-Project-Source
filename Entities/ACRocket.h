@@ -35,9 +35,8 @@ class Leg;
 // Class history:   09/02/2004 ARocket created.
 //                  12/13/2006 ARocket changed names to ACRocket, parent changed to ACraft
 
-class ACRocket:
-    public ACraft
-{
+class ACRocket : public ACraft {
+	friend struct EntityLuaBindings;
 
 enum LandingGearState
 {
@@ -56,9 +55,9 @@ public:
 
 
 // Concrete allocation and cloning definitions
-EntityAllocation(ACRocket)
-SerializableOverrideMethods
-ClassInfoGetters
+EntityAllocation(ACRocket);
+SerializableOverrideMethods;
+ClassInfoGetters;
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Constructor:     ACRocket
@@ -156,17 +155,6 @@ ClassInfoGetters
 // Return value:    None.
 
 	void Update() override;
-
-
-//////////////////////////////////////////////////////////////////////////////////////////
-// Virtual method:  ResetEmissionTimers
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Reset the timers of all emissions so they will start/stop at the 
-//                  correct relative offsets from now.
-// Arguments:       None.
-// Return value:    None.
-
-	void ResetEmissionTimers() override;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -320,8 +308,7 @@ protected:
     // Limb paths for different movement states.
     // [0] is for the right limbs, and [1] is for left.
     LimbPath m_Paths[2][GearStateCount];
-    // The craft explodes if it has been on its side for more than this many MS (default 4000). Disable by setting to -1.
-    float m_ScuttleIfFlippedTime;
+	float m_MaxGimbalAngle; //!< How much the main engine is able to tilt in order to stabilize the rocket.
 
 
 //////////////////////////////////////////////////////////////////////////////////////////

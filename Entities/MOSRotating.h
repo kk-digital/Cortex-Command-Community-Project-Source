@@ -34,9 +34,7 @@ class Attachable;
 // Parent(s):       MOSprite.
 // Class history:   05/30/2002 MOSRotating created.
 
-class MOSRotating:
-    public MOSprite
-{
+class MOSRotating : public MOSprite {
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -47,13 +45,13 @@ public:
 
 friend class AtomGroup;
 friend class SLTerrain;
-friend class LuaMan;
+friend struct EntityLuaBindings;
 
 
 // Concrete allocation and cloning definitions
-EntityAllocation(MOSRotating)
-SerializableOverrideMethods
-ClassInfoGetters
+EntityAllocation(MOSRotating);
+SerializableOverrideMethods;
+ClassInfoGetters;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -402,28 +400,14 @@ ClassInfoGetters
 
 	bool MoveOutOfTerrain(unsigned char strongerThan = g_MaterialAir) override;
 
-
-//////////////////////////////////////////////////////////////////////////////////////////
-// Virtual method:  ApplyForces
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Gathers and applies the global and accumulated forces. Then it clears
-//                  out the force list.Note that this does NOT apply the accumulated
-//                  impulses (impulse forces)!
-// Arguments:       None.
-// Return value:    None.
-
+	/// <summary>
+	/// Gathers, clears and applies this MOSRotating's accumulated forces.
+	/// </summary>
 	void ApplyForces() override;
 
-
-//////////////////////////////////////////////////////////////////////////////////////////
-// Virtual method:  ApplyImpulses
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Gathers and applies the accumulated impulse forces. Then it clears
-//                  out the impulse list.Note that this does NOT apply the accumulated
-//                  regular forces (non-impulse forces)!
-// Arguments:       None.
-// Return value:    None.
-
+	/// <summary>
+	/// Gathers, clears and applies this MOSRotating's accumulated impulse forces, gibbing if appropriate.
+	/// </summary>
 	void ApplyImpulses() override;
 
     /// <summary>
@@ -439,13 +423,12 @@ ClassInfoGetters
     /// <param name="parentOffsetToSet">The Vector to set as the Attachable's parent offset.</param>
 	virtual void AddAttachable(Attachable *attachable, const Vector &parentOffsetToSet);
 
-    //TODO All RemoveAttachable methods should return the removed attachable (if it's not deleted) so there's no potential memory leaks or other safety problems. Very little cares about whether this actually succeeded or failed anyway, so returning a boolean here is kind of pointless. This should probably be done as part of Arm cleanup. Also, worth noting, dinosaurs are/were neat.
     /// <summary>
     /// Removes the Attachable corresponding to the passed in UniqueID and sets its parent to nullptr. Does not add it to MovableMan or add break wounds.
     /// </summary>
     /// <param name="attachableUniqueID">The UniqueID of the Attachable to remove.</param>
-    /// <returns>False if the Attachable is invalid, otherwise true.</returns>
-    virtual bool RemoveAttachable(long attachableUniqueID) { return RemoveAttachable(attachableUniqueID, false, false); }
+    /// <returns>A pointer to the removed Attachable. Ownership IS transferred!</returns>
+    virtual Attachable * RemoveAttachable(long attachableUniqueID) { return RemoveAttachable(attachableUniqueID, false, false); }
 
     /// <summary>
     /// Removes the Attachable corresponding to the passed in UniqueID and sets its parent to nullptr. Optionally adds it to MovableMan and/or adds break wounds.
@@ -454,15 +437,15 @@ ClassInfoGetters
     /// <param name="attachableUniqueID">The UniqueID of the Attachable to remove.</param>
     /// <param name="addToMovableMan">Whether or not to add the Attachable to MovableMan once it has been removed.</param>
     /// <param name="addBreakWounds">Whether or not to add break wounds to the removed Attachable and this MOSRotating.</param>
-    /// <returns>False if the Attachable is invalid, otherwise true.</returns>
-    virtual bool RemoveAttachable(long attachableUniqueID, bool addToMovableMan, bool addBreakWounds);
+    /// <returns>A pointer to the removed Attachable, if it wasn't added to MovableMan or nullptr if it was. Ownership IS transferred!</returns>
+    virtual Attachable * RemoveAttachable(long attachableUniqueID, bool addToMovableMan, bool addBreakWounds);
 
     /// <summary>
     /// Removes the passed in Attachable and sets its parent to nullptr. Does not add it to MovableMan or add break wounds.
     /// </summary>
     /// <param name="attachable">The Attachable to remove.</param>
-    /// <returns>False if the Attachable is invalid, otherwise true.</returns>
-    virtual bool RemoveAttachable(Attachable *attachable) { return RemoveAttachable(attachable, false, false); }
+    /// <returns>A pointer to the removed Attachable. Ownership IS transferred!</returns>
+    virtual Attachable * RemoveAttachable(Attachable *attachable) { return RemoveAttachable(attachable, false, false); }
 
     /// <summary>
     /// Removes the passed in Attachable and sets its parent to nullptr. Optionally adds it to MovableMan and/or adds break wounds.
@@ -471,8 +454,14 @@ ClassInfoGetters
     /// <param name="attachable">The Attachable to remove.</param>
     /// <param name="addToMovableMan">Whether or not to add the Attachable to MovableMan once it has been removed.</param>
     /// <param name="addBreakWounds">Whether or not to add break wounds to the removed Attachable and this MOSRotating.</param>
-    /// <returns>False if the Attachable is invalid, otherwise true.</returns>
-    virtual bool RemoveAttachable(Attachable *attachable, bool addToMovableMan, bool addBreakWounds);
+    /// <returns>A pointer to the removed Attachable, if it wasn't added to MovableMan or nullptr if it was. Ownership IS transferred!</returns>
+    virtual Attachable * RemoveAttachable(Attachable *attachable, bool addToMovableMan, bool addBreakWounds);
+
+    /// <summary>
+    /// Removes the passed in Attachable, and sets it to delete so it will go straight to MovableMan and be handled there.
+    /// </summary>
+    /// <param name="attachable">The Attacahble to remove and delete.</param>
+    void RemoveAndDeleteAttachable(Attachable *attachable);
 
     /// <summary>
     /// Either removes or deletes all of this MOSRotating's Attachables.
@@ -639,6 +628,24 @@ ClassInfoGetters
     /// </summary>
     /// <param name="newLimit">The new gib wound limit to use.</param>
     void SetGibWoundLimit(int newGibWoundLimit) { m_GibWoundLimit = newGibWoundLimit; }
+
+	/// <summary>
+	/// Gets the rate at which wound count of this MOSRotating will diminish the impulse limit.
+	/// </summary>
+	/// <returns>The rate at which wound count affects the impulse limit.</returns>
+	float GetWoundCountAffectsImpulseLimitRatio() const { return m_WoundCountAffectsImpulseLimitRatio; }
+
+	/// <summary>
+	/// Gets whether this MOSRotating should gib at the end of its lifetime instead of just being deleted.
+	/// </summary>
+	/// <returns>Whether this MOSRotating should gib at the end of its lifetime instead of just being deleted.</returns>
+	bool GetGibAtEndOfLifetime() const { return m_GibAtEndOfLifetime; }
+	
+	/// <summary>
+	/// Sets whether this MOSRotating should gib at the end of its lifetime instead of just being deleted.
+	/// </summary>
+	/// <param name="shouldGibAtEndOfLifetime">Whether or not this MOSRotating should gib at the end of its lifetime instead of just being deleted.</param>
+	void SetGibAtEndOfLifetime(bool shouldGibAtEndOfLifetime) { m_GibAtEndOfLifetime = shouldGibAtEndOfLifetime; }
 
     /// <summary>
     /// Gets the gib blast strength this MOSRotating, i.e. the strength with which Gibs and Attachables will be launched when this MOSRotating is gibbed.
@@ -828,6 +835,18 @@ ClassInfoGetters
     /// <returns>Whether the damage multiplier for this MOSRotating has been set.</returns>
     bool HasNoSetDamageMultiplier() const { return m_NoSetDamageMultiplier; }
 
+	/// <summary>
+	/// Gets the velocity orientation scalar of this MOSRotating.
+	/// </summary>
+	/// <returns>New scalar value.</returns>
+	float GetOrientToVel() const { return m_OrientToVel; }
+
+	/// <summary>
+	/// Sets the velocity orientation scalar of this MOSRotating.
+	/// </summary>
+	/// <param name="newValue">New scalar value.</param>
+	void SetOrientToVel(float newValue) { m_OrientToVel = newValue; }
+
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          GetTravelImpulse
@@ -847,6 +866,23 @@ ClassInfoGetters
 // Return value:    None.
 
 	void SetTravelImpulse(Vector impulse) { m_TravelImpulse = impulse; }
+
+	/// <summary>
+	/// Gets this MOSRotating's gib sound. Ownership is NOT transferred!
+	/// </summary>
+	/// <returns>The SoundContainer for this MOSRotating's gib sound.</returns>
+	SoundContainer * GetGibSound() const { return m_GibSound; }
+
+	/// <summary>
+	/// Sets this MOSRotating's gib sound. Ownership IS transferred!
+	/// </summary>
+	/// <param name="newSound">The new SoundContainer for this MOSRotating's gib sound.</param>
+	void SetGibSound(SoundContainer *newSound) { m_GibSound = newSound; }
+
+	/// <summary>
+	/// Ensures all attachables and wounds are positioned and rotated correctly. Must be run when this MOSRotating is added to MovableMan to avoid issues with Attachables spawning in at (0, 0).
+	/// </summary>
+	virtual void CorrectAttachableAndWoundPositionsAndRotations() const;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -922,6 +958,7 @@ protected:
     std::list<Attachable *> m_Attachables;
     std::unordered_set<unsigned long> m_ReferenceHardcodedAttachableUniqueIDs; //!< An unordered set is filled with the Unique IDs of all of the reference object's hardcoded Attachables when using the copy Create.
     std::unordered_map<unsigned long, std::function<void (MOSRotating*, Attachable*)>> m_HardcodedAttachableUniqueIDsAndSetters; //!< An unordered map of Unique IDs to setter lambda functions, used to call the appropriate hardcoded Attachable setter when a hardcoded Attachable is removed.
+    std::unordered_map<unsigned long, std::function<void(MOSRotating *, Attachable *)>> m_HardcodedAttachableUniqueIDsAndRemovers; //!< An unordered map of Unique IDs to remove lambda functions, used to call the appropriate hardcoded Attachable remover when a hardcoded Attachable is removed and calling the setter with nullptr won't work.
     const Attachable *m_RadiusAffectingAttachable; //!< A pointer to the Attachable that is currently affecting the radius. Used for some efficiency benefits.
     float m_FarthestAttachableDistanceAndRadius; //!< The distance + radius of the radius affecting Attachable.
     float m_AttachableAndWoundMass; //!< The mass of all Attachables and wounds on this MOSRotating. Used in combination with its actual mass and any other affecting factors to get its total mass.
@@ -929,11 +966,12 @@ protected:
     std::list<Gib> m_Gibs;
     // The amount of impulse force required to gib this, in kg * (m/s). 0 means no limit
     float m_GibImpulseLimit;
-    // The number of wound emitters allowed before this gets gibbed. 0 means this can't get gibbed
-    int m_GibWoundLimit;
+	int m_GibWoundLimit; //!< The number of wounds that will gib this MOSRotating. 0 means that it can't be gibbed via wounds.
     float m_GibBlastStrength; //!< The strength with which Gibs and Attachables will get launched when this MOSRotating is gibbed.
+	float m_WoundCountAffectsImpulseLimitRatio; //!< The rate at which this MOSRotating's wound count will diminish the impulse limit.
+	bool m_GibAtEndOfLifetime; //!< Whether or not this MOSRotating should gib when it reaches the end of its lifetime, instead of just deleting.
     // Gib sound effect
-    SoundContainer m_GibSound;
+    SoundContainer *m_GibSound;
     // Whether to flash effect on gib
     bool m_EffectOnGib;
     // How far this is audiable (in screens) when gibbing

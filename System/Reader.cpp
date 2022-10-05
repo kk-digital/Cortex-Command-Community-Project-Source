@@ -40,7 +40,7 @@ namespace RTE {
 		m_CanFail = failOK;
 
 		m_Stream = std::make_unique<std::ifstream>(fileName);
-		if (!m_CanFail) { RTEAssert(m_Stream->good(), "Failed to open data file \"" + m_FilePath + "\"!"); }
+		if (!m_CanFail) { RTEAssert(System::PathExistsCaseSensitive(fileName) && m_Stream->good(), "Failed to open data file \"" + m_FilePath + "\"!"); }
 
 		m_OverwriteExisting = overwrites;
 
@@ -89,7 +89,7 @@ namespace RTE {
 			retString.append(1, temp);
 			peek = static_cast<char>(m_Stream->peek());
 		}
-		return retString;
+		return TrimString(retString);
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -204,7 +204,7 @@ namespace RTE {
 				if (peek == '\n') {
 					m_CurrentLine++;
 					// Only report every few lines
-					if (m_ReportProgress && (m_CurrentLine % g_SettingsMan.LoadingScreenReportPrecision() == 0)) {
+					if (m_ReportProgress && (m_CurrentLine % g_SettingsMan.LoadingScreenProgressReportPrecision() == 0)) {
 						m_ReportProgress(m_ReportTabs + m_FileName + " reading line " + std::to_string(m_CurrentLine), false);
 					}
 				}
@@ -275,7 +275,7 @@ namespace RTE {
 		m_FilePath = includeFilePath;
 		m_Stream = std::make_unique<std::ifstream>(m_FilePath);
 
-		if (m_Stream->fail()) {
+		if (m_Stream->fail() || !System::PathExistsCaseSensitive(includeFilePath)) {
 			// Backpedal and set up to read the next property in the old stream
 			m_Stream.reset(m_StreamStack.top().Stream); // Destructs the current m_Stream and takes back ownership and management of the raw StreamInfo std::ifstream pointer.
 			m_FilePath = m_StreamStack.top().FilePath;

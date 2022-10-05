@@ -22,7 +22,7 @@ namespace RTE
 
 class Actor;
 class ObjectPickerGUI;
-class PieMenuGUI;
+class PieMenu;
 class GUIScreen;
 class GUIInput;
 class GUIControlManager;
@@ -42,9 +42,7 @@ class GUIComboBox;
 // Parent(s):       EditorActivity.
 // Class history:   10/08/2007 ActorEditor Created.
 
-class ActorEditor:
-    public EditorActivity
-{
+class ActorEditor : public EditorActivity {
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Public member variable, method and friend function declarations
@@ -53,9 +51,9 @@ public:
 
 
 // Concrete allocation and cloning definitions
-EntityAllocation(ActorEditor)
-SerializableOverrideMethods
-ClassInfoGetters
+EntityAllocation(ActorEditor);
+SerializableOverrideMethods;
+ClassInfoGetters;
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Constructor:     ActorEditor
@@ -242,8 +240,6 @@ protected:
     std::string m_ActorDataFilePath;
     // The picker for selecting which object to load
     ObjectPickerGUI *m_pPicker;
-    // The pie menu to show the actor's commands
-    PieMenuGUI *m_pPieMenu;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////

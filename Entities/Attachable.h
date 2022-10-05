@@ -2,6 +2,7 @@
 #define _RTEATTACHABLE_
 
 #include "MOSRotating.h"
+#include "PieSlice.h"
 
 namespace RTE {
 
@@ -15,17 +16,17 @@ namespace RTE {
 
 	public:
 
-		EntityAllocation(Attachable)
-		AddScriptFunctionNames(MOSRotating, "OnAttach", "OnDetach")
-		SerializableOverrideMethods
-		ClassInfoGetters
+		EntityAllocation(Attachable);
+		AddScriptFunctionNames(MOSRotating, "OnAttach", "OnDetach");
+		SerializableOverrideMethods;
+		ClassInfoGetters;
 
 #pragma region Creation
 		/// <summary>
 		/// Constructor method used to instantiate a Attachable object in system memory. Create() should be called before using the object.
 		/// </summary>
 		Attachable() { Clear(); }
-		
+
 		/// <summary>
 		/// Makes the Attachable object ready for use.
 		/// </summary>
@@ -66,7 +67,7 @@ namespace RTE {
 		MOSRotating * GetParent() override { return m_Parent; }
 
 		/// <summary>
-		/// Gets the MOSRotating which is the parent of this Attachable. 
+		/// Gets the MOSRotating which is the parent of this Attachable.
 		/// </summary>
 		/// <returns>A pointer to the parent of this Attachable.</returns>
 		const MOSRotating * GetParent() const override { return m_Parent; }
@@ -220,11 +221,11 @@ namespace RTE {
 		float GetJointStiffness() const { return m_JointStiffness; }
 
 		/// <summary>
-		/// Sets the stiffness scalar of the joint of this Attachable, normalized between 0 and 1.0.
+		/// Sets the stiffness scalar of the joint of this Attachable, limited between 0 and 1.0.
 		/// 1.0 means impulse forces on this attachable will be transferred to the parent with 100% strength, 0 means they will not transfer at all.
 		/// </summary>
 		/// <param name="jointStiffness">A float describing the normalized stiffness scalar of this Attachable's joint. It will automatically be limited between 0 and 1.0.</param>
-		void SetJointStiffness(float jointStiffness) { m_JointStiffness = Limit(jointStiffness, 1.0F, 0.0F); }
+		virtual void SetJointStiffness(float jointStiffness) { m_JointStiffness = std::clamp(jointStiffness, 0.0F, 1.0F); }
 
 		/// <summary>
 		/// Gets the offset of the joint (the point around which this Attachable and its parent hinge) from this Attachable's center of mass/origin.
@@ -237,6 +238,12 @@ namespace RTE {
 		/// </summary>
 		/// <param name="newJointOffset">A Vector describing the offset of the joint relative to the this Attachable's origin/center of mass position.</param>
 		void SetJointOffset(const Vector &newJointOffset) { m_JointOffset = newJointOffset; }
+
+		/// <summary>
+		/// Gets the absolute position of the joint that the parent of this Attachable sets upon Update().
+		/// </summary>
+		/// <returns>A Vector describing the current absolute position of the joint.</returns>
+		const Vector & GetJointPos() const { return m_JointPos; }
 #pragma endregion
 
 #pragma region Force Transferral
@@ -304,14 +311,14 @@ namespace RTE {
 #pragma region Inherited Value Getters and Setters
 		/// <summary>
 		/// Gets whether or not this Attachable inherits its parent's HFlipped value, i.e. whether it has its HFlipped value reset to match/reverse its parent's every frame, if attached.
-		/// -1 (or technically any value that's not 0 or 1) means reversed inheritance (i.e. if the parent's HFlipped value is true, this Attachable's HFlipped value will be false), 0 means no inheritance, 1 means normal inheritance.
+		/// 0 means no inheritance, 1 means normal inheritance, anything else means reversed inheritance (i.e. if the parent's HFlipped value is true, this Attachable's HFlipped value will be false).
 		/// </summary>
 		/// <returns>Whether or not this Attachable inherits its parent's HFlipped value.</returns>
 		int InheritsHFlipped() const { return m_InheritsHFlipped; }
 
 		/// <summary>
 		/// Sets whether or not this Attachable inherits its parent's HFlipped value, i.e. whether it has its HFlipped value reset to match/reverse its parent's every frame, if attached.
-		/// -1 (or technically any value that's not 0 or 1) means reversed inheritance (i.e. if the parent's HFlipped value is true, this Attachable's HFlipped value will be false), 0 means no inheritance, 1 means normal inheritance.
+		/// 0 means no inheritance, 1 means normal inheritance, anything else means reversed inheritance (i.e. if the parent's HFlipped value is true, this Attachable's HFlipped value will be false).
 		/// </summary>
 		/// <param name="inheritsRotAngle">Whether or not to inherit its parent's HFlipped value.</param>
 		void SetInheritsHFlipped(int inheritsHFlipped) { m_InheritsHFlipped = inheritsHFlipped; }
@@ -339,6 +346,18 @@ namespace RTE {
 		/// </summary>
 		/// <param name="inheritedRotAngleOffset">Thee new rotation angle offset for this Attachable.</param>
 		void SetInheritedRotAngleOffset(float inheritedRotAngleOffset) { m_InheritedRotAngleOffset = inheritedRotAngleOffset; }
+
+		/// <summary>
+		/// Gets whether or not this Attachable inherits its Frame from its parent, if attached.
+		/// </summary>
+		/// <returns>Whether or not this Attachable inherits its parent's Frame.</returns>
+		bool InheritsFrame() const { return m_InheritsFrame; }
+
+		/// <summary>
+		/// Sets whether or not this Attachable inherits its Frame from its parent, if attached.
+		/// </summary>
+		/// <param name="inheritsFrame">Whether or not to inherit its parent's Frame.</param>
+		void SetInheritsFrame(bool inheritsFrame) { m_InheritsFrame = inheritsFrame; }
 #pragma endregion
 
 #pragma region Collision Management
@@ -403,9 +422,15 @@ namespace RTE {
 
 		/// <summary>
 		/// Updates this Attachable. Supposed to be done every frame.
+		///	NOTE - Attachable subclasses that do things before calling Attachable::Update should make sure to call Attachable::PreUpdate.
 		/// </summary>
 		void Update() override;
 #pragma endregion
+
+		/// <summary>
+		/// Pre-update method that should be run by all Attachable sub-classes that do things before calling Attachable::Update.
+		/// </summary>
+		void PreUpdate();
 
 #pragma region Override Methods for Handling Mass
 		/// <summary>
@@ -438,8 +463,8 @@ namespace RTE {
 		/// Removes the Attachable corresponding to the passed in UniqueID and sets its parent to nullptr. Does not add it to MovableMan or add break wounds.
 		/// </summary>
 		/// <param name="attachableUniqueID">The UniqueID of the Attachable to remove.</param>
-		/// <returns>False if the Attachable is invalid, otherwise true.</returns>
-		bool RemoveAttachable(long attachableUniqueID) final { return MOSRotating::RemoveAttachable(attachableUniqueID); }
+		/// <returns>A pointer to the removed Attachable. Ownership IS transferred!</returns>
+		Attachable * RemoveAttachable(long attachableUniqueID) final { return MOSRotating::RemoveAttachable(attachableUniqueID); }
 
 		/// <summary>
 		/// Removes the Attachable corresponding to the passed in UniqueID and sets its parent to nullptr. Optionally adds it to MovableMan and/or adds break wounds.
@@ -448,15 +473,15 @@ namespace RTE {
 		/// <param name="attachableUniqueID">The UniqueID of the Attachable to remove.</param>
 		/// <param name="addToMovableMan">Whether or not to add the Attachable to MovableMan once it has been removed.</param>
 		/// <param name="addBreakWounds">Whether or not to add break wounds to the removed Attachable and this Attachable.</param>
-		/// <returns>False if the Attachable is invalid, otherwise true.</returns>
-		bool RemoveAttachable(long attachableUniqueID, bool addToMovableMan, bool addBreakWounds) final { return MOSRotating::RemoveAttachable(attachableUniqueID, addToMovableMan, addBreakWounds); }
+		/// <returns>A pointer to the removed Attachable, if it wasn't added to MovableMan or nullptr if it was. Ownership IS transferred!</returns>
+		Attachable * RemoveAttachable(long attachableUniqueID, bool addToMovableMan, bool addBreakWounds) final { return MOSRotating::RemoveAttachable(attachableUniqueID, addToMovableMan, addBreakWounds); }
 
 		/// <summary>
 		/// Removes the passed in Attachable and sets its parent to nullptr. Does not add it to MovableMan or add break wounds.
 		/// </summary>
 		/// <param name="attachable">The Attachable to remove.</param>
-		/// <returns>False if the Attachable is invalid, otherwise true.</returns>
-		bool RemoveAttachable(Attachable *attachable) final { return MOSRotating::RemoveAttachable(attachable); }
+		/// <returns>A pointer to the removed Attachable. Ownership IS transferred!</returns>
+		Attachable * RemoveAttachable(Attachable *attachable) final { return MOSRotating::RemoveAttachable(attachable); }
 
 		/// <summary>
 		/// Removes the passed in Attachable and sets its parent to nullptr. Optionally adds it to MovableMan and/or adds break wounds.
@@ -465,8 +490,8 @@ namespace RTE {
 		/// <param name="attachable">The Attachable to remove.</param>
 		/// <param name="addToMovableMan">Whether or not to add the Attachable to MovableMan once it has been removed.</param>
 		/// <param name="addBreakWounds">Whether or not to add break wounds to the removed Attachable and this Attachable.</param>
-		/// <returns>False if the Attachable is invalid, otherwise true.</returns>
-		bool RemoveAttachable(Attachable *attachable, bool addToMovableMan, bool addBreakWounds) final;
+		/// <returns>A pointer to the removed Attachable, if it wasn't added to MovableMan or nullptr if it was. Ownership IS transferred!</returns>
+		Attachable * RemoveAttachable(Attachable *attachable, bool addToMovableMan, bool addBreakWounds) final;
 
 		/// <summary>
 		/// Adds the passed in wound AEmitter to the list of wounds and changes its parent offset to the passed in Vector.
@@ -506,10 +531,10 @@ namespace RTE {
 		bool m_DrawnNormallyByParent; //!< Whether this Attachable will be drawn normally when attached, or will require special handling by some non-MOSR parent type.
 		bool m_DeleteWhenRemovedFromParent; //!< Whether this Attachable should be deleted when it's removed from its parent.
 		bool m_ApplyTransferredForcesAtOffset; //!< Whether forces transferred from this Attachable should be applied at the rotated parent offset (which will produce torque), or directly at the parent's position. Mostly useful to make jetpacks and similar emitters viable.
-		
+
 		float m_GibWithParentChance; //!< The percentage chance that this Attachable will gib when its parent does. 0 means never, 1 means always.
 		float m_ParentGibBlastStrengthMultiplier; //!< The multiplier for how strongly this Attachable's parent's gib blast strength will be applied to it when its parent's gibs.
-		
+
 		//TODO This is a stopgap for a dedicated Wound class, that would be helpful to simplify things like this and default damage multiplier handling.
 		bool m_IsWound; //!< Whether or not this Attachable has been added as a wound. Only set and applied for Attachables with parents.
 
@@ -525,13 +550,17 @@ namespace RTE {
 		int m_InheritsHFlipped; //!< Whether this Attachable should inherit its parent's HFlipped. Defaults to 1 (normal inheritance).
 		bool m_InheritsRotAngle; //!< Whether this Attachable should inherit its parent's RotAngle. Defaults to true.
 		float m_InheritedRotAngleOffset; //!< The offset by which this Attachable should be rotated when it's set to inherit its parent's rotation angle. Defaults to 0.
+		bool m_InheritsFrame; //!< Whether this Attachable should inherit its parent's Frame. Defaults to false.
 
 		long m_AtomSubgroupID; //!< The Atom IDs this' atoms will have when attached and added to a parent's AtomGroup.
 		bool m_CollidesWithTerrainWhileAttached; //!< Whether this attachable currently has terrain collisions enabled while it's attached to a parent.
 
+		std::vector<std::unique_ptr<PieSlice>> m_PieSlices; //!< The vector of PieSlices belonging to this Attachable. Added to and removed from the RootParent as appropriate, when a parent is set.
+
 		Vector m_PrevParentOffset; //!< The previous frame's parent offset.
 		Vector m_PrevJointOffset; //!< The previous frame's joint offset.
 		float m_PrevRotAngleOffset; //!< The previous frame's difference between this Attachable's RotAngle and it's root parent's RotAngle.
+		bool m_PreUpdateHasRunThisFrame; //!< Whether or not PreUpdate has run this frame. PreUpdate, like Update, should only run once per frame.
 
 		/// <summary>
 		/// Sets this Attachable's parent MOSRotating, and also sets its Team based on its parent and, if the Attachable is set to collide, adds/removes Atoms to its new/old parent.

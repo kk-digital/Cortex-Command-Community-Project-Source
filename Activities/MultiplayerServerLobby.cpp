@@ -25,30 +25,26 @@
 #include "MetaMan.h"
 #include "AudioMan.h"
 
-#include "GUI/GUI.h"
-#include "GUI/AllegroBitmap.h"
-#include "GUI/AllegroScreen.h"
-#include "GUI/AllegroInput.h"
-#include "GUI/GUIControlManager.h"
-#include "GUI/GUICollectionBox.h"
-#include "GUI/GUIComboBox.h"
-#include "GUI/GUICheckbox.h"
-#include "GUI/GUITab.h"
-#include "GUI/GUIListBox.h"
-#include "GUI/GUITextBox.h"
-#include "GUI/GUIButton.h"
-#include "GUI/GUILabel.h"
-#include "GUI/GUISlider.h"
-#include "PieMenuGUI.h"
+#include "GUI.h"
+#include "AllegroBitmap.h"
+#include "AllegroScreen.h"
+#include "AllegroInput.h"
+#include "GUIControlManager.h"
+#include "GUICollectionBox.h"
+#include "GUIComboBox.h"
+#include "GUICheckbox.h"
+#include "GUITab.h"
+#include "GUIListBox.h"
+#include "GUITextBox.h"
+#include "GUIButton.h"
+#include "GUILabel.h"
+#include "GUISlider.h"
 
 #include "NetworkServer.h"
 
-
-extern bool g_ResetActivity;
-
 namespace RTE {
 
-	ConcreteClassInfo(MultiplayerServerLobby, Activity, 0)
+	ConcreteClassInfo(MultiplayerServerLobby, Activity, 0);
 
 	//////////////////////////////////////////////////////////////////////////////////////////
 	// Method:          Clear
@@ -228,8 +224,9 @@ namespace RTE {
 			m_pGUIInput = new AllegroInput(-1, true);
 		if (!m_pGUIController)
 			m_pGUIController = new GUIControlManager();
-		if (!m_pGUIController->Create(m_pGUIScreen, m_pGUIInput, "Base.rte/GUIs/Skins/Base"))
-			RTEAbort("Failed to create GUI Control Manager and load it from Base.rte/GUIs/Skins/Base");
+		if (!m_pGUIController->Create(m_pGUIScreen, m_pGUIInput, "Base.rte/GUIs/Skins", "DefaultSkin.ini")) {
+			RTEAbort("Failed to create GUI Control Manager and load it from Base.rte/GUIs/Skins/DefaultSkin.ini");
+		}
 
 		m_pGUIController->Load("Base.rte/GUIs/MultiplayerServerLobbyGUI.ini");
 		m_pGUIController->EnableMouse(true);
@@ -245,8 +242,8 @@ namespace RTE {
 		m_pDifficultyLabel = dynamic_cast<GUILabel *>(m_pGUIController->GetControl("DifficultyLabel"));
 		m_pDifficultySlider = dynamic_cast<GUISlider *>(m_pGUIController->GetControl("DifficultySlider"));
 		//m_pActivitySelect->SetDropHeight(64);
-		//    m_pActivitySelect->GetListPanel()->SetFont(m_pGUIController->GetSkin()->GetFont("smallfont.png"));
-		//m_pActivityLabel->SetFont(m_pGUIController->GetSkin()->GetFont("smallfont.png"));
+		//    m_pActivitySelect->GetListPanel()->SetFont(m_pGUIController->GetSkin()->GetFont("FontSmall.png"));
+		//m_pActivityLabel->SetFont(m_pGUIController->GetSkin()->GetFont("FontSmall.png"));
 
 		// Player team assignment box
 		char str[128];
@@ -305,31 +302,16 @@ namespace RTE {
 		m_pCPULockLabel = dynamic_cast<GUILabel *>(m_pGUIController->GetControl("CPULockLabel"));
 
 		// Populate the tech comboboxes with the available tech modules
-		const DataModule *pModule = 0;
-		string techName;
-		string techString = " Tech";
-		string::size_type techPos = string::npos;
-		for (int i = 0; i < g_PresetMan.GetTotalModuleCount(); ++i)
-		{
-			pModule = g_PresetMan.GetDataModule(i);
-			if (pModule)
-			{
-				techName = pModule->GetFriendlyName();
-				if ((techPos = techName.find(techString)) != string::npos)
-				{
-					techName.replace(techPos, techString.length(), "");
-					m_apTeamTechSelect[Teams::TeamOne]->GetListPanel()->AddItem(techName, "", 0, 0, i);
-					m_apTeamTechSelect[Teams::TeamTwo]->GetListPanel()->AddItem(techName, "", 0, 0, i);
-					m_apTeamTechSelect[Teams::TeamThree]->GetListPanel()->AddItem(techName, "", 0, 0, i);
-					m_apTeamTechSelect[Teams::TeamFour]->GetListPanel()->AddItem(techName, "", 0, 0, i);
+		for (int moduleID = 0; moduleID < g_PresetMan.GetTotalModuleCount(); ++moduleID) {
+			if (const DataModule *dataModule = g_PresetMan.GetDataModule(moduleID)) {
+				if (dataModule->IsFaction()) {
+					for (int team = Activity::Teams::TeamOne; team < Activity::Teams::MaxTeamCount; ++team) {
+						m_apTeamTechSelect[team]->GetListPanel()->AddItem(dataModule->GetFriendlyName(), "", nullptr, nullptr, moduleID);
+						m_apTeamTechSelect[team]->GetListPanel()->ScrollToTop();
+					}
 				}
 			}
 		}
-		// Make the lists be scrolled to the top when they are initially dropped
-		m_apTeamTechSelect[Teams::TeamOne]->GetListPanel()->ScrollToTop();
-		m_apTeamTechSelect[Teams::TeamTwo]->GetListPanel()->ScrollToTop();
-		m_apTeamTechSelect[Teams::TeamThree]->GetListPanel()->ScrollToTop();
-		m_apTeamTechSelect[Teams::TeamFour]->GetListPanel()->ScrollToTop();
 
 		m_pGoldLabel = dynamic_cast<GUILabel *>(m_pGUIController->GetControl("GoldLabel"));
 		m_pGoldSlider = dynamic_cast<GUISlider *>(m_pGUIController->GetControl("GoldSlider"));
@@ -339,9 +321,11 @@ namespace RTE {
 
 		m_pStartScenarioButton = dynamic_cast<GUIButton *>(m_pGUIController->GetControl("StartButton"));
 
-		m_pScenePreviewBitmap = create_bitmap_ex(8, Scene::PREVIEW_WIDTH, Scene::PREVIEW_HEIGHT);
+		// TODO: Use old dimensions because don't feel like redesigning this whole GUI. Deal with this eventually.
+		m_pScenePreviewBitmap = create_bitmap_ex(8, 140, 55);
+		//m_pScenePreviewBitmap = create_bitmap_ex(8, c_ScenePreviewWidth, c_ScenePreviewHeight);
 
-		ContentFile defaultPreview("Base.rte/GUIs/DefaultPreview.png");
+		ContentFile defaultPreview("Base.rte/GUIs/DefaultPreview000.png");
 		m_pDefaultPreviewBitmap = defaultPreview.GetAsBitmap(COLORCONV_NONE, false);
 
 		clear_to_color(m_pScenePreviewBitmap, g_MaskColor);
@@ -369,7 +353,7 @@ namespace RTE {
 		UpdateActivityBox();
 
 		// This allow to reduce looby bandwidth by 50% while still somewhat descent looking
-		g_NetworkServer.SetInterlacingMode(true);
+		//g_NetworkServer.SetInterlacingMode(true);
 
 		return error;
 	}
@@ -1007,7 +991,7 @@ namespace RTE {
 		g_AudioMan.ClearMusicQueue();
 		g_AudioMan.StopMusic();
 
-		g_ResetActivity = true;
+		g_ActivityMan.SetRestartActivity();
 		g_ActivityMan.SetStartActivity(pActivity);
 
 		// Kill any Campaign games currently running
@@ -1335,13 +1319,17 @@ namespace RTE {
 				{
 					int xOffset = 0;
 					int yOffset = 0;
-					blit(preview, m_pScenePreviewBitmap, xOffset, yOffset, 0, 0, m_pScenePreviewBitmap->w, m_pScenePreviewBitmap->h);
+					// TODO: Scale down the previews to old dimensions so they fit. Deal with this when redesigning GUI one day.
+					stretch_blit(preview, m_pScenePreviewBitmap, xOffset, yOffset, c_ScenePreviewWidth, c_ScenePreviewHeight, 0, 0, 140, 55 );
+					//blit(preview, m_pScenePreviewBitmap, xOffset, yOffset, 0, 0, m_pScenePreviewBitmap->w, m_pScenePreviewBitmap->h);
 				}
 				else 
 				{
 					int xOffset = 0;
 					int yOffset = 0;
-					blit(m_pDefaultPreviewBitmap, m_pScenePreviewBitmap, xOffset, yOffset, 0, 0, m_pScenePreviewBitmap->w, m_pScenePreviewBitmap->h);
+					// TODO: Scale down the previews to old dimensions so they fit. Deal with this when redesigning GUI one day.
+					stretch_blit(m_pDefaultPreviewBitmap, m_pScenePreviewBitmap, xOffset, yOffset, c_ScenePreviewWidth, c_ScenePreviewHeight, 0, 0, 140, 55);
+					//blit(m_pDefaultPreviewBitmap, m_pScenePreviewBitmap, xOffset, yOffset, 0, 0, m_pScenePreviewBitmap->w, m_pScenePreviewBitmap->h);
 				}
 				draw_sprite(drawBitmap, m_pScenePreviewBitmap,  419, 57);
 			}

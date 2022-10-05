@@ -50,9 +50,7 @@ class GAScripted;
 // Parent(s):       Serializable.
 // Class history:   8/22/2008 MetagameGUI Created.
 
-class MetagameGUI:
-    public Serializable
-{
+class MetagameGUI : public Serializable {
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -438,6 +436,11 @@ public:
 // Return value:    None.
 	void SetToStartNewGame();
 
+	/// <summary>
+	/// Sets where the station is located on the planet orbit.
+	/// </summary>
+	/// <param name="newStationPos">The position of the station on the planet orbit.</param>
+	void SetStationOrbitPos(const Vector &newStationPos) { m_StationPosOnOrbit = newStationPos; }
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Protected member variable and method declarations
@@ -1247,6 +1250,8 @@ protected:
     bool m_BackToMain;
     // Player selected to quit the program
     bool m_Quit;
+
+	Vector m_StationPosOnOrbit; //!< The position of the station on the planet orbit.
 
 
 //////////////////////////////////////////////////////////////////////////////////////////

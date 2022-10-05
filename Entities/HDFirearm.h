@@ -29,9 +29,7 @@ class Magazine;
 // Parent(s):       HeldDevice.
 // Class history:   07/1/2002 HDFirearm created.
 
-class HDFirearm:
-    public HeldDevice
-{
+class HDFirearm : public HeldDevice {
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -41,9 +39,10 @@ public:
 
 
 // Concrete allocation and cloning definitions
-EntityAllocation(HDFirearm)
-SerializableOverrideMethods
-ClassInfoGetters
+EntityAllocation(HDFirearm);
+SerializableOverrideMethods;
+ClassInfoGetters;
+AddScriptFunctionNames(HeldDevice, "OnFire", "OnReload");
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Constructor:     HDFirearm
@@ -155,6 +154,11 @@ ClassInfoGetters
     /// <param name="newTurret">The new flash to use.</param>
     void SetFlash(Attachable *newFlash);
 
+	/// <summary>
+	/// Gets the preset name of the next Magazine that will be loaded into this gun.
+	/// </summary>
+	/// <returns>The preset name of the next Magazine that will be loaded into this gun.</returns>
+	std::string GetNextMagazineName() const;
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:  SetNextMagazineName
@@ -177,6 +181,13 @@ ClassInfoGetters
 //                  HDFirearm. Negative means infinite ammo.
 
     int GetRoundInMagCount() const;
+
+	/// <summary>
+	/// Gets the maximum RoundCount a Magazine of this HDFirearm can hold.
+	/// If there is no Magazine, it gets the RoundCount of the reference Magazine.
+	/// </summary>
+	/// <returns>An int with the maximum RoundCount the magazine or magazine reference of this HDFirearm can hold.</returns>
+	int GetRoundInMagCapacity() const;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -320,6 +331,24 @@ ClassInfoGetters
 
     void SetParticleSpreadRange(float range) { m_ParticleSpreadRange = range; };
 
+	/// <summary>
+	/// Gets the random velocity variation scalar at which this HDFirearm's shell is to be ejected.
+	/// </summary>
+	/// <returns>A float with the scalar value.</returns>
+	float GetShellVelVariation() const { return m_ShellVelVariation; }
+
+	/// <summary>
+	/// Sets the random velocity variation scalar at which this HDFirearm's shell is to be ejected.
+	/// </summary>
+	/// <param name = newValue>The new velocity variation scalar.</param>
+	void SetShellVelVariation(float newVariation) { m_ShellVelVariation = newVariation; }
+
+	/// <summary>
+	/// Sets the stiffness scalar of the joint of this HDFirearm. Unlike Attachable::SetJointStiffness, there are no limitations on this value.
+	/// 1.0 means impulse forces on this attachable will be transferred to the parent with 100% strength, 0 means they will not transfer at all, negative values will apply negative force, which may behave oddly.
+	/// </summary>
+	/// <param name="jointStiffness">A float describing the normalized stiffness scalar of this Attachable's joint.</param>
+	void SetJointStiffness(float jointStiffness) override { m_JointStiffness = jointStiffness; }
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          GetAIFireVel
@@ -427,6 +456,101 @@ ClassInfoGetters
 
 	void SetMuzzleOffset(Vector newOffset) override { m_MuzzleOff = newOffset; }
 
+	/// <summary>
+	/// Gets this HDFirearm's pre fire sound. Ownership is NOT transferred!
+	/// </summary>
+	/// <returns>The SoundContainer for this HDFirearm's pre fire sound.</returns>
+	SoundContainer * GetPreFireSound() const { return m_PreFireSound; }
+
+	/// <summary>
+	/// Sets this HDFirearm's pre fire sound. Ownership IS transferred!
+	/// </summary>
+	/// <param name="newSound">The new SoundContainer for this HDFirearm's pre fire sound.</param>
+	void SetPreFireSound(SoundContainer *newSound) { m_PreFireSound = newSound; }
+
+	/// <summary>
+	/// Gets this HDFirearm's fire sound. Ownership is NOT transferred!
+	/// </summary>
+	/// <returns>The SoundContainer for this HDFirearm's fire sound.</returns>
+	SoundContainer * GetFireSound() const { return m_FireSound; }
+
+	/// <summary>
+	/// Sets this HDFirearm's fire sound. Ownership IS transferred!
+	/// </summary>
+	/// <param name="newSound">The new SoundContainer for this HDFirearm's fire sound.</param>
+	void SetFireSound(SoundContainer *newSound) { m_FireSound = newSound; }
+
+	/// <summary>
+	/// Gets this HDFirearm's fire echo sound. Ownership is NOT transferred!
+	/// </summary>
+	/// <returns>The SoundContainer for this HDFirearm's fire echo sound.</returns>
+	SoundContainer * GetFireEchoSound() const { return m_FireEchoSound; }
+
+	/// <summary>
+	/// Sets this HDFirearm's fire echo sound. Ownership IS transferred!
+	/// </summary>
+	/// <param name="newSound">The new SoundContainer for this HDFirearm's fire echo sound.</param>
+	void SetFireEchoSound(SoundContainer *newSound) { m_FireEchoSound = newSound; }
+
+	/// <summary>
+	/// Gets this HDFirearm's active sound. Ownership is NOT transferred!
+	/// </summary>
+	/// <returns>The SoundContainer for this HDFirearm's active sound.</returns>
+	SoundContainer * GetActiveSound() const { return m_ActiveSound; }
+
+	/// <summary>
+	/// Sets this HDFirearm's active sound. Ownership IS transferred!
+	/// </summary>
+	/// <param name="newSound">The new SoundContainer for this HDFirearm's active sound.</param>
+	void SetActiveSound(SoundContainer *newSound) { m_ActiveSound = newSound; }
+
+	/// <summary>
+	/// Gets this HDFirearm's deactivation sound. Ownership is NOT transferred!
+	/// </summary>
+	/// <returns>The SoundContainer for this HDFirearm's deactivation sound.</returns>
+	SoundContainer * GetDeactivationSound() const { return m_DeactivationSound; }
+
+	/// <summary>
+	/// Sets this HDFirearm's deactivation sound. Ownership IS transferred!
+	/// </summary>
+	/// <param name="newSound">The new SoundContainer for this HDFirearm's deactivation sound.</param>
+	void SetDeactivationSound(SoundContainer *newSound) { m_DeactivationSound = newSound; }
+
+	/// <summary>
+	/// Gets this HDFirearm's empty sound. Ownership is NOT transferred!
+	/// </summary>
+	/// <returns>The SoundContainer for this HDFirearm's empty sound.</returns>
+	SoundContainer * GetEmptySound() const { return m_EmptySound; }
+
+	/// <summary>
+	/// Sets this HDFirearm's empty sound. Ownership IS transferred!
+	/// </summary>
+	/// <param name="newSound">The new SoundContainer for this HDFirearm's empty sound.</param>
+	void SetEmptySound(SoundContainer *newSound) { m_EmptySound = newSound; }
+
+	/// <summary>
+	/// Gets this HDFirearm's reload start sound. Ownership is NOT transferred!
+	/// </summary>
+	/// <returns>The SoundContainer for this HDFirearm's reload start sound.</returns>
+	SoundContainer * GetReloadStartSound() const { return m_ReloadStartSound; }
+
+	/// <summary>
+	/// Sets this HDFirearm's reload start sound. Ownership IS transferred!
+	/// </summary>
+	/// <param name="newSound">The new SoundContainer for this HDFirearm's reload start sound.</param>
+	void SetReloadStartSound(SoundContainer *newSound) { m_ReloadStartSound = newSound; }
+
+	/// <summary>
+	/// Gets this HDFirearm's reload end sound. Ownership is NOT transferred!
+	/// </summary>
+	/// <returns>The SoundContainer for this HDFirearm's reload end sound.</returns>
+	SoundContainer * GetReloadEndSound() const { return m_ReloadEndSound; }
+
+	/// <summary>
+	/// Sets this HDFirearm's reload end sound. Ownership IS transferred!
+	/// </summary>
+	/// <param name="newSound">The new SoundContainer for this HDFirearm's reload end sound.</param>
+	void SetReloadEndSound(SoundContainer *newSound) { m_ReloadEndSound = newSound; }
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Virtual method:  ResetAllTimers
@@ -439,6 +563,11 @@ ClassInfoGetters
 
     void ResetAllTimers() override { HeldDevice::ResetAllTimers(); m_LastFireTmr.Reset(); m_ReloadTmr.Reset(); }
 
+	/// <summary>
+	/// Gets this HDFirearm's reload progress as a scalar from 0 to 1.
+	/// </summary>
+	/// <returns>The reload progress as a scalar from 0 to 1.</returns>
+	float GetReloadProgress() const { return IsReloading() && m_ReloadTime > 0 ? std::min(static_cast<float>(m_ReloadTmr.GetElapsedSimTimeMS() / m_ReloadTime), 1.0F) : 1.0F; }
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Virtual method:  RestDetection
@@ -533,7 +662,9 @@ ClassInfoGetters
 // Arguments:       None.
 // Return value:    Whetehr magazine is full or not.
 
-	bool IsFull() override;
+	bool IsFull() const override;
+
+	bool IsEmpty() const override;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -544,6 +675,18 @@ ClassInfoGetters
 // Return value:    Whether the player can hold down fire and this will fire repeatedly.
 
 	bool IsFullAuto() const { return m_FullAuto; }
+
+	/// <summary>
+	/// Gets whether this HDFirearm is set to be reloadable or not.
+	/// </summary>
+	/// <returns>Whether this HDFirearm is reloadable.</returns>
+	bool IsReloadable() const { return m_Reloadable; }
+
+	/// <summary>
+	/// Sets whether this HDFirearm is reloadable or not and halts the reloading process.
+	/// </summary>
+	/// <param name="isReloadable">Whether this HDFirearm is reloadable.</param>
+	void SetReloadable(bool isReloadable) { m_Reloadable = isReloadable; m_Reloading = m_Reloading && m_Reloadable; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -676,19 +819,19 @@ protected:
     // Muzzle Flash Attachable. Owned
     Attachable *m_pFlash;
 
-    SoundContainer m_PreFireSound; //!< The sound this HDFirearm should play before it starts firing. Distinct from activation sound in that it will play exactly once per trigger pull and not pitch up.
+    SoundContainer *m_PreFireSound; //!< The sound this HDFirearm should play before it starts firing. Distinct from activation sound in that it will play exactly once per trigger pull and not pitch up.
     // The audio of this FireArm being fired.
-    SoundContainer m_FireSound;
-    SoundContainer m_FireEchoSound; //!< The audio that is played as the echo for the gun. Each shot will restart this sound, so it doesn't ever overlap.
+    SoundContainer *m_FireSound;
+    SoundContainer *m_FireEchoSound; //!< The audio that is played as the echo for the gun. Each shot will restart this sound, so it doesn't ever overlap.
     // The audio that is played immediately upon activation, but perhaps before actual first firing, if there's a pre-delay
-    SoundContainer m_ActiveSound;
+    SoundContainer *m_ActiveSound;
     // The audio that is played immediately upon cease of activation
-    SoundContainer m_DeactivationSound;
+    SoundContainer *m_DeactivationSound;
     // The audio of this FireArm being fired empty.
-    SoundContainer m_EmptySound;
+    SoundContainer *m_EmptySound;
     // The audio of this FireArm being reloaded.
-    SoundContainer m_ReloadStartSound;
-    SoundContainer m_ReloadEndSound;
+    SoundContainer *m_ReloadStartSound;
+    SoundContainer *m_ReloadEndSound;
 
     // Rate of fire, in rounds per min.
     // If 0, firearm is semi-automatic (ie only one discharge per activation).
@@ -708,6 +851,7 @@ protected:
     // Whether particles fired from this HDFirearm will ignore hits with itself,
     // and the root parent of this HDFirearm, regardless if they are set to hit MOs.
     bool m_FireIgnoresThis;
+	bool m_Reloadable; //!< Whether this HDFirearm is reloadable by normal means.
 
     // Timer for timing how long ago the last round was fired.
     Timer m_LastFireTmr;
@@ -728,10 +872,13 @@ protected:
     float m_NoSupportFactor;
     // Range of spread angle of fired particles, in one direction
     float m_ParticleSpreadRange;
+	// Angle in which shells are ejected relative to this weapon
+	float m_ShellEjectAngle;
     // Range of spread angle of ejected shells, in one direction
     float m_ShellSpreadRange;
     // Range of spread in ang vel of ejected shells, in one direction
     float m_ShellAngVelRange;
+	float m_ShellVelVariation; //!< The velocity variation scalar of ejected shells.
     // The muzzle velocity the AI use when aiming this weapon
     float m_AIFireVel;
     // The bullet life time the AI use when aiming this weapon
@@ -756,6 +903,9 @@ protected:
 	// If true m_Frame is not changed during an update hence the animation 
 	// is done by external Lua code
 	bool m_IsAnimatedManually;
+
+
+	bool m_LegacyCompatibilityRoundsAlwaysFireUnflipped; //<! Legacy compatibility flag to make it so rounds don't flip with the gun. Useful for old mods with things like missiles that accounted for the old code that didn't flip them properly.
 
 /* TODO
     // Path the the script file that contains the ballistic solution function of this

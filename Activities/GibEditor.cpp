@@ -27,29 +27,25 @@
 #include "Scene.h"
 #include "DataModule.h"
 
-#include "GUI/GUI.h"
-#include "GUI/GUIFont.h"
-#include "GUI/AllegroScreen.h"
-#include "GUI/AllegroBitmap.h"
-#include "GUI/AllegroInput.h"
-#include "GUI/GUIControlManager.h"
-#include "GUI/GUICollectionBox.h"
-#include "GUI/GUITab.h"
-#include "GUI/GUIListBox.h"
-#include "GUI/GUITextBox.h"
-#include "GUI/GUIButton.h"
-#include "GUI/GUILabel.h"
-#include "GUI/GUIComboBox.h"
+#include "GUI.h"
+#include "GUIFont.h"
+#include "AllegroScreen.h"
+#include "AllegroBitmap.h"
+#include "AllegroInput.h"
+#include "GUIControlManager.h"
+#include "GUICollectionBox.h"
+#include "GUITab.h"
+#include "GUIListBox.h"
+#include "GUITextBox.h"
+#include "GUIButton.h"
+#include "GUILabel.h"
+#include "GUIComboBox.h"
 
 #include "GibEditorGUI.h"
-#include "PieMenuGUI.h"
-#include "GABaseDefense.h"
-
-extern bool g_ResetActivity;
 
 namespace RTE {
 
-ConcreteClassInfo(GibEditor, EditorActivity, 0)
+ConcreteClassInfo(GibEditor, EditorActivity, 0);
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -342,7 +338,7 @@ void GibEditor::Update()
                 // Clear out the terrain after a few tests
                 if (m_TestCounter >= 3)
                 {
-                    g_SceneMan.GetScene()->GetTerrain()->ClearAllMaterial();
+					ClearTestArea();
                     m_TestCounter = 0;
                 }
                 // Clear all crap still flying around
@@ -383,7 +379,7 @@ void GibEditor::Update()
     m_NeedSave = m_NeedSave || m_pEditorGUI->EditMade();
 
     // Get any mode change commands that the user gave the Editor GUI
-    if (m_pEditorGUI->GetActivatedPieSlice() == PieMenuGUI::PSI_NEW && m_EditorMode != NEWDIALOG)
+    if (m_pEditorGUI->GetActivatedPieSlice() == PieSlice::SliceType::EditorNew && m_EditorMode != NEWDIALOG)
     {
         m_pEditorGUI->SetEditorGUIMode(GibEditorGUI::INACTIVE);
         m_EditorMode = EditorActivity::NEWDIALOG;
@@ -397,14 +393,14 @@ void GibEditor::Update()
         m_EditorMode = EditorActivity::LOADDIALOG;
         m_ModeChange = true;
     }
-    else if (m_pEditorGUI->GetActivatedPieSlice() == PieMenuGUI::PSI_SAVE && m_EditorMode != SAVEDIALOG)
+    else if (m_pEditorGUI->GetActivatedPieSlice() == PieSlice::SliceType::EditorSave && m_EditorMode != SAVEDIALOG)
     {
         m_pEditorGUI->SetEditorGUIMode(GibEditorGUI::INACTIVE);
         m_EditorMode = EditorActivity::SAVEDIALOG;
         m_ModeChange = true;
     }
     // Test the object by allowing the player to gib temporary test copy instances of the edited object
-    else if (m_pEditorGUI->GetActivatedPieSlice() == PieMenuGUI::PSI_DONE)
+    else if (m_pEditorGUI->GetActivatedPieSlice() == PieSlice::SliceType::EditorDone)
     {
         // Make the copy of the current edited object
         delete m_pTestingObject;
@@ -533,7 +529,7 @@ void GibEditor::Update()
                     }
 
                     // Clear out the testing area
-                    g_SceneMan.GetScene()->GetTerrain()->ClearAllMaterial();
+					ClearTestArea();
                     m_TestCounter = 0;
 
                     m_pObjectToLoad = 0;
@@ -959,4 +955,11 @@ void GibEditor::UpdateOverwriteDialog()
         m_pOverwriteNameLabel->SetText(g_PresetMan.GetDataModule(m_ModuleSpaceID)->GetFileName() + "/NewData/" + m_pEditedObject->GetPresetName() + ".ini");
 }
 
-} // namespace RTE
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	void GibEditor::ClearTestArea() const {
+		clear_bitmap(g_SceneMan.GetTerrain()->GetFGColorBitmap());
+		clear_bitmap(g_SceneMan.GetTerrain()->GetBGColorBitmap());
+		clear_bitmap(g_SceneMan.GetTerrain()->GetMaterialBitmap());
+	}
+}

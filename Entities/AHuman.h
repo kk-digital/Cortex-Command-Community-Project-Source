@@ -34,9 +34,8 @@ class AEmitter;
 // Parent(s):       Actor.
 // Class history:   05/24/2001 AHuman created.
 
-class AHuman:
-    public Actor
-{
+class AHuman : public Actor {
+	friend struct EntityLuaBindings;
 
 
 enum UpperBodyState
@@ -87,10 +86,11 @@ public:
 
 
 // Concrete allocation and cloning definitions
-EntityAllocation(AHuman)
-AddScriptFunctionNames(Actor, "OnStride")
-SerializableOverrideMethods
-ClassInfoGetters
+EntityAllocation(AHuman);
+AddScriptFunctionNames(Actor, "OnStride");
+SerializableOverrideMethods;
+ClassInfoGetters;
+DefaultPieMenuNameGetter("Default Human Pie Menu");
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Constructor:     AHuman
@@ -179,12 +179,6 @@ ClassInfoGetters
 
 	float GetTotalValue(int nativeModule = 0, float foreignMult = 1.0, float nativeMult = 1.0) const override;
 
-//////////////////////////////////////////////////////////////////////////////////////////
-// Method:          GetTotalValueOld
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     DOES THE SAME THING AS GetTotalValue, USED ONLY TO PRESERVE LUA COMPATIBILITY
-
-	float GetTotalValueOld(int nativeModule = 0, float foreignMult = 1.0) const override { return GetTotalValue(nativeModule, foreignMult, 1.0); }
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          HasObject
@@ -328,16 +322,6 @@ ClassInfoGetters
     void SetBGFoot(Attachable *newFoot) { if (m_pBGLeg && m_pBGLeg->IsAttached()) { m_pBGLeg->SetFoot(newFoot); } }
 
 
-//////////////////////////////////////////////////////////////////////////////////////////
-// Method:          GetHeadBitmap
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Gets the sprite representing the head of this.
-// Arguments:       None.
-// Return value:    A pointer to the bitmap of with the head of this. Ownership is NOT
-//                  transferred!
-
-    BITMAP *GetHeadBitmap() const;
-
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          GetJetTimeTotal
@@ -378,6 +362,32 @@ ClassInfoGetters
 
 	void SetJetTimeLeft(float newValue) { m_JetTimeLeft = newValue < m_JetTimeTotal ? newValue : m_JetTimeTotal; }
 
+	/// <summary>
+	/// Gets the rate at which this AHuman's jetpack is replenished during downtime.
+	/// </summary>
+	/// <returns>The rate at which the jetpack is replenished.</returns>
+	float GetJetReplenishRate() const { return m_JetReplenishRate; }
+
+
+	/// <summary>
+	/// Sets the rate at which this AHuman's jetpack is replenished during downtime.
+	/// </summary>
+	/// <param name="newValue">The rate at which the jetpack is replenished.</param>
+	void SetJetReplenishRate(float newValue) { m_JetReplenishRate = newValue; }
+
+
+	/// <summary>
+	/// Gets the scalar ratio at which this jetpack's thrust angle follows the aim angle of the user.
+	/// </summary>
+	/// <returns>The ratio at which this jetpack follows the aim angle of the user.</returns>
+	float GetJetAngleRange() const { return m_JetAngleRange; }
+
+	/// <summary>
+	/// Sets the scalar ratio at which this jetpack's thrust angle follows the aim angle of the user.
+	/// </summary>
+	/// <param name="newValue">The ratio at which this jetpack follows the aim angle of the user.</param>
+	void SetJetAngleRange(float newValue) { m_JetAngleRange = newValue; }
+
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Virtual method:  CollideAtPoint
@@ -392,27 +402,12 @@ ClassInfoGetters
 
     bool CollideAtPoint(HitData &hitData) override;
 
-
-//////////////////////////////////////////////////////////////////////////////////////////
-// Virtual method:  AddPieMenuSlices
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Adds all slices this needs on a pie menu.
-// Arguments:       The pie menu to add slices to. Ownership is NOT transferred!
-// Return value:    Whether any slices were added.
-
-   bool AddPieMenuSlices(PieMenuGUI *pPieMenu) override;
-
-
-//////////////////////////////////////////////////////////////////////////////////////////
-// Virtual method:  HandlePieCommand
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Handles and does whatever a specific activated Pie Menu slice does to
-//                  this.
-// Arguments:       The pie menu command to handle. See the PieSliceIndex enum.
-// Return value:    Whetehr any slice was handled. False if no matching slice handler was
-//                  found, or there was no slice currently activated by the pie menu.
-
-    bool HandlePieCommand(int pieSliceIndex) override;
+    /// <summary>
+    /// Tries to handle the activated PieSlice in this object's PieMenu, if there is one, based on its SliceType.
+    /// </summary>
+    /// <param name="pieSliceType">The SliceType of the PieSlice being handled.</param>
+    /// <returns>Whether or not the activated PieSlice SliceType was able to be handled.</returns>
+    bool HandlePieCommand(PieSlice::SliceType pieSliceType) override;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -443,7 +438,7 @@ ClassInfoGetters
 // Virtual Method:  EquipDeviceInGroup
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Switches the currently held device (if any) to the first found device
-//                  of the specified group in the inventory. If the held device already 
+//                  of the specified group in the inventory. If the held device already
 //                  is of that group, or no device is in inventory, nothing happens.
 // Arguments:       The group the device must belong to.
 //                  Whether to actually equip any matching item found in the inventory,
@@ -457,7 +452,7 @@ ClassInfoGetters
 // Virtual Method:  EquipLoadedFirearmInGroup
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Switches the currently held device (if any) to the first loaded HDFirearm
-//                  of the specified group in the inventory. If no such weapon is in the 
+//                  of the specified group in the inventory. If no such weapon is in the
 //                  inventory, nothing happens.
 // Arguments:       The group the HDFirearm must belong to. "Any" for all groups.
 //                  The group the HDFirearm must *not* belong to. "None" for no group.
@@ -472,7 +467,7 @@ ClassInfoGetters
 // Virtual Method:  EquipNamedDevice
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Switches the currently held device (if any) to the first found device
-//                  of with the specified preset name in the inventory. If the held device already 
+//                  of with the specified preset name in the inventory. If the held device already
 //                  is of that preset name, or no device is in inventory, nothing happens.
 // Arguments:       The preset name the device must have.
 //                  Whether to actually equip any matching item found in the inventory,
@@ -554,15 +549,28 @@ ClassInfoGetters
 
 //	bool EquipDualWieldableInBGArm();
 
+	/// <summary>
+	/// Gets the throw chargeup progress of this AHuman.
+	/// </summary>
+	/// <returns>The throw chargeup progress, as a scalar from 0 to 1.</returns>
+	float GetThrowProgress() const { return m_ThrowPrepTime > 0 ? static_cast<float>(std::min(m_ThrowTmr.GetElapsedSimTimeMS() / static_cast<double>(m_ThrowPrepTime), 1.0)) : 1.0F; }
 
-//////////////////////////////////////////////////////////////////////////////////////////
-// Virtual Method:  UnequipBGArm
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Unequips whatever is in the BG arm and puts it into the inventory.
-// Arguments:       None.
-// Return value:    Whether there was anything to unequip.
+	/// <summary>
+	/// Unequips whatever is in the FG arm and puts it into the inventory.
+	/// </summary>
+	/// <returns>Whether there was anything to unequip.</returns>
+	bool UnequipFGArm();
 
+	/// <summary>
+	/// Unequips whatever is in the BG arm and puts it into the inventory.
+	/// </summary>
+	/// <returns>Whether there was anything to unequip.</returns>
 	bool UnequipBGArm();
+
+	/// <summary>
+	/// Unequips whatever is in either of the arms and puts them into the inventory.
+	/// </summary>
+	void UnequipArms() { UnequipFGArm(); UnequipBGArm(); }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -583,6 +591,13 @@ ClassInfoGetters
 // Return value:    The currently equipped item, if any.
 
 	MovableObject * GetEquippedBGItem() const;
+
+
+	/// <summary>
+	/// Gets the total mass of this AHuman's currently equipped devices.
+	/// </summary>
+	/// <returns>The mass of this AHuman's equipped devices.</returns>
+	float GetEquippedMass() const;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -654,7 +669,7 @@ ClassInfoGetters
 // Arguments:       None.
 // Return value:    None.
 
-	void ReloadFirearm() const;
+	void ReloadFirearms() const;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -710,16 +725,11 @@ ClassInfoGetters
 	MovableObject * LookForMOs(float FOVSpread = 45, unsigned char ignoreMaterial = 0, bool ignoreAllTerrain = false);
 
 
-//////////////////////////////////////////////////////////////////////////////////////////
-// Method:          GetGraphicalIcon
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Gets a bitmap showing a good identifyable icon of this, for use in
-//                  GUI lists etc.
-// Arguments:       None.
-// Return value:    A good identifyable graphical representation of this in a BITMAP, if
-//                  available. If not, 0 is returned. Ownership is NOT TRANSFERRED!
-
-    BITMAP * GetGraphicalIcon() override { return GetHeadBitmap(); }
+	/// <summary>
+	/// Gets the GUI representation of this AHuman, only defaulting to its Head or body if no GraphicalIcon has been defined.
+	/// </summary>
+	/// <returns>The graphical representation of this AHuman as a BITMAP.</returns>
+	BITMAP * GetGraphicalIcon() const override;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -744,6 +754,33 @@ ClassInfoGetters
 	bool UpdateMovePath() override;
 
 
+	/// <summary>
+	/// Detects slopes in terrain and updates the walk path rotation for the corresponding Layer accordingly.
+	/// </summary>
+	/// <param name="whichLayer">The Layer in question.</param>
+	void UpdateWalkAngle(AHuman::Layer whichLayer);
+
+	/// <summary>
+	/// Gets the walk path rotation for the specified Layer.
+	/// </summary>
+	/// <param name="whichLayer">The Layer in question.</param>
+	/// <returns>The walk angle in radians.</returns>
+	float GetWalkAngle(AHuman::Layer whichLayer) const { return m_WalkAngle[whichLayer].GetRadAngle(); }
+
+	/// <summary>
+	/// Sets the walk path rotation for the specified Layer.
+	/// </summary>
+	/// <param name="whichLayer">The Layer in question.</param>
+	/// <param name="angle">The angle to set.</param>
+	void SetWalkAngle(AHuman::Layer whichLayer, float angle) { m_WalkAngle[whichLayer] = Matrix(angle); }
+
+	/// <summary>
+	/// Gets whether this AHuman is currently attempting to climb something, using arms.
+	/// </summary>
+	/// <returns>Whether this AHuman is currently climbing or not.</returns>
+	bool IsClimbing() const { return m_ArmClimbing[FGROUND] || m_ArmClimbing[BGROUND]; }
+
+
 //////////////////////////////////////////////////////////////////////////////////////////
 // Virtual method:  UpdateAI
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -763,13 +800,6 @@ ClassInfoGetters
 // Return value:    None.
 
 	void Update() override;
-
-    /// <summary>
-    /// Executes the Lua-defined OnPieMenu event handler for this AHuman.
-    /// </summary>
-    /// <param name="pieMenuActor">The actor which triggered the pie menu event.</param>
-    /// <returns>An error return value signaling sucess or any particular failure. Anything below 0 is an error signal.</returns>
-	int OnPieMenu(Actor *pieMenuActor) override;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -834,7 +864,7 @@ ClassInfoGetters
 // Method:  GetLimbPathPushForce
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Gets the default force that a limb traveling walking LimbPath can push against
-//                  stuff in the scene with. 
+//                  stuff in the scene with.
 // Arguments:       None.
 // Return value:    The default set force maximum, in kg * m/s^2.
 
@@ -845,7 +875,7 @@ ClassInfoGetters
 // Method:  SetLimbPathPushForce
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Sets the default force that a limb traveling walking LimbPath can push against
-//                  stuff in the scene with. 
+//                  stuff in the scene with.
 // Arguments:       The default set force maximum, in kg * m/s^2.
 // Return value:    None
 
@@ -856,14 +886,14 @@ ClassInfoGetters
     /// </summary>
     /// <param name="movementState">The MovementState to get the rot angle target for.</param>
     /// <returns>The target rot angle for the given MovementState.</returns>
-    float GetRotAngleTarget(MovementState movementState) { return m_RotAngleTargets.at(movementState); }
+    float GetRotAngleTarget(MovementState movementState) { return m_RotAngleTargets[movementState]; }
 
     /// <summary>
     /// Sets the target rot angle for the given MovementState.
     /// </summary>
     /// <param name="movementState">The MovementState to get the rot angle target for.</param>
     /// <param name="newRotAngleTarget">The new rot angle target to use.</param>
-    void SetRotAngleTarget(MovementState movementState, float newRotAngleTarget) { m_RotAngleTargets.at(movementState) = newRotAngleTarget; }
+    void SetRotAngleTarget(MovementState movementState, float newRotAngleTarget) { m_RotAngleTargets[movementState] = newRotAngleTarget; }
 
 	/// <summary>
 	/// Gets the duration it takes this AHuman to fully charge a throw.
@@ -877,6 +907,29 @@ ClassInfoGetters
 	/// <param name="newPrepTime">New duration to fully charge a throw in MS.</param>
 	void SetThrowPrepTime(long newPrepTime) { m_ThrowPrepTime = newPrepTime; }
 
+	/// <summary>
+	/// Gets the rate at which this AHuman is set to swing its arms while walking.
+	/// </summary>
+	/// <returns>The arm swing rate of this AHuman.</returns>
+	float GetArmSwingRate() const { return m_ArmSwingRate; }
+
+	/// <summary>
+	/// Sets the rate at which this AHuman is set to swing its arms while walking.
+	/// </summary>
+	/// <param name="newValue">The new arm swing rate for this AHuman.</param>
+	void SetArmSwingRate(float newValue) { m_ArmSwingRate = newValue; }
+
+	/// <summary>
+	/// Gets this AHuman's stride sound. Ownership is NOT transferred!
+	/// </summary>
+	/// <returns>The SoundContainer for this AHuman's stride sound.</returns>
+	SoundContainer * GetStrideSound() const { return m_StrideSound; }
+
+	/// <summary>
+	/// Sets this AHuman's stride sound. Ownership IS transferred!
+	/// </summary>
+	/// <param name="newSound">The new SoundContainer for this AHuman's stride sound.</param>
+	void SetStrideSound(SoundContainer *newSound) { m_StrideSound = newSound; }
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Protected member variable and method declarations
@@ -895,23 +948,21 @@ protected:
     void ChunkGold();
 
 
-//////////////////////////////////////////////////////////////////////////////////////////
-// Method:  DrawThrowingReticule
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Draws an aiming aid in front of this HeldDevice for throwing.
-// Arguments:       A pointer to a BITMAP to draw on.
-//                  The absolute position of the target bitmap's upper left corner in the Scene.
-//                  A normalized scalar that determines how much of the magnitude of the
-//                  reticule should be drawn, to indicate force in the throw.
-// Return value:    None.
-
-	void DrawThrowingReticule(BITMAP *pTargetBitmap, const Vector &targetPos = Vector(), double amount = 1.0) const;
+	/// <summary>
+	/// Draws an aiming aid in front of this AHuman for throwing.
+	/// </summary>
+	/// <param name="targetBitmap">A pointer to a BITMAP to draw on.</param>
+	/// <param name="targetPos">The absolute position of the target bitmap's upper left corner in the Scene.</param>
+	/// <param name="progressScalar">A normalized scalar that determines the magnitude of the reticle, to indicate force in the throw.</param>
+	void DrawThrowingReticle(BITMAP *targetBitmap, const Vector &targetPos = Vector(), float progressScalar = 1.0F) const;
 
 
     // Member variables
     static Entity::ClassInfo m_sClass;
     // Articulated head.
     Attachable *m_pHead;
+	// Ratio at which the head's rotation follows the aim angle
+	float m_LookToAimRatio;
     // Foreground arm.
     Arm *m_pFGArm;
     // Background arm.
@@ -928,13 +979,16 @@ protected:
     AtomGroup *m_pBGFootGroup;
     AtomGroup *m_BackupBGFootGroup;
     // The sound of the actor taking a step (think robot servo)
-    SoundContainer m_StrideSound;
+    SoundContainer *m_StrideSound;
     // Jetpack booster.
     AEmitter *m_pJetpack;
     // The max total time, in ms, that the jetpack can be used without pause
     float m_JetTimeTotal;
     // How much time left the jetpack can go, in ms
     float m_JetTimeLeft;
+	float m_JetReplenishRate; //!< A multiplier affecting how fast the jetpack fuel will replenish when not in use. 1 means that jet time replenishes at 2x speed in relation to depletion.
+	// Ratio at which the jetpack angle follows aim angle
+	float m_JetAngleRange;
     // Blink timer
     Timer m_IconBlinkTimer;
     // Current upper body state.
@@ -963,8 +1017,14 @@ protected:
     int m_GoldInInventoryChunk;
     // For timing throws
     Timer m_ThrowTmr;
-    
-    long m_ThrowPrepTime; //!< The duration it takes this AHuman to fully charge a throw.
+	// The duration it takes this AHuman to fully charge a throw.
+    long m_ThrowPrepTime;
+	Timer m_SharpAimRevertTimer; //!< For timing the transition from sharp aim back to regular aim.
+	float m_FGArmFlailScalar; //!< The rate at which this AHuman's FG Arm follows the the bodily rotation. Best to keep this at 0 so it doesn't complicate aiming.
+	float m_BGArmFlailScalar; //!< The rate at which this AHuman's BG Arm follows the the bodily rotation. Set to a negative value for a "counterweight" effect.
+	Timer m_EquipHUDTimer; //!< Timer for showing the name of any newly equipped Device.
+	std::array<Matrix, 2> m_WalkAngle; //!< An array of rot angle targets for different movement states.
+	float m_ArmSwingRate; //!< Controls the rate at which this AHuman's arms follow the movement of its legs.
 
     ////////////////
     // AI States
@@ -1040,8 +1100,14 @@ protected:
     // Timer for how long to be firing the jetpack in a direction
     Timer m_JumpTimer;
 
-	// April 1 prank
-	bool m_GotHat;
+#pragma region Event Handling
+	/// <summary>
+	/// Event listener to be run while this AHuman's PieMenu is opened.
+	/// </summary>
+	/// <param name="pieMenu">The PieMenu this event listener needs to listen to. This will always be this' m_PieMenu and only exists for std::bind.</param>
+	/// <returns>An error return value signaling success or any particular failure. Anything below 0 is an error signal.</returns>
+	int WhilePieMenuOpenListener(const PieMenu *pieMenu) override;
+#pragma endregion
 
 
 //////////////////////////////////////////////////////////////////////////////////////////

@@ -43,6 +43,8 @@ namespace RTE
 struct HitData;
 
 class MOSRotating;
+class PieMenu;
+class SLTerrain;
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Abstract class:  MovableObject
@@ -51,21 +53,19 @@ class MOSRotating;
 // Parent(s):       SceneObject.
 // Class history:   03/18/2001 MovableObject created.
 
-class MovableObject:
-    public SceneObject
-{
+class MovableObject : public SceneObject {
 
 friend class Atom;
-friend class LuaMan;
+friend struct EntityLuaBindings;
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Public member variable, method and friend function declarations
 
 public:
 
-	ScriptFunctionNames("Create", "Destroy", "Update", "OnScriptDisable", "OnScriptEnable", "OnPieMenu", "OnCollideWithTerrain", "OnCollideWithMO")
-	SerializableOverrideMethods
-	ClassInfoGetters
+	ScriptFunctionNames("Create", "Destroy", "Update", "OnScriptDisable", "OnScriptEnable", "OnCollideWithTerrain", "OnCollideWithMO", "WhilePieMenuOpen");
+	SerializableOverrideMethods;
+	ClassInfoGetters;
 
 enum MOType
 {
@@ -170,41 +170,20 @@ enum MOType
     /// Reloads the all of the scripts on this object. This will also reload scripts for the original preset in PresetMan so future objects spawned will use the new scripts.
     /// </summary>
     /// <returns>An error return value signaling success or any particular failure. Anything below 0 is an error signal.</returns>
-    int ReloadScripts() override { return ReloadScripts(true); }
-
-    /// <summary>
-    /// Reloads the all of the scripts on this object. This will also optionally reload scripts for the original preset in PresetMan so future objects spawned will use the new scripts.
-    /// </summary>
-    /// <param name="alsoReloadPresetScripts">Whether to reload scripts on the PresetMan preset as well as those on the object instance. Irrelevant if the object instance is the preset.</param>
-    /// <returns>An error return value signaling success or any particular failure. Anything below 0 is an error signal.</returns>
-	int ReloadScripts(bool alsoReloadPresetScripts);
-
-    /// <summary>
-    /// Convenience method to get the script at the given path if it's on this MO. Like standard find, returns m_AllLoadedScripts.end() if it's not.
-    /// </summary>
-    /// <param name="scriptPath">The path to the script to find.</param>
-    /// <returns>The iterator pointing to the vector entry for the script or the end of the vector if the script was not found.</returns>
-	std::vector<std::pair<std::string, bool>>::iterator const FindScript(std::string const &scriptPath) { return std::find_if(m_AllLoadedScripts.begin(), m_AllLoadedScripts.end(), [&scriptPath](auto element) { return element.first == scriptPath; }); }
-
-    /// <summary>
-    /// Convenience method to get the script at the given path if it's on this MO. Like standard find, returns m_AllLoadedScripts.cend() if it's not.
-    /// </summary>
-    /// <param name="scriptPath">The path to the script to find.</param>
-    /// <returns>The iterator pointing to the vector entry for the script or the end of the vector if the script was not found.</returns>
-	std::vector<std::pair<std::string, bool>>::const_iterator const FindScript(std::string const &scriptPath) const { return std::find_if(m_AllLoadedScripts.cbegin(), m_AllLoadedScripts.cend(), [&scriptPath](auto element) { return element.first == scriptPath; }); }
+	int ReloadScripts();
 
     /// <summary>
     /// Checks if this MO has any scripts on it.
     /// </summary>
     /// <returns>Whether or not this MO has any scripts on it.</returns>
-	bool const HasAnyScripts() const { return !m_AllLoadedScripts.empty(); }
+	bool HasAnyScripts() const { return !m_AllLoadedScripts.empty(); }
 
     /// <summary>
     /// Checks if the script at the given path is one of the scripts on this MO.
     /// </summary>
     /// <param name="scriptPath">The path to the script to check.</param>
     /// <returns>Whether or not the script is on this MO.</returns>
-	bool const HasScript(const std::string &scriptPath) const { return FindScript(scriptPath) != m_AllLoadedScripts.end(); }
+	bool HasScript(const std::string &scriptPath) const { return m_AllLoadedScripts.find(scriptPath) != m_AllLoadedScripts.end(); }
 
     /// <summary>
     /// Adds the script at the given path as one of the scripts on this MO.
@@ -218,7 +197,7 @@ enum MOType
     /// </summary>
     /// <param name="scriptPath">The path to the script to check.</param>
     /// <returns>Whether or not the script is enabled on this MO.</returns>
-	bool const ScriptEnabled(const std::string &scriptPath) const { auto scriptIterator = FindScript(scriptPath); return scriptIterator != m_AllLoadedScripts.end() && scriptIterator->second == true; }
+    bool ScriptEnabled(const std::string &scriptPath) const { std::map<std::string, bool>::const_iterator scriptPathIterator = m_AllLoadedScripts.find(scriptPath); return scriptPathIterator != m_AllLoadedScripts.end() && scriptPathIterator->second == true; }
 
     /// <summary>
     /// Enable the script at the given path on this MO.
@@ -235,6 +214,12 @@ enum MOType
 	bool DisableScript(const std::string &scriptPath);
 
     /// <summary>
+    /// Enables or disables all scripts on this MovableObject.
+    /// </summary>
+    /// <param name="enableScripts">Whether to enable (true) or disable (false) all scripts on this MovableObject.</param>
+    void EnableOrDisableAllScripts(bool enableScripts);
+
+    /// <summary>
     /// Runs the given function for the given script, with the given arguments. The first argument to the function will always be 'self'.
     /// If either argument list is not empty, its entries will be passed into the Lua function in order, with entity arguments first.
     /// </summary>
@@ -243,7 +228,7 @@ enum MOType
     /// <param name="functionEntityArguments">Optional vector of entity pointers that should be passed into the Lua function. Their internal Lua states will not be accessible. Defaults to empty.</param>
     /// <param name="functionLiteralArguments">Optional vector of strings, that should be passed into the Lua function. Entries must be surrounded with escaped quotes (i.e.`\"`) they'll be passed in as-is, allowing them to act as booleans, etc.. Defaults to empty.</param>
     /// <returns>An error return value signaling success or any particular failure. Anything below 0 is an error signal.</returns>
-    int RunScriptedFunction(const std::string &scriptPath, const std::string &functionName, std::vector<Entity *> functionEntityArguments = std::vector<Entity *>(), std::vector<std::string> functionLiteralArguments = std::vector<std::string>());
+    int RunScriptedFunction(const std::string &scriptPath, const std::string &functionName, const std::vector<const Entity *> &functionEntityArguments = std::vector<const Entity *>(), const std::vector<std::string_view> &functionLiteralArguments = std::vector<std::string_view>()) const;
 
     /// <summary>
     /// Runs the given function in all scripts that have it, with the given arguments, with the ability to not run on disabled scripts and to cease running if there's an error.
@@ -255,7 +240,7 @@ enum MOType
     /// <param name="functionEntityArguments">Optional vector of entity pointers that should be passed into the Lua function. Their internal Lua states will not be accessible. Defaults to empty.</param>
     /// <param name="functionLiteralArguments">Optional vector of strings, that should be passed into the Lua function. Entries must be surrounded with escaped quotes (i.e.`\"`) they'll be passed in as-is, allowing them to act as booleans, etc.. Defaults to empty.</param>
     /// <returns>An error return value signaling success or any particular failure. Anything below 0 is an error signal.</returns>
-    int RunScriptedFunctionInAppropriateScripts(const std::string &functionName, bool runOnDisabledScripts = false, bool stopOnError = false, std::vector<Entity *> functionEntityArguments = std::vector<Entity *>(), std::vector<std::string> functionLiteralArguments = std::vector<std::string>());
+    int RunScriptedFunctionInAppropriateScripts(const std::string &functionName, bool runOnDisabledScripts = false, bool stopOnError = false, const std::vector<const Entity *> &functionEntityArguments = std::vector<const Entity *>(), const std::vector<std::string_view> &functionLiteralArguments = std::vector<std::string_view>());
 
     /// <summary>
     /// Gets whether or not the object has a script name, and there were no errors when initializing its Lua scripts. If there were, the object would need to be reloaded.
@@ -267,7 +252,8 @@ enum MOType
     /// Override SetPresetName so it also resets script preset name and then reloads scripts to safely allow for multiple scripts.
     /// </summary>
     /// <param name="newName">A string reference with the instance name of this Entity.</param>
-    void SetPresetName(const std::string &newName) override { Entity::SetPresetName(newName); m_ScriptPresetName.clear(); ReloadScripts(); }
+    /// <param name="calledFromLua">Whether this method was called from Lua, in which case this change is cosmetic only and shouldn't affect scripts.</param>
+    void SetPresetName(const std::string &newName, bool calledFromLua = false) override { Entity::SetPresetName(newName); if (!calledFromLua) { m_ScriptPresetName.clear(); ReloadScripts(); } }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -290,6 +276,13 @@ enum MOType
     virtual float GetMass() const { return m_Mass; }
 
 
+	/// <summary>
+	/// Gets the previous position vector of this MovableObject, prior to this frame.
+	/// </summary>
+	/// <returns>A Vector describing the previous position vector.</returns>
+	const Vector & GetPrevPos() const { return m_PrevPos; }
+
+
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          GetVel
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -298,6 +291,13 @@ enum MOType
 // Return value:    A Vector describing the current velocity vector.
 
     const Vector & GetVel() const { return m_Vel; }
+
+
+	/// <summary>
+	/// Gets the previous velocity vector of this MovableObject, prior to this frame.
+	/// </summary>
+	/// <returns>A Vector describing the previous velocity vector.</returns>
+	const Vector & GetPrevVel() const { return m_PrevVel; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -672,7 +672,7 @@ enum MOType
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          GetScreenEffectHash
 //////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Gets the hash of the path of this object's screen effect file. Used to 
+// Description:     Gets the hash of the path of this object's screen effect file. Used to
 //					transfer glow effects over network. The hash itself is calculated during
 //					load.
 // Arguments:       None.
@@ -732,11 +732,23 @@ enum MOType
 //////////////////////////////////////////////////////////////////////////////////////////
 // Virtual method:  GetEffectRotAngle
 //////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Returns the current absolute angle of rotation of this MovableObject's effect.
+// Description:     Gets the current absolute angle of rotation of this MovableObject's effect.
 // Arguments:       None.
 // Return value:    The absolute angle in radians.
 
 	float GetEffectRotAngle() const { return m_EffectRotAngle; }
+
+	/// <summary>
+	/// Gets the starting strength of this MovableObject's effect.
+	/// </summary>
+	/// <returns>The starting strength of the effect, 0-255.</returns>
+	int GetEffectStartStrength() const { return m_EffectStartStrength; }
+
+	/// <summary>
+	/// Gets the stopping strength of this MovableObject's effect.
+	/// </summary>
+	/// <returns>The stopping strength of the effect, 0-255.</returns>
+	int GetEffectStopStrength() const { return m_EffectStopStrength; }
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Virtual method:  SetAngularVel
@@ -1302,7 +1314,7 @@ enum MOType
 // Return value:    Wheter the MovableObject should immediately halt any travel going on
 //                  after this hit.
 
-    virtual bool OnMOHit(MovableObject *pOtherMO) { return false; }
+    virtual bool OnMOHit(MovableObject *pOtherMO);
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -1483,6 +1495,18 @@ enum MOType
 
 	void SetImpulseOffset(int n, Vector v) { if (n > 0 && n < m_ImpulseForces.size()) m_ImpulseForces[n].second = v; }
 
+    /// <summary>
+    /// Gets the number of Sim updates that run between each script update for this MovableObject.
+    /// </summary>
+    /// <returns>The number of Sim updates that run between each script update for this MovableObject.</returns>
+    int GetSimUpdatesBetweenScriptedUpdates() const { return m_SimUpdatesBetweenScriptedUpdates; }
+
+    /// <summary>
+    /// sets the number of Sim updates that run between each script update for this MovableObject.
+    /// </summary>
+    /// <param name="newSimUpdatesBetweenScriptedUpdates">The new number of Sim updates that run between each script update for this MovableObject.</param>
+    void SetSimUpdatesBetweenScriptedUpdates(int newSimUpdatesBetweenScriptedUpdates) { m_SimUpdatesBetweenScriptedUpdates = std::max(1, newSimUpdatesBetweenScriptedUpdates); }
+
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Virtual method:  PreTravel
@@ -1539,12 +1563,12 @@ enum MOType
 
 	int UpdateScripts();
 
-    /// <summary>
-    /// Executes the Lua-defined OnPieMenu event handler for this MO.
-    /// </summary>
-    /// <param name="pieMenuActor">The actor which triggered the pie menu event.</param>
-    /// <returns>An error return value signaling sucess or any particular failure. Anything below 0 is an error signal.</returns>
-	virtual int OnPieMenu(Actor *pieMenuActor);
+	/// <summary>
+	/// Event listener to be run while this MovableObject's PieMenu is opened.
+	/// </summary>
+	/// <param name="pieMenu">The PieMenu this event listener needs to listen to. This will always be this' m_PieMenu and only exists for std::bind.</param>
+	/// <returns>An error return value signaling success or any particular failure. Anything below 0 is an error signal.</returns>
+	virtual int WhilePieMenuOpenListener(const PieMenu *pieMenu);
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -1628,7 +1652,7 @@ enum MOType
 //////////////////////////////////////////////////////////////////////////////////////////
 // Virtual method:  DamageOnCollision
 //////////////////////////////////////////////////////////////////////////////////////////
-// Description:     If not zero applyies specified ammount of damage points to actors on 
+// Description:     If not zero applyies specified ammount of damage points to actors on
 //					collision even without penetration.
 // Arguments:       None
 // Return value:    Amount of damage to apply.
@@ -1639,7 +1663,7 @@ enum MOType
 //////////////////////////////////////////////////////////////////////////////////////////
 // Virtual method:  SetDamageOnCollision
 //////////////////////////////////////////////////////////////////////////////////////////
-// Description:     If not zero applyies specified ammount of damage points to actors on 
+// Description:     If not zero applyies specified ammount of damage points to actors on
 //					collision even without penetration.
 // Arguments:       Amount of damage to apply.
 // Return value:    None.
@@ -1650,7 +1674,7 @@ enum MOType
 //////////////////////////////////////////////////////////////////////////////////////////
 // Virtual method:  DamageOnPenetration
 //////////////////////////////////////////////////////////////////////////////////////////
-// Description:     If not zero applies specified ammount of damage points to actors on 
+// Description:     If not zero applies specified ammount of damage points to actors on
 //					collision if penetration occured.
 // Arguments:       None
 // Return value:    Amount of damage to apply.
@@ -1661,7 +1685,7 @@ enum MOType
 //////////////////////////////////////////////////////////////////////////////////////////
 // Virtual method:  SetDamageOnPenetration
 //////////////////////////////////////////////////////////////////////////////////////////
-// Description:     If not zero applies specified ammount of damage points to actors on 
+// Description:     If not zero applies specified ammount of damage points to actors on
 //					collision if penetration occured.
 // Arguments:       Amount of damage to apply.
 // Return value:    None.
@@ -1687,6 +1711,30 @@ enum MOType
 // Return value:    None.
 
 	void SetWoundDamageMultiplier(float value) { m_WoundDamageMultiplier = value; }
+
+    /// <summary>
+    /// Gets whether or not this MovableObject should apply wound damage when it collides with another MovableObject.
+    /// </summary>
+    /// <returns>Whether or not this MovableObject should apply wound damage when it collides with another MovableObject.</returns>
+    bool GetApplyWoundDamageOnCollision() const { return m_ApplyWoundDamageOnCollision; }
+
+    /// <summary>
+    /// Sets whether or not this MovableObject should apply wound damage when it collides with another MovableObject.
+    /// </summary>
+    /// <param name="applyWoundDamageOnCollision">Whether or not this MovableObject should apply wound damage on collision.</param>
+    void SetApplyWoundDamageOnCollision(bool applyWoundDamageOnCollision) { m_ApplyWoundDamageOnCollision = applyWoundDamageOnCollision; }
+
+    /// <summary>
+    /// Gets whether or not this MovableObject should apply burst wound damage when it collides with another MovableObject.
+    /// </summary>
+    /// <returns>Whether or not this MovableObject should apply burst wound damage when it collides with another MovableObject.</returns>
+    bool GetApplyWoundBurstDamageOnCollision() const { return m_ApplyWoundBurstDamageOnCollision; }
+
+    /// <summary>
+    /// Sets whether or not this MovableObject should apply burst wound damage when it collides with another MovableObject.
+    /// </summary>
+    /// <param name="applyWoundDamageOnCollision">Whether or not this MovableObject should apply burst wound damage on collision.</param>
+    void SetApplyWoundBurstDamageOnCollision(bool applyWoundBurstDamageOnCollision) { m_ApplyWoundBurstDamageOnCollision = applyWoundBurstDamageOnCollision; }
 
 
 
@@ -1766,10 +1814,18 @@ enum MOType
 
 	void SetHitWhatTerrMaterial(unsigned char matID);
 
-	bool ProvidesPieMenuContext() const { return m_ProvidesPieMenuContext; }
+    /// <summary>
+    /// Gets whether this MO's RootParent can GetHitByMOs and is currently traveling.
+    /// </summary>
+    /// <returns>Whether this MO's RootParent can GetHitByMOs and is currently traveling.</returns>
+    bool GetTraveling() const { return GetRootParent()->m_IsTraveling; }
 
-	void SetProvidesPieMenuContext(bool value) { m_ProvidesPieMenuContext = value; }
-
+	/// <summary>
+	/// Draws this MovableObject's graphical and material representations to the specified SLTerrain's respective layers.
+	/// </summary>
+	/// <param name="terrain">The SLTerrain to draw this MovableObject to. Ownership is NOT transferred!</param>
+	/// <returns>Whether the object was successfully drawn to the terrain.</returns>
+	bool DrawToTerrain(SLTerrain *terrain);
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Protected member variable and method declarations
@@ -1902,10 +1958,10 @@ protected:
     // To draw this guy's HUD or not
     bool m_HUDVisible;
 
-    // A vector of scripts have been loaded onto this. Contains a pair with the script path and whether or not the script is enabled.
-    std::vector<std::pair<std::string, bool>> m_AllLoadedScripts;
-    // A map of function name strings to vectors of scripts for each function name. Said vectors contain pointers to pairs with the script path and whether or not the script is enabled. Used to efficiently avoid extra Lua calls.
-    std::unordered_map<std::string, std::vector<std::pair<std::string, bool> *>> m_FunctionsAndScripts;
+	bool m_IsTraveling; //!< Prevents self-intersection while traveling when simplified collision detection is used.
+
+    std::map<std::string, bool> m_AllLoadedScripts; //!< A map of script paths to the enabled state of the given script.
+    std::unordered_map<std::string, std::vector<std::string>> m_FunctionsAndScripts; //!< A map of function names to vectors of scripts paths. Used to maintain script execution order and avoid extraneous Lua calls.
 
     // The ID name unique to this' preset and its defined scripted functions in the lua state.
     std::string m_ScriptPresetName;
@@ -1940,7 +1996,7 @@ protected:
 
 	// This object's unique persistent ID
 	long int m_UniqueID;
-	// In which radis should we look to remove orphaned terrain on terrain penetration, 
+	// In which radis should we look to remove orphaned terrain on terrain penetration,
 	// must not be greater than SceneMan::ORPHANSIZE, or will be truncated
 	int m_RemoveOrphanTerrainRadius;
 	// What is the max orphan area to trigger terrain removal
@@ -1953,6 +2009,8 @@ protected:
 	float m_DamageOnPenetration;
 	// Damage multiplier transferred to wound inflicted by this object on penetration
 	float m_WoundDamageMultiplier;
+    bool m_ApplyWoundDamageOnCollision; //!< Whether or not this should apply wound damage on collision, respecting WoundDamageMultiplier and without creating a wound.
+    bool m_ApplyWoundBurstDamageOnCollision; //!< Whether or not this should apply wound burst damage on collision, respecting WoundDamageMultiplier and without creating a wound.
 	//Whether this MO should ignore terrain when traveling
 	bool m_IgnoreTerrain;
 	// MOID hit during last Travel
@@ -1963,8 +2021,8 @@ protected:
 	long int m_ParticleUniqueIDHit;
 	// Number of sim update frame when last collision was detcted
 	unsigned int m_LastCollisionSimFrameNumber;
-	// If true, the object will receive OnPieMenu event whenever someone activated a pie menu
-	bool m_ProvidesPieMenuContext;
+    int m_SimUpdatesBetweenScriptedUpdates; //!< The number of Sim updates between each scripted update for this MovableObject.
+    int m_SimUpdatesSinceLastScriptedUpdate; //!< The counter for the current number of Sim updates since this MovableObject last ran a scripted update.
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Private member variable and method declarations

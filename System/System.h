@@ -17,6 +17,25 @@ namespace RTE {
 		static void Initialize();
 #pragma endregion
 
+#pragma region Program Termination
+		/// <summary>
+		/// Gets whether the program was set to be terminated by the user.
+		/// </summary>
+		/// <returns>Whether the program was set to be terminated by the user.</returns>
+		static bool IsSetToQuit() { return s_Quit; }
+
+		/// <summary>
+		/// Sets the program to be terminated.
+		/// </summary>
+		/// <param name="quitOrNot">Terminate or not.</param>
+		static void SetQuit(bool quitOrNot = true) { s_Quit = quitOrNot; }
+
+		/// <summary>
+		/// Sets termination when the close button (X) is pressed on the program window.
+		/// </summary>
+		static void WindowCloseButtonHandler() { SetQuit(); }
+#pragma endregion
+
 #pragma region Directories
 		/// <summary>
 		/// Gets the current working directory.
@@ -54,6 +73,27 @@ namespace RTE {
 		/// <param name="path">Path to create.</param>
 		/// <returns>Returns 0 if successful.</returns>
 		static bool MakeDirectory(const std::string &pathToMake);
+#pragma endregion
+
+#pragma region Filesystem
+		/// <summary>
+		/// Gets whether case sensitivity is enforced when checking for file existence.
+		/// </summary>
+		/// <returns>Whether case sensitivity is enforced.</returns>
+		static bool FilePathsCaseSensitive() { return s_CaseSensitive; }
+
+		/// <summary>
+		/// Sets whether case sensitivity should be enforced when checking for file existence.
+		/// </summary>
+		/// <param name="enable">Whether case sensitivity should be enforced or not.</param>
+		static void EnableFilePathCaseSensitivity(bool enable) { s_CaseSensitive = enable; }
+
+		/// <summary>
+		/// Checks if a file exists. On case sensitive filesystems returns std::filesystem::exists, otherwise the working directory will be checked for a matching file.
+		/// </summary>
+		/// <param name="pathToCheck">The path to check.</param>
+		/// <returns>Whether the file exists.</returns>
+		static bool PathExistsCaseSensitive(const std::string &pathToCheck);
 #pragma endregion
 
 #pragma region Command-Line Interface
@@ -94,7 +134,7 @@ namespace RTE {
 		/// Fires up the default browser for the current OS on a specific URL.
 		/// </summary>
 		/// <param name="goToURL">A string with the URL to send the browser to.</param>
-		static void OpenBrowserToURL(const std::string &goToURL) { std::system(std::string("start ").append(goToURL).c_str()); }
+		static void OpenBrowserToURL(const std::string_view &goToURL) { std::system(std::string("start ").append(goToURL).c_str()); }
 
 		/// <summary>
 		/// Searches through an ASCII file on disk for a specific string and tells whether it was found or not.
@@ -102,13 +142,18 @@ namespace RTE {
 		/// <param name="">The path to the ASCII file to search.</param>
 		/// <param name="">The exact string to look for. Case sensitive!</param>
 		/// <returns>0 if the string was found in the file or 1 if not. -1 if the file was inaccessible.</returns>
-		static int ASCIIFileContainsString(const std::string &filePath, const std::string &findString);
+		static int ASCIIFileContainsString(const std::string &filePath, const std::string_view &findString);
 #pragma endregion
 
 	private:
 
+		static bool s_Quit; //!< Whether the user requested program termination through GUI or the window close button.
 		static bool s_LogToCLI; //!< Bool to tell whether to print the loading log and anything specified with PrintToCLI to command-line or not.
 		static std::string s_WorkingDirectory; //!< String containing the absolute path to current working directory.
+		static std::vector<size_t> s_WorkingTree; //!< Vector of the hashes of all file paths in the working directory.
+		static std::filesystem::file_time_type s_ProgramStartTime; //!< Low precision time point of program start for checking if a file was created after starting.
+
+		static bool s_CaseSensitive; //!< Whether case sensitivity is enforced when checking for file existence.
 		static const std::string s_ScreenshotDirectory; //!< String containing the folder name of the screenshots directory.
 		static const std::string s_ModDirectory; //!< String containing the folder name of the mod directory.
 		static const std::string s_ModulePackageExtension; //!< The extension that determines a directory/file is a RTE module.

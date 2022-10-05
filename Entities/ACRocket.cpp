@@ -20,13 +20,14 @@
 #include "Matrix.h"
 #include "AEmitter.h"
 #include "SettingsMan.h"
+#include "PresetMan.h"
 
-#include "GUI/GUI.h"
-#include "GUI/AllegroBitmap.h"
+#include "GUI.h"
+#include "AllegroBitmap.h"
 
 namespace RTE {
 
-ConcreteClassInfo(ACRocket, ACraft, 10)
+ConcreteClassInfo(ACRocket, ACraft, 10);
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -49,13 +50,13 @@ void ACRocket::Clear()
     m_pURThruster = 0;
     m_pULThruster = 0;
     m_GearState = RAISED;
-    m_ScuttleIfFlippedTime = 4000;
     for (int i = 0; i < GearStateCount; ++i) {
         m_Paths[RIGHT][i].Reset();
         m_Paths[LEFT][i].Reset();
         m_Paths[RIGHT][i].Terminate();
         m_Paths[LEFT][i].Terminate();
     }
+	m_MaxGimbalAngle = 0;
 }
 
 
@@ -93,36 +94,23 @@ int ACRocket::Create()
 // Description:     Creates a ACRocket to be identical to another, by deep copy.
 
 int ACRocket::Create(const ACRocket &reference) {
-    if (reference.m_pRLeg) {
-        m_ReferenceHardcodedAttachableUniqueIDs.insert(reference.m_pRLeg->GetUniqueID());
-        SetRightLeg(dynamic_cast<Leg *>(reference.m_pRLeg->Clone()));
-    }
-    if (reference.m_pLLeg) {
-        m_ReferenceHardcodedAttachableUniqueIDs.insert(reference.m_pLLeg->GetUniqueID());
-        SetLeftLeg(dynamic_cast<Leg *>(reference.m_pLLeg->Clone()));
-    }
-    if (reference.m_pMThruster) {
-        m_ReferenceHardcodedAttachableUniqueIDs.insert(reference.m_pMThruster->GetUniqueID());
-        SetMainThruster(dynamic_cast<AEmitter *>(reference.m_pMThruster->Clone()));
-    }
-    if (reference.m_pRThruster) {
-        m_ReferenceHardcodedAttachableUniqueIDs.insert(reference.m_pRThruster->GetUniqueID());
-        SetRightThruster(dynamic_cast<AEmitter *>(reference.m_pRThruster->Clone()));
-    }
-    if (reference.m_pLThruster) {
-        m_ReferenceHardcodedAttachableUniqueIDs.insert(reference.m_pLThruster->GetUniqueID());
-        SetLeftThruster(dynamic_cast<AEmitter *>(reference.m_pLThruster->Clone()));
-    }
-    if (reference.m_pURThruster) {
-        m_ReferenceHardcodedAttachableUniqueIDs.insert(reference.m_pURThruster->GetUniqueID());
-        SetURightThruster(dynamic_cast<AEmitter *>(reference.m_pURThruster->Clone()));
-    }
-    if (reference.m_pULThruster) {
-        m_ReferenceHardcodedAttachableUniqueIDs.insert(reference.m_pULThruster->GetUniqueID());
-        SetULeftThruster(dynamic_cast<AEmitter *>(reference.m_pULThruster->Clone()));
-    }
+    if (reference.m_pRLeg) { m_ReferenceHardcodedAttachableUniqueIDs.insert(reference.m_pRLeg->GetUniqueID()); }
+    if (reference.m_pLLeg) { m_ReferenceHardcodedAttachableUniqueIDs.insert(reference.m_pLLeg->GetUniqueID()); }
+    if (reference.m_pMThruster) { m_ReferenceHardcodedAttachableUniqueIDs.insert(reference.m_pMThruster->GetUniqueID()); }
+    if (reference.m_pRThruster) { m_ReferenceHardcodedAttachableUniqueIDs.insert(reference.m_pRThruster->GetUniqueID()); }
+    if (reference.m_pLThruster) { m_ReferenceHardcodedAttachableUniqueIDs.insert(reference.m_pLThruster->GetUniqueID()); }
+    if (reference.m_pURThruster) { m_ReferenceHardcodedAttachableUniqueIDs.insert(reference.m_pURThruster->GetUniqueID()); }
+    if (reference.m_pULThruster) { m_ReferenceHardcodedAttachableUniqueIDs.insert(reference.m_pULThruster->GetUniqueID()); }
 
     ACraft::Create(reference);
+
+    if (reference.m_pRLeg) { SetRightLeg(dynamic_cast<Leg *>(reference.m_pRLeg->Clone())); }
+    if (reference.m_pLLeg) { SetLeftLeg(dynamic_cast<Leg *>(reference.m_pLLeg->Clone())); }
+    if (reference.m_pMThruster) { SetMainThruster(dynamic_cast<AEmitter *>(reference.m_pMThruster->Clone())); }
+    if (reference.m_pRThruster) { SetRightThruster(dynamic_cast<AEmitter *>(reference.m_pRThruster->Clone())); }
+    if (reference.m_pLThruster) { SetLeftThruster(dynamic_cast<AEmitter *>(reference.m_pLThruster->Clone())); }
+    if (reference.m_pURThruster) { SetURightThruster(dynamic_cast<AEmitter *>(reference.m_pURThruster->Clone())); }
+    if (reference.m_pULThruster) { SetULeftThruster(dynamic_cast<AEmitter *>(reference.m_pULThruster->Clone())); }
 
     m_pBodyAG = dynamic_cast<AtomGroup *>(reference.m_pBodyAG->Clone());
     m_pBodyAG->SetOwner(this);
@@ -145,7 +133,7 @@ int ACRocket::Create(const ACRocket &reference) {
         m_Paths[LEFT][i].Create(reference.m_Paths[LEFT][i]);
     }
 
-    m_ScuttleIfFlippedTime = reference.m_ScuttleIfFlippedTime;
+	m_MaxGimbalAngle = reference.m_MaxGimbalAngle;
 
     return 0;
 }
@@ -160,44 +148,30 @@ int ACRocket::Create(const ACRocket &reference) {
 //                  false is returned, and the reader's position is untouched.
 
 int ACRocket::ReadProperty(const std::string_view &propName, Reader &reader) {
-    if (propName == "RLeg") {
-        m_pRLeg = new Leg;
-        reader >> m_pRLeg;
-        SetRightLeg(m_pRLeg);
-    } else if (propName == "LLeg") {
-        m_pLLeg = new Leg;
-        reader >> m_pLLeg;
-        SetLeftLeg(m_pLLeg);
-    } else if (propName == "RFootGroup") {
+    if (propName == "RLeg" || propName == "RightLeg") {
+        SetRightLeg(dynamic_cast<Leg *>(g_PresetMan.ReadReflectedPreset(reader)));
+    } else if (propName == "LLeg" || propName == "LeftLeg") {
+        SetLeftLeg(dynamic_cast<Leg *>(g_PresetMan.ReadReflectedPreset(reader)));
+    } else if (propName == "RFootGroup" || propName == "RightFootGroup") {
         delete m_pRFootGroup;
         m_pRFootGroup = new AtomGroup();
         reader >> m_pRFootGroup;
         m_pRFootGroup->SetOwner(this);
-    } else if (propName == "LFootGroup") {
+    } else if (propName == "LFootGroup" || propName == "LeftFootGroup") {
         delete m_pLFootGroup;
         m_pLFootGroup = new AtomGroup();
         reader >> m_pLFootGroup;
         m_pLFootGroup->SetOwner(this);
-    } else if (propName == "MThruster") {
-        m_pMThruster = new AEmitter;
-        reader >> m_pMThruster;
-        SetMainThruster(m_pMThruster);
-    } else if (propName == "RThruster") {
-        m_pRThruster = new AEmitter;
-        reader >> m_pRThruster;
-        SetRightThruster(m_pRThruster);
-    } else if (propName == "LThruster") {
-        m_pLThruster = new AEmitter;
-        reader >> m_pLThruster;
-        SetLeftThruster(m_pLThruster);
-    } else if (propName == "URThruster") {
-        m_pURThruster = new AEmitter;
-        reader >> m_pURThruster;
-        SetURightThruster(m_pURThruster);
-    } else if (propName == "ULThruster") {
-        m_pULThruster = new AEmitter;
-        reader >> m_pULThruster;
-        SetULeftThruster(m_pULThruster);
+    } else if (propName == "MThruster" || propName == "MainThruster") {
+        SetMainThruster(dynamic_cast<AEmitter *>(g_PresetMan.ReadReflectedPreset(reader)));
+    } else if (propName == "RThruster" || propName == "RightThruster") {
+        SetRightThruster(dynamic_cast<AEmitter *>(g_PresetMan.ReadReflectedPreset(reader)));
+    } else if (propName == "LThruster" || propName == "LeftThruster") {
+        SetLeftThruster(dynamic_cast<AEmitter *>(g_PresetMan.ReadReflectedPreset(reader)));
+    } else if (propName == "URThruster" || propName == "UpRightThruster") {
+        SetURightThruster(dynamic_cast<AEmitter *>(g_PresetMan.ReadReflectedPreset(reader)));
+    } else if (propName == "ULThruster" || propName == "UpLeftThruster") {
+        SetULeftThruster(dynamic_cast<AEmitter *>(g_PresetMan.ReadReflectedPreset(reader)));
     } else if (propName == "RaisedGearLimbPath") {
         reader >> m_Paths[RIGHT][RAISED];
     } else if (propName == "LoweredGearLimbPath") {
@@ -206,8 +180,9 @@ int ACRocket::ReadProperty(const std::string_view &propName, Reader &reader) {
         reader >> m_Paths[RIGHT][LOWERING];
     } else if (propName == "RaisingGearLimbPath") {
         reader >> m_Paths[RIGHT][RAISING];
-    } else if (propName == "ScuttleIfFlippedTime") {
-        reader >> m_ScuttleIfFlippedTime;
+    } else if (propName == "MaxGimbalAngle") {
+		reader >> m_MaxGimbalAngle;
+		m_MaxGimbalAngle *= (c_PI / 180.0F);
     } else {
         return ACraft::ReadProperty(propName, reader);
     }
@@ -252,8 +227,8 @@ int ACRocket::Save(Writer &writer) const
     writer << m_Paths[RIGHT][LOWERING];
     writer.NewProperty("RaisingGearLimbPath");
     writer << m_Paths[RIGHT][RAISING];
-    writer.NewProperty("ScuttleIfFlippedTime");
-    writer << m_ScuttleIfFlippedTime;
+	writer.NewProperty("MaxGimbalAngle");
+	writer << m_MaxGimbalAngle / (c_PI / 180.0F);
 
     return 0;
 }
@@ -512,210 +487,84 @@ void ACRocket::Update()
     /////////////////////////////////
     // Controller update and handling
 
-// TODO: Improve and make optional thrusters more robust!
-    // Make sure we have all thrusters
-    if (m_pMThruster && m_pRThruster && m_pLThruster && m_pURThruster && m_pULThruster)
-    {
-        if (m_Status != DEAD && m_Status != DYING)
-        {
-            // Fire main thrusters
-            if (m_Controller.IsState(MOVE_UP) || m_Controller.IsState(AIM_UP))
-            {
-                if (!m_pMThruster->IsEmitting())
-                {
-                    m_pMThruster->TriggerBurst();
-                    // This is to make sure se get loose from being sideways stuck
-                    m_ForceDeepCheck = true;
-                }
-                m_pMThruster->EnableEmission(true);
-                // Engines are noisy!
-                m_pMThruster->AlarmOnEmit(m_Team);
+    if ((m_Status == STABLE || m_Status == UNSTABLE) && !m_Controller.IsDisabled()) {
+		if (m_pMThruster) { 
+			if (m_MaxGimbalAngle != 0) { m_pMThruster->SetInheritedRotAngleOffset(std::sin(m_Rotation.GetRadAngle()) * m_MaxGimbalAngle - c_HalfPI); }
 
-                if (m_HatchState == OPEN) {
-                    CloseHatch();
-                    m_HatchTimer.Reset();
-                }
-            }
-            else
-            {
-                m_pMThruster->EnableEmission(false);
+			if (m_Controller.IsState(MOVE_UP) || m_Controller.IsState(AIM_UP)) {
+				if (!m_pMThruster->IsEmitting()) {
+					m_pMThruster->TriggerBurst();
+					m_ForceDeepCheck = true;
+				}
+				m_pMThruster->EnableEmission(true);
+				m_pMThruster->AlarmOnEmit(m_Team);
 
-                // Fire reverse thrusters
-                if (m_Controller.IsState(MOVE_DOWN) || m_Controller.IsState(AIM_DOWN))
-                {
-                    if (!m_pURThruster->IsEmitting())
-                        m_pURThruster->TriggerBurst();
-                    if (!m_pULThruster->IsEmitting())
-                        m_pULThruster->TriggerBurst();
-                    m_pURThruster->EnableEmission(true);
-                    m_pULThruster->EnableEmission(true);
-                }
-                else
-                {
-                    m_pURThruster->EnableEmission(false);
-                    m_pULThruster->EnableEmission(false);
-                }
-            }
-
-            // Fire left thrusters
-            if (m_Controller.IsState(MOVE_RIGHT)/* || m_Rotation > 0.1*/)
-            {
-                if (!m_pLThruster->IsEmitting())
-                    m_pLThruster->TriggerBurst();
-                m_pLThruster->EnableEmission(true);
-            }
-            else
-                m_pLThruster->EnableEmission(false);
-
-            // Fire right thrusters
-            if (m_Controller.IsState(MOVE_LEFT)/* || m_Rotation < 0.1*/)
-            {
-                if (!m_pRThruster->IsEmitting())
-                    m_pRThruster->TriggerBurst();
-                m_pRThruster->EnableEmission(true);
-            }
-            else
-                m_pRThruster->EnableEmission(false);
-            /*
-            if (m_Controller.IsState(PRESS_FACEBUTTON))
-            {
-                if (m_GearState == RAISED)
-                    m_GearState = LOWERING;
-                else if (m_GearState == LOWERED)
-                    m_GearState = RAISING;
-            }
-            */
-            if (m_Controller.IsState(PRESS_FACEBUTTON))
-            {
-                if (m_HatchState == CLOSED)
-                    DropAllInventory();
-                else if (m_HatchState == OPEN)
-                    CloseHatch();
-            }
+				if (m_HatchState == OPEN) {
+					CloseHatch();
+					m_HatchTimer.Reset();
+				}
+			} else {
+				m_pMThruster->EnableEmission(false);
+			}
         }
-        else
-        {
-            m_pMThruster->EnableEmission(false);
-            m_pRThruster->EnableEmission(false);
-            m_pLThruster->EnableEmission(false);
-            m_pURThruster->EnableEmission(false);
-            m_pULThruster->EnableEmission(false);
-        }
-
-/*
-        else if (m_Controller && m_Controller.IsState(MOVE_RIGHT) || m_Controller.IsState(MOVE_LEFT))
-        {
-            if (m_MoveState != WALK && m_MoveState != CROUCH)
-                m_StrideStart = true;
-
-            if (m_MoveState == BODY_JUMPSTART || m_MoveState == BODY_JUMPSTART)
-                m_MoveState = CROUCH;
-            else
-                m_MoveState = WALK;
-
-            if (m_Controller.IsState(MOVE_FAST))
-            {
-                m_Paths[FGROUND][WALK].SetSpeed(FAST);
-                m_Paths[BGROUND][WALK].SetSpeed(FAST);
-            }
-            else
-            {
-                m_Paths[FGROUND][WALK].SetSpeed(NORMAL);
-                m_Paths[BGROUND][WALK].SetSpeed(NORMAL);
-            }
-
-            if ((m_Controller.IsState(MOVE_RIGHT) && m_HFlipped) || (m_Controller.IsState(MOVE_LEFT) && !m_HFlipped))
-            {
-                m_HFlipped = !m_HFlipped;
-                m_Paths[FGROUND][WALK].Terminate();
-                m_Paths[BGROUND][WALK].Terminate();
-                m_Paths[FGROUND][CLIMB].Terminate();
-                m_Paths[BGROUND][CLIMB].Terminate();
-                m_Paths[FGROUND][STAND].Terminate();
-                m_Paths[BGROUND][STAND].Terminate();
-                m_StrideStart = true;
-            }
-        }
-        else
-            m_MoveState = STAND;
-
-        if (m_Controller.IsState(WEAPON_CHANGE_NEXT))
-        {
-            if (m_pFGArm && m_pFGArm->IsAttached())
-            {
-                m_pFGArm->SetDevice(SwapNextDevice(m_pFGArm->ReleaseDevice()));
-                m_pFGArm->SetHandPos(m_Pos + m_HolsterOffset.GetXFlipped(m_HFlipped));
-            }
-        }
-*/
-        // No Controller present
-        if (m_Controller.IsDisabled())
-        {
-            m_pMThruster->EnableEmission(false);
-            m_pRThruster->EnableEmission(false);
-            m_pLThruster->EnableEmission(false);
-            m_pURThruster->EnableEmission(false);
-            m_pULThruster->EnableEmission(false);
-        }
+		if (m_pULThruster || m_pURThruster) {
+			if (m_Controller.IsState(MOVE_DOWN) || m_Controller.IsState(AIM_DOWN)) {
+				if (m_pURThruster) {
+					if (!m_pURThruster->IsEmitting()) { m_pURThruster->TriggerBurst(); }
+					m_pURThruster->EnableEmission(true);
+				}
+				if (m_pULThruster) {
+					if (!m_pULThruster->IsEmitting()) { m_pULThruster->TriggerBurst(); }
+					m_pULThruster->EnableEmission(true);
+				}
+			} else {
+				if (m_pURThruster) { m_pURThruster->EnableEmission(false); }
+				if (m_pULThruster) { m_pULThruster->EnableEmission(false); }
+			}
+		}
+		if (m_pLThruster) {
+			if (m_Controller.IsState(MOVE_RIGHT)) {
+				if (!m_pLThruster->IsEmitting()) { m_pLThruster->TriggerBurst(); }
+				m_pLThruster->EnableEmission(true);
+			} else {
+				m_pLThruster->EnableEmission(false);
+			}
+		}
+		if (m_pRThruster) {
+			if (m_Controller.IsState(MOVE_LEFT)) {
+				if (!m_pRThruster->IsEmitting()) { m_pRThruster->TriggerBurst(); }
+				m_pRThruster->EnableEmission(true);
+			} else {
+				m_pRThruster->EnableEmission(false);
+			}
+		}
+		if (m_Controller.IsState(PRESS_FACEBUTTON)) {
+			if (m_HatchState == CLOSED) {
+				DropAllInventory();
+			} else if (m_HatchState == OPEN) {
+				CloseHatch();
+			}
+		}
+	} else {
+		if (m_pMThruster) { m_pMThruster->EnableEmission(false); }
+		if (m_pRThruster) { m_pRThruster->EnableEmission(false); }
+		if (m_pLThruster) { m_pLThruster->EnableEmission(false); }
+		if (m_pURThruster) { m_pURThruster->EnableEmission(false); }
+		if (m_pULThruster) { m_pULThruster->EnableEmission(false); }
     }
-//    m_aSprite->SetAngle((m_AimAngle / 180) * 3.141592654);
-//    m_aSprite->SetScale(2.0);
-
 
     ///////////////////////////////////////////////////
     // Travel the landing gear AtomGroup:s
 
+	if (m_pMThruster) {
+        m_GearState = m_pMThruster->IsEmitting() ? LandingGearState::RAISED : LandingGearState::LOWERED;
 
-    // RAISE the gears
-    if (m_pMThruster && m_pMThruster->IsEmitting())// && m_pMThruster->IsSetToBurst())
-    {
-        m_Paths[RIGHT][RAISED].SetHFlip(m_HFlipped);
-        m_Paths[LEFT][RAISED].SetHFlip(!m_HFlipped);
-
-        if (m_pRLeg)
-            m_pRFootGroup->PushAsLimb(m_Pos.GetFloored() + m_pRLeg->GetParentOffset().GetXFlipped(m_HFlipped) * m_Rotation,
-                                      m_Vel,
-                                      m_Rotation,
-                                      m_Paths[RIGHT][RAISED],
-                                      deltaTime,
-                                      0,
-                                      true);
-        if (m_pLLeg)
-            m_pLFootGroup->PushAsLimb(m_Pos.GetFloored() + m_pLLeg->GetParentOffset().GetXFlipped(m_HFlipped) * m_Rotation,
-                                      m_Vel,
-                                      m_Rotation,
-                                      m_Paths[LEFT][RAISED],
-                                      deltaTime,
-                                      0,
-                                      true);
-
-        m_GearState = RAISED;
-    }
-    // LOWER the gears
-    else if (m_pMThruster && !m_pMThruster->IsEmitting())// && m_GearState != LOWERED)
-    {
-        m_Paths[RIGHT][LOWERED].SetHFlip(m_HFlipped);
-        m_Paths[LEFT][LOWERED].SetHFlip(!m_HFlipped);
-
-        if (m_pRLeg)
-            m_pRFootGroup->PushAsLimb(m_Pos.GetFloored() + m_pRLeg->GetParentOffset().GetXFlipped(m_HFlipped) * m_Rotation,
-                                      m_Vel,
-                                      m_Rotation,
-                                      m_Paths[RIGHT][LOWERED],
-                                      deltaTime,
-                                      0,
-                                      true);
-        if (m_pLLeg)
-            m_pLFootGroup->PushAsLimb(m_Pos.GetFloored() + m_pLLeg->GetParentOffset().GetXFlipped(m_HFlipped) * m_Rotation,
-                                      m_Vel,
-                                      m_Rotation,
-                                      m_Paths[LEFT][LOWERED],
-                                      deltaTime,
-                                      0,
-                                      true);
-        m_GearState = LOWERED;
-    }
-
+        m_Paths[RIGHT][m_GearState].SetHFlip(m_HFlipped);
+        m_Paths[LEFT][m_GearState].SetHFlip(!m_HFlipped);
+        
+        if (m_pRLeg) { m_pRFootGroup->PushAsLimb(m_Pos.GetFloored() + RotateOffset(m_pRLeg->GetParentOffset()), m_Vel, m_Rotation, m_Paths[RIGHT][m_GearState], deltaTime, nullptr, true); }
+        if (m_pLLeg) { m_pLFootGroup->PushAsLimb(m_Pos.GetFloored() + RotateOffset(m_pLLeg->GetParentOffset()), m_Vel, m_Rotation, m_Paths[LEFT][m_GearState], deltaTime, nullptr, true); }
+	}
 
     /////////////////////////////////
     // Manage Attachable:s
@@ -730,71 +579,6 @@ void ACRocket::Update()
     /////////////////////////////////////////////////
     // Update MovableObject, adds on the forces etc, updated viewpoint
     ACraft::Update();
-
-    ///////////////////////////////////
-    // Explosion logic
-
-    if (m_Status == DEAD)
-        GibThis();
-
-    ////////////////////////////////////////
-    // Balance stuff
-
-    // Get the rotation in radians.
-    float rot = m_Rotation.GetRadAngle();
-
-    // Eliminate full rotations
-    while (fabs(rot) > c_TwoPI)
-        rot -= rot > 0 ? c_TwoPI : -c_TwoPI;
-
-    // Eliminate rotations over half a turn
-    if (fabs(rot) > c_PI)
-        rot = (rot > 0 ? -c_PI : c_PI) + (rot - (rot > 0 ? c_PI : -c_PI));
-
-    // If tipped too far for too long, die
-    if (rot < c_HalfPI && rot > -c_HalfPI)
-	{
-        m_FlippedTimer.Reset();
-	}
-    // Start death process if tipped over for too long
-    else if (m_ScuttleIfFlippedTime >= 0 && m_FlippedTimer.IsPastSimMS(m_ScuttleIfFlippedTime) && m_Status != DYING)
-	{
-        m_Status = DYING;
-        m_DeathTmr.Reset();
-	}
-
-    // Flash if dying, warning of impending explosion
-    if (m_Status == DYING)
-    {
-        if (m_DeathTmr.IsPastSimMS(500) && m_DeathTmr.AlternateSim(100))
-            FlashWhite(10);
-    }
-/*
-//        rot = fabs(rot) < c_QuarterPI ? rot : (rot > 0 ? c_QuarterPI : -c_QuarterPI);
-
-    // Rotational balancing spring calc
-    if (m_Status == STABLE) {
-        // Break the spring if close to target angle.
-        if (fabs(rot) > 0.1)
-            m_AngularVel -= rot * fabs(rot);
-        else if (fabs(m_AngularVel) > 0.1)
-            m_AngularVel *= 0.5;
-    }
-    // Unstable, or without balance
-    else if (m_Status == DYING) {
-//        float rotTarget = rot > 0 ? c_HalfPI : -c_HalfPI;
-        float rotTarget = c_HalfPI;
-        float rotDiff = rotTarget - rot;
-        if (fabs(rotDiff) > 0.1)
-            m_AngularVel += rotDiff * rotDiff;
-        else
-            m_Status = DEAD;
-
-//        else if (fabs(m_AngularVel) > 0.1)
-//            m_AngularVel *= 0.5;
-    }
-    m_Rotation.SetRadAngle(rot);
-*/
 
     ////////////////////////////////////////
     // Hatch Operation
@@ -825,11 +609,10 @@ void ACRocket::Update()
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void ACRocket::SetRightLeg(Leg *newLeg) {
+    if (m_pRLeg && m_pRLeg->IsAttached()) { RemoveAndDeleteAttachable(m_pRLeg); }
     if (newLeg == nullptr) {
-        if (m_pRLeg && m_pRLeg->IsAttached()) { RemoveAttachable(m_pRLeg); }
         m_pRLeg = nullptr;
     } else {
-        if (m_pRLeg && m_pRLeg->IsAttached()) { RemoveAttachable(m_pRLeg); }
         m_pRLeg = newLeg;
         AddAttachable(newLeg);
 
@@ -846,13 +629,13 @@ void ACRocket::SetRightLeg(Leg *newLeg) {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void ACRocket::SetLeftLeg(Leg *newLeg) {
+    if (m_pLLeg && m_pLLeg->IsAttached()) { RemoveAndDeleteAttachable(m_pLLeg); }
     if (newLeg == nullptr) {
-        if (m_pLLeg && m_pLLeg->IsAttached()) { RemoveAttachable(m_pLLeg); }
         m_pLLeg = nullptr;
     } else {
-        if (m_pLLeg && m_pLLeg->IsAttached()) { RemoveAttachable(m_pLLeg); }
         m_pLLeg = newLeg;
         AddAttachable(newLeg);
+
         m_HardcodedAttachableUniqueIDsAndSetters.insert({newLeg->GetUniqueID(), [](MOSRotating *parent, Attachable *attachable) {
             Leg *castedAttachable = dynamic_cast<Leg *>(attachable);
             RTEAssert(!attachable || castedAttachable, "Tried to pass incorrect Attachable subtype " + (attachable ? attachable->GetClassName() : "") + " to SetLeftLeg");
@@ -867,11 +650,10 @@ void ACRocket::SetLeftLeg(Leg *newLeg) {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void ACRocket::SetMainThruster(AEmitter *newThruster) {
+    if (m_pMThruster && m_pMThruster->IsAttached()) { RemoveAndDeleteAttachable(m_pMThruster); }
     if (newThruster == nullptr) {
-        if (m_pMThruster && m_pMThruster->IsAttached()) { RemoveAttachable(m_pMThruster); }
         m_pMThruster = nullptr;
     } else {
-        if (m_pMThruster && m_pMThruster->IsAttached()) { RemoveAttachable(m_pMThruster); }
         m_pMThruster = newThruster;
         AddAttachable(newThruster);
 
@@ -889,11 +671,10 @@ void ACRocket::SetMainThruster(AEmitter *newThruster) {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void ACRocket::SetRightThruster(AEmitter *newThruster) {
+    if (m_pRThruster && m_pRThruster->IsAttached()) { RemoveAndDeleteAttachable(m_pRThruster); }
     if (newThruster == nullptr) {
-        if (m_pRThruster && m_pRThruster->IsAttached()) { RemoveAttachable(m_pRThruster); }
         m_pRThruster = nullptr;
     } else {
-        if (m_pRThruster && m_pRThruster->IsAttached()) { RemoveAttachable(m_pRThruster); }
         m_pRThruster = newThruster;
         AddAttachable(newThruster);
 
@@ -911,14 +692,13 @@ void ACRocket::SetRightThruster(AEmitter *newThruster) {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void ACRocket::SetLeftThruster(AEmitter *newThruster) {
+    if (m_pLThruster && m_pLThruster->IsAttached()) { RemoveAndDeleteAttachable(m_pLThruster); }
     if (newThruster == nullptr) {
-        if (m_pLThruster && m_pLThruster->IsAttached()) { RemoveAttachable(m_pLThruster); }
         m_pLThruster = nullptr;
     } else {
-        if (m_pLThruster && m_pLThruster->IsAttached()) { RemoveAttachable(m_pLThruster); }
         m_pLThruster = newThruster;
         AddAttachable(newThruster);
-        
+
         m_HardcodedAttachableUniqueIDsAndSetters.insert({newThruster->GetUniqueID(), [](MOSRotating *parent, Attachable *attachable) {
             AEmitter *castedAttachable = dynamic_cast<AEmitter *>(attachable);
             RTEAssert(!attachable || castedAttachable, "Tried to pass incorrect Attachable subtype " + (attachable ? attachable->GetClassName() : "") + " to SetLeftThruster");
@@ -933,11 +713,10 @@ void ACRocket::SetLeftThruster(AEmitter *newThruster) {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void ACRocket::SetURightThruster(AEmitter *newThruster) {
+    if (m_pURThruster && m_pURThruster->IsAttached()) { RemoveAndDeleteAttachable(m_pURThruster); }
     if (newThruster == nullptr) {
-        if (m_pURThruster && m_pURThruster->IsAttached()) { RemoveAttachable(m_pURThruster); }
         m_pURThruster = nullptr;
     } else {
-        if (m_pURThruster && m_pURThruster->IsAttached()) { RemoveAttachable(m_pURThruster); }
         m_pURThruster = newThruster;
         AddAttachable(newThruster);
 
@@ -955,11 +734,10 @@ void ACRocket::SetURightThruster(AEmitter *newThruster) {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void ACRocket::SetULeftThruster(AEmitter *newThruster) {
+    if (m_pULThruster && m_pULThruster->IsAttached()) { RemoveAndDeleteAttachable(m_pULThruster); }
     if (newThruster == nullptr) {
-        if (m_pULThruster && m_pULThruster->IsAttached()) { RemoveAttachable(m_pULThruster); }
         m_pULThruster = nullptr;
     } else {
-        if (m_pULThruster && m_pULThruster->IsAttached()) { RemoveAttachable(m_pULThruster); }
         m_pULThruster = newThruster;
         AddAttachable(newThruster);
 
@@ -972,33 +750,6 @@ void ACRocket::SetULeftThruster(AEmitter *newThruster) {
         if (m_pULThruster->HasNoSetDamageMultiplier()) { m_pULThruster->SetDamageMultiplier(1.0F); }
         m_pULThruster->SetInheritedRotAngleOffset(c_HalfPI + c_EighthPI);
     }
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-//////////////////////////////////////////////////////////////////////////////////////////
-// Method:          ResetEmissionTimers
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Reset the timers of all emissions so they will start/stop at the 
-//                  correct relative offsets from now.
-
-void ACRocket::ResetEmissionTimers()
-{
-    if (m_pMThruster && m_pMThruster->IsAttached())
-        m_pMThruster->ResetEmissionTimers();
-
-    if (m_pRThruster && m_pRThruster->IsAttached())
-        m_pRThruster->ResetEmissionTimers();
-
-    if (m_pLThruster && m_pLThruster->IsAttached())
-        m_pLThruster->ResetEmissionTimers();
-
-    if (m_pURThruster && m_pURThruster->IsAttached())
-        m_pURThruster->ResetEmissionTimers();
-
-    if (m_pULThruster && m_pULThruster->IsAttached())
-        m_pULThruster->ResetEmissionTimers();
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

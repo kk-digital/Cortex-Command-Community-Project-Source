@@ -31,7 +31,7 @@
 
 namespace RTE {
 
-ConcreteClassInfo(MOSRotating, MOSprite, 500)
+ConcreteClassInfo(MOSRotating, MOSprite, 500);
 
 BITMAP * MOSRotating::m_spTempBitmap16 = 0;
 BITMAP * MOSRotating::m_spTempBitmap32 = 0;
@@ -71,6 +71,7 @@ void MOSRotating::Clear()
     m_Attachables.clear();
     m_ReferenceHardcodedAttachableUniqueIDs.clear();
     m_HardcodedAttachableUniqueIDsAndSetters.clear();
+    m_HardcodedAttachableUniqueIDsAndRemovers.clear();
     m_RadiusAffectingAttachable = nullptr;
     m_FarthestAttachableDistanceAndRadius = 0.0F;
     m_AttachableAndWoundMass = 0.0F;
@@ -78,7 +79,9 @@ void MOSRotating::Clear()
     m_GibImpulseLimit = 0;
     m_GibWoundLimit = 0;
     m_GibBlastStrength = 10.0F;
-    m_GibSound.Reset();
+	m_WoundCountAffectsImpulseLimitRatio = 0.25F;
+	m_GibAtEndOfLifetime = false;
+    m_GibSound = nullptr;
     m_EffectOnGib = true;
     m_pFlipBitmap = 0;
 	m_pFlipBitmapS = 0;
@@ -259,8 +262,10 @@ int MOSRotating::Create(const MOSRotating &reference) {
     m_GibImpulseLimit = reference.m_GibImpulseLimit;
     m_GibWoundLimit = reference.m_GibWoundLimit;
     m_GibBlastStrength = reference.m_GibBlastStrength;
-    m_GibSound = reference.m_GibSound;
-    m_EffectOnGib = reference.m_EffectOnGib;
+	m_WoundCountAffectsImpulseLimitRatio = reference.m_WoundCountAffectsImpulseLimitRatio;
+	m_GibAtEndOfLifetime = reference.m_GibAtEndOfLifetime;
+	if (reference.m_GibSound) { m_GibSound = dynamic_cast<SoundContainer*>(reference.m_GibSound->Clone()); }
+	m_EffectOnGib = reference.m_EffectOnGib;
     m_LoudnessOnGib = reference.m_LoudnessOnGib;
 
 	m_DamageMultiplier = reference.m_DamageMultiplier;
@@ -329,11 +334,16 @@ int MOSRotating::ReadProperty(const std::string_view &propName, Reader &reader)
         reader >> m_GibImpulseLimit;
     else if (propName == "GibWoundLimit" || propName == "WoundLimit")
         reader >> m_GibWoundLimit;
-    else if (propName == "GibBlastStrength") {
-        reader >> m_GibBlastStrength;
-    } else if (propName == "GibSound")
-        reader >> m_GibSound;
-    else if (propName == "EffectOnGib")
+	else if (propName == "GibBlastStrength") {
+		reader >> m_GibBlastStrength;
+	} else if (propName == "WoundCountAffectsImpulseLimitRatio") {
+		reader >> m_WoundCountAffectsImpulseLimitRatio;
+	} else if (propName == "GibAtEndOfLifetime") {
+		reader >> m_GibAtEndOfLifetime;
+	} else if (propName == "GibSound") {
+		if (!m_GibSound) { m_GibSound = new SoundContainer; }
+		reader >> m_GibSound;
+	} else if (propName == "EffectOnGib")
         reader >> m_EffectOnGib;
     else if (propName == "LoudnessOnGib")
         reader >> m_LoudnessOnGib;
@@ -411,6 +421,7 @@ int MOSRotating::Save(Writer &writer) const
     writer << m_GibImpulseLimit;
     writer.NewProperty("GibWoundLimit");
     writer << m_GibWoundLimit;
+	writer.NewPropertyWithValue("GibAtEndOfLifetime", m_GibAtEndOfLifetime);
     writer.NewProperty("GibSound");
     writer << m_GibSound;
     writer.NewProperty("EffectOnGib");
@@ -459,12 +470,13 @@ int MOSRotating::GetWoundCount(bool includePositiveDamageAttachables, bool inclu
 
 void MOSRotating::AddWound(AEmitter *woundToAdd, const Vector &parentOffsetToSet, bool checkGibWoundLimit) {
     if (woundToAdd) {
-        if (checkGibWoundLimit && !ToDelete() && m_GibWoundLimit && m_Wounds.size() + 1 > m_GibWoundLimit) {
+        if (checkGibWoundLimit && !ToDelete() && m_GibWoundLimit > 0 && m_Wounds.size() + 1 >= m_GibWoundLimit) {
             // Indicate blast in opposite direction of emission
             // TODO: don't hardcode here, get some data from the emitter
             Vector blast(-5, 0);
             blast.RadRotate(woundToAdd->GetEmitAngle());
             GibThis(blast);
+            delete woundToAdd;
             return;
         } else {
             woundToAdd->SetCollidesWithTerrainWhileAttached(false);
@@ -547,16 +559,20 @@ void MOSRotating::Destroy(bool notInherited)
     delete m_pAtomGroup;
     delete m_pDeepGroup;
 
-    for (list<AEmitter *>::iterator itr = m_Wounds.begin(); itr != m_Wounds.end(); ++itr)
-        delete (*itr);
-    for (list<Attachable *>::iterator aItr = m_Attachables.begin(); aItr != m_Attachables.end(); ++aItr)
-        delete (*aItr);
+    for (list<AEmitter *>::iterator itr = m_Wounds.begin(); itr != m_Wounds.end(); ++itr) { delete (*itr); }
+    for (list<Attachable *>::iterator aItr = m_Attachables.begin(); aItr != m_Attachables.end(); ++aItr) {
+        if (m_HardcodedAttachableUniqueIDsAndRemovers.find((*aItr)->GetUniqueID()) == m_HardcodedAttachableUniqueIDsAndRemovers.end()) {
+            delete (*aItr);
+        }
+    }
 
     destroy_bitmap(m_pFlipBitmap);
     destroy_bitmap(m_pFlipBitmapS);
 
 // Not anymore; point to shared static bitmaps
 //    destroy_bitmap(m_pTempBitmap);
+
+	delete m_GibSound;
 
     if (!notInherited)
         MOSprite::Destroy();
@@ -755,13 +771,6 @@ bool MOSRotating::OnBounce(HitData &hd)
 
 bool MOSRotating::OnSink(HitData &hd)
 {
-/*
-    Vector oldPos(m_Pos);
-    m_Pos = pos;
-    Draw(g_SceneMan.GetTerrainColorBitmap(), Vector(), g_DrawMask);
-    Draw(g_SceneMan.GetTerrainMaterialBitmap(), Vector(), g_DrawAir);
-    m_Pos = oldPos;
-*/
     return false;
 }
 
@@ -968,7 +977,7 @@ void MOSRotating::GibThis(const Vector &impactImpulse, MovableObject *movableObj
 
     RemoveAttachablesWhenGibbing(impactImpulse, movableObjectToIgnore);
 
-    m_GibSound.Play(m_Pos);
+	if (m_GibSound) { m_GibSound->Play(m_Pos); }
 
     if (m_pScreenEffect && m_EffectOnGib && (m_EffectAlwaysShows || !g_SceneMan.ObscuredPoint(m_Pos.GetFloorIntX(), m_Pos.GetFloorIntY()))) {
 		g_PostProcessMan.RegisterPostEffect(m_Pos, m_pScreenEffect, m_ScreenEffectHash, 255, m_EffectRotAngle);
@@ -988,39 +997,92 @@ void MOSRotating::CreateGibsWhenGibbing(const Vector &impactImpulse, MovableObje
         }
         MovableObject *gibParticleClone = dynamic_cast<MovableObject *>(gibSettingsObject.GetParticlePreset()->Clone());
 
-        float minVelocity = gibSettingsObject.GetMinVelocity();
-        float velocityRange = gibSettingsObject.GetMaxVelocity() - gibSettingsObject.GetMinVelocity();
-        if (gibSettingsObject.GetMinVelocity() == 0 && gibSettingsObject.GetMaxVelocity() == 0) {
-            minVelocity = m_GibBlastStrength / gibParticleClone->GetMass();
-            velocityRange = 10.0F;
+		int count = gibSettingsObject.GetCount();
+		float lifeVariation = gibSettingsObject.GetLifeVariation();
+		float spread = gibSettingsObject.GetSpread();
+		float minVelocity = gibSettingsObject.GetMinVelocity();
+		float maxVelocity = gibSettingsObject.GetMaxVelocity();
+
+		float mass = (gibParticleClone->GetMass() != 0 ? gibParticleClone->GetMass() : 0.0001F);
+		int lifetime = gibParticleClone->GetLifetime();
+
+        if (minVelocity == 0 && maxVelocity == 0) {
+            minVelocity = m_GibBlastStrength / mass;
+            maxVelocity = minVelocity + 10.0F;
         }
+		float velocityRange = maxVelocity - minVelocity;
         Vector rotatedGibOffset = RotateOffset(gibSettingsObject.GetOffset());
-        for (int i = 0; i < gibSettingsObject.GetCount(); i++) {
-            gibParticleClone = dynamic_cast<MovableObject *>(gibSettingsObject.GetParticlePreset()->Clone());
 
-            if (gibParticleClone->GetLifetime() != 0) {
-                gibParticleClone->SetLifetime(static_cast<int>(static_cast<float>(gibParticleClone->GetLifetime()) * (1.0F + (gibSettingsObject.GetLifeVariation() * RandomNormalNum()))));
-            }
+		// The "Spiral" spread mode uses the fermat spiral as means to determine the velocity of the gib particles, resulting in a evenly spaced out circle (or ring) of particles.
+		if (gibSettingsObject.GetSpreadMode() == Gib::SpreadMode::SpreadSpiral) {
+			float maxRadius = std::sqrt(static_cast<float>(count));
+			float scale = velocityRange / maxRadius;
+			float randAngle = c_PI * RandomNormalNum();
+			float goldenAngle = 2.39996F;
 
-            gibParticleClone->SetRotAngle(GetRotAngle() + gibParticleClone->GetRotAngle());
-            gibParticleClone->SetAngularVel((gibParticleClone->GetAngularVel() * 0.35F) + (gibParticleClone->GetAngularVel() * 0.65F / gibParticleClone->GetMass()) * RandomNum());
-            if (rotatedGibOffset.GetRoundIntX() > m_aSprite[0]->w / 3) {
-                float offCenterRatio = rotatedGibOffset.m_X / (static_cast<float>(m_aSprite[0]->w) / 2.0F);
-                float angularVel = fabs(gibParticleClone->GetAngularVel() * 0.5F) + std::fabs(gibParticleClone->GetAngularVel() * 0.5F * offCenterRatio);
-                gibParticleClone->SetAngularVel(angularVel * (rotatedGibOffset.m_X > 0 ? -1 : 1));
-            } else {
-                gibParticleClone->SetAngularVel((gibParticleClone->GetAngularVel() * 0.5F + (gibParticleClone->GetAngularVel() * RandomNum())) * (RandomNormalNum() > 0.0F ? 1.0F : -1.0F));
-            }
+			for (int i = 0; i < count; i++) {
+				if (i > 0) { gibParticleClone = dynamic_cast<MovableObject *>(gibSettingsObject.GetParticlePreset()->Clone()); }
 
-            gibParticleClone->SetPos(m_Pos + rotatedGibOffset);
-            Vector gibVelocity = rotatedGibOffset.IsZero() ? Vector(minVelocity + RandomNum(0.0F, velocityRange), 0.0F) : rotatedGibOffset.SetMagnitude(minVelocity + RandomNum(0.0F, velocityRange));
-            gibVelocity.RadRotate(impactImpulse.GetAbsRadAngle() + (gibSettingsObject.GetSpread() * RandomNormalNum()));
-            gibParticleClone->SetVel(gibVelocity + (gibSettingsObject.InheritsVelocity() ? m_Vel : Vector()));
+				float radius = std::sqrt(static_cast<float>(count - i));
+				gibParticleClone->SetPos(m_Pos + rotatedGibOffset);
+				gibParticleClone->SetHFlipped(m_HFlipped);
+				Vector gibVelocity(radius * scale + minVelocity, 0);
+				gibVelocity.RadRotate(randAngle + RandomNum(0.0F, spread) + static_cast<float>(i) * goldenAngle);
+				if (lifetime != 0) {
+					gibParticleClone->SetLifetime(std::max(static_cast<int>(static_cast<float>(lifetime) * (1.0F - lifeVariation * ((radius / maxRadius) * 0.75F + RandomNormalNum() * 0.25F))), 1));
+				}
+				gibParticleClone->SetRotAngle(gibVelocity.GetAbsRadAngle() + (m_HFlipped ? c_PI : 0));
+				gibParticleClone->SetAngularVel((gibParticleClone->GetAngularVel() * 0.35F) + (gibParticleClone->GetAngularVel() * 0.65F / mass) * RandomNum());
+				gibParticleClone->SetVel(gibVelocity + (gibSettingsObject.InheritsVelocity() ? (m_PrevVel + m_Vel) / 2 : Vector()));
+				if (movableObjectToIgnore) { gibParticleClone->SetWhichMOToNotHit(movableObjectToIgnore); }
+				if (gibSettingsObject.IgnoresTeamHits()) {
+					gibParticleClone->SetTeam(m_Team);
+					gibParticleClone->SetIgnoresTeamHits(true);
+				}
 
-            if (movableObjectToIgnore) { gibParticleClone->SetWhichMOToNotHit(movableObjectToIgnore); }
+				g_MovableMan.AddParticle(gibParticleClone);
+			}
+		} else {
+			for (int i = 0; i < count; i++) {
+				if (i > 0) { gibParticleClone = dynamic_cast<MovableObject *>(gibSettingsObject.GetParticlePreset()->Clone()); }
 
-            g_MovableMan.AddParticle(gibParticleClone);
-        }
+				if (gibParticleClone->GetLifetime() != 0) {
+					gibParticleClone->SetLifetime(std::max(static_cast<int>(static_cast<float>(gibParticleClone->GetLifetime()) * (1.0F + (lifeVariation * RandomNormalNum()))), 1));
+				}
+
+				gibParticleClone->SetRotAngle(GetRotAngle() + gibParticleClone->GetRotAngle());
+				gibParticleClone->SetAngularVel((gibParticleClone->GetAngularVel() * 0.35F) + (gibParticleClone->GetAngularVel() * 0.65F / mass) * RandomNum());
+				if (rotatedGibOffset.GetRoundIntX() > m_aSprite[0]->w / 3) {
+					float offCenterRatio = rotatedGibOffset.m_X / (static_cast<float>(m_aSprite[0]->w) / 2.0F);
+					float angularVel = std::abs(gibParticleClone->GetAngularVel() * 0.5F) + std::abs(gibParticleClone->GetAngularVel() * 0.5F * offCenterRatio);
+					gibParticleClone->SetAngularVel(angularVel * (rotatedGibOffset.m_X > 0 ? -1 : 1));
+				} else {
+					gibParticleClone->SetAngularVel((gibParticleClone->GetAngularVel() * 0.5F + (gibParticleClone->GetAngularVel() * RandomNum())) * (RandomNormalNum() > 0.0F ? 1.0F : -1.0F));
+				}
+
+				gibParticleClone->SetPos(m_Pos + rotatedGibOffset);
+				gibParticleClone->SetHFlipped(m_HFlipped);
+				Vector gibVelocity = rotatedGibOffset.IsZero() ? Vector(minVelocity + RandomNum(0.0F, velocityRange), 0.0F) : rotatedGibOffset.SetMagnitude(minVelocity + RandomNum(0.0F, velocityRange));
+				// TODO: Figure out how much the magnitude of an offset should affect spread
+				float gibSpread = (rotatedGibOffset.IsZero() && spread == 0.1F) ? c_PI : spread;
+
+				gibVelocity.RadRotate(gibSettingsObject.InheritsVelocity() ? impactImpulse.GetAbsRadAngle() : m_Rotation.GetRadAngle() + (m_HFlipped ? c_PI : 0));
+				// The "Even" spread will spread all gib particles evenly in an arc, while maintaining a randomized velocity magnitude.
+				if (gibSettingsObject.GetSpreadMode() == Gib::SpreadMode::SpreadEven) {
+					gibVelocity.RadRotate(gibSpread - (gibSpread * 2.0F * static_cast<float>(i) / static_cast<float>(count)));
+				} else {
+					gibVelocity.RadRotate(gibSpread * RandomNormalNum());
+				}
+				gibParticleClone->SetVel(gibVelocity + (gibSettingsObject.InheritsVelocity() ? (m_PrevVel + m_Vel) / 2 : Vector()));
+				if (movableObjectToIgnore) { gibParticleClone->SetWhichMOToNotHit(movableObjectToIgnore); }
+				if (gibSettingsObject.IgnoresTeamHits()) {
+					gibParticleClone->SetTeam(m_Team);
+					gibParticleClone->SetIgnoresTeamHits(true);
+				}
+
+				g_MovableMan.AddParticle(gibParticleClone);
+			}
+		}
     }
 }
 
@@ -1067,61 +1129,40 @@ bool MOSRotating::MoveOutOfTerrain(unsigned char strongerThan)
     return m_pAtomGroup->ResolveTerrainIntersection(m_Pos, strongerThan);
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-//////////////////////////////////////////////////////////////////////////////////////////
-// Virtual method:  ApplyForces
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Gathers and applies the global and accumulated forces. Then it clears
-//                  out the force list.Note that this does NOT apply the accumulated
-//                  impulses (impulse forces)!
-
-void MOSRotating::ApplyForces()
-{
+void MOSRotating::ApplyForces() {
     float deltaTime = g_TimerMan.GetDeltaTimeSecs();
 
-    // Apply the rotational effects of all the forces accumulated during the Update()
-    for (deque<pair<Vector, Vector> >::iterator fItr = m_Forces.begin();
-         fItr != m_Forces.end(); ++fItr) {
-        // Continuous force application to rotational velocity.
-        if (!(*fItr).second.IsZero())
-            m_AngularVel += ((*fItr).second.GetPerpendicular().Dot((*fItr).first) /
-                            m_pAtomGroup->GetMomentOfInertia()) * deltaTime;
-    }
+	for (const auto &[forceVector, forceOffset] : m_Forces) {
+		if (!forceOffset.IsZero()) { m_AngularVel += (forceOffset.GetPerpendicular().Dot(forceVector) / m_pAtomGroup->GetMomentOfInertia()) * deltaTime; }
+	}
 
     MOSprite::ApplyForces();
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-//////////////////////////////////////////////////////////////////////////////////////////
-// Virtual method:  ApplyImpulses
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Gathers and applies the accumulated impulse forces. Then it clears
-//                  out the impulse list.Note that this does NOT apply the accumulated
-//                  regular forces (non-impulse forces)!
+void MOSRotating::ApplyImpulses() {
+	for (const auto &[impulseForceVector, impulseForceOffset] : m_ImpulseForces) {
+		if (!impulseForceOffset.IsZero()) { m_AngularVel += impulseForceOffset.GetPerpendicular().Dot(impulseForceVector) / m_pAtomGroup->GetMomentOfInertia(); }
+	}
 
-void MOSRotating::ApplyImpulses()
-{
-    // Apply the rotational effects of all the impulses accumulated during the Update()
-    for (deque<pair<Vector, Vector> >::iterator iItr = m_ImpulseForces.begin();
-         iItr != m_ImpulseForces.end(); ++iItr) {
-        // Impulse force application to the rotational velocity of this MO.
-        if (!(*iItr).second.IsZero())
-            m_AngularVel += (*iItr).second.GetPerpendicular().Dot((*iItr).first) /
-                            m_pAtomGroup->GetMomentOfInertia();
-    }
+	Vector totalImpulse;
+	for (const auto &[impulseForceVector, impulseForceOffset] : m_ImpulseForces) {
+		totalImpulse += impulseForceVector;
+	}
 
-    // See if the impulses are enough to gib this
-    Vector totalImpulse;
-    for (deque<pair<Vector, Vector> >::iterator iItr = m_ImpulseForces.begin(); iItr != m_ImpulseForces.end(); ++iItr)
-    {
-        totalImpulse += (*iItr).first;
-    }
-    // If impulse gibbing threshold is enabled for this, see if it's below the total impulse force
-    if (m_GibImpulseLimit > 0 && totalImpulse.GetMagnitude() > m_GibImpulseLimit)
-        GibThis(totalImpulse);
+	if (m_GibImpulseLimit > 0) {
+		float impulseLimit = m_GibImpulseLimit;
+		if (m_WoundCountAffectsImpulseLimitRatio != 0 && m_GibWoundLimit > 0) { impulseLimit *= 1.0F - (static_cast<float>(m_Wounds.size()) / static_cast<float>(m_GibWoundLimit)) * m_WoundCountAffectsImpulseLimitRatio; }
+		if (totalImpulse.GetMagnitude() > impulseLimit) { GibThis(totalImpulse); }
+	}
 
-    MOSprite::ApplyImpulses();
+	MOSprite::ApplyImpulses();
 }
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -1254,14 +1295,7 @@ bool MOSRotating::DeepCheck(bool makeMOPs, int skipMOP, int maxMOPs)
     {
         m_ForceDeepCheck = false;
         m_DeepHardness = true;
-/*
-        // Just make the outline of this disappear from the terrain
-        {
-// TODO: These don't work at all because they're drawing shapes of color 0 to an intermediate field of 0!
-            Draw(g_SceneMan.GetTerrain()->GetFGColorBitmap(), Vector(), g_DrawMask, true);
-            Draw(g_SceneMan.GetTerrain()->GetMaterialBitmap(), Vector(), g_DrawAir, true);
-        }
-*/
+
 // TODO: This stuff is just way too slow, EraseSilhouette is a hog
         // Make particles fly at least somewhat
         float velMag = MAX(10.0f, m_Vel.GetMagnitude());
@@ -1354,6 +1388,8 @@ void MOSRotating::Travel()
     // Reset the travel impulse for this frame
     m_TravelImpulse.Reset();
 
+	RTEAssert(m_pAtomGroup, "No AtomGroup defined for MOSRotating " + GetPresetName() + " in Travel!");
+
     // Set the atom to ignore a certain MO, if set and applicable.
     if (m_HitsMOs && m_pMOToNotHit && g_MovableMan.ValidMO(m_pMOToNotHit) && !m_MOIgnoreTimer.IsPastSimTimeLimit()) {
         std::vector<MOID> MOIDsNotToHit;
@@ -1386,12 +1422,19 @@ void MOSRotating::PostTravel()
     if (IsTooFast())
         GibThis();
 
+	// For some reason MovableObject lifetime death is in post travel rather than update, so this is done here too
+	if (m_GibAtEndOfLifetime && m_Lifetime && m_AgeTimer.GetElapsedSimTimeMS() > m_Lifetime) { GibThis(); }
+
     MOSprite::PostTravel();
 
     // Check if travel hits created enough impulse forces to gib this
-    if (m_GibImpulseLimit > 0 && m_TravelImpulse.GetMagnitude() > m_GibImpulseLimit)
-        GibThis();
-
+	if (m_GibImpulseLimit > 0) {
+		float impulseLimit = m_GibImpulseLimit;
+		if (m_WoundCountAffectsImpulseLimitRatio != 0 && m_GibWoundLimit > 0) {
+			impulseLimit *= 1.0F - (static_cast<float>(m_Wounds.size()) / static_cast<float>(m_GibWoundLimit)) * m_WoundCountAffectsImpulseLimitRatio;
+		}
+		if (m_TravelImpulse.GetMagnitude() > impulseLimit) { GibThis(); }
+	}
     // Reset
     m_DeepHardness = 0;
 
@@ -1430,7 +1473,7 @@ void MOSRotating::Update() {
         m_OrientToVel = std::clamp(m_OrientToVel, 0.0F, 1.0F);
 
         float velInfluence = std::clamp(m_OrientToVel < 1.0F ? m_Vel.GetMagnitude() / 100.0F : 1.0F, 0.0F, 1.0F);
-        float radsToGo = m_Rotation.GetRadAngleTo(m_Vel.GetAbsRadAngle());
+        float radsToGo = m_Rotation.GetRadAngleTo(m_Vel.GetAbsRadAngle() + (m_HFlipped ? -c_PI : 0));
         m_Rotation += radsToGo * m_OrientToVel * velInfluence;
     }
 
@@ -1544,20 +1587,19 @@ void MOSRotating::AddAttachable(Attachable *attachable, const Vector& parentOffs
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool MOSRotating::RemoveAttachable(long attachableUniqueID, bool addToMovableMan, bool addBreakWounds) {
-    MovableObject *attachableAsMovableObject = g_MovableMan.FindObjectByUniqueID(attachableUniqueID);
-    if (attachableAsMovableObject) {
+Attachable * MOSRotating::RemoveAttachable(long attachableUniqueID, bool addToMovableMan, bool addBreakWounds) {
+    if (MovableObject *attachableAsMovableObject = g_MovableMan.FindObjectByUniqueID(attachableUniqueID)) {
         return RemoveAttachable(dynamic_cast<Attachable *>(attachableAsMovableObject), addToMovableMan, addBreakWounds);
     }
-    return false;
+    return nullptr;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-bool MOSRotating::RemoveAttachable(Attachable *attachable, bool addToMovableMan, bool addBreakWounds) {
+Attachable * MOSRotating::RemoveAttachable(Attachable *attachable, bool addToMovableMan, bool addBreakWounds) {
     if (!attachable || !attachable->IsAttached()) {
-        return false;
+        return attachable;
     }
     RTEAssert(attachable->IsAttachedTo(this), "Tried to remove Attachable " + attachable->GetPresetNameAndUniqueID() + " from presumed parent " + GetPresetNameAndUniqueID() + ", but it had a different parent (" + (attachable->GetParent() ? attachable->GetParent()->GetPresetNameAndUniqueID() : "ERROR") + "). This should never happen!");
 
@@ -1570,11 +1612,19 @@ bool MOSRotating::RemoveAttachable(Attachable *attachable, bool addToMovableMan,
         hardcodedAttachableMapEntry->second(this, nullptr);
         m_HardcodedAttachableUniqueIDsAndSetters.erase(hardcodedAttachableMapEntry);
     }
-    
+
+    // Note, this version handles cases where you can't pass null to a setter cause you're calling a remover function, i.e. when dealing with hardcoded Attachable lists.
+    hardcodedAttachableMapEntry = m_HardcodedAttachableUniqueIDsAndRemovers.find(attachable->GetUniqueID());
+    if (hardcodedAttachableMapEntry != m_HardcodedAttachableUniqueIDsAndRemovers.end()) {
+        hardcodedAttachableMapEntry->second(this, attachable);
+        m_HardcodedAttachableUniqueIDsAndRemovers.erase(hardcodedAttachableMapEntry);
+    }
+
     if (addBreakWounds) {
         if (!m_ToDelete && attachable->GetParentBreakWound()) {
             AEmitter *parentBreakWound = dynamic_cast<AEmitter *>(attachable->GetParentBreakWound()->Clone());
             if (parentBreakWound) {
+				parentBreakWound->SetDrawnAfterParent(attachable->IsDrawnAfterParent());
                 parentBreakWound->SetEmitAngle((attachable->GetParentOffset() * m_Rotation).GetAbsRadAngle());
                 AddWound(parentBreakWound, attachable->GetParentOffset(), false);
                 parentBreakWound = nullptr;
@@ -1589,8 +1639,6 @@ bool MOSRotating::RemoveAttachable(Attachable *attachable, bool addToMovableMan,
             }
         }
     }
-    if (attachable->GetDeleteWhenRemovedFromParent()) { attachable->SetToDelete(); }
-    if (addToMovableMan || attachable->IsSetToDelete()) { g_MovableMan.AddMO(attachable); }
 
     if (attachable == m_RadiusAffectingAttachable) {
         m_RadiusAffectingAttachable = nullptr;
@@ -1603,7 +1651,20 @@ bool MOSRotating::RemoveAttachable(Attachable *attachable, bool addToMovableMan,
         }
     }
 
-    return true;
+    if (attachable->GetDeleteWhenRemovedFromParent()) { attachable->SetToDelete(); }
+    if (addToMovableMan || attachable->IsSetToDelete()) {
+        g_MovableMan.AddMO(attachable);
+        return nullptr;
+    }
+
+    return attachable;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void MOSRotating::RemoveAndDeleteAttachable(Attachable *attachable) {
+    attachable->SetToDelete();
+    RemoveAttachable(attachable);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1616,9 +1677,9 @@ void MOSRotating::RemoveOrDestroyAllAttachables(bool destroy) {
         ++attachableIterator;
 
         if (destroy) {
-            delete attachable;
+            RemoveAndDeleteAttachable(attachable);
         } else {
-            RemoveAttachable(attachable);
+            RemoveAttachable(attachable, true, true);
         }
     }
 	m_Attachables.clear();
@@ -1653,7 +1714,7 @@ void MOSRotating::Draw(BITMAP *pTargetBitmap,
                        DrawMode mode,
                        bool onlyPhysical) const
 {
-    RTEAssert(m_aSprite, "No sprite bitmaps loaded to draw!");
+    RTEAssert(!m_aSprite.empty(), "No sprite bitmaps loaded to draw!");
     RTEAssert(m_Frame >= 0 && m_Frame < m_FrameCount, "Frame is out of bounds!");
     
     // Only draw MOID if this gets hit by MO's and it has a valid MOID assigned to it
@@ -1685,7 +1746,7 @@ void MOSRotating::Draw(BITMAP *pTargetBitmap,
 		keyColor = g_MOIDMaskColor;
 	}
 
-    Vector spritePos(m_Pos.GetFloored() - targetPos);
+    Vector spritePos(m_Pos.GetRounded() - targetPos);
 
     if (m_Recoiled)
         spritePos += m_RecoilOffset;
@@ -1696,21 +1757,17 @@ void MOSRotating::Draw(BITMAP *pTargetBitmap,
         clear_to_color(pTempBitmap, keyColor);
 
 // TODO: Fix that MaterialAir and KeyColor don't work at all because they're drawing 0 to a field of 0's
-        // Draw the requested material sihouette on the material bitmap
+        // Draw the requested material silhouette on the material bitmap
         if (mode == g_DrawMaterial)
             draw_character_ex(pTempBitmap, m_aSprite[m_Frame], 0, 0, m_SettleMaterialDisabled ? GetMaterial()->GetIndex() : GetMaterial()->GetSettleMaterial(), -1);
-        else if (mode == g_DrawAir)
-            draw_character_ex(pTempBitmap, m_aSprite[m_Frame], 0, 0, g_MaterialAir, -1);
-        else if (mode == g_DrawMask)
-            draw_character_ex(pTempBitmap, m_aSprite[m_Frame], 0, 0, keyColor, -1);
         else if (mode == g_DrawWhite)
             draw_character_ex(pTempBitmap, m_aSprite[m_Frame], 0, 0, g_WhiteColor, -1);
         else if (mode == g_DrawMOID)
             draw_character_ex(pTempBitmap, m_aSprite[m_Frame], 0, 0, m_MOID, -1);
         else if (mode == g_DrawNoMOID)
             draw_character_ex(pTempBitmap, m_aSprite[m_Frame], 0, 0, g_NoMOID, -1);
-        else if (mode == g_DrawRedTrans)
-            draw_trans_sprite(pTempBitmap, m_aSprite[m_Frame], 0, 0);
+		else if (mode == g_DrawDoor)
+			draw_character_ex(pTempBitmap, m_aSprite[m_Frame], 0, 0, g_MaterialDoor, -1);
         else
         {
 //            return;
@@ -1923,6 +1980,23 @@ bool MOSRotating::HandlePotentialRadiusAffectingAttachable(const Attachable *att
         return true;
     }
     return false;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void MOSRotating::CorrectAttachableAndWoundPositionsAndRotations() const {
+	for (Attachable *attachable : m_Attachables) {
+		attachable->PreUpdate();
+		attachable->m_PreUpdateHasRunThisFrame = false;
+		attachable->UpdatePositionAndJointPositionBasedOnOffsets();
+		attachable->CorrectAttachableAndWoundPositionsAndRotations();
+	}
+	for (Attachable *wound : m_Wounds) {
+		wound->PreUpdate();
+		wound->m_PreUpdateHasRunThisFrame = false;
+		wound->UpdatePositionAndJointPositionBasedOnOffsets();
+		wound->CorrectAttachableAndWoundPositionsAndRotations();
+	}
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

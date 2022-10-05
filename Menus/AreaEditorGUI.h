@@ -20,6 +20,7 @@
 #include "Vector.h"
 #include "Box.h"
 #include "Controller.h"
+#include "PieSlice.h"
 
 struct BITMAP;
 
@@ -28,7 +29,7 @@ namespace RTE
 {
 
 class AreaPickerGUI;
-class PieMenuGUI;
+class PieMenu;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -153,9 +154,9 @@ public:
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Gets any Pie menu slice command activated last update.
 // Arguments:       None.
-// Return value:    The enum'd int of any slice activated. See the PieSliceIndex enum.
+// Return value:    The enum'd int of any slice activated. See the PieSlice::SliceType enum.
 
-    int GetActivatedPieSlice();
+	PieSlice::SliceType GetActivatedPieSlice() const;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -248,16 +249,6 @@ public:
 protected:
 
 
-//////////////////////////////////////////////////////////////////////////////////////////
-// Method:          UpdatePieMenu
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Updates the PieMenu config based ont eh current editor state.
-// Arguments:       None.
-// Return value:    None.
-
-    void UpdatePieMenu();
-
-
     enum BlinkMode
     {
         NOBLINK = 0,
@@ -285,8 +276,7 @@ protected:
     // Measures the interval between input repeats
     Timer m_RepeatTimer;
 
-    // The pie menu
-    PieMenuGUI *m_pPieMenu;
+	std::unique_ptr<PieMenu> m_PieMenu; //!< The PieMenu for this AreaEditorGUI.
     // The Area picker
     AreaPickerGUI *m_pPicker;
     // Grid snapping enabled

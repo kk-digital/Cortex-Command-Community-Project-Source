@@ -26,7 +26,6 @@
 #include "ACrab.h"
 #include "SLTerrain.h"
 #include "AreaPickerGUI.h"
-#include "PieMenuGUI.h"
 #include "Scene.h"
 
 using namespace RTE;
@@ -48,7 +47,7 @@ void AreaEditorGUI::Clear()
     m_BlinkMode = NOBLINK;
     m_RepeatStartTimer.Reset();
     m_RepeatTimer.Reset();
-    m_pPieMenu = 0;
+	m_PieMenu = nullptr;
     m_pPicker = 0;
     m_GridSnapping = true;
     m_CursorPos.Reset();
@@ -72,15 +71,10 @@ int AreaEditorGUI::Create(Controller *pController, bool fullFeatured, int whichM
 
     m_FullFeatured = fullFeatured;
 
-    // Allocate and (re)create the Editor GUIs
-    if (!m_pPieMenu)
-        m_pPieMenu = new PieMenuGUI();
-    else
-        m_pPieMenu->Destroy();
-    m_pPieMenu->Create(pController);
-
-    // Init the pie menu
-    UpdatePieMenu();
+	if (m_PieMenu) { m_PieMenu = nullptr; }
+	std::string pieMenuName = m_FullFeatured ? "Area Editor Full Pie Menu" : "Area Editor Minimal Pie Menu";
+	m_PieMenu = std::unique_ptr<PieMenu>(dynamic_cast<PieMenu *>(g_PresetMan.GetEntityPreset("PieMenu", pieMenuName)->Clone()));
+	m_PieMenu->SetMenuController(pController);
 
     // Allocate and (re)create the Editor GUIs
     if (!m_pPicker)
@@ -111,7 +105,6 @@ int AreaEditorGUI::Create(Controller *pController, bool fullFeatured, int whichM
 
 void AreaEditorGUI::Destroy()
 {
-    delete m_pPieMenu;
     delete m_pPicker;
 
     Clear();
@@ -127,7 +120,7 @@ void AreaEditorGUI::Destroy()
 void AreaEditorGUI::SetController(Controller *pController)
 {
     m_pController = pController;
-    m_pPieMenu->SetController(pController);
+	m_PieMenu->SetMenuController(pController);
     m_pPicker->SetController(pController);
 }
 
@@ -150,9 +143,8 @@ void AreaEditorGUI::SetPosOnScreen(int newPosX, int newPosY)
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Gets any Pie menu slice command activated last update.
 
-int AreaEditorGUI::GetActivatedPieSlice()
-{
-    return m_pPieMenu->GetPieCommand();
+PieSlice::SliceType AreaEditorGUI::GetActivatedPieSlice() const {
+	return m_PieMenu->GetPieCommand();
 }
 
 
@@ -285,33 +277,26 @@ void AreaEditorGUI::Update()
     /////////////////////////////////////////////
     // PIE MENU
 
-    m_pPieMenu->Update();
+    m_PieMenu->Update();
 
     // Show the pie menu only when the secondary button is held down
-    if (m_pController->IsState(PRESS_SECONDARY) && m_EditorGUIMode != INACTIVE && m_EditorGUIMode != PICKINGAREA)
-    {
-        m_pPieMenu->SetEnabled(true);
-        m_pPieMenu->SetPos(m_GridSnapping ? g_SceneMan.SnapPosition(m_CursorPos) : m_CursorPos);
+    if (m_pController->IsState(PRESS_SECONDARY) && m_EditorGUIMode != INACTIVE && m_EditorGUIMode != PICKINGAREA) {
+		m_PieMenu->SetPos(m_GridSnapping ? g_SceneMan.SnapPosition(m_CursorPos) : m_CursorPos);
+		m_PieMenu->SetEnabled(true);
     }
 
-    if (!m_pController->IsState(PIE_MENU_ACTIVE) || m_EditorGUIMode == INACTIVE || m_EditorGUIMode == PICKINGAREA)
-        m_pPieMenu->SetEnabled(false);
+	if (!m_pController->IsState(PIE_MENU_ACTIVE) || m_EditorGUIMode == INACTIVE || m_EditorGUIMode == PICKINGAREA) { m_PieMenu->SetEnabled(false); }
 
-    ///////////////////////////////////////
-    // Handle pie menu selections
-
-    if (m_pPieMenu->GetPieCommand() != PieMenuGUI::PSI_NONE)
-    {
-        if (m_pPieMenu->GetPieCommand() == PieMenuGUI::PSI_PICK)
-            m_EditorGUIMode = PICKINGAREA;
-        else if (m_pPieMenu->GetPieCommand() == PieMenuGUI::PSI_MOVE)
-            m_EditorGUIMode = PREADDMOVEBOX;
-        else if (m_pPieMenu->GetPieCommand() == PieMenuGUI::PSI_REMOVE)
-            m_EditorGUIMode = DELETINGBOX;
-        else if (m_pPieMenu->GetPieCommand() == PieMenuGUI::PSI_DONE)
-            m_EditorGUIMode = DONEEDITING;
-        
-        UpdatePieMenu();
+    if (m_PieMenu->GetPieCommand() != PieSlice::SliceType::NoType) {
+		if (m_PieMenu->GetPieCommand() == PieSlice::SliceType::EditorPick) {
+			m_EditorGUIMode = PICKINGAREA;
+		} else if (m_PieMenu->GetPieCommand() == PieSlice::SliceType::EditorMove) {
+			m_EditorGUIMode = PREADDMOVEBOX;
+		} else if (m_PieMenu->GetPieCommand() == PieSlice::SliceType::EditorRemove) {
+			m_EditorGUIMode = DELETINGBOX;
+		} else if (m_PieMenu->GetPieCommand() == PieSlice::SliceType::EditorDone) {
+			m_EditorGUIMode = DONEEDITING;
+		}
     }
 
     //////////////////////////////////////////
@@ -335,7 +320,6 @@ void AreaEditorGUI::Update()
             if (m_pPicker->DonePicking())
             {
                 m_EditorGUIMode = PREADDMOVEBOX;
-                UpdatePieMenu();
             }
         }
     }
@@ -372,7 +356,7 @@ void AreaEditorGUI::Update()
     /////////////////////////////////////
     // ADDING or MOVING BOX MODE
 
-    if (m_pCurrentArea && m_EditorGUIMode == PREADDMOVEBOX && !m_pPieMenu->IsEnabled())
+    if (m_pCurrentArea && m_EditorGUIMode == PREADDMOVEBOX && !m_PieMenu->IsEnabled())
     {
         g_FrameMan.SetScreenText("Click and drag to ADD a new box to the Area - Drag existing ones to MOVE them", g_ActivityMan.GetActivity()->ScreenOfPlayer(m_pController->GetPlayer()));
 
@@ -444,7 +428,6 @@ void AreaEditorGUI::Update()
                 m_PreviousMode = PREADDMOVEBOX;
             }
 
-            UpdatePieMenu();
             g_GUISound.PlacementBlip()->Play();
         }
         // Just hovering over things, show what would be moved if we started dragging
@@ -461,7 +444,7 @@ void AreaEditorGUI::Update()
     /////////////////////////////////////////////////////////////
     // POINTING AT/DRAGGING MODES WITHOUT SNAPPING
 
-    else if (m_pCurrentArea && (m_EditorGUIMode == MOVINGBOX || m_EditorGUIMode == ADDINGBOX || m_EditorGUIMode == DELETINGBOX) && !m_pPieMenu->IsEnabled())
+    else if (m_pCurrentArea && (m_EditorGUIMode == MOVINGBOX || m_EditorGUIMode == ADDINGBOX || m_EditorGUIMode == DELETINGBOX) && !m_PieMenu->IsEnabled())
     {
         // Trap the mouse cursor
         g_UInputMan.TrapMousePos(true, m_pController->GetPlayer());
@@ -682,62 +665,5 @@ void AreaEditorGUI::Draw(BITMAP *pTargetBitmap, const Vector &targetPos) const
     m_pPicker->Draw(pTargetBitmap);
 
     // Draw the pie menu
-    m_pPieMenu->Draw(pTargetBitmap, targetPos);
-}
-
-
-//////////////////////////////////////////////////////////////////////////////////////////
-// Method:          UpdatePieMenu
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Updates the PieMenu config based ont eh current editor state.
-
-void AreaEditorGUI::UpdatePieMenu()
-{
-    m_pPieMenu->ResetSlices();
-
-    // Add pie menu slices and align them
-    if (m_FullFeatured)
-    {
-		PieMenuGUI::Slice newAreaSlice("New Area", PieMenuGUI::PSI_NEW, PieMenuGUI::Slice::UP);
-        m_pPieMenu->AddSlice(newAreaSlice);
-        PieMenuGUI::Slice loadSceneSlice("Load Scene", PieMenuGUI::PSI_LOAD, PieMenuGUI::Slice::UP);
-		m_pPieMenu->AddSlice(loadSceneSlice);
-		
-		PieMenuGUI::Slice testSceneSlice("Test Scene", PieMenuGUI::PSI_DONE, PieMenuGUI::Slice::UP);
-        m_pPieMenu->AddSlice(testSceneSlice);
-        PieMenuGUI::Slice addMoveSlice("Add/Move Box", PieMenuGUI::PSI_MOVE, PieMenuGUI::Slice::LEFT);
-		m_pPieMenu->AddSlice(addMoveSlice);
-		
-		PieMenuGUI::Slice removeBoxSlice("Remove Box", PieMenuGUI::PSI_REMOVE, PieMenuGUI::Slice::LEFT);
-        m_pPieMenu->AddSlice(removeBoxSlice);
-		
-		PieMenuGUI::Slice selectAreaSlice("Select Area", PieMenuGUI::PSI_PICK, PieMenuGUI::Slice::RIGHT);
-        m_pPieMenu->AddSlice(selectAreaSlice);
-		
-		PieMenuGUI::Slice saveSceneSlice("Save Scene", PieMenuGUI::PSI_SAVE, PieMenuGUI::Slice::DOWN);
-        m_pPieMenu->AddSlice(saveSceneSlice);
-        if (m_pCurrentArea)
-        {
-            if (dynamic_cast<Actor *>(m_pCurrentArea))
-            {
-				PieMenuGUI::Slice team1Slice("Team 1 Actor", PieMenuGUI::PSI_TEAM1, PieMenuGUI::Slice::DOWN);
-                m_pPieMenu->AddSlice(team1Slice);
-				PieMenuGUI::Slice team2Slice("Team 2 Actor", PieMenuGUI::PSI_TEAM2, PieMenuGUI::Slice::DOWN);
-                m_pPieMenu->AddSlice(team2Slice);
-            }
-        }
-    }
-    else
-    {
-		PieMenuGUI::Slice moveAreaSlice("(Re)Move Area", PieMenuGUI::PSI_REMOVE, PieMenuGUI::Slice::UP, false);
-        m_pPieMenu->AddSlice(moveAreaSlice);
-        PieMenuGUI::Slice doneSlice("DONE Building!", PieMenuGUI::PSI_DONE, PieMenuGUI::Slice::LEFT);
-		m_pPieMenu->AddSlice(doneSlice);
-		
-		PieMenuGUI::Slice pickAreaSlice("Pick Area", PieMenuGUI::PSI_PICK, PieMenuGUI::Slice::RIGHT);
-        m_pPieMenu->AddSlice(pickAreaSlice);
-        PieMenuGUI::Slice saveSceneSlice("Save Scene", PieMenuGUI::PSI_SAVE, PieMenuGUI::Slice::DOWN, false);
-		m_pPieMenu->AddSlice(saveSceneSlice);
-    }
-    m_pPieMenu->RealignSlices();
+	m_PieMenu->Draw(pTargetBitmap, targetPos);
 }

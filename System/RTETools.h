@@ -172,6 +172,40 @@ namespace RTE {
 	float Limit(float value, float upperLimit, float lowerLimit);
 #pragma endregion
 
+#pragma region Angle Helpers
+	/// <summary>
+	/// Returns a copy of the angle normalized so it's between 0 and 2PI.
+	/// </summary>
+	/// <param name="angle">The angle to normalize, in radians.</param>
+	/// <returns>The angle, normalized so it's between 0 and 2PI</returns>
+	float NormalizeAngleBetween0And2PI(float angle);
+
+	/// <summary>
+	/// Returns a copy of the angle normalized so it's between -PI and PI.
+	/// </summary>
+	/// <param name="angle">The angle to normalize, in radians.</param>
+	/// <returns>The angle, normalized so it's between -PI and PI</returns>
+	float NormalizeAngleBetweenNegativePIAndPI(float angle);
+
+	/// <summary>
+	/// Returns whether or not the angle to check is between the start and end angles. Note that, because of how angles work (when normalized), the start angle may be greater than the end angle.
+	/// </summary>
+	/// <param name="angleToCheck">The angle to check, in radians.</param>
+	/// <param name="startAngle">The starting angle for the range.</param>
+	/// <param name="endAngle">The ending angle for the range.</param>
+	/// <returns>Whether or not the angle to check is between the start and end angle.</returns>
+	bool AngleWithinRange(float angleToCheck, float startAngle, float endAngle);
+
+	/// <summary>
+	/// Clamps the passed in angle between the specified lower and upper limits, in a CCW direction.
+	/// </summary>
+	/// <param name="angleToClamp">The angle to clamp.</param>
+	/// <param name="startAngle">The lower limit for clamping.</param>
+	/// <param name="endAngle">The upper limit for clamping.</param>
+	/// <returns>The angle, clamped between the start and end angle.</returns>
+	float ClampAngle(float angleToClamp, float startAngle, float endAngle);
+#pragma endregion
+
 #pragma region Detection
 	/// <summary>
 	/// Tells whether a point is within a specified box.
@@ -216,6 +250,30 @@ namespace RTE {
 	/// <param name="angleRadians">The angle in radians to be converted.</param>
 	/// <returns>The converted angle in degrees.</returns>
 	inline float RadiansToDegrees(float angleRadians) { return angleRadians / c_PI * 180.0F; }
+
+	/// <summary>
+	/// Rounds a float to a set fixed point precision (digits after decimal point) with option to always ceil or always floor the remainder.
+	/// </summary>
+	/// <param name="inputFloat">The input float to round.</param>
+	/// <param name="roundingMode">Method of rounding to use. 0 for system default, 1 for floored remainder, 2 for ceiled remainder.</param>
+	/// <returns>A string of the float, rounded and displayed to chosen precision.</returns>
+	std::string RoundFloatToPrecision(float input, int precision, int roundingMode = 0);
+#pragma endregion
+
+#pragma region Misc
+	/// <summary>
+	/// Convenience method that takes in a double pointer array and returns a std::vector with its contents, because pointers-to-pointers are the devil. The passed in array is deleted in the process so no need to delete it manually.
+	/// </summary>
+	/// <param name="arrayOfType">The double pointer to convert to a std::vector.</param>
+	/// <param name="arraySize">The size of the double pointer array.</param>
+	template <typename Type> std::vector<Type *> ConvertDoublePointerToVectorOfPointers(Type **arrayOfType, size_t arraySize) {
+		std::unique_ptr<Type *[]> doublePointerArray = std::unique_ptr<Type *[]>(arrayOfType);
+		std::vector<Type *> outputVector;
+		for (size_t i = 0; i < arraySize; ++i) {
+			outputVector.emplace_back(doublePointerArray[i]);
+		}
+		return outputVector;
+	}
 #pragma endregion
 }
 #endif

@@ -27,6 +27,7 @@
 #include "Actor.h"
 #include "BunkerAssemblyScheme.h"
 #include "BunkerAssembly.h"
+#include "SLBackground.h"
 
 #include "ADoor.h"
 #include "AHuman.h"
@@ -35,7 +36,7 @@
 
 namespace RTE {
 
-ConcreteClassInfo(Scene, Entity, 0)
+ConcreteClassInfo(Scene, Entity, 0);
 const string Scene::Area::c_ClassName = "Area";
 
 
@@ -142,6 +143,19 @@ bool Scene::Area::AddBox(const Box &newBox)
     m_BoxList.push_back(newBox);
     return true;
 }
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+bool Scene::Area::RemoveBox(const Box &boxToRemove) {
+    std::vector<Box>::iterator boxToRemoveIterator = std::find(m_BoxList.begin(), m_BoxList.end(), boxToRemove);
+    if (boxToRemoveIterator != m_BoxList.end()) {
+        m_BoxList.erase(boxToRemoveIterator);
+        return true;
+    }
+    return false;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -520,8 +534,8 @@ int Scene::Create(const Scene &reference)
             m_PlacedObjects[set].push_back(dynamic_cast<SceneObject *>((*oItr)->Clone()));
     }
 
-    for (list<SceneLayer *>::const_iterator lItr = reference.m_BackLayerList.begin(); lItr != reference.m_BackLayerList.end(); ++lItr)
-        m_BackLayerList.push_back(dynamic_cast<SceneLayer *>((*lItr)->Clone()));
+    for (list<SLBackground *>::const_iterator lItr = reference.m_BackLayerList.begin(); lItr != reference.m_BackLayerList.end(); ++lItr)
+        m_BackLayerList.push_back(dynamic_cast<SLBackground *>((*lItr)->Clone()));
 
     for (int team = Activity::TeamOne; team < Activity::MaxTeamCount; ++team)
     {
@@ -577,7 +591,10 @@ int Scene::LoadData(bool placeObjects, bool initPathfinding, bool placeUnits)
         RTEAbort("Loading Terrain " + m_pTerrain->GetPresetName() + "\'s data failed!");
         return -1;
     }
-    
+	for (SLBackground *backgroundLayer : m_BackLayerList) {
+		backgroundLayer->InitScaleFactors();
+	}
+
     ///////////////////////////////////
     // Load Unseen layers before applying objects to the scene,
     // so we can reveal around stuff that is getting placed for the appropriate team
@@ -652,11 +669,9 @@ int Scene::LoadData(bool placeObjects, bool initPathfinding, bool placeUnits)
 						// Place units as usual if we're told to place units
 						g_MovableMan.AddActor(dynamic_cast<Actor *>(pMO));
 					}
+				} else {
+					g_MovableMan.AddMO(pMO);
 				}
-                else if (pMO->IsDevice())
-                    g_MovableMan.AddItem(dynamic_cast<MovableObject *>(pMO));
-                else
-                    g_MovableMan.AddParticle(dynamic_cast<MovableObject *>(pMO));
             }
             else
             {
@@ -728,7 +743,7 @@ int Scene::LoadData(bool placeObjects, bool initPathfinding, bool placeUnits)
 								SceneObject *pObject = pDep->CreateDeployedObject(pDep->GetPlacedByPlayer(), cost);
 								pMO = dynamic_cast<MovableObject *>(pObject);
 								if (pMO)
-									g_MovableMan.AddItem(pMO);
+									g_MovableMan.AddMO(pMO);
 								else
 								{
 									delete pObject;
@@ -821,19 +836,21 @@ int Scene::LoadData(bool placeObjects, bool initPathfinding, bool placeUnits)
 					// Finally place TerrainObject
 					if (pTO)
                     {
+						const BITMAP *terrainObjectBitmap = pTO->GetFGColorBitmap() ? pTO->GetFGColorBitmap() : pTO->GetBGColorBitmap();
+
                         // First clear out the box of unseen layer for whichever team placed this
-                        if (pTO->GetFGColorBitmap() && pTO->GetPlacedByPlayer() != Players::NoPlayer && g_ActivityMan.GetActivity())
+                        if (terrainObjectBitmap && pTO->GetPlacedByPlayer() != Players::NoPlayer && g_ActivityMan.GetActivity())
                         {
                             // Learn which team placed this thing so we can reveal for them only
                             int ownerTeam = pTO->GetTeam();
                             if (ownerTeam != Activity::NoTeam && m_apUnseenLayer[ownerTeam] && m_apUnseenLayer[ownerTeam]->GetBitmap())
                             {
                                 // Translate to the scaled unseen layer's coordinates
-                                Vector scale = m_apUnseenLayer[ownerTeam]->GetScaleInverse();
-                                int scaledX = std::floor((pTO->GetPos().m_X - (float)(pTO->GetFGColorBitmap()->w / 2)) * scale.m_X);
-                                int scaledY = std::floor((pTO->GetPos().m_Y - (float)(pTO->GetFGColorBitmap()->h / 2)) * scale.m_Y);
-                                int scaledW = std::ceil(pTO->GetFGColorBitmap()->w * scale.m_X);
-                                int scaledH = std::ceil(pTO->GetFGColorBitmap()->h * scale.m_Y);
+                                Vector scale = m_apUnseenLayer[ownerTeam]->GetScaleFactor();
+                                int scaledX = std::floor((pTO->GetPos().m_X - (float)(terrainObjectBitmap->w / 2)) / scale.m_X);
+                                int scaledY = std::floor((pTO->GetPos().m_Y - (float)(terrainObjectBitmap->h / 2)) / scale.m_Y);
+                                int scaledW = std::ceil(terrainObjectBitmap->w / scale.m_X);
+                                int scaledH = std::ceil(terrainObjectBitmap->h / scale.m_Y);
                                 // Fill the box with key color for the owner ownerTeam, revealing the area that this thing is on
                                 rectfill(m_apUnseenLayer[ownerTeam]->GetBitmap(), scaledX, scaledY, scaledX + scaledW, scaledY + scaledH, g_MaskColor);
                                 // Expand the box a little so the whole placed object is going to be hidden
@@ -850,7 +867,7 @@ int Scene::LoadData(bool placeObjects, bool initPathfinding, bool placeUnits)
                             }
                         }
                         // Now actually stamp the terrain object onto the terrain's scene layers
-                        m_pTerrain->ApplyTerrainObject(pTO);
+						pTO->PlaceOnTerrain(m_pTerrain);
                         //delete pTO;
                         //pTO = 0;
                     }
@@ -902,17 +919,6 @@ int Scene::LoadData(bool placeObjects, bool initPathfinding, bool placeUnits)
         m_pPathFinder = new PathFinder(this, 20, 2000);
         // Update all the pathfinding data
         m_pPathFinder->RecalculateAllCosts();
-
-        // Load Background layers' data
-        for (list<SceneLayer *>::iterator slItr = m_BackLayerList.begin(); slItr != m_BackLayerList.end(); ++slItr)
-        {
-            RTEAssert((*slItr), "Background layer not instantiated before trying to load its data!");
-            if ((*slItr)->LoadData() < 0)
-            {
-                g_ConsoleMan.PrintString("ERROR: Loading background layer " + (*slItr)->GetPresetName() + "\'s data failed!");
-                return -1;
-            }
-        }
     }
 
     return 0;
@@ -1030,7 +1036,7 @@ int Scene::SaveData(string pathBase)
         {
             std::snprintf(str, sizeof(str), "T%d", team);
             // Save unseen layer data to disk
-            if (m_apUnseenLayer[team]->SaveData(pathBase + " US" + str + ".bmp") < 0)
+            if (m_apUnseenLayer[team]->SaveData(pathBase + " US" + str + ".png") < 0)
             {
                 g_ConsoleMan.PrintString("ERROR: Saving unseen layer " + m_apUnseenLayer[team]->GetPresetName() + "\'s data failed!");
                 return -1;
@@ -1054,11 +1060,11 @@ int Scene::SavePreview(const std::string &bitmapPath) {
 		return -1;
 	}
 
-	if (m_pPreviewBitmap && (m_pPreviewBitmap->w != PREVIEW_WIDTH || m_pPreviewBitmap->h != PREVIEW_HEIGHT)) {
+	if (m_pPreviewBitmap && (m_pPreviewBitmap->w != c_ScenePreviewWidth || m_pPreviewBitmap->h != c_ScenePreviewHeight)) {
 		destroy_bitmap(m_pPreviewBitmap);
 		m_pPreviewBitmap = nullptr;
 	}
-	if (!m_pPreviewBitmap) { m_pPreviewBitmap = create_bitmap_ex(8, PREVIEW_WIDTH, PREVIEW_HEIGHT); }
+	if (!m_pPreviewBitmap) { m_pPreviewBitmap = create_bitmap_ex(8, c_ScenePreviewWidth, c_ScenePreviewHeight); }
 
 	ContentFile scenePreviewGradient("Base.rte/GUIs/PreviewSkyGradient.png");
 	draw_sprite(m_pPreviewBitmap, scenePreviewGradient.GetAsBitmap(COLORCONV_NONE, true), 0, 0);
@@ -1128,17 +1134,6 @@ int Scene::ClearData()
     {
         RTEAbort("Clearing Terrain " + m_pTerrain->GetPresetName() + "\'s data failed!");
         return -1;
-    }
-
-    // Clear Background layers' data
-    for (list<SceneLayer *>::iterator slItr = m_BackLayerList.begin(); slItr != m_BackLayerList.end(); ++slItr)
-    {
-        RTEAssert((*slItr), "Background layer not instantiated before trying to clear its data!");
-        if ((*slItr)->ClearData() < 0)
-        {
-            g_ConsoleMan.PrintString("ERROR: Clearing background layer " + (*slItr)->GetPresetName() + "\'s data failed!");
-            return -1;
-        }
     }
 
     // Clear unseen layers' data
@@ -1243,7 +1238,7 @@ int Scene::ReadProperty(const std::string_view &propName, Reader &reader)
     }
     else if (propName == "AddBackgroundLayer")
     {
-        SceneLayer *pLayer = dynamic_cast<SceneLayer *>(g_PresetMan.ReadReflectedPreset(reader));
+		SLBackground *pLayer = dynamic_cast<SLBackground *>(g_PresetMan.ReadReflectedPreset(reader));
         RTEAssert(pLayer, "Something went wrong with reading SceneLayer");
         if (pLayer)
             m_BackLayerList.push_back(pLayer);
@@ -1532,7 +1527,7 @@ int Scene::Save(Writer &writer) const
         }
     }
 
-    for (list<SceneLayer *>::const_iterator slItr = m_BackLayerList.begin(); slItr != m_BackLayerList.end(); ++slItr)
+    for (list<SLBackground *>::const_iterator slItr = m_BackLayerList.begin(); slItr != m_BackLayerList.end(); ++slItr)
     {
         writer.NewProperty("AddBackgroundLayer");
         (*slItr)->SavePresetCopy(writer);
@@ -1635,7 +1630,7 @@ void Scene::Destroy(bool notInherited)
         }
     }
 
-    for (list<SceneLayer *>::iterator slItr = m_BackLayerList.begin(); slItr != m_BackLayerList.end(); ++slItr)
+    for (list<SLBackground *>::iterator slItr = m_BackLayerList.begin(); slItr != m_BackLayerList.end(); ++slItr)
     {
         delete (*slItr);
         *slItr = 0;
@@ -1779,7 +1774,7 @@ bool Scene::CleanOrphanPixel(int posX, int posY, NeighborDirection checkingFrom,
         return false;
 
     // Do any necessary wrapping
-    m_apUnseenLayer[team]->WrapPosition(posX, posY, false);
+    m_apUnseenLayer[team]->WrapPosition(posX, posY);
 
     // First check the actual position of the checked pixel, it may already been seen.
     if (getpixel(m_apUnseenLayer[team]->GetBitmap(), posX, posY) == g_MaskColor)
@@ -1792,56 +1787,56 @@ bool Scene::CleanOrphanPixel(int posX, int posY, NeighborDirection checkingFrom,
     {
         testPosX = posX + 1;
         testPosY = posY;
-        m_apUnseenLayer[team]->WrapPosition(testPosX, testPosY, false);
+        m_apUnseenLayer[team]->WrapPosition(testPosX, testPosY);
         support += getpixel(m_apUnseenLayer[team]->GetBitmap(), testPosX, testPosY) != g_MaskColor ? 1 : 0;
     }
     if (checkingFrom != W)
     {
         testPosX = posX - 1;
         testPosY = posY;
-        m_apUnseenLayer[team]->WrapPosition(testPosX, testPosY, false);
+        m_apUnseenLayer[team]->WrapPosition(testPosX, testPosY);
         support += getpixel(m_apUnseenLayer[team]->GetBitmap(), testPosX, testPosY) != g_MaskColor ? 1 : 0;
     }
     if (checkingFrom != S)
     {
         testPosX = posX;
         testPosY = posY + 1;
-        m_apUnseenLayer[team]->WrapPosition(testPosX, testPosY, false);
+        m_apUnseenLayer[team]->WrapPosition(testPosX, testPosY);
         support += getpixel(m_apUnseenLayer[team]->GetBitmap(), testPosX, testPosY) != g_MaskColor ? 1 : 0;
     }
     if (checkingFrom != N)
     {
         testPosX = posX;
         testPosY = posY - 1;
-        m_apUnseenLayer[team]->WrapPosition(testPosX, testPosY, false);
+        m_apUnseenLayer[team]->WrapPosition(testPosX, testPosY);
         support += getpixel(m_apUnseenLayer[team]->GetBitmap(), testPosX, testPosY) != g_MaskColor ? 1 : 0;
     }
     if (checkingFrom != SE)
     {
         testPosX = posX + 1;
         testPosY = posY + 1;
-        m_apUnseenLayer[team]->WrapPosition(testPosX, testPosY, false);
+        m_apUnseenLayer[team]->WrapPosition(testPosX, testPosY);
         support += getpixel(m_apUnseenLayer[team]->GetBitmap(), testPosX, testPosY) != g_MaskColor ? 0.5f : 0;
     }
     if (checkingFrom != SW)
     {
         testPosX = posX - 1;
         testPosY = posY + 1;
-        m_apUnseenLayer[team]->WrapPosition(testPosX, testPosY, false);
+        m_apUnseenLayer[team]->WrapPosition(testPosX, testPosY);
         support += getpixel(m_apUnseenLayer[team]->GetBitmap(), testPosX, testPosY) != g_MaskColor ? 0.5f : 0;
     }
     if (checkingFrom != NW)
     {
         testPosX = posX - 1;
         testPosY = posY - 1;
-        m_apUnseenLayer[team]->WrapPosition(testPosX, testPosY, false);
+        m_apUnseenLayer[team]->WrapPosition(testPosX, testPosY);
         support += getpixel(m_apUnseenLayer[team]->GetBitmap(), testPosX, testPosY) != g_MaskColor ? 0.5f : 0;
     }
     if (checkingFrom != NE)
     {
         testPosX = posX + 1;
         testPosY = posY - 1;
-        m_apUnseenLayer[team]->WrapPosition(testPosX, testPosY, false);
+        m_apUnseenLayer[team]->WrapPosition(testPosX, testPosY);
         support += getpixel(m_apUnseenLayer[team]->GetBitmap(), testPosX, testPosY) != g_MaskColor ? 0.5f : 0;
     }
 
@@ -1864,7 +1859,7 @@ bool Scene::CleanOrphanPixel(int posX, int posY, NeighborDirection checkingFrom,
 
 Vector Scene::GetDimensions() const
 {
-    return m_pTerrain ? Vector(m_pTerrain->GetBitmap()->w, m_pTerrain->GetBitmap()->h) : Vector();
+    return (m_pTerrain && m_pTerrain->GetBitmap()) ? Vector(m_pTerrain->GetBitmap()->w, m_pTerrain->GetBitmap()->h) : Vector();
 }
 
 
@@ -1873,7 +1868,7 @@ Vector Scene::GetDimensions() const
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Gets the total width of the scene, in pixels.
 
-int Scene::GetWidth() const { return m_pTerrain ? m_pTerrain->GetBitmap()->w : 0; }
+int Scene::GetWidth() const { return (m_pTerrain && m_pTerrain->GetBitmap()) ? m_pTerrain->GetBitmap()->w : 0; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -1881,7 +1876,7 @@ int Scene::GetWidth() const { return m_pTerrain ? m_pTerrain->GetBitmap()->w : 0
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Gets the total height of the scene, in pixels.
 
-int Scene::GetHeight() const { return m_pTerrain ? m_pTerrain->GetBitmap()->h : 0; }
+int Scene::GetHeight() const { return (m_pTerrain && m_pTerrain->GetBitmap()) ? m_pTerrain->GetBitmap()->h : 0; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -2276,16 +2271,17 @@ bool Scene::HasArea(string areaName)
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Gets a specific area box identified by a name. Ownership is NOT transferred!
 
-Scene::Area * Scene::GetArea(string areaName)
-{
-    for (list<Area>::iterator aItr = m_AreaList.begin(); aItr != m_AreaList.end(); ++aItr)
-    {
-        if ((*aItr).GetName() == areaName)
-            return &(*aItr);
-    }
+Scene::Area * Scene::GetArea(const std::string_view &areaName, bool luaWarnNotError) {
+	for (Scene::Area &area : m_AreaList) {
+		if (area.GetName() == areaName) {
+			return &area;
+		}
+	}
 
-    g_ConsoleMan.PrintString("ERROR: Could not find the requested Scene Area named: " + areaName);
-    return 0;
+	std::string luaMessageStart = luaWarnNotError ? "WARNING" : "ERROR";
+    g_ConsoleMan.PrintString(luaMessageStart + ": Could not find the requested Scene Area named: " + areaName.data());
+
+    return nullptr;
 }
 
 
@@ -2896,7 +2892,7 @@ void Scene::ResetPathFinding()
 void Scene::UpdatePathFinding()
 {
     m_pPathFinder->RecalculateAreaCosts(m_pTerrain->GetUpdatedMaterialAreas());
-    m_pTerrain->ClearUpdatedAreas();
+    m_pTerrain->ClearUpdatedMaterialAreas();
     m_PartialPathUpdateTimer.Reset();
     m_PathfindingUpdated = true;
 }

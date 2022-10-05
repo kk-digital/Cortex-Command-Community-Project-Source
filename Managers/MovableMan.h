@@ -16,6 +16,7 @@
 
 #include "Serializable.h"
 #include "Entity.h"
+#include "FrameMan.h"
 #include "SceneMan.h"
 #include "LuaMan.h"
 #include "Singleton.h"
@@ -27,6 +28,7 @@ namespace RTE
 
 class MovableObject;
 class Actor;
+class HeldDevice;
 class MOPixel;
 class AHuman;
 class SceneLayer;
@@ -39,11 +41,11 @@ class SceneLayer;
 // Parent(s):       None.
 // Class history:   10/3/2008  AlarmEvent created.
 
-struct AlarmEvent
-{
-    AlarmEvent() { m_ScenePos.Reset(); m_Team = Activity::NoTeam; m_Range = 1; }
-    AlarmEvent(const Vector &pos, int team = Activity::NoTeam, float range = 1) { m_ScenePos = pos; m_Team = (Activity::Teams)team; m_Range = range; }
-    
+struct AlarmEvent {
+	AlarmEvent() { m_ScenePos.Reset(); m_Team = Activity::NoTeam; m_Range = 1.0F; }
+	// TODO: Stop relying on screen width for this shit!
+	AlarmEvent(const Vector &pos, int team = Activity::NoTeam, float range = 1.0F) { m_ScenePos = pos; m_Team = (Activity::Teams)team; m_Range = range * g_FrameMan.GetPlayerScreenWidth() * 0.51F; }
+
     // Absolute position in the scene where this occurred
     Vector m_ScenePos;
     // The team of whatever object that caused this event
@@ -62,7 +64,7 @@ struct AlarmEvent
 
 class MovableMan : public Singleton<MovableMan>, public Serializable {
 	friend class SettingsMan;
-    friend class LuaMan;
+    friend struct ManagerLuaBindings;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -70,8 +72,8 @@ class MovableMan : public Singleton<MovableMan>, public Serializable {
 
 public:
 
-	SerializableClassNameGetter
-	SerializableOverrideMethods
+	SerializableClassNameGetter;
+	SerializableOverrideMethods;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -254,7 +256,7 @@ public:
 //                  point, but not outside the max radius. If no Actor other than the
 //                  excluded one was found within the radius of the point, 0 is returned.
 
-    Actor * GetClosestTeamActor(int team, int player, const Vector &scenePoint, int maxRadius, float &getDistance, const Actor *pExcludeThis = 0);
+    Actor * GetClosestTeamActor(int team, int player, const Vector &scenePoint, int maxRadius, Vector &getDistance, const Actor *pExcludeThis = 0);
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -265,7 +267,7 @@ public:
 // Arguments:       Which team to try to get an enemy Actor for. NoTeam means all teams.
 //                  The Scene point to search for the closest to.
 //                  The maximum radius around that scene point to search.
-//                  A vector to be filled out with the distance of the returned closest to
+//                  A Vector to be filled out with the distance of the returned closest to
 //                  the search point. Will be unaltered if no object was found within radius.
 // Return value:    An Actor pointer to the enemy closest to the Scene
 //                  point, but not outside the max radius. If no Actor
@@ -284,7 +286,7 @@ public:
 // Return value:    An Actor pointer to the first one of the requested team. If no Actor
 //                  is in that team, 0 is returned.
 
-    Actor * GetFirstTeamActor(int team, int player) { float temp; return GetClosestTeamActor(team, player, Vector(), 10000000, temp); }
+	Actor * GetFirstTeamActor(int team, int player) { Vector temp; return GetClosestTeamActor(team, player, Vector(), 10000000, temp); }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -295,14 +297,14 @@ public:
 // Arguments:       Which team to try to get an Actor for. 0 means first team, 1 means 2nd.
 //                  The Scene point to search for the closest to.
 //                  The maximum radius around that scene point to search.
-//                  A float to be filled out with the distance of the returned closest to
+//                  A Vector to be filled out with the distance of the returned closest to
 //                  the search point. Will be unaltered if no object was found within radius.
 //                  An Actor to exclude from the search. OWNERSHIP IS NOT TRANSFERRED!
 // Return value:    An Actor pointer to the requested Actor closest to the Scene
 //                  point, but not outside the max radius. If no Actor other than the
 //                  excluded one was found within the radius of the point, 0 is returned.
 
-    Actor * GetClosestActor(Vector &scenePoint, int maxRadius, float &getDistance, const Actor *pExcludeThis = 0);
+    Actor * GetClosestActor(const Vector &scenePoint, int maxRadius, Vector &getDistance, const Actor *pExcludeThis = 0);
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -420,55 +422,30 @@ public:
 
     void SortTeamRoster(int team) { m_SortTeamRoster[team] = true; }
 
+    /// <summary>
+    /// Adds a MovableObject to this, after it is determined what it is and the best way to add it is. E.g. if it's an Actor, it will be added as such. Ownership IS transferred!
+    /// </summary>
+    /// <param name="movableObjectToAdd">A pointer to the MovableObject to add. Ownership IS transferred!</param>
+    /// <returns>Whether the MovableObject was successfully added or not. Note that Ownership IS transferred either way, but the MovableObject will be deleted if this is not successful.</returns>
+    bool AddMO(MovableObject *movableObjectToAdd);
 
-//////////////////////////////////////////////////////////////////////////////////////////
-// Method:          AddMO
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Adds a MovableObject to this, after it is determined what it is and the
-//                  best way to add it is. E.g. if it's an Actor, it will be added as such.
-//                  Ownership IS transferred! TODO: ITEMS ARE NOT SORTED OUT YET
-// Arguments:       A pointer to the MovableObject to add. Ownership IS transferred!
-// Return value:    Whether the MovableObject was successfully added or not. Either way,
-//                  ownership was transferred. If no success, the object was deleted.
+    /// <summary>
+    /// Adds an Actor to the internal list of Actors. Destruction and deletion will be taken care of automatically. Ownership IS transferred!
+    /// </summary>
+    /// <param name="actorToAdd">A pointer to the Actor to add. Ownership IS transferred!</param>
+    void AddActor(Actor *actorToAdd);
 
+    /// <summary>
+    /// Adds a pickup-able item to the internal list of items. Destruction and deletion will be taken care of automatically. Ownership IS transferred!
+    /// </summary>
+	/// <param name="itemToAdd">A pointer to the item to add. Ownership IS transferred!</param>
+    void AddItem(HeldDevice *itemToAdd);
 
-    bool AddMO(MovableObject *pMOToAdd);
-
-
-//////////////////////////////////////////////////////////////////////////////////////////
-// Method:          AddActor
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Adds an Actor to the internal list of MO:s. Destruction and 
-//                  deletion will be taken care of automatically. Do NOT delete the passed
-//                  MO after adding it here! i.e. Ownership IS transferred!
-// Arguments:       A pointer to the Actor to add.
-// Return value:    None.
-
-    void AddActor(Actor *pActorToAdd);
-
-
-//////////////////////////////////////////////////////////////////////////////////////////
-// Method:          AddItem
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Adds a pickup-able item to the internal list of items. Destruction and 
-//                  deletion will be taken care of automatically. Do NOT delete the passed
-//                  MO after adding it here! i.e. Ownership IS transferred!
-// Arguments:       A pointer to the item MovableObject to add. Ownership is transferred.
-// Return value:    None.
-
-    void AddItem(MovableObject *pItemToAdd);
-
-
-//////////////////////////////////////////////////////////////////////////////////////////
-// Method:          AddParticle
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Adds a MovableObject to the internal list of MO:s. Destruction and 
-//                  deletion will be taken care of automatically. Do NOT delete the passed
-//                  MO after adding it here! i.e. Ownership IS transferred!
-// Arguments:       A pointer to the MovableObject to add. Ownership is transferred.
-// Return value:    None.
-
-    void AddParticle(MovableObject *pMOToAdd);
+    /// <summary>
+    /// Adds a MovableObject to the internal list of particles. Destruction and deletion will be taken care of automatically. Ownership IS transferred!
+    /// </summary>
+    /// <param name="particleToAdd">A pointer to the MovableObject to add. Ownership is transferred!</param>
+    void AddParticle(MovableObject *particleToAdd);
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -634,15 +611,19 @@ public:
 
     bool RemoveMO(MovableObject *pMOToRem);
 
+    /// <summary>
+    /// Kills and destroys all Actors of a specific Team.
+    /// </summary>
+    /// <param name="teamToKill">The team to annihilate. If NoTeam is passed in, then NO Actors die.</param>
+    /// <returns>How many Actors were killed.</returns>
+    int KillAllTeamActors(int teamToKill) const;
 
-//////////////////////////////////////////////////////////////////////////////////////////
-// Method:          KillAllActors
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Kills and destroys all actors of a specific team.
-// Arguments:       The team to NOT annihilate, if NoTeam, then ALL actors die.
-// Return value:    How many Actors were killed.
-
-    int KillAllActors(int exceptTeam = -1);
+	/// <summary>
+	/// Kills and destroys all enemy Actors of a specific Team.
+	/// </summary>
+	/// <param name="teamNotToKill">The team to NOT annihilate. If NoTeam is passed in, then ALL Actors die.</param>
+	/// <returns>How many Actors were killed.</returns>
+	int KillAllEnemyActors(int teamNotToKill = Activity::NoTeam) const;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -669,29 +650,20 @@ public:
 
     int EjectAllItems(std::list<SceneObject *> &itemList);
 
+    /// <summary>
+    /// Opens all doors and keeps them open until this is called again with false.
+    /// </summary>
+    /// <param name="open">Whether to open all doors (true), or close all doors (false).</param>
+    /// <param name="team">Which team to open doors for. NoTeam means all teams.</param>
+    void OpenAllDoors(bool open = true, int team = Activity::NoTeam) const;
 
-//////////////////////////////////////////////////////////////////////////////////////////
-// Method:          OpenAllDoors
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Opens all doors and keeps them open until this is called again with false.
-// Arguments:       Whether to open all doors (true), or undo this action (false)
-//                  Which team to do this for. NoTeam means all teams.
-// Return value:    None.
-
-    void OpenAllDoors(bool open = true, int team = Activity::NoTeam);
-
-
-//////////////////////////////////////////////////////////////////////////////////////////
-// Method:          OverrideMaterialDoors
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Temporarily erases any material door representations of a specific team.
-//                  Used for making pathfinding work better, allowing teammember to navigate
-//                  through friendly bases.
-// Arguments:       Whether to enable the override (true), or undo this action (false)
-//                  Which team to do this for. NoTeam means all teams.
-// Return value:    None.
-
-    void OverrideMaterialDoors(bool enable, int team = Activity::NoTeam);
+    /// <summary>
+    /// Temporarily erases or redraws any material door representations of a specific team.
+	/// Used to make pathfinding work better, allowing Actors to navigate through firendly bases despite the door material layer.
+    /// </summary>
+    /// <param name="eraseDoorMaterial">Whether to erase door material, thereby overriding it, or redraw it and undo the override.</param>
+    /// <param name="team">Which team to do this for, NoTeam means all teams.</param>
+    void OverrideMaterialDoors(bool eraseDoorMaterial, int team = Activity::NoTeam) const;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -899,8 +871,6 @@ public:
 // Return value:    Current sim update frame number.
 
 	unsigned int GetSimUpdateFrameNumber() const { return m_SimUpdateFrameNumber; }
-
-	void OnPieMenu(Actor *pActor);
 
 
 //////////////////////////////////////////////////////////////////////////////////////////

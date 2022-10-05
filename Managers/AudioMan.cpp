@@ -1,5 +1,6 @@
 #include "AudioMan.h"
 #include "ConsoleMan.h"
+#include "FrameMan.h"
 #include "SettingsMan.h"
 #include "SceneMan.h"
 #include "ActivityMan.h"
@@ -15,6 +16,10 @@ namespace RTE {
 		m_CurrentActivityHumanPlayerPositions.clear();
 		m_SoundChannelMinimumAudibleDistances.clear();
 
+		m_MuteMaster = false;
+		m_MuteMusic = false;
+		m_MuteSounds = false;
+		m_MasterVolume = 0.5F;
 		m_MusicVolume = 1.0F;
 		m_SoundsVolume = 1.0F;
 		m_GlobalPitch = 1.0F;
@@ -41,9 +46,9 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	int AudioMan::Initialize() {
+	bool AudioMan::Initialize() {
 		FMOD_RESULT audioSystemSetupResult = FMOD::System_Create(&m_AudioSystem);
-		
+
 		FMOD_ADVANCEDSETTINGS audioSystemAdvancedSettings;
 		memset(&audioSystemAdvancedSettings, 0, sizeof(audioSystemAdvancedSettings));
 		audioSystemAdvancedSettings.cbSize = sizeof(FMOD_ADVANCEDSETTINGS);
@@ -65,18 +70,23 @@ namespace RTE {
 		audioSystemSetupResult = (audioSystemSetupResult == FMOD_OK) ? m_MasterChannelGroup->addGroup(m_SoundChannelGroup) : audioSystemSetupResult;
 		audioSystemSetupResult = (audioSystemSetupResult == FMOD_OK) ? m_SoundChannelGroup->addGroup(m_MobileSoundChannelGroup) : audioSystemSetupResult;
 		audioSystemSetupResult = (audioSystemSetupResult == FMOD_OK) ? m_SoundChannelGroup->addGroup(m_ImmobileSoundChannelGroup) : audioSystemSetupResult;
-		
+
 		m_AudioEnabled = audioSystemSetupResult == FMOD_OK;
 
 		if (!m_AudioEnabled) {
-			return -1;
+			return false;
 		}
+
+		if (m_MuteSounds) { SetSoundsMuted(); }
+		if (m_MuteMusic) { SetMusicMuted(); }
+		if (m_MuteMaster) { SetMasterMuted(); }
 
 		SetGlobalPitch(m_GlobalPitch, false, false);
 		SetSoundsVolume(m_SoundsVolume);
 		SetMusicVolume(m_MusicVolume);
+		SetMasterVolume(m_MasterVolume);
 
-		return 0;
+		return true;
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -94,30 +104,28 @@ namespace RTE {
 	void AudioMan::Update() {
 		if (m_AudioEnabled) {
 
-			//TODO allow setting vel for AEmitter and PEmitter. Also maybe consider setting vel on listener when SceneMan target scrolling is happening.
-
 			FMOD_RESULT status = FMOD_OK;
 
-			if (g_ActivityMan.ActivityRunning()) {
+			if (!g_ActivityMan.ActivityPaused()) {
 				const Activity *currentActivity = g_ActivityMan.GetActivity();
 				int currentActivityHumanCount = m_IsInMultiplayerMode ? 1 : currentActivity->GetHumanCount();
 
 				if (m_CurrentActivityHumanPlayerPositions.size() != currentActivityHumanCount) { status = status == FMOD_OK ? m_AudioSystem->set3DNumListeners(currentActivityHumanCount) : status; }
 
-				if (m_CurrentActivityHumanPlayerPositions.empty() || (m_CurrentActivityHumanPlayerPositions.at(0) == nullptr || m_CurrentActivityHumanPlayerPositions.at(0)->GetFloorIntX() > g_SceneMan.GetSceneWidth() || m_CurrentActivityHumanPlayerPositions.at(0)->GetX() < 0.0F)) {
-					m_CurrentActivityHumanPlayerPositions.clear();
-					for (short player = Players::PlayerOne; player < Players::MaxPlayerCount && m_CurrentActivityHumanPlayerPositions.size() < currentActivityHumanCount; player++) {
-						if (currentActivity->PlayerActive(player) && currentActivity->PlayerHuman(player)) {
-							const Vector &humanPlayerPosition = g_SceneMan.GetScrollTarget(currentActivity->ScreenOfPlayer(player));
-							m_CurrentActivityHumanPlayerPositions.push_back(&humanPlayerPosition);
-						}
+				m_CurrentActivityHumanPlayerPositions.clear();
+				for (int player = Players::PlayerOne; player < Players::MaxPlayerCount && m_CurrentActivityHumanPlayerPositions.size() < currentActivityHumanCount; player++) {
+					if (currentActivity->PlayerActive(player) && currentActivity->PlayerHuman(player)) {
+						int screen = currentActivity->ScreenOfPlayer(player);
+						Vector humanPlayerPosition = g_SceneMan.GetScrollTarget(screen);
+						if (IsInMultiplayerMode()) { humanPlayerPosition += (Vector(g_FrameMan.GetPlayerFrameBufferWidth(screen), g_FrameMan.GetPlayerFrameBufferHeight(screen)) / 2); }
+						m_CurrentActivityHumanPlayerPositions.push_back(std::make_unique<const RTE::Vector>(humanPlayerPosition));
 					}
 				}
 
 				int listenerNumber = 0;
-				for (const Vector *humanPlayerPosition : m_CurrentActivityHumanPlayerPositions) {
+				for (const std::unique_ptr<const Vector> & humanPlayerPosition : m_CurrentActivityHumanPlayerPositions) {
 					if (status == FMOD_OK) {
-						FMOD_VECTOR playerPosition = GetAsFMODVector(*humanPlayerPosition, m_ListenerZOffset);
+						FMOD_VECTOR playerPosition = GetAsFMODVector(*(humanPlayerPosition.get()), m_ListenerZOffset);
 						status = m_AudioSystem->set3DListenerAttributes(listenerNumber, &playerPosition, nullptr, &c_FMODForward, &c_FMODUp);
 					}
 					listenerNumber++;
@@ -229,7 +237,14 @@ namespace RTE {
 		if (m_AudioEnabled) {
 			if (m_IsInMultiplayerMode) { RegisterMusicEvent(-1, MUSIC_PLAY, filePath, loops); }
 
-			FMOD_RESULT result = m_MusicChannelGroup->stop();
+			bool musicIsPlaying;
+			FMOD_RESULT result = m_MusicChannelGroup->isPlaying(&musicIsPlaying);
+			if (result == FMOD_OK && musicIsPlaying) {
+				bool doNotPlayNextStream = true;
+				FMOD_RESULT result = m_MusicChannelGroup->setUserData(&doNotPlayNextStream);
+				result = (result == FMOD_OK) ? m_MusicChannelGroup->stop() : result;
+				result = (result == FMOD_OK) ? m_MusicChannelGroup->setUserData(nullptr) : result;
+			}
 			if (result != FMOD_OK) {
 				g_ConsoleMan.PrintString("ERROR: Could not stop existing music to play new music: " + std::string(FMOD_ErrorString(result)));
 				return;
@@ -293,7 +308,7 @@ namespace RTE {
 			std::string nextString = m_MusicPlayList.front();
 			m_MusicPlayList.pop_front();
 
-			if (!nextString.empty() && nextString.at(0) == '@') {
+			if (!nextString.empty() && nextString[0] == '@') {
 				try {
 					int seconds = std::stoi(nextString.substr(1, nextString.size()));
 					m_SilenceTimer.SetRealTimeLimitS((seconds > 0) ? seconds : 0);
@@ -347,13 +362,15 @@ namespace RTE {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	SoundContainer *AudioMan::PlaySound(const std::string &filePath, const Vector &position, int player) {
+		if (m_IsInMultiplayerMode) {
+			return nullptr;
+		}
+
 		SoundContainer *newSoundContainer = new SoundContainer();
 		newSoundContainer->SetPosition(position);
 		newSoundContainer->GetTopLevelSoundSet().AddSound(filePath);
 		if (newSoundContainer->HasAnySounds()) {
 			PlaySoundContainer(newSoundContainer, player);
-		} else {
-			delete newSoundContainer;
 		}
 		return newSoundContainer;
 	}
@@ -396,6 +413,18 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+	void AudioMan::ClearMusicEvents(int player) {
+		if (player == -1 || player >= c_MaxClients) {
+			for (int i = 0; i < c_MaxClients; i++) { ClearMusicEvents(i); }
+		} else {
+			g_SoundEventsListMutex[player].lock();
+			m_MusicEvents[player].clear();
+			g_SoundEventsListMutex[player].unlock();
+		}
+	}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 	void AudioMan::GetSoundEvents(int player, std::list<NetworkSoundData> &list) {
 		if (player < 0 || player >= c_MaxClients) {
 			return;
@@ -412,9 +441,9 @@ namespace RTE {
 			}
 		}
 		if (lastSetGlobalPitchEvent) { list.push_back(*lastSetGlobalPitchEvent); }
+		m_SoundEvents[player].clear();
 		g_SoundEventsListMutex[player].unlock();
 
-		m_SoundEvents[player].clear();
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -467,6 +496,18 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+	void AudioMan::ClearSoundEvents(int player) {
+		if (player == -1 || player >= c_MaxClients) {
+			for (int i = 0; i < c_MaxClients; i++) { ClearSoundEvents(i); }
+		} else {
+			g_SoundEventsListMutex[player].lock();
+			m_SoundEvents[player].clear();
+			g_SoundEventsListMutex[player].unlock();
+		}
+	}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 	bool AudioMan::PlaySoundContainer(SoundContainer *soundContainer, int player) {
 		if (!m_AudioEnabled || !soundContainer || soundContainer->GetPlayingChannels()->size() >= c_MaxPlayingSoundsPerContainer) {
 			return false;
@@ -489,6 +530,7 @@ namespace RTE {
 		int channelIndex;
 		std::vector<const SoundSet::SoundData *> selectedSoundData;
 		soundContainer->GetTopLevelSoundSet().GetFlattenedSoundData(selectedSoundData, true);
+		float pitchVariationFactor = 1.0F + std::abs(soundContainer->GetPitchVariation());
 		for (const SoundSet::SoundData *soundData : selectedSoundData) {
 			result = (result == FMOD_OK) ? m_AudioSystem->playSound(soundData->SoundObject, channelGroupToPlayIn, true, &channel) : result;
 			result = (result == FMOD_OK) ? channel->getIndex(&channelIndex) : result;
@@ -496,7 +538,8 @@ namespace RTE {
 			result = (result == FMOD_OK) ? channel->setUserData(soundContainer) : result;
 			result = (result == FMOD_OK) ? channel->setCallback(SoundChannelEndedCallback) : result;
 			result = (result == FMOD_OK) ? channel->setPriority(soundContainer->GetPriority()) : result;
-			result = (result == FMOD_OK) ? channel->setPitch(soundContainer->GetPitch()) : result;
+			float pitchVariationMultiplier = pitchVariationFactor == 1.0F ? 1.0F : RandomNum(1.0F / pitchVariationFactor, 1.0F * pitchVariationFactor);
+			result = (result == FMOD_OK) ? channel->setPitch(soundContainer->GetPitch() * pitchVariationMultiplier) : result;
 			if (soundContainer->IsImmobile()) {
 				result = (result == FMOD_OK) ? channel->set3DLevel(0.0F) : result;
 				result = (result == FMOD_OK) ? channel->setVolume(soundContainer->GetVolume()) : result;
@@ -678,7 +721,7 @@ namespace RTE {
 			float channel3dLevel;
 			result = (result == FMOD_OK) ? soundChannel->get3DLevel(&channel3dLevel) : result;
 			if (result == FMOD_OK && m_CurrentActivityHumanPlayerPositions.size() == 1) {
-				float distanceToPlayer = (*m_CurrentActivityHumanPlayerPositions.at(0) - GetAsVector(channelPosition)).GetMagnitude();
+				float distanceToPlayer = (*(m_CurrentActivityHumanPlayerPositions[0].get()) - GetAsVector(channelPosition)).GetMagnitude();
 				if (distanceToPlayer < m_MinimumDistanceForPanning) {
 					soundChannel->set3DLevel(0);
 				} else if (distanceToPlayer < m_MinimumDistanceForPanning * 2) {
@@ -724,9 +767,9 @@ namespace RTE {
 
 		float shortestDistance = c_SoundMaxAudibleDistance;
 		float longestDistance = 0;
-		for (const Vector *humanPlayerPosition : m_CurrentActivityHumanPlayerPositions) {
+		for (const std::unique_ptr<const Vector> & humanPlayerPosition : m_CurrentActivityHumanPlayerPositions) {
 			for (const FMOD_VECTOR &wrappedChannelPosition : wrappedChannelPositions) {
-				float distanceToChannelPosition = (*humanPlayerPosition - GetAsVector(wrappedChannelPosition)).GetMagnitude();
+				float distanceToChannelPosition = (*(humanPlayerPosition.get()) - GetAsVector(wrappedChannelPosition)).GetMagnitude();
 				if (distanceToChannelPosition < shortestDistance) {
 					shortestDistance = distanceToChannelPosition;
 					channelPosition = wrappedChannelPosition;
@@ -772,7 +815,9 @@ namespace RTE {
 
 	FMOD_RESULT F_CALLBACK AudioMan::MusicChannelEndedCallback(FMOD_CHANNELCONTROL *channelControl, FMOD_CHANNELCONTROL_TYPE channelControlType, FMOD_CHANNELCONTROL_CALLBACK_TYPE callbackType, void *unusedCommandData1, void *unusedCommandData2) {
 		if (channelControlType == FMOD_CHANNELCONTROL_CHANNEL && callbackType == FMOD_CHANNELCONTROL_CALLBACK_END) {
-			g_AudioMan.PlayNextStream();
+			void *userData;
+			FMOD_RESULT result = g_AudioMan.m_MusicChannelGroup->getUserData(&userData);
+			if (userData == nullptr) { g_AudioMan.PlayNextStream(); }
 		}
 		return FMOD_OK;
 	}

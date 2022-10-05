@@ -1,15 +1,19 @@
 ﻿#include "System.h"
 #include "unzip.h"
 
-#ifndef _WIN32
+#ifdef __unix__
 #include <unistd.h>
 #include <sys/stat.h>
 #endif
 
 namespace RTE {
 
+	bool System::s_Quit = false;
 	bool System::s_LogToCLI = false;
 	std::string System::s_WorkingDirectory = ".";
+	std::vector<size_t> System::s_WorkingTree;
+	std::filesystem::file_time_type System::s_ProgramStartTime = std::filesystem::file_time_type::clock::now();
+	bool System::s_CaseSensitive = true;
 	const std::string System::s_ScreenshotDirectory = "_ScreenShots";
 	const std::string System::s_ModDirectory = "_Mods";
 	const std::string System::s_ModulePackageExtension = ".rte";
@@ -34,6 +38,26 @@ namespace RTE {
 			std::filesystem::permissions(pathToMake, std::filesystem::perms::owner_all | std::filesystem::perms::group_read | std::filesystem::perms::group_exec | std::filesystem::perms::others_read | std::filesystem::perms::others_exec, std::filesystem::perm_options::add);
 		}
 		return createResult;
+	}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	bool System::PathExistsCaseSensitive(const std::string &pathToCheck) {
+		if (s_CaseSensitive) {
+			if (s_WorkingTree.empty()) {
+				for (const std::filesystem::directory_entry &directoryEntry : std::filesystem::recursive_directory_iterator(s_WorkingDirectory, std::filesystem::directory_options::follow_directory_symlink)) {
+					s_WorkingTree.emplace_back(std::hash<std::string>()(directoryEntry.path().generic_string().substr(s_WorkingDirectory.length())));
+				}
+			}
+			if (std::find(s_WorkingTree.begin(), s_WorkingTree.end(), std::hash<std::string>()(pathToCheck)) != s_WorkingTree.end()) {
+				return true;
+			} else if (std::filesystem::exists(pathToCheck) && std::filesystem::last_write_time(pathToCheck) > s_ProgramStartTime) {
+				s_WorkingTree.emplace_back(std::hash<std::string>()(pathToCheck));
+				return true;
+			}
+			return false;
+		}
+		return std::filesystem::exists(pathToCheck);
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -251,14 +275,14 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	int System::ASCIIFileContainsString(const std::string &filePath, const std::string &findString) {
+	int System::ASCIIFileContainsString(const std::string &filePath, const std::string_view &findString) {
 		std::ifstream inputStream(filePath, std::ios::binary);
 		if (!inputStream.is_open()) {
 			return -1;
 		} else {
 			size_t fileSize = static_cast<size_t>(std::filesystem::file_size(filePath));
 			std::vector<unsigned char> rawData(fileSize);
-			inputStream.read(reinterpret_cast<char *>(&rawData.at(0)), fileSize);
+			inputStream.read(reinterpret_cast<char *>(&rawData[0]), fileSize);
 			inputStream.close();
 
 			return (std::search(rawData.begin(), rawData.end(), findString.begin(), findString.end()) != rawData.end()) ? 0 : 1;

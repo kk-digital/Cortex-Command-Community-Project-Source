@@ -3,7 +3,7 @@
 
 namespace RTE {
 
-	ConcreteClassInfo(Leg, Attachable, 50)
+	ConcreteClassInfo(Leg, Attachable, 50);
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -78,8 +78,7 @@ namespace RTE {
 
 	int Leg::ReadProperty(const std::string_view &propName, Reader &reader) {
 		if (propName == "Foot") {
-			const Entity *footEntity = g_PresetMan.GetEntityPreset(reader);
-			if (footEntity) { SetFoot(dynamic_cast<Attachable *>(footEntity->Clone())); }
+			SetFoot(dynamic_cast<Attachable *>(g_PresetMan.ReadReflectedPreset(reader)));
 		} else if (propName == "ContractedOffset") {
 			reader >> m_ContractedOffset;
 			m_MinExtension = m_ContractedOffset.GetMagnitude();
@@ -123,11 +122,10 @@ namespace RTE {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void Leg::SetFoot(Attachable *newFoot) {
+		if (m_Foot && m_Foot->IsAttached()) { RemoveAndDeleteAttachable(m_Foot); }
 		if (newFoot == nullptr) {
-			if (m_Foot && m_Foot->IsAttached()) { RemoveAttachable(m_Foot); }
 			m_Foot = nullptr;
 		} else {
-			if (m_Foot && m_Foot->IsAttached()) { RemoveAttachable(m_Foot); }
 			m_Foot = newFoot;
 			AddAttachable(newFoot);
 
@@ -135,6 +133,7 @@ namespace RTE {
 				dynamic_cast<Leg *>(parent)->SetFoot(attachable);
 			}});
 
+			if (m_Foot->HasNoSetDamageMultiplier()) { m_Foot->SetDamageMultiplier(1.0F); }
 			m_Foot->SetInheritsRotAngle(false);
 			m_Foot->SetParentGibBlastStrengthMultiplier(0.0F);
 			m_Foot->SetCollidesWithTerrainWhileAttached(false);
@@ -144,7 +143,11 @@ namespace RTE {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void Leg::Update() {
+		Attachable::PreUpdate();
+
 		UpdateCurrentAnkleOffset();
+
+		UpdateLegRotation();
 
 		if (m_Foot) {
 			// In order to keep the foot in the right place, we need to convert its offset (the ankle offset) to work as the ParentOffset for the foot.
@@ -156,11 +159,7 @@ namespace RTE {
 
 		Attachable::Update();
 
-		UpdateLegRotation();
-
-		if (m_FrameCount == 1) {
-			m_Frame = 0;
-		} else {
+		if (m_FrameCount != 1) {
 			m_NormalizedExtension = std::clamp((m_AnkleOffset.GetMagnitude() - m_MinExtension) / (m_MaxExtension - m_MinExtension), 0.0F, 1.0F);
 			m_Frame = std::min(m_FrameCount - 1, static_cast<unsigned int>(std::floor(m_NormalizedExtension * static_cast<float>(m_FrameCount))));
 		}
@@ -173,7 +172,8 @@ namespace RTE {
 	void Leg::UpdateCurrentAnkleOffset() {
 		if (IsAttached()) {
 			Vector targetOffset = g_SceneMan.ShortestDistance(m_JointPos, m_TargetPosition, g_SceneMan.SceneWrapsX());
-			if (m_WillIdle && targetOffset.m_Y < -3) { targetOffset = m_IdleOffset.GetXFlipped(m_HFlipped); }
+			Vector rotatedTargetOffset = targetOffset.GetRadRotatedCopy(m_Parent->GetRotAngle());
+			if (m_WillIdle && rotatedTargetOffset.m_Y < -std::abs(rotatedTargetOffset.m_X)) { targetOffset = m_Parent->RotateOffset(m_IdleOffset); }
 
 			Vector distanceFromTargetOffsetToAnkleOffset(targetOffset - m_AnkleOffset);
 			m_AnkleOffset += distanceFromTargetOffsetToAnkleOffset * m_MoveSpeed;
@@ -200,7 +200,7 @@ namespace RTE {
 			// This is negative because it's a correction, the bitmap needs to rotate back to align the ankle with where it's supposed to be in the sprite.
 			extraRotation -= (m_ExtendedOffset.GetAbsRadAngle() - m_ContractedOffset.GetAbsRadAngle()) * extraRotationRatio;
 
-			m_Rotation.SetRadAngle(m_Rotation.GetRadAngle() + extraRotation * static_cast<float>(GetFlipFactor()));
+			m_Rotation.SetRadAngle(m_Rotation.GetRadAngle() + extraRotation * GetFlipFactor());
 			m_AngularVel = 0.0F;
 		}
 	}
@@ -209,20 +209,20 @@ namespace RTE {
 
 	void Leg::UpdateFootFrameAndRotation() {
 		if (m_Foot) {
-			if (IsAttached()) {
+			if (IsAttached() && m_AnkleOffset.GetY() > std::abs(m_AnkleOffset.GetX() * 0.3F)) {
 				float ankleOffsetHorizontalDistanceAccountingForFlipping = m_AnkleOffset.GetXFlipped(m_HFlipped).GetX();
-				if (ankleOffsetHorizontalDistanceAccountingForFlipping < -10) {
+				if (ankleOffsetHorizontalDistanceAccountingForFlipping < -m_MaxExtension * 0.6F) {
 					m_Foot->SetFrame(3);
-				} else if (ankleOffsetHorizontalDistanceAccountingForFlipping < -6) {
+				} else if (ankleOffsetHorizontalDistanceAccountingForFlipping < -m_MaxExtension * 0.4F) {
 					m_Foot->SetFrame(2);
-				} else if (ankleOffsetHorizontalDistanceAccountingForFlipping > 6) {
+				} else if (ankleOffsetHorizontalDistanceAccountingForFlipping > m_MaxExtension * 0.4F) {
 					m_Foot->SetFrame(1);
 				} else {
 					m_Foot->SetFrame(0);
 				}
 				m_Foot->SetRotAngle(0.0F);
 			} else {
-				m_Foot->SetRotAngle(m_Rotation.GetRadAngle() + c_PI / 2);
+				m_Foot->SetRotAngle(m_Rotation.GetRadAngle() + c_HalfPI * GetFlipFactor());
 			}
 		}
 	}

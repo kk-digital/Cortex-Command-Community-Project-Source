@@ -22,11 +22,6 @@ struct BITMAP;
 namespace RTE
 {
 
-class Attachable;
-class Arm;
-class Leg;
-//class LimbPath;
-
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Class:           ACraft
@@ -35,9 +30,8 @@ class Leg;
 // Parent(s):       Actor.
 // Class history:   12/13/2006 ACraft created.
 
-class ACraft:
-    public Actor
-{
+class ACraft : public Actor {
+	friend struct EntityLuaBindings;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -45,8 +39,9 @@ class ACraft:
 
 public:
 
-	SerializableOverrideMethods
-	ClassInfoGetters
+	SerializableOverrideMethods;
+	ClassInfoGetters;
+	DefaultPieMenuNameGetter("Default Craft Pie Menu");
 
 
 enum HatchState
@@ -58,7 +53,7 @@ enum HatchState
     HatchStateCount
 };
 
-enum
+enum Side
 {
     RIGHT = 0,
     LEFT
@@ -83,8 +78,8 @@ enum
 
     public:
 
-		SerializableClassNameGetter
-		SerializableOverrideMethods
+		SerializableClassNameGetter;
+		SerializableOverrideMethods;
 
 
     //////////////////////////////////////////////////////////////////////////////////////////
@@ -334,13 +329,6 @@ enum
 
 	float GetTotalValue(int nativeModule = 0, float foreignMult = 1.0, float nativeMult = 1.0) const override;
 
-//////////////////////////////////////////////////////////////////////////////////////////
-// Method:          GetTotalValueOld
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     DOES THE SAME THING AS GetTotalValue, USED ONLY TO PRESERVE LUA COMPATIBILITY
-
-	float GetTotalValueOld(int nativeModule = 0, float foreignMult = 1.0) const override { return GetTotalValue(nativeModule, foreignMult, 1.0); }
-
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          HasObject
@@ -385,28 +373,12 @@ enum
 
 	void SetTeam(int team) override;
 
-
-
-//////////////////////////////////////////////////////////////////////////////////////////
-// Virtual method:  AddPieMenuSlices
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Adds all slices this needs on a pie menu.
-// Arguments:       The pie menu to add slices to. Ownership is NOT transferred!
-// Return value:    Whether any slices were added.
-
-   bool AddPieMenuSlices(PieMenuGUI *pPieMenu) override;
-
-
-//////////////////////////////////////////////////////////////////////////////////////////
-// Virtual method:  HandlePieCommand
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Handles and does whatever a specific activated Pie Menu slice does to
-//                  this.
-// Arguments:       The pie menu command to handle. See the PieSliceIndex enum.
-// Return value:    Whetehr any slice was handled. False if no matching slice handler was
-//                  found, or there was no slice currently activated by the pie menu.
-
-    bool HandlePieCommand(int pieSliceIndex) override;
+    /// <summary>
+    /// Tries to handle the activated PieSlice in this object's PieMenu, if there is one, based on its SliceType.
+    /// </summary>
+    /// <param name="pieSliceType">The SliceType of the PieSlice being handled.</param>
+    /// <returns>Whether or not the activated PieSlice SliceType was able to be handled.</returns>
+    bool HandlePieCommand(PieSlice::SliceType pieSliceType) override;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -462,6 +434,18 @@ enum
 
 	void DropAllInventory() override;
 
+	/// <summary>
+	/// Gets the mass of this ACraft's inventory of newly collected items.
+	/// </summary>
+	/// <returns>The mass of this ACraft's newly collected inventory.</returns>
+	float GetCollectedInventoryMass() const;
+
+	/// <summary>
+	/// Gets the mass of this ACraft, including the mass of its Attachables, wounds and inventory.
+	/// </summary>
+	/// <returns>The mass of this ACraft, its inventory and all its Attachables and wounds in Kilograms (kg).</returns>
+	float GetMass() const override { return Actor::GetMass() + GetCollectedInventoryMass(); }
+
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          HasDelivered
@@ -472,17 +456,10 @@ enum
 
     bool HasDelivered() { return m_HasDelivered; }
 
-
-//////////////////////////////////////////////////////////////////////////////////////////
-// Virtual method:  ResetEmissionTimers
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Reset the timers of all emissions so they will start/stop at the 
-//                  correct relative offsets from now.
-// Arguments:       None.
-// Return value:    None.
-
-	virtual void ResetEmissionTimers() {}
-
+	/// <summary>
+	/// Resets all the timers related to this, including the scuttle timer.
+	/// </summary>
+	void ResetAllTimers() override;
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Virtual method:  OnMOHit
@@ -567,12 +544,71 @@ enum
 
 
 	/// <summary>
+	/// Gets whether this ACraft will scuttle automatically on death.
+	/// </summary>
+	/// <returns>Whether this ACraft will scuttle automatically on death.</returns>
+	bool GetScuttleOnDeath() const { return m_ScuttleOnDeath; }
+
+	/// <summary>
+	/// Sets whether this ACraft will scuttle automatically on death.
+	/// </summary>
+	/// <param name="scuttleOnDeath">Whether this ACraft will scuttle automatically on death.</param>
+	void SetScuttleOnDeath(bool scuttleOnDeath) { m_ScuttleOnDeath = scuttleOnDeath; }
+
+	/// <summary>
+	/// Gets the hatch opening/closing delay of this ACraft.
+	/// </summary>
+	/// <returns>The hatch delay of this ACraft.</returns>
+	int GetHatchDelay() const { return m_HatchDelay; }
+
+	/// <summary>
+	/// Sets the hatch opening/closing delay of this ACraft.
+	/// </summary>
+	/// <param name="newDelay">The new hatch delay of this ACraft.</param>
+	void SetHatchDelay(int newDelay) { m_HatchDelay = newDelay; }
+
+	/// <summary>
 	/// Destroys this ACraft and creates its specified Gibs in its place with appropriate velocities. Any Attachables are removed and also given appropriate velocities.
 	/// </summary>
 	/// <param name="impactImpulse">The impulse (kg * m/s) of the impact causing the gibbing to happen.</param>
 	/// <param name="movableObjectToIgnore">A pointer to an MO which the Gibs and Attachables should not be colliding with.</param>
 	void GibThis(const Vector &impactImpulse = Vector(), MovableObject *movableObjectToIgnore = nullptr) override;
 
+	/// <summary>
+	/// Gets this ACraft's hatch opening sound. Ownership is NOT transferred!
+	/// </summary>
+	/// <returns>The SoundContainer for this ACraft's hatch opening sound.</returns>
+	SoundContainer * GetHatchOpenSound() const { return m_HatchOpenSound; }
+
+	/// <summary>
+	/// Sets this ACraft's hatch opening sound. Ownership IS transferred!
+	/// </summary>
+	/// <param name="newSound">The new SoundContainer for this ACraft's hatch opening sound.</param>
+	void SetHatchOpenSound(SoundContainer *newSound) { m_HatchOpenSound = newSound; }
+
+	/// <summary>
+	/// Gets this ACraft's hatch closing sound. Ownership is NOT transferred!
+	/// </summary>
+	/// <returns>The SoundContainer for this ACraft's hatch closing sound.</returns>
+	SoundContainer * GetHatchCloseSound() const { return m_HatchCloseSound; }
+
+	/// <summary>
+	/// Sets this ACraft's hatch closing sound. Ownership IS transferred!
+	/// </summary>
+	/// <param name="newSound">The new SoundContainer for this ACraft's hatch closing sound.</param>
+	void SetHatchCloseSound(SoundContainer *newSound) { m_HatchCloseSound = newSound; }
+
+	/// <summary>
+	/// Gets this ACraft's crash sound. Ownership is NOT transferred!
+	/// </summary>
+	/// <returns>The SoundContainer for this ACraft's crash sound.</returns>
+	SoundContainer * GetCrashSound() const { return m_CrashSound; }
+
+	/// <summary>
+	/// Sets this ACraft's crash sound. Ownership IS transferred!
+	/// </summary>
+	/// <param name="newSound">The new SoundContainer for this ACraft's crash sound.</param>
+	void SetCrashSound(SoundContainer *newSound) { m_CrashSound = newSound; }
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Protected member variable and method declarations
@@ -590,10 +626,10 @@ protected:
     // The time it takes to open or close the hatch, in ms.
     int m_HatchDelay;
     // Sound for opening the hatch
-    SoundContainer m_HatchOpenSound;
-    // The new intermediate inventory of things that have been thrown into the craft while the doors are open,
-    // but they shouldn't be ejected until the doors are closed and then opened again.
-    std::deque<MovableObject *> m_NewInventory;
+    SoundContainer *m_HatchOpenSound;
+	// Sound for closing the hatch
+	SoundContainer *m_HatchCloseSound;
+    std::deque<MovableObject *> m_CollectedInventory;	//!< A separate inventory to temporarily store newly collected items, so that they don't get immediately ejected from the main inventory while the hatch is still open.
     // All the possible exits for when ejecting stuff out of this.
     std::list<Exit> m_Exits;
     // Last used exit so we can alternate/cycle
@@ -613,9 +649,11 @@ protected:
     // Timer to measure how long ago a crash sound was played
     Timer m_CrashTimer;
     // Crash sound
-    SoundContainer m_CrashSound;
-    // The recomended, not absolute, maximum number of actors that fit in the inventory
+    SoundContainer *m_CrashSound;
+    // The maximum number of actors that fit in the inventory
     int m_MaxPassengers;
+	int m_ScuttleIfFlippedTime; //!< The time after which the craft will scuttle automatically, if tipped over.
+	bool m_ScuttleOnDeath; //!< Whether the craft will self-destruct at zero health.
 
 	static bool s_CrabBombInEffect; //!< Flag to determine if a craft is triggering the Crab Bomb effect.
 

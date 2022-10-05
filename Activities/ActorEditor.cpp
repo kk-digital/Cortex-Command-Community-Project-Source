@@ -27,29 +27,25 @@
 #include "Scene.h"
 #include "DataModule.h"
 
-#include "GUI/GUI.h"
-#include "GUI/GUIFont.h"
-#include "GUI/AllegroScreen.h"
-#include "GUI/AllegroBitmap.h"
-#include "GUI/AllegroInput.h"
-#include "GUI/GUIControlManager.h"
-#include "GUI/GUICollectionBox.h"
-#include "GUI/GUITab.h"
-#include "GUI/GUIListBox.h"
-#include "GUI/GUITextBox.h"
-#include "GUI/GUIButton.h"
-#include "GUI/GUILabel.h"
-#include "GUI/GUIComboBox.h"
+#include "GUI.h"
+#include "GUIFont.h"
+#include "AllegroScreen.h"
+#include "AllegroBitmap.h"
+#include "AllegroInput.h"
+#include "GUIControlManager.h"
+#include "GUICollectionBox.h"
+#include "GUITab.h"
+#include "GUIListBox.h"
+#include "GUITextBox.h"
+#include "GUIButton.h"
+#include "GUILabel.h"
+#include "GUIComboBox.h"
 
 #include "ObjectPickerGUI.h"
-#include "PieMenuGUI.h"
-#include "GABaseDefense.h"
-
-extern bool g_ResetActivity;
 
 namespace RTE {
 
-ConcreteClassInfo(ActorEditor, EditorActivity, 0)
+ConcreteClassInfo(ActorEditor, EditorActivity, 0);
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -63,7 +59,6 @@ void ActorEditor::Clear()
     m_pEditedActor = 0;
     m_ActorDataFilePath.clear();
     m_pPicker = 0;
-    m_pPieMenu = 0;
 }
 
 
@@ -77,6 +72,7 @@ int ActorEditor::Create()
     if (EditorActivity::Create() < 0)
         return -1;
 
+    m_PieMenu = std::unique_ptr<PieMenu>(dynamic_cast<PieMenu *>(g_PresetMan.GetEntityPreset("PieMenu", "Actor Editor Pie Menu")->Clone()));
 
     return 0;
 }
@@ -166,16 +162,12 @@ int ActorEditor::Start()
     // Allocate and (re)create the picker GUI
 
     if (m_pPicker)
-        m_pPicker->Destroy();
+        m_pPicker->Reset();
     else
         m_pPicker = new ObjectPickerGUI;
     m_pPicker->Create(&(m_PlayerController[0]), -1, "Actor");
 
-    if (m_pPieMenu)
-        m_pPieMenu->Destroy();
-    else
-        m_pPieMenu = new PieMenuGUI;
-    m_pPieMenu->Create(&(m_PlayerController[0]));
+    m_PieMenu->SetMenuController(&m_PlayerController[0]);
 
     m_EditorMode = EditorActivity::EDITINGOBJECT;
     m_ModeChange = true;
@@ -205,7 +197,7 @@ void ActorEditor::End()
 {
     EditorActivity::End();
 
-    
+
 
     m_ActivityState = ActivityState::Over;
 }
@@ -285,32 +277,17 @@ void ActorEditor::Update()
     //////////////////////////////////////////////
     // Pie menu logic
 
-    m_pPieMenu->Update();
+	if (m_pEditedActor) {
+		PieMenu *editedActorPieMenu = m_pEditedActor->GetPieMenu();
+		editedActorPieMenu->SetEnabled(m_PlayerController[0].IsState(ControlState::PIE_MENU_ACTIVE) && m_EditorMode != EditorActivity::LOADDIALOG);
 
-    // Show the pie menu only when the secondary button is held down
-    if (m_PlayerController[0].IsState(PIE_MENU_ACTIVE) && m_EditorMode != EditorActivity::LOADDIALOG)
-    {
-        m_pPieMenu->SetEnabled(true);
-//        m_pPieMenu->SetPos(m_GridSnapping ? g_SceneMan.SnapPosition(m_CursorPos) : m_CursorPos);
-        m_pPieMenu->SetPos(g_SceneMan.GetSceneDim() / 2);
-    }
-    else
-        m_pPieMenu->SetEnabled(false);
-
-    // Handle what user does with the pie menu
-    const PieMenuGUI::Slice *pSlice = m_pPieMenu->SliceActivated();
-    if (pSlice)
-    {
-        // User chose to reload the Actor's data
-        if (pSlice->m_SliceType == PieMenuGUI::PSI_LOAD)
-            ReloadActorData();
-        // User chose to pick a new Actor to edit
-        else if (pSlice->m_SliceType == PieMenuGUI::PSI_PICK)
-        {
-            m_EditorMode = EditorActivity::LOADDIALOG;
-            m_ModeChange = true;
-        }
-    }
+		if (editedActorPieMenu->GetPieCommand() == PieSlice::SliceType::EditorLoad) {
+			ReloadActorData();
+		} else if (editedActorPieMenu->GetPieCommand() == PieSlice::SliceType::EditorPick) {
+			m_EditorMode = EditorActivity::LOADDIALOG;
+			m_ModeChange = true;
+		}
+	}
 }
 
 
@@ -321,18 +298,18 @@ void ActorEditor::Update()
 
 void ActorEditor::DrawGUI(BITMAP *pTargetBitmap, const Vector &targetPos, int which)
 {
-    // Draw the edited actor
+    // Draw the edited actor and pie menu
     if (m_pEditedActor)
     {
         m_pEditedActor->Draw(pTargetBitmap, targetPos, g_DrawColor);
-        m_pEditedActor->Draw(pTargetBitmap, targetPos, g_DrawDebug);
+		m_pEditedActor->GetPieMenu()->Draw(pTargetBitmap, targetPos);
     }
 
     // Clear out annoying blooms
-    g_PostProcessMan.ClearScenePostEffects();
+    // TODO: Figure out if this needs a button or piemenu toggle for some edge case
+    //g_PostProcessMan.ClearScenePostEffects();
 
     m_pPicker->Draw(pTargetBitmap);
-    m_pPieMenu->Draw(pTargetBitmap, targetPos);
 
     EditorActivity::DrawGUI(pTargetBitmap, targetPos, which);
 }
@@ -369,17 +346,10 @@ bool ActorEditor::LoadActor(const Entity *pActorToLoad)
     {
         // Set up the editor for the new actor
         m_pEditedActor->SetControllerMode(Controller::CIM_PLAYER, Players::PlayerOne);
-        // Set up the pie menu with the actor's own slices
-        m_pPieMenu->ResetSlices();
-        // Add the reload data slice
-		PieMenuGUI::Slice reloadSlice("Reload Actor's Data", PieMenuGUI::PSI_LOAD, PieMenuGUI::Slice::UP, true);
-        m_pPieMenu->AddSlice(reloadSlice);
-        PieMenuGUI::Slice chooseSlice("Choose a different Actor", PieMenuGUI::PSI_PICK, PieMenuGUI::Slice::RIGHT, true);
-		m_pPieMenu->AddSlice(chooseSlice);
-        // Add the Actor's slices
-        m_pEditedActor->AddPieMenuSlices(m_pPieMenu);
-        // Final slice setup
-        m_pPieMenu->RealignSlices();
+
+		for (const PieSlice *pieSlice : m_PieMenu->GetPieSlices()) {
+			m_pEditedActor->GetPieMenu()->AddPieSlice(dynamic_cast<PieSlice *>(pieSlice->Clone()), this);
+		}
 
         // Get the actor's data path so we can reload that file quickly
         m_ActorDataFilePath = g_PresetMan.GetEntityDataLocation(m_pEditedActor->GetClassName(), m_pEditedActor->GetPresetName(), m_pEditedActor->GetModuleID());

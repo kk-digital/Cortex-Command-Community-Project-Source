@@ -19,10 +19,11 @@
 #include "LuaMan.h"
 #include "Atom.h"
 #include "Actor.h"
+#include "SLTerrain.h"
 
 namespace RTE {
 
-AbstractClassInfo(MovableObject, SceneObject)
+AbstractClassInfo(MovableObject, SceneObject);
 
 unsigned long int MovableObject::m_UniqueIDCounter = 1;
 
@@ -90,19 +91,25 @@ void MovableObject::Clear()
     m_EffectStartStrength = 128;
     m_EffectStopStrength = 128;
     m_EffectAlwaysShows = false;
+
+    m_UniqueID = 0;
+
 	m_RemoveOrphanTerrainRadius = 0;
 	m_RemoveOrphanTerrainMaxArea = 0;
 	m_RemoveOrphanTerrainRate = 0.0;
 	m_DamageOnCollision = 0.0;
 	m_DamageOnPenetration = 0.0;
 	m_WoundDamageMultiplier = 1.0;
+    m_ApplyWoundDamageOnCollision = false;
+    m_ApplyWoundBurstDamageOnCollision = false;
 	m_IgnoreTerrain = false;
 
 	m_MOIDHit = g_NoMOID;
 	m_TerrainMatHit = g_MaterialAir;
 	m_ParticleUniqueIDHit = 0;
 
-	m_ProvidesPieMenuContext = false;
+	m_SimUpdatesBetweenScriptedUpdates = 1;
+    m_SimUpdatesSinceLastScriptedUpdate = 0;
 }
 
 
@@ -128,6 +135,8 @@ int MovableObject::Create()
 	m_MOIDHit = g_NoMOID;
 	m_TerrainMatHit = g_MaterialAir;
 	m_ParticleUniqueIDHit = 0;
+
+    g_MovableMan.RegisterObject(this);
 
     return 0;
 }
@@ -208,11 +217,11 @@ int MovableObject::Create(const MovableObject &reference)
     m_MissionCritical = reference.m_MissionCritical;
     m_CanBeSquished = reference.m_CanBeSquished;
     m_HUDVisible = reference.m_HUDVisible;
-    
-    for (const std::pair<std::string, bool> &referenceScriptEntry : reference.m_AllLoadedScripts) {
-        m_AllLoadedScripts.push_back({referenceScriptEntry.first, referenceScriptEntry.second});
+
+    m_ScriptPresetName = reference.m_ScriptPresetName;
+    for (auto &[scriptPath, scriptEnabled] : reference.m_AllLoadedScripts) {
+        LoadScript(scriptPath, scriptEnabled);
     }
-    ReloadScripts(false);
 
     if (reference.m_pScreenEffect)
     {
@@ -246,10 +255,11 @@ int MovableObject::Create(const MovableObject &reference)
 	m_TerrainMatHit = reference.m_TerrainMatHit;
 	m_ParticleUniqueIDHit = reference.m_ParticleUniqueIDHit;
 
+	m_SimUpdatesBetweenScriptedUpdates = reference.m_SimUpdatesBetweenScriptedUpdates;
+	m_SimUpdatesSinceLastScriptedUpdate = reference.m_SimUpdatesSinceLastScriptedUpdate;
+
 	m_UniqueID = MovableObject::GetNextUniqueID();
 	g_MovableMan.RegisterObject(this);
-
-	m_ProvidesPieMenuContext = reference.m_ProvidesPieMenuContext;
 
     return 0;
 }
@@ -265,13 +275,9 @@ int MovableObject::Create(const MovableObject &reference)
 
 int MovableObject::ReadProperty(const std::string_view &propName, Reader &reader)
 {
-	if (propName == "Mass")
-	{
+	if (propName == "Mass") {
 		reader >> m_Mass;
-		if (m_Mass == 0)
-			m_Mass = 0.0001;
-	}
-	else if (propName == "Velocity")
+	} else if (propName == "Velocity")
 		reader >> m_Vel;
 	else if (propName == "Scale")
 		reader >> m_Scale;
@@ -323,17 +329,30 @@ int MovableObject::ReadProperty(const std::string_view &propName, Reader &reader
 		reader >> m_CanBeSquished;
 	else if (propName == "HUDVisible")
 		reader >> m_HUDVisible;
-	else if (propName == "ProvidesPieMenuContext")
-		reader >> m_ProvidesPieMenuContext;
-	else if (propName == "AddPieSlice")
-	{
-		PieMenuGUI::Slice newSlice;
-		reader >> newSlice;
-		PieMenuGUI::AddAvailableSlice(newSlice);
-	}
 	else if (propName == "ScriptPath") {
 		std::string scriptPath = CorrectBackslashesInPath(reader.ReadPropValue());
-		if (LoadScript(scriptPath) == -3) { reader.ReportError("Duplicate script path " + scriptPath); }
+        switch (LoadScript(CorrectBackslashesInPath(scriptPath))) {
+            case 0:
+                break;
+            case -1:
+                reader.ReportError("The script path " + scriptPath + " was empty.");
+                break;
+            case -2:
+                reader.ReportError("The script path " + scriptPath + "  did not point to a valid file.");
+                break;
+            case -3:
+                reader.ReportError("The script path " + scriptPath + " is already loaded onto this object.");
+                break;
+            case -4:
+                reader.ReportError("Failed to do necessary setup to add scripts while attempting to add the script with path " + scriptPath + ". This has nothing to do with your script, please report it to a developer.");
+                break;
+            case -5:
+                // Error in lua file, this'll pop up in the console so no need to report an error through the reader.
+                break;
+            default:
+                RTEAbort("Reached default case while adding script in INI. This should never happen!");
+                break;
+        }
 	} else if (propName == "ScreenEffect") {
         reader >> m_ScreenEffectFile;
         m_pScreenEffect = m_ScreenEffectFile.GetAsBitmap();
@@ -371,8 +390,14 @@ int MovableObject::ReadProperty(const std::string_view &propName, Reader &reader
 		reader >> m_DamageOnPenetration;
 	else if (propName == "WoundDamageMultiplier")
 		reader >> m_WoundDamageMultiplier;
+    else if (propName == "ApplyWoundDamageOnCollision")
+        reader >> m_ApplyWoundDamageOnCollision;
+    else if (propName == "ApplyWoundBurstDamageOnCollision")
+        reader >> m_ApplyWoundBurstDamageOnCollision;
 	else if (propName == "IgnoreTerrain")
 		reader >> m_IgnoreTerrain;
+    else if (propName == "SimUpdatesBetweenScriptedUpdates")
+        reader >> m_SimUpdatesBetweenScriptedUpdates;
 	else
         return SceneObject::ReadProperty(propName, reader);
 
@@ -455,11 +480,9 @@ void MovableObject::Destroy(bool notInherited) {
         RunScriptedFunctionInAppropriateScripts("Destroy");
         g_LuaMan.RunScriptString(m_ScriptObjectName + " = nil;");
     }
-
+	g_MovableMan.UnregisterObject(this);
     if (!notInherited) { SceneObject::Destroy(); }
     Clear();
-
-	g_MovableMan.UnregisterObject(this);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -467,7 +490,6 @@ void MovableObject::Destroy(bool notInherited) {
 int MovableObject::InitializeObjectScripts() {
     m_ScriptObjectName = GetClassName() + "s." + g_LuaMan.GetNewObjectID();
 
-    // Give Lua access to this object, then use that access to set up the object's Lua representation
     g_LuaMan.SetTempEntity(this);
 
     if (g_LuaMan.RunScriptString(m_ScriptObjectName + " = To" + GetClassName() + "(LuaMan.TempEntity);") < 0) {
@@ -475,7 +497,7 @@ int MovableObject::InitializeObjectScripts() {
         return -2;
     }
 
-	if (!(*m_FunctionsAndScripts.find("Create")).second.empty() && RunScriptedFunctionInAppropriateScripts("Create", true, true) < 0) {
+	if (RunScriptedFunctionInAppropriateScripts("Create", true, true) < 0) {
 		m_ScriptObjectName = "ERROR";
 		return -3;
 	}
@@ -485,15 +507,14 @@ int MovableObject::InitializeObjectScripts() {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int MovableObject::LoadScript(const std::string &scriptPath, bool loadAsEnabledScript) {
-    // Return an error if the script path is empty or already there
     if (scriptPath.empty()) {
         return -1;
-    } else if (!std::filesystem::exists(scriptPath)) {
+    } else if (!System::PathExistsCaseSensitive(scriptPath)) {
         return -2;
     } else if (HasScript(scriptPath)) {
         return -3;
     }
-    m_AllLoadedScripts.push_back({scriptPath, loadAsEnabledScript});
+    m_AllLoadedScripts.insert({scriptPath, loadAsEnabledScript});
 
     // Clear the temporary variable names that will hold the functions read in from the file
     for (const std::string &functionName : GetSupportedScriptFunctionNames()) {
@@ -526,10 +547,10 @@ int MovableObject::LoadScript(const std::string &scriptPath, bool loadAsEnabledS
     // Assign the different functions read in from the script to their permanent locations in the preset's table
     for (const std::string &functionName : GetSupportedScriptFunctionNames()) {
         if (m_FunctionsAndScripts.find(functionName) == m_FunctionsAndScripts.end()) {
-            m_FunctionsAndScripts.insert({functionName, std::vector<std::pair<std::string, bool> *>()});
+            m_FunctionsAndScripts.insert({functionName, std::vector<std::string>()});
         }
         if (g_LuaMan.GlobalIsDefined(functionName)) {
-            m_FunctionsAndScripts.find(functionName)->second.push_back(&m_AllLoadedScripts.back());
+            m_FunctionsAndScripts.find(functionName)->second.emplace_back(scriptPath);
             int error = g_LuaMan.RunScriptString(
                 m_ScriptPresetName + "." + functionName + " = " + m_ScriptPresetName + "." + functionName + " or {}; " +
                 m_ScriptPresetName + "." + functionName + "[\"" + scriptPath + "\"] = " + functionName + ";"
@@ -545,7 +566,7 @@ int MovableObject::LoadScript(const std::string &scriptPath, bool loadAsEnabledS
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-int MovableObject::ReloadScripts(bool alsoReloadPresetScripts) {
+int MovableObject::ReloadScripts() {
     if (m_AllLoadedScripts.empty()) {
         return 0;
     }
@@ -553,19 +574,19 @@ int MovableObject::ReloadScripts(bool alsoReloadPresetScripts) {
     /// <summary>
     /// Internal lambda function to clear a given object's script configurations, and then load them all again in order to reset them.
     /// </summary>
-    auto clearScriptConfigurationAndLoadPreexistingScripts = [](MovableObject *object, bool shouldClearScriptPresetName) {
-        std::vector<std::pair<std::string, bool>> loadedScriptsCopy = object->m_AllLoadedScripts;
+    auto clearScriptConfigurationAndLoadPreexistingScripts = [](MovableObject *object, bool isPresetObject) {
+        std::map<std::string, bool> loadedScriptsCopy = object->m_AllLoadedScripts;
         object->m_AllLoadedScripts.clear();
         object->m_FunctionsAndScripts.clear();
-        if (shouldClearScriptPresetName) {
+        if (isPresetObject) {
             object->m_ScriptPresetName.clear();
         } else {
             object->m_ScriptObjectName.clear();
         }
 
-        int status = 0; 
-        for (const std::pair<std::string, bool> &scriptEntry : loadedScriptsCopy) {
-            status = object->LoadScript(scriptEntry.first, scriptEntry.second);
+        int status = 0;
+        for (const auto &[scriptPath, scriptEnabled] : loadedScriptsCopy) {
+            status = object->LoadScript(scriptPath, scriptEnabled);
             if (status < 0) {
                 return status;
             }
@@ -574,11 +595,12 @@ int MovableObject::ReloadScripts(bool alsoReloadPresetScripts) {
     };
 
     //TODO consider getting rid of this const_cast. It would require either code duplication or creating some none const methods (specifically of PresetMan::GetEntityPreset, which may be unsafe. Could be this gross exceptional handling is the best way to go.
-    MovableObject *pPreset = const_cast<MovableObject *>(dynamic_cast<const MovableObject *>(g_PresetMan.GetEntityPreset(GetClassName(), GetPresetName(), GetModuleID())));
-
-    int status = clearScriptConfigurationAndLoadPreexistingScripts(this, pPreset == this);
-    if (alsoReloadPresetScripts && status <= 0 && pPreset && pPreset != this) {
-        status = clearScriptConfigurationAndLoadPreexistingScripts(pPreset, true);
+    MovableObject *movableObjectPreset = const_cast<MovableObject *>(dynamic_cast<const MovableObject *>(g_PresetMan.GetEntityPreset(GetClassName(), GetPresetName(), GetModuleID())));
+    int status = 0;
+    if (movableObjectPreset == this) { status = clearScriptConfigurationAndLoadPreexistingScripts(movableObjectPreset, true); }
+    if (status == 0 && movableObjectPreset != this) {
+        if (movableObjectPreset) { m_ScriptPresetName = movableObjectPreset->m_ScriptPresetName; }
+        status = clearScriptConfigurationAndLoadPreexistingScripts(this, false);
     }
 
     return status;
@@ -587,7 +609,7 @@ int MovableObject::ReloadScripts(bool alsoReloadPresetScripts) {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 bool MovableObject::AddScript(const std::string &scriptPath) {
-    switch (LoadScript(scriptPath)) {
+    switch (LoadScript(CorrectBackslashesInPath(scriptPath))) {
         case 0:
             // If we have a ScriptObjectName that means Create has already been run for pre-existing scripts. Run it right away for this one.
             if (ObjectScriptsInitialized()) {
@@ -596,16 +618,19 @@ bool MovableObject::AddScript(const std::string &scriptPath) {
             }
             return true;
         case -1:
-            g_ConsoleMan.PrintString("ERROR: The script path was empty.");
+            g_ConsoleMan.PrintString("ERROR: The script path " + scriptPath + " was empty.");
             break;
         case -2:
-            g_ConsoleMan.PrintString("ERROR: The script path did not point to a valid file.");
+            g_ConsoleMan.PrintString("ERROR: The script path " + scriptPath + "  did not point to a valid file.");
             break;
         case -3:
             g_ConsoleMan.PrintString("ERROR: The script path " + scriptPath + " is already loaded onto this object.");
             break;
         case -4:
             g_ConsoleMan.PrintString("ERROR: Failed to do necessary setup to add scripts while attempting to add the script with path " + scriptPath + ". This has nothing to do with your script, please report it to a developer.");
+            break;
+        case -5:
+            g_ConsoleMan.PrintString("ERROR: The file with script path " + scriptPath +" could not be run. Please check that this is a valid Lua file.");
             break;
         default:
             RTEAbort("Reached default case while adding script. This should never happen!");
@@ -621,7 +646,7 @@ bool MovableObject::EnableScript(const std::string &scriptPath) {
         return false;
     }
 
-    std::vector<std::pair<std::string, bool>>::iterator scriptEntryIterator = FindScript(scriptPath);
+    std::map<std::string, bool>::iterator scriptEntryIterator = m_AllLoadedScripts.find(scriptPath);
     if (scriptEntryIterator != m_AllLoadedScripts.end() && scriptEntryIterator->second == false) {
         if (ObjectScriptsInitialized() && RunScriptedFunction(scriptPath, "OnScriptEnable") < 0) {
             return false;
@@ -639,7 +664,7 @@ bool MovableObject::DisableScript(const std::string &scriptPath) {
         return false;
     }
 
-    std::vector<std::pair<std::string, bool>>::iterator scriptEntryIterator = FindScript(scriptPath);
+    std::map<std::string, bool>::iterator scriptEntryIterator = m_AllLoadedScripts.find(scriptPath);
     if (scriptEntryIterator != m_AllLoadedScripts.end() && scriptEntryIterator->second == true) {
         if (ObjectScriptsInitialized() && RunScriptedFunction(scriptPath, "OnScriptDisable") < 0) {
             return false;
@@ -652,18 +677,27 @@ bool MovableObject::DisableScript(const std::string &scriptPath) {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-int MovableObject::RunScriptedFunction(const std::string &scriptPath, const std::string &functionName, std::vector<Entity *> functionEntityArguments, std::vector<std::string> functionLiteralArguments) {
+void MovableObject::EnableOrDisableAllScripts(bool enableScripts) {
+    for (const auto &[scriptPath, scriptIsEnabled] : m_AllLoadedScripts) {
+        if (enableScripts && !scriptIsEnabled) {
+            EnableScript(scriptPath);
+        } else if (!enableScripts && scriptIsEnabled) {
+            DisableScript(scriptPath);
+        }
+    }
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+int MovableObject::RunScriptedFunction(const std::string &scriptPath, const std::string &functionName, const std::vector<const Entity *> &functionEntityArguments, const std::vector<std::string_view> &functionLiteralArguments) const {
     if (m_AllLoadedScripts.empty() || m_ScriptPresetName.empty() || !ObjectScriptsInitialized()) {
         return -1;
     }
 
     std::string presetAndFunctionName = m_ScriptPresetName + "." + functionName;
     std::string fullFunctionName = presetAndFunctionName + "[\"" + scriptPath + "\"]";
-    
+
     int status = g_LuaMan.RunScriptedFunction(fullFunctionName, m_ScriptObjectName, {presetAndFunctionName, m_ScriptObjectName, fullFunctionName}, functionEntityArguments, functionLiteralArguments);
-    functionEntityArguments.clear();
-    functionLiteralArguments.clear();
-    
     if (status < 0 && m_AllLoadedScripts.size() > 1) {
         g_ConsoleMan.PrintString("ERROR: An error occured while trying to run the " + functionName + " function for script at path " + scriptPath);
         return -2;
@@ -674,17 +708,21 @@ int MovableObject::RunScriptedFunction(const std::string &scriptPath, const std:
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-int MovableObject::RunScriptedFunctionInAppropriateScripts(const std::string &functionName, bool runOnDisabledScripts, bool stopOnError, std::vector<Entity *> functionEntityArguments, std::vector<std::string> functionLiteralArguments) {
-    if (m_AllLoadedScripts.empty() || m_ScriptPresetName.empty() || !ObjectScriptsInitialized() || m_FunctionsAndScripts.find(functionName) == m_FunctionsAndScripts.end()) {
-        return -1;
+int MovableObject::RunScriptedFunctionInAppropriateScripts(const std::string &functionName, bool runOnDisabledScripts, bool stopOnError, const std::vector<const Entity *> &functionEntityArguments, const std::vector<std::string_view> &functionLiteralArguments) {
+    int status = 0;
+    if (m_AllLoadedScripts.empty() || m_ScriptPresetName.empty() || m_FunctionsAndScripts.find(functionName) == m_FunctionsAndScripts.end() || m_FunctionsAndScripts.find(functionName)->second.empty()) {
+        status = -1;
+    } else if (!ObjectScriptsInitialized()) {
+        status = InitializeObjectScripts();
     }
 
-    int status = 0;
-    for (const std::pair<std::string, bool> *scriptEntry : m_FunctionsAndScripts.at(functionName)) {
-        if (runOnDisabledScripts || scriptEntry->second == true) {
-            status = RunScriptedFunction(scriptEntry->first, functionName, functionEntityArguments, functionLiteralArguments);
-            if (status < 0 && stopOnError) {
-                return status;
+    if (status >= 0) {
+        for (const std::string &scriptPath : m_FunctionsAndScripts.at(functionName)) {
+            if (runOnDisabledScripts || m_AllLoadedScripts.at(scriptPath) == true) {
+                status = RunScriptedFunction(scriptPath, functionName, functionEntityArguments, functionLiteralArguments);
+                if (status < 0 && stopOnError) {
+                    return status;
+                }
             }
         }
     }
@@ -786,6 +824,11 @@ bool MovableObject::OnMOHit(HitData &hd)
     return hd.Terminate[hd.RootBody[HITOR] == this ? HITOR : HITEE] = OnMOHit(hd.RootBody[hd.RootBody[HITOR] == this ? HITEE : HITOR]);
 }
 
+bool MovableObject::OnMOHit(MovableObject *pOtherMO) {
+    if (pOtherMO != this) { RunScriptedFunctionInAppropriateScripts("OnCollideWithMO", false, false, {pOtherMO, pOtherMO ? pOtherMO->GetRootParent() : nullptr}); }
+    return false;
+}
+
 void MovableObject::SetHitWhatTerrMaterial(unsigned char matID) {
     m_TerrainMatHit = matID;
     m_LastCollisionSimFrameNumber = g_MovableMan.GetSimUpdateFrameNumber();
@@ -825,7 +868,7 @@ void MovableObject::ApplyForces()
     {
         // Continuous force application to transformational velocity.
         // (F = m * a -> a = F / m).
-        m_Vel += ((*fItr).first / GetMass()) * deltaTime;
+        m_Vel += ((*fItr).first / (GetMass() != 0 ? GetMass() : 0.0001F) * deltaTime);
     }
 
     // Clear out the forces list
@@ -855,7 +898,7 @@ void MovableObject::ApplyImpulses()
     for (deque<pair<Vector, Vector> >::iterator iItr = m_ImpulseForces.begin(); iItr != m_ImpulseForces.end(); ++iItr) {
         // Impulse force application to the transformational velocity of this MO.
         // Don't timescale these because they're already in kg * m/s (as opposed to kg * m/s^2).
-        m_Vel += (*iItr).first / GetMass();
+        m_Vel += (*iItr).first / (GetMass() != 0 ? GetMass() : 0.0001F);
     }
 
     // Clear out the impulses list
@@ -871,8 +914,14 @@ void MovableObject::ApplyImpulses()
 
 void MovableObject::PreTravel()
 {
-	// Temporarily remove the representation of this from the scene MO layers
-	if (m_GetsHitByMOs) { Draw(g_SceneMan.GetMOIDBitmap(), Vector(), g_DrawNoMOID, true); }
+	// Temporarily remove the representation of this from the scene MO sampler
+	if (m_GetsHitByMOs) {
+		if (g_SettingsMan.SimplifiedCollisionDetection()) {
+			m_IsTraveling = true;
+		} else {
+			Draw(g_SceneMan.GetMOIDBitmap(), Vector(), DrawMode::g_DrawNoMOID, true);
+		}
+	}
 
     // Save previous position and velocities before moving
     m_PrevPos = m_Pos;
@@ -908,7 +957,13 @@ void MovableObject::PostTravel()
         m_IgnoresAtomGroupHits = m_Vel.GetLargest() < m_IgnoresAGHitsWhenSlowerThan;
 
 	if (m_GetsHitByMOs) {
-        if (!GetParent()) { Draw(g_SceneMan.GetMOIDBitmap(), Vector(), g_DrawMOID, true); }
+        if (!GetParent()) {
+			if (g_SettingsMan.SimplifiedCollisionDetection()) {
+				m_IsTraveling = false;
+			} else {
+				Draw(g_SceneMan.GetMOIDBitmap(), Vector(), DrawMode::g_DrawMOID, true);
+			}
+		}
 		m_AlreadyHitBy.clear();
 	}
 	m_IsUpdated = true;
@@ -949,9 +1004,18 @@ void MovableObject::Update()
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int MovableObject::UpdateScripts() {
+    m_SimUpdatesSinceLastScriptedUpdate++;
+    
     if (m_AllLoadedScripts.empty() || m_ScriptPresetName.empty()) {
         return -1;
     }
+
+    if (m_SimUpdatesSinceLastScriptedUpdate < m_SimUpdatesBetweenScriptedUpdates) {
+        return 1;
+    }
+
+	m_SimUpdatesSinceLastScriptedUpdate = 0;
+
 
     int status = !g_LuaMan.ExpressionIsTrue(m_ScriptPresetName, false) ? ReloadScripts() : 0;
     status = (status >= 0 && !ObjectScriptsInitialized()) ? InitializeObjectScripts() : status;
@@ -962,12 +1026,8 @@ int MovableObject::UpdateScripts() {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-int MovableObject::OnPieMenu(Actor *pieMenuActor) {
-    if (!pieMenuActor || m_AllLoadedScripts.empty() || m_ScriptPresetName.empty() || !ObjectScriptsInitialized()) {
-        return -1;
-    }
-
-    return RunScriptedFunctionInAppropriateScripts("OnPieMenu", false, false, {pieMenuActor});
+int MovableObject::WhilePieMenuOpenListener(const PieMenu *pieMenu) {
+	return RunScriptedFunctionInAppropriateScripts("WhilePieMenuOpen", false, false, { pieMenu });
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1027,6 +1087,70 @@ void MovableObject::RegMOID(vector<MovableObject *> &MOIDIndex, MOID rootMOID, b
     }
 
     m_RootMOID = rootMOID == g_NoMOID ? m_MOID : rootMOID;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+bool MovableObject::DrawToTerrain(SLTerrain *terrain) {
+	if (!terrain) {
+		return false;
+	}
+	if (dynamic_cast<MOSprite *>(this)) {
+		auto wrappedMaskedBlit = [](BITMAP *sourceBitmap, BITMAP *destinationBitmap, const Vector &bitmapPos, bool swapSourceWithDestination) {
+			std::array<BITMAP *, 2> bitmaps = { sourceBitmap, destinationBitmap };
+			std::array<Vector, 5> srcPos = {
+				Vector(bitmapPos.GetX(), bitmapPos.GetY()),
+				Vector(bitmapPos.GetX() + static_cast<float>(g_SceneMan.GetSceneWidth()), bitmapPos.GetY()),
+				Vector(bitmapPos.GetX() - static_cast<float>(g_SceneMan.GetSceneWidth()), bitmapPos.GetY()),
+				Vector(bitmapPos.GetX(), bitmapPos.GetY() + static_cast<float>(g_SceneMan.GetSceneHeight())),
+				Vector(bitmapPos.GetX(), bitmapPos.GetY() - static_cast<float>(g_SceneMan.GetSceneHeight()))
+			};
+			std::array<Vector, 5> destPos;
+			destPos.fill(Vector());
+
+			if (swapSourceWithDestination) {
+				std::swap(bitmaps[0], bitmaps[1]);
+				std::swap(srcPos, destPos);
+			}
+			masked_blit(bitmaps[0], bitmaps[1], srcPos[0].GetFloorIntX(), srcPos[0].GetFloorIntY(), destPos[0].GetFloorIntX(), destPos[0].GetFloorIntY(), destinationBitmap->w, destinationBitmap->h);
+			if (g_SceneMan.SceneWrapsX()) {
+				if (bitmapPos.GetFloorIntX() < 0) {
+					masked_blit(bitmaps[0], bitmaps[1], srcPos[1].GetFloorIntX(), srcPos[1].GetFloorIntY(), destPos[1].GetFloorIntX(), destPos[1].GetFloorIntY(), destinationBitmap->w, destinationBitmap->h);
+				} else if (bitmapPos.GetFloorIntX() + destinationBitmap->w > g_SceneMan.GetSceneWidth()) {
+					masked_blit(bitmaps[0], bitmaps[1], srcPos[2].GetFloorIntX(), srcPos[2].GetFloorIntY(), destPos[2].GetFloorIntX(), destPos[2].GetFloorIntY(), destinationBitmap->w, destinationBitmap->h);
+				}
+			}
+			if (g_SceneMan.SceneWrapsY()) {
+				if (bitmapPos.GetFloorIntY() < 0) {
+					masked_blit(bitmaps[0], bitmaps[1], srcPos[3].GetFloorIntX(), srcPos[3].GetFloorIntY(), destPos[3].GetFloorIntX(), destPos[3].GetFloorIntY(), destinationBitmap->w, destinationBitmap->h);
+				} else if (bitmapPos.GetFloorIntY() + destinationBitmap->h > g_SceneMan.GetSceneHeight()) {
+					masked_blit(bitmaps[0], bitmaps[1], srcPos[4].GetFloorIntX(), srcPos[4].GetFloorIntY(), destPos[4].GetFloorIntX(), destPos[4].GetFloorIntY(), destinationBitmap->w, destinationBitmap->h);
+				}
+			}
+		};
+		BITMAP *tempBitmap = g_SceneMan.GetIntermediateBitmapForSettlingIntoTerrain(static_cast<int>(GetDiameter()));
+		Vector tempBitmapPos = m_Pos.GetFloored() - Vector(static_cast<float>(tempBitmap->w / 2), static_cast<float>(tempBitmap->w / 2));
+
+		clear_bitmap(tempBitmap);
+		// Draw the object to the temp bitmap, then draw the foreground layer on top of it, then draw it to the foreground layer.
+		Draw(tempBitmap, tempBitmapPos, DrawMode::g_DrawColor, true);
+		wrappedMaskedBlit(terrain->GetFGColorBitmap(), tempBitmap, tempBitmapPos, false);
+		wrappedMaskedBlit(terrain->GetFGColorBitmap(), tempBitmap, tempBitmapPos, true);
+
+		clear_bitmap(tempBitmap);
+		// Draw the object to the temp bitmap, then draw the material layer on top of it, then draw it to the material layer.
+		Draw(tempBitmap, tempBitmapPos, DrawMode::g_DrawMaterial, true);
+		wrappedMaskedBlit(terrain->GetMaterialBitmap(), tempBitmap, tempBitmapPos, false);
+		wrappedMaskedBlit(terrain->GetMaterialBitmap(), tempBitmap, tempBitmapPos, true);
+
+		terrain->AddUpdatedMaterialArea(Box(tempBitmapPos, static_cast<float>(tempBitmap->w), static_cast<float>(tempBitmap->h)));
+		g_SceneMan.RegisterTerrainChange(tempBitmapPos.GetFloorIntX(), tempBitmapPos.GetFloorIntY(), tempBitmap->w, tempBitmap->h, ColorKeys::g_MaskColor, false);
+	} else {
+		Draw(terrain->GetFGColorBitmap(), Vector(), DrawMode::g_DrawColor, true);
+		Draw(terrain->GetMaterialBitmap(), Vector(), DrawMode::g_DrawMaterial, true);
+		g_SceneMan.RegisterTerrainChange(m_Pos.GetFloorIntX(), m_Pos.GetFloorIntY(), 1, 1, DrawMode::g_DrawColor, false);
+	}
+	return true;
 }
 
 } // namespace RTE

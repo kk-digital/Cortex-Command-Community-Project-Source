@@ -15,14 +15,19 @@
 // Inclusions of header files
 
 #include "MOSRotating.h"
-#include "PieMenuGUI.h"
+#include "PieMenu.h"
 
 namespace RTE
 {
 
+
+#pragma region Global Macro Definitions
+	#define DefaultPieMenuNameGetter(DEFAULTPIEMENUNAME) \
+		std::string GetDefaultPieMenuName() const override { return DEFAULTPIEMENUNAME; }
+#pragma endregion
+
 class AtomGroup;
 class HeldDevice;
-class PieMenuGUI;
 
 #define AILINEDOTSPACING 16
 
@@ -33,10 +38,8 @@ class PieMenuGUI;
 // Parent(s):       MOSRotating.
 // Class history:   04/13/2001 Actor created.
 
-class Actor:
-    public MOSRotating
-{
-    friend class LuaMan;
+class Actor : public MOSRotating {
+    friend struct EntityLuaBindings;
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Public member variable, method and friend function declarations
@@ -71,10 +74,10 @@ public:
     };
 
 // Concrete allocation and cloning definitions
-EntityAllocation(Actor)
-AddScriptFunctionNames(MOSRotating, "UpdateAI")
-SerializableOverrideMethods
-ClassInfoGetters
+EntityAllocation(Actor);
+AddScriptFunctionNames(MOSRotating, "UpdateAI");
+SerializableOverrideMethods;
+ClassInfoGetters;
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Constructor:     Actor
@@ -200,23 +203,24 @@ ClassInfoGetters
     int GetStatus() const { return m_Status; }
 
 
-//////////////////////////////////////////////////////////////////////////////////////////
-// Method:          GetHealth
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Gets this Actor's health value.
-// Arguments:       None.
-// Return value:    A const int describing this Actor's health.
+	/// <summary>
+	/// Gets this Actor's health value.
+	/// </summary>
+	/// <returns>A float describing this Actor's health.</returns>
+	float GetHealth() const { return m_Health; }
 
-    int GetHealth() const { return m_Health; }
+	/// <summary>
+	/// Gets this Actor's previous health value, prior to this frame.
+	/// </summary>
+	/// <returns>A float describing this Actor's previous health.</returns>
+	float GetPrevHealth() const { return m_PrevHealth; }
 
-//////////////////////////////////////////////////////////////////////////////////////////
-// Method:          GetMaxHealth
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Gets this Actor's maximum health value.
-// Arguments:       None.
-// Return value:    A const int describing this Actor's max health.
+	/// <summary>
+	/// Gets this Actor's maximum health value.
+	/// </summary>
+	/// <returns>A float describing this Actor's max health.</returns>
+	float GetMaxHealth() const { return m_MaxHealth; }
 
-    int GetMaxHealth() const { return m_MaxHealth; }
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          SetMaxHealth
@@ -271,13 +275,6 @@ ClassInfoGetters
 // Return value:    The current value of this Actor and all his carried assets.
 
 	float GetTotalValue(int nativeModule = 0, float foreignMult = 1.0, float nativeMult = 1.0) const override;
-
-//////////////////////////////////////////////////////////////////////////////////////////
-// Method:          GetTotalValueOld
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     DOES THE SAME THING AS GetTotalValue, USED ONLY TO PRESERVE LUA COMPATIBILITY
-
-	float GetTotalValueOld(int nativeModule = 0, float foreignMult = 1.0) const override { return GetTotalValue(nativeModule, foreignMult, 1.0); }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -354,6 +351,19 @@ ClassInfoGetters
 	Vector GetAboveHUDPos() const override { return m_Pos + Vector(0, m_HUDStack + 6); }
 
 
+	/// <summary>
+	/// Gets the offset position of the holster where this Actor draws his devices from.
+	/// </summary>
+	/// <returns>The offset position of the holster.</returns>
+	Vector GetHolsterOffset() const { return m_HolsterOffset; }
+
+	/// <summary>
+	/// Sets the offset position of the holster where this Actor draws his devices from.
+	/// </summary>
+	/// <param name="newOffset">A new holster offset.</param>
+	void SetHolsterOffset(Vector newOffset) { m_HolsterOffset = newOffset; }
+
+
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          GetViewPoint
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -364,6 +374,13 @@ ClassInfoGetters
 // Return value:    The point in absolute scene coordinates.
 
     Vector GetViewPoint() const { return m_ViewPoint.IsZero() ? m_Pos : m_ViewPoint; }
+
+
+	/// <summary>
+	/// Gets the item that is within reach of the Actor at this frame, ready to be be picked up. Ownership is NOT transferred!
+	/// </summary>
+	/// <returns>A pointer to the item that has been determined to be within reach of this Actor, if any.</returns>
+	HeldDevice * GetItemInReach() const { return m_pItemInReach; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -379,7 +396,7 @@ ClassInfoGetters
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          GetSharpAimProgress
 //////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Gets the normalized amount of sharp aim that has been achieved by this. 
+// Description:     Gets the normalized amount of sharp aim that has been achieved by this.
 // Arguments:       None.
 // Return value:    Sharp aim progress between 0 - 1.0. 1.0 is fully aimed.
 
@@ -464,7 +481,7 @@ ClassInfoGetters
 // Arguments:       A new amount of passenger slots.
 // Return value:    None.
 
-    void SetPassengerSlots(int newPassengerSlots) { m_PassengerSlots = newPassengerSlots;; }
+    void SetPassengerSlots(int newPassengerSlots) { m_PassengerSlots = newPassengerSlots; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -548,24 +565,18 @@ ClassInfoGetters
     void RestDetection() override;
 
 
-//////////////////////////////////////////////////////////////////////////////////////////
-// Method:          AddHealth
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Adds health points to this Actor's current health value.
-// Arguments:       An int specifying the value to add.
-// Return value:    The resulting total health of this Actor.
+	/// <summary>
+	/// Adds health points to this Actor's current health value.
+	/// </summary>
+	/// <param name="setHealth">A float specifying the value to add.</param>
+	/// <returns>The resulting total health of this Actor.</returns>
+	const float AddHealth(const float addedHealth) { return m_Health += addedHealth; }
 
-    const int AddHealth(const int addedHealth) { return m_Health += addedHealth; }
-
-
-//////////////////////////////////////////////////////////////////////////////////////////
-// Method:          SetHealth
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Sets this Actor's current health value.
-// Arguments:       An int specifying the value to set to.
-// Return value:    The resulting total health of this Actor.
-
-    void SetHealth(const int setHealth) { m_Health = setHealth; }
+	/// <summary>
+	/// Sets this Actor's current health value.
+	/// </summary>
+	/// <param name="setHealth">A float specifying the value to set to.</param>
+	void SetHealth(const float setHealth) { m_Health = setHealth; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -587,37 +598,12 @@ ClassInfoGetters
 
     bool IsDead() const { return m_Status == DEAD; }
 
-
-//////////////////////////////////////////////////////////////////////////////////////////
-// Virtual method:  PieNeedsUpdate
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Indicates that the pie menu associated with this Actor needs updating.
-// Arguments:       None.
-// Return value:    Whether the pie menu needs updating.
-
-    bool PieNeedsUpdate() { return m_PieNeedsUpdate; };
-
-
-//////////////////////////////////////////////////////////////////////////////////////////
-// Virtual method:  AddPieMenuSlices
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Adds all slices this needs on a pie menu.
-// Arguments:       The pie menu to add slices to. Ownership is NOT transferred!
-// Return value:    Whether any slices were added.
-
-	virtual bool AddPieMenuSlices(PieMenuGUI *pPieMenu);
-
-
-//////////////////////////////////////////////////////////////////////////////////////////
-// Virtual method:  HandlePieCommand
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Handles and does whatever a specific activated Pie Menu slice does to
-//                  this.
-// Arguments:       The pie menu command to handle. See the PieSliceIndex enum.
-// Return value:    Whetehr any slice was handled. False if no matching slice handler was
-//                  found, or there was no slice currently activated by the pie menu.
-
-    virtual bool HandlePieCommand(int pieSliceIndex);
+    /// <summary>
+    /// Tries to handle the activated PieSlice in this object's PieMenu, if there is one, based on its SliceType.
+    /// </summary>
+    /// <param name="pieSliceType">The SliceType of the PieSlice being handled.</param>
+    /// <returns>Whether or not the activated PieSlice SliceType was able to be handled.</returns>
+    virtual bool HandlePieCommand(PieSlice::SliceType pieSliceType) { return false; }
 
 /*
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -802,6 +788,19 @@ ClassInfoGetters
 	float GetPerceptiveness() const { return m_Perceptiveness; }
 
 
+	/// <summary>
+	/// Gets whether this actor is able to reveal unseen areas by looking.
+	/// </summary>
+	/// <returns>Whether this actor can reveal unseen areas.</returns>
+	bool GetCanRevealUnseen() const { return m_CanRevealUnseen; }
+
+	/// <summary>
+	/// Sets whether this actor can reveal unseen areas by looking.
+	/// </summary>
+	/// <param name="newCanRevealUnseen">Whether this actor can reveal unseen areas.</param>
+	void SetCanRevealUnseen(bool newCanRevealUnseen) { m_CanRevealUnseen = newCanRevealUnseen; }
+
+
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:  AlarmPoint
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -811,7 +810,7 @@ ClassInfoGetters
 //                  is there.
 // Return value:    None.
 
-	void AlarmPoint(const Vector &alarmPoint) { if (m_AlarmTimer.GetElapsedSimTimeMS() > 50) { m_AlarmTimer.Reset(); m_LastAlarmPos = m_PointingTarget = alarmPoint; m_AlarmSound.Play(alarmPoint); } }
+	void AlarmPoint(const Vector &alarmPoint) { if (m_AlarmSound && m_AlarmTimer.IsPastSimTimeLimit()) { m_AlarmSound->Play(alarmPoint); } if (m_AlarmTimer.GetElapsedSimTimeMS() > 50) { m_AlarmTimer.Reset(); m_LastAlarmPos = m_PointingTarget = alarmPoint; } }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -832,7 +831,7 @@ ClassInfoGetters
 // Arguments:       An pointer to the new item to add. Ownership IS TRANSFERRED!
 // Return value:    None..
 
-    virtual void AddInventoryItem(MovableObject *pItemToAdd) { if (pItemToAdd) { m_Inventory.push_back(pItemToAdd); } }
+    virtual void AddInventoryItem(MovableObject *pItemToAdd) { if (pItemToAdd) { m_Inventory.emplace_back(pItemToAdd); } }
 
 
 
@@ -844,6 +843,13 @@ ClassInfoGetters
 // Return value:    None.
 
 	void RemoveInventoryItem(string presetName);
+
+    /// <summary>
+    /// Removes and returns the inventory item at the given index. Ownership IS transferred.
+    /// </summary>
+    /// <param name="inventoryIndex">The index of the inventory item to remove.</param>
+    /// <returns>An owning pointer to the removed inventory item.</returns>
+    MovableObject * RemoveInventoryItemAtIndex(int inventoryIndex);
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -871,6 +877,23 @@ ClassInfoGetters
 //                  If there are no MovableObject:s in inventory, 0 will be returned.
 
 	MovableObject * SwapPrevInventory(MovableObject *pSwapIn = 0);
+
+    /// <summary>
+    /// Swaps the inventory items at the given indices. Will return false if a given index is invalid.
+    /// </summary>
+    /// <param name="inventoryIndex1">The index of one item.</param>
+    /// <param name="inventoryIndex2">The index of the other item.</param>
+    /// <returns>Whether or not the swap was successful.</returns>
+    bool SwapInventoryItemsByIndex(int inventoryIndex1, int inventoryIndex2);
+
+    /// <summary>
+    /// Sets the inventory item at the given index as the new inventory item, and gives back the one that was originally there.
+    /// If an invalid index is given, the new item will be put in the back of the inventory, and nullptr will be returned.
+    /// </summary>
+    /// <param name="newInventoryItem">The new item that should be at the given inventory index. Cannot be a nullptr. Ownership IS transferred.</param>
+    /// <param name="inventoryIndex">The inventory index the new item should be placed at.</param>
+    /// <returns>The inventory item that used to be at the inventory index. Ownership IS transferred.</returns>
+    MovableObject * SetInventoryItemAtIndex(MovableObject *newInventoryItem, int inventoryIndex);
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -914,16 +937,11 @@ ClassInfoGetters
 
 	const std::deque<MovableObject *> * GetInventory() { return &m_Inventory; }
 
-
-//////////////////////////////////////////////////////////////////////////////////////////
-// Method:  GetMaxMass
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Tells how much total mass (in kg) this Actor is recommended to weigh
-//                  at most INCLUDING his own weight AND all his inventory!
-// Arguments:       None.
-// Return value:    The max recommend total mass for this Actor
-
-	float GetMaxMass() const { return m_MaxMass; }
+	/// <summary>
+	/// Returns the maximum total mass this Actor can carry in its inventory.
+	/// </summary>
+	/// <returns>The maximum carriable mass of this Actor.</returns>
+	float GetMaxInventoryMass() const { return m_MaxInventoryMass; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -1199,26 +1217,64 @@ ClassInfoGetters
 
 
 	/// <summary>
-	/// Returns the defined sound to be played on death.
+	/// Gets this Actor's body hit sound. Ownership is NOT transferred!
 	/// </summary>
-	/// <returns>A sound with the death sample of this actor.</returns>
-	SoundContainer GetDeathSound() const { return m_DeathSound; }
-
+	/// <returns>The SoundContainer for this Actor's body hit sound.</returns>
+	SoundContainer * GetBodyHitSound() const { return m_BodyHitSound; }
 
 	/// <summary>
-	/// Sets new death sound sample from specified path or sets null.
+	/// Sets this Actor's body hit sound. Ownership IS transferred!
 	/// </summary>
-	/// <param name="samplePath">Filepath to new sample or None/nil for no sound.</param>
-	/// <returns>Updated DeathSound.</returns>
-	void SetDeathSound(const char *samplePath) {
-		if (samplePath == nullptr) {
-			m_DeathSound.Reset();
-		} else {
-            SoundContainer newDeathSound;
-			newDeathSound.Create(samplePath);
-			m_DeathSound = newDeathSound;
-		}
-	}
+	/// <param name="newSound">The new SoundContainer for this Actor's body hit sound.</param>
+	void SetBodyHitSound(SoundContainer *newSound) { m_BodyHitSound = newSound; }
+
+	/// <summary>
+	/// Gets this Actor's alarm sound. Ownership is NOT transferred!
+	/// </summary>
+	/// <returns>The SoundContainer for this Actor's alarm sound.</returns>
+	SoundContainer * GetAlarmSound() const { return m_AlarmSound; }
+
+	/// <summary>
+	/// Sets this Actor's alarm sound. Ownership IS transferred!
+	/// </summary>
+	/// <param name="newSound">The new SoundContainer for this Actor's alarm sound.</param>
+	void SetAlarmSound(SoundContainer *newSound) { m_AlarmSound = newSound; }
+
+	/// <summary>
+	/// Gets this Actor's pain sound. Ownership is NOT transferred!
+	/// </summary>
+	/// <returns>The SoundContainer for this Actor's pain sound.</returns>
+	SoundContainer * GetPainSound() const { return m_PainSound; }
+
+	/// <summary>
+	/// Sets this Actor's pain sound. Ownership IS transferred!
+	/// </summary>
+	/// <param name="newSound">The new SoundContainer for this Actor's pain sound.</param>
+	void SetPainSound(SoundContainer *newSound) { m_PainSound = newSound; }
+
+	/// <summary>
+	/// Gets this Actor's death sound. Ownership is NOT transferred!
+	/// </summary>
+	/// <returns>The SoundContainer for this Actor's death sound.</returns>
+	SoundContainer * GetDeathSound() const { return m_DeathSound; }
+
+	/// <summary>
+	/// Sets this Actor's death sound. Ownership IS transferred!
+	/// </summary>
+	/// <param name="newSound">The new SoundContainer for this Actor's death sound.</param>
+	void SetDeathSound(SoundContainer *newSound) { m_DeathSound = newSound; }
+
+	/// <summary>
+	/// Gets this Actor's device switch sound. Ownership is NOT transferred!
+	/// </summary>
+	/// <returns>The SoundContainer for this Actor's device switch sound.</returns>
+	SoundContainer * GetDeviceSwitchSound() const { return m_DeviceSwitchSound; }
+
+	/// <summary>
+	/// Sets this Actor's device switch sound. Ownership IS transferred!
+	/// </summary>
+	/// <param name="newSound">The new SoundContainer for this Actor's device switch sound.</param>
+	void SetDeviceSwitchSound(SoundContainer *newSound) { m_DeviceSwitchSound = newSound; }
 
 	/// <summary>
 	/// Gets the X and Y thresholds for how fast the actor can travel before losing stability.
@@ -1238,6 +1294,48 @@ ClassInfoGetters
 	/// </summary>
 	/// <param name="newVelVector">Vector with new values for how fast the actor can travel before losing stability on both axis.</param>
 	void SetStableVel(Vector newVelVector) { m_StableVel = newVelVector; }
+
+	/// <summary>
+	/// Gets the recovery delay from UNSTABLE to STABLE, in MS.
+	/// </summary>
+	/// <returns>The recovery delay, in MS.</returns>
+	int GetStableRecoverDelay() const { return m_StableRecoverDelay; }
+
+	/// <summary>
+	/// Sets the recovery delay from UNSTABLE to STABLE, in MS.
+	/// </summary>
+	/// <param name="newRecoverDelay">The recovery delay, in MS.</param>
+	void SetStableRecoverDelay(int newRecoverDelay) { m_StableRecoverDelay = newRecoverDelay; }
+
+	/// <summary>
+	/// Gets whether or not this Actor has the organic flag set and should be considered as organic.
+	/// </summary>
+	/// <returns>Whether or not this Actor has the organic flag set and should be considered as organic.</returns>
+	bool IsOrganic() const { return m_Organic; }
+
+	/// <summary>
+	/// Gets whether or not this Actor has the mechanical flag set and should be considered as mechanical.
+	/// </summary>
+	/// <returns>Whether or not this Actor has the mechanical flag set and should be considered as mechanical.</returns>
+	bool IsMechanical() const { return m_Mechanical; }
+
+	/// <summary>
+	/// Gets the default PieMenu name for this type.
+	/// </summary>
+	/// <returns>The default PieMenu name for this type.</returns>
+	virtual std::string GetDefaultPieMenuName() const { return "Default Actor Pie Menu"; }
+
+    /// <summary>
+    /// Gets a pointer to the PieMenu for this Actor. Ownership is NOT transferred.
+    /// </summary>
+    /// <returns>The PieMenu for this Actor.</returns>
+    PieMenu * GetPieMenu() const { return m_PieMenu.get(); }
+
+	/// <summary>
+	/// Sets the PieMenu for this Actor. Ownership IS transferred.
+	/// </summary>
+	/// <param name="newPieMenu">The new PieMenu for this Actor.</param>
+	void SetPieMenu(PieMenu *newPieMenu) { m_PieMenu = std::unique_ptr<PieMenu>(newPieMenu); m_PieMenu->Create(this); m_PieMenu->AddWhilePieMenuOpenListener(this, std::bind(&Actor::WhilePieMenuOpenListener, this, m_PieMenu.get())); }
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Protected member variable and method declarations
@@ -1267,13 +1365,12 @@ protected:
     Controller m_Controller;
 
     // Sounds
-    SoundContainer m_BodyHitSound;
-    SoundContainer m_AlarmSound;
-    SoundContainer m_PainSound;
-    SoundContainer m_DeathSound;
-    SoundContainer m_DeviceSwitchSound;
+    SoundContainer *m_BodyHitSound;
+    SoundContainer *m_AlarmSound;
+    SoundContainer *m_PainSound;
+    SoundContainer *m_DeathSound;
+    SoundContainer *m_DeviceSwitchSound;
 
-//    bool m_FacingRight;
     int m_Status;
     float m_Health;
     // Maximum health
@@ -1297,6 +1394,7 @@ protected:
     Timer m_StableRecoverTimer;
     // Thresholds in both x and y for how fast the actor can travel before losing stability. Meters per second (m/s).
     Vector m_StableVel;
+	int m_StableRecoverDelay; //!< The delay before regaining stability after losing it, in MS
     // Timer for the heartbeat of this Actor
     Timer m_HeartBeat;
     // Timer for timing how long this has been under Control
@@ -1317,7 +1415,7 @@ protected:
     float m_AimDistance;
     // Aiming timing timer
     Timer m_AimTmr;
-    // For timing the transition between regular aim and sharp aim
+    // For timing the transition from regular aim to sharp aim
     Timer m_SharpAimTimer;
     // The time it takes to achieve complete full sharp aiming
     int m_SharpAimDelay;
@@ -1339,6 +1437,8 @@ protected:
     float m_SightDistance;
     // How perceptive this is of alarming events going on around him, 0.0 - 1.0
     float m_Perceptiveness;
+	// Whether or not this actor can reveal unseen areas by looking
+	bool m_CanRevealUnseen;
     // About How tall is the Actor, in pixels?
     float m_CharHeight;
     // Speed at which the m_AimAngle will change, in radians/s.
@@ -1351,21 +1451,15 @@ protected:
     Vector m_ViewPoint;
     // The inventory of carried MovableObjects of this Actor. They are also Owned by this.
     std::deque<MovableObject *> m_Inventory;
-    // The max recommended weight of this Actor, including himself and all his inventory
-    // If this is 0 or less, there's no recommended limit
-    float m_MaxMass;
+    float m_MaxInventoryMass; //!< The mass limit for this Actor's inventory. -1 means there's no limit.
     // The device that can/will be picked up
     HeldDevice *m_pItemInReach;
-    // Whether the pie menu associated with this needs updating
-    bool m_PieNeedsUpdate;
     // HUD positioning aid
     int m_HUDStack;
     // For how much longer to draw this as white. 0 means don't draw as white
     int m_FlashWhiteMS;
     // The timer that measures and deducts past time from the remaining white flash time
     Timer m_WhiteFlashTimer;
-    // Extra pie menu options that this should add to any Pie Menu that focuses on this
-    std::list<PieMenuGUI::Slice> m_PieSlices;
     // What material strength this actor is capable of digging trough.
     float m_DigStrength;
 	// ID of deployment which spawned this actor
@@ -1401,13 +1495,13 @@ protected:
          FOLLOWWAIT
     };
     // Unknown team icon
-    static BITMAP **m_apNoTeamIcon;
+    static std::vector<BITMAP *> m_apNoTeamIcon;
     // The AI mode icons
     static BITMAP *m_apAIIcons[AIMODE_COUNT];
     // Selection arrow
-    static BITMAP **m_apSelectArrow;
+    static std::vector<BITMAP *> m_apSelectArrow;
     // Selection arrow
-    static BITMAP **m_apAlarmExclamation;
+    static std::vector<BITMAP *> m_apAlarmExclamation;
     // Whether the static icons have been loaded yet or not
     static bool m_sIconsLoaded;
     // Whether a Lua update AI function was provided in this' script file
@@ -1453,10 +1547,15 @@ protected:
     // Timer for measuring interval between height checks
     Timer m_FallTimer;
 
+	bool m_Organic; //!< Flag for whether or not this Actor is organic. Useful for lua purposes and mod support.
+	bool m_Mechanical; //!< Flag for whether or not this Actor is robotic. Useful for lua purposes and mod support.
+
 //////////////////////////////////////////////////////////////////////////////////////////
 // Private member variable and method declarations
 
 private:
+
+    std::unique_ptr<PieMenu> m_PieMenu;
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          Clear

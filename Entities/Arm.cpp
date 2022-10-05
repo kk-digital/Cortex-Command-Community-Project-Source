@@ -14,11 +14,12 @@
 #include "Arm.h"
 #include "HDFirearm.h"
 #include "ThrownDevice.h"
+#include "AHuman.h"
 #include "PresetMan.h"
 
 namespace RTE {
 
-ConcreteClassInfo(Arm, Attachable, 50)
+ConcreteClassInfo(Arm, Attachable, 50);
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -31,6 +32,7 @@ void Arm::Clear()
 {
     m_pHeldMO = nullptr;
     m_GripStrength = 0;
+    m_ThrowStrength = 25.0F;
     m_HandFile.Reset();
     m_pHand = nullptr;
     m_MaxLength = 0;
@@ -76,6 +78,7 @@ int Arm::Create(const Arm &reference) {
     Attachable::Create(reference);
 
     m_GripStrength = reference.m_GripStrength;
+    m_ThrowStrength = reference.m_ThrowStrength;
     m_HandFile = reference.m_HandFile;
     m_pHand = m_HandFile.GetAsBitmap();
     RTEAssert(m_pHand, "Failed to load hand bitmap in Arm::Create")
@@ -100,10 +103,11 @@ int Arm::Create(const Arm &reference) {
 
 int Arm::ReadProperty(const std::string_view &propName, Reader &reader) {
     if (propName == "HeldDevice") {
-        const Entity *heldEntity = g_PresetMan.GetEntityPreset(reader);
-        if (heldEntity) { SetHeldMO(dynamic_cast<MovableObject *>(heldEntity->Clone())); }
+        SetHeldMO(dynamic_cast<MovableObject *>(g_PresetMan.ReadReflectedPreset(reader)));
     } else if (propName == "GripStrength") {
         reader >> m_GripStrength;
+    } else if (propName == "ThrowStrength") {
+        reader >> m_ThrowStrength;
     } else if (propName == "Hand") {
         reader >> m_HandFile;
         m_pHand = m_HandFile.GetAsBitmap();
@@ -137,6 +141,8 @@ int Arm::Save(Writer &writer) const
     writer << m_pHeldMO;
     writer.NewProperty("GripStrength");
     writer << m_GripStrength;
+    writer.NewProperty("ThrowStrength");
+    writer << m_ThrowStrength;
     writer.NewProperty("HandGroup");
     writer << m_HandFile;
     writer.NewProperty("MaxLength");
@@ -193,30 +199,22 @@ HeldDevice * Arm::GetHeldDevice() const
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Replaces the MovableObject currently held by this Arm with a new
 //                  one. Ownership IS transferred. The currently held MovableObject
-//                  (if there is one) will be dropped and become a detached MovableObject,
+//                  (if there is one) will be deleted.
 
 void Arm::SetHeldMO(MovableObject *newHeldMO) {
+    Attachable *oldHeldMOAsAttachable = dynamic_cast<Attachable *>(m_pHeldMO);
+    if (oldHeldMOAsAttachable && oldHeldMOAsAttachable->IsAttached()) { RemoveAndDeleteAttachable(oldHeldMOAsAttachable); }
     if (newHeldMO == nullptr) {
-        Attachable *heldMOAsAttachable = dynamic_cast<Attachable *>(m_pHeldMO);
-        if (heldMOAsAttachable && heldMOAsAttachable->IsAttached()) { RemoveAttachable(heldMOAsAttachable); }
         m_pHeldMO = nullptr;
     } else {
-        //TODO All this needs cleaning up, this should do the basics, some other method should be responsible for replacing held things
-        if (m_pHeldMO && m_pHeldMO->IsHeldDevice() && dynamic_cast<HeldDevice *>(m_pHeldMO)->IsAttached()) {
-            RemoveAttachable(dynamic_cast<HeldDevice *>(m_pHeldMO), true, false);
-            m_pHeldMO = nullptr;
-        }
+        m_pHeldMO = newHeldMO;
+        if (Attachable *heldMOAsAttachable = dynamic_cast<Attachable *>(newHeldMO)) {
+            AddAttachable(heldMOAsAttachable);
 
-        if (newHeldMO->IsHeldDevice()) {
-            Attachable *newHeldDevice = dynamic_cast<Attachable *>(newHeldMO);
-            if (newHeldDevice->IsAttached()) { newHeldDevice->GetParent()->RemoveAttachable(newHeldDevice); }
-            AddAttachable(newHeldDevice);
-
-            m_HardcodedAttachableUniqueIDsAndSetters.insert({newHeldDevice->GetUniqueID(), [](MOSRotating *parent, Attachable *attachable) {
+            m_HardcodedAttachableUniqueIDsAndSetters.insert({heldMOAsAttachable->GetUniqueID(), [](MOSRotating *parent, Attachable *attachable) {
                 dynamic_cast<Arm *>(parent)->SetHeldMO(attachable);
             }});
         }
-        m_pHeldMO = newHeldMO;
     }
 }
 
@@ -243,6 +241,10 @@ MovableObject * Arm::ReleaseHeldMO()
 			// Once detached may have incorrect ID value. Detach will take care m_RootID. New ID will be assigned on next frame.
             m_pHeldMO->SetAsNoID();
             RemoveAttachable(dynamic_cast<Attachable *>(m_pHeldMO));
+			//This is to work around the edge case where an attachable is set to delete/gibbed in its OnDetach script. In that case the object is added to MovableMan and nothing else should be done with it (e.g. it shouldn't be added to MovableMan again), so this will return nullptr to signify there's no object to work with.
+			if (pReturnMO->IsSetToDelete()) {
+				return nullptr;
+			}
 		}
     }
     m_pHeldMO = nullptr;
@@ -349,13 +351,13 @@ void Arm::ReachToward(const Vector &scenePoint)
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void Arm::Update() {
+    Attachable::PreUpdate();
+
     if (!IsAttached()) {
         RemoveAttachable(dynamic_cast<Attachable *>(m_pHeldMO), true, false);
     } else {
         m_AngularVel = 0.0F;
     }
-
-    UpdateCurrentHandOffset();
 
     HeldDevice *heldDevice = m_pHeldMO ? dynamic_cast<HeldDevice *>(m_pHeldMO) : nullptr;
     const ThrownDevice *thrownDevice = heldDevice ? dynamic_cast<ThrownDevice *>(heldDevice) : nullptr;
@@ -363,6 +365,7 @@ void Arm::Update() {
     // HeldDevices need to use the aim angle for their positioning and rotating, while ThrownDevices need to aim and position themselves based on the hand offset, so this done here for TDs and below for HDs.
     if (thrownDevice || !heldDevice) { m_Rotation = m_HandOffset.GetAbsRadAngle() + (m_HFlipped ? c_PI : 0); }
 
+	UpdateCurrentHandOffset();
     if (heldDevice) {
         // In order to keep the HeldDevice in the right place, we need to convert its offset (the hand offset) to work as the ParentOffset for the HeldDevice.
         // The HeldDevice will then use this to set its JointPos when it's updated. Unfortunately UnRotateOffset doesn't work for this, since it's Vector/Matrix division, which isn't commutative.
@@ -390,17 +393,48 @@ void Arm::UpdateCurrentHandOffset() {
         Vector targetOffset;
         if (m_pHeldMO && !dynamic_cast<ThrownDevice *>(m_pHeldMO)) {
             m_DidReach = false;
-            const HeldDevice *heldDevice = dynamic_cast<HeldDevice *>(m_pHeldMO);
-            targetOffset = heldDevice->GetStanceOffset() * m_Rotation;
+			const HeldDevice *heldDevice = dynamic_cast<HeldDevice *>(m_pHeldMO);
+			targetOffset = heldDevice->GetStanceOffset();
+
+			// TODO: Fine-tune this shit if needed, and move it elsewhere
+			if (!heldDevice->GetRecoilForce().IsZero()) {
+				float totalGripStrength = m_GripStrength * heldDevice->GetGripStrengthMultiplier();
+				if (totalGripStrength == 0) { totalGripStrength = heldDevice->GetJointStrength(); }
+				if (heldDevice->GetSupported()) {
+					const AHuman *rootParentAsAHuman = dynamic_cast<const AHuman *>(GetRootParent());
+					const Arm *rootParentAsHumanBGArm = rootParentAsAHuman ? rootParentAsAHuman->GetBGArm() : nullptr;
+					if (rootParentAsHumanBGArm) {
+						if (rootParentAsHumanBGArm->GetGripStrength() < 0) {
+							totalGripStrength = -1.0F;
+						} else if (rootParentAsHumanBGArm->GetGripStrength() > 0) {
+							totalGripStrength += (rootParentAsHumanBGArm->GetGripStrength() * heldDevice->GetGripStrengthMultiplier());
+						} else {
+							totalGripStrength *= 1.5F;
+						}
+					}
+				}
+				if (totalGripStrength > 0) {
+					// Diminish recoil effect when body is horizontal so that the device doesn't get pushed into terrain when prone.
+					float rotAngleScalar = std::abs(std::cos(m_Parent->GetRotAngle()));
+					float recoilScalar = std::min((heldDevice->GetRecoilForce() / totalGripStrength).GetMagnitude() * 0.4F, 0.8F) * rotAngleScalar;
+					targetOffset.SetX(targetOffset.GetX() * (1.0F - recoilScalar));
+
+					// Shift Y offset slightly so the device is more likely to go under the shoulder rather than over it, otherwise it looks goofy.
+					if (targetOffset.GetY() <= 0) { targetOffset.SetY(targetOffset.GetY() * (1.0F - recoilScalar) + recoilScalar); }
+				}
+			}
+			targetOffset *= m_Rotation;
 
             // In order to keep the held device from clipping through terrain, we need to determine where its muzzle position will be, and use that to figure out where its midpoint will be, as well as the distance between the two.
             Vector newMuzzlePos = (m_JointPos + targetOffset) - RotateOffset(heldDevice->GetJointOffset()) + RotateOffset(heldDevice->GetMuzzleOffset());
-            Vector midToMuzzle = RotateOffset({heldDevice->GetRadius(), 0});
+            Vector midToMuzzle = RotateOffset({heldDevice->GetIndividualRadius(), 0});
             Vector midOfDevice = newMuzzlePos - midToMuzzle;
 
             Vector terrainOrMuzzlePosition;
-            g_SceneMan.CastStrengthRay(midOfDevice, midToMuzzle, 5, terrainOrMuzzlePosition, 0, false);
-            targetOffset += g_SceneMan.ShortestDistance(newMuzzlePos, terrainOrMuzzlePosition, g_SceneMan.SceneWrapsX());
+			if (g_SceneMan.CastStrengthRay(midOfDevice, midToMuzzle, 5, terrainOrMuzzlePosition, 0, false)) {
+				Vector muzzleAdjustment = g_SceneMan.ShortestDistance(newMuzzlePos, terrainOrMuzzlePosition, g_SceneMan.SceneWrapsX());
+				if (muzzleAdjustment.GetMagnitude() > 2.0F) { targetOffset += muzzleAdjustment; }
+			}
         } else {
             if (m_TargetPosition.IsZero()) {
                 targetOffset = m_IdleOffset.GetXFlipped(m_HFlipped);
@@ -417,7 +451,7 @@ void Arm::UpdateCurrentHandOffset() {
 
         Vector distanceFromTargetOffsetToHandOffset(targetOffset - m_HandOffset);
         m_HandOffset += distanceFromTargetOffsetToHandOffset * m_MoveSpeed;
-        m_HandOffset.ClampMagnitude(m_MaxLength, m_MaxLength / 2 + 0.1F);
+        m_HandOffset.ClampMagnitude(m_MaxLength / 2.0F, m_MaxLength);
     } else {
         m_HandOffset.SetXY(m_MaxLength * 0.65F, 0);
         m_HandOffset.RadRotate((m_HFlipped ? c_PI : 0) + m_Rotation.GetRadAngle());
@@ -429,10 +463,8 @@ void Arm::UpdateCurrentHandOffset() {
 void Arm::UpdateArmFrame() {
     if (IsAttached()) {
         float halfMax = m_MaxLength / 2.0F;
-        //TODO this should be replaced with floor I think. If I remember right, casting float to int always rounds to 0, which should function the same but is harder to remember than clearly flooring it.
-        int newFrame = static_cast<int>(((m_HandOffset.GetMagnitude() - halfMax) / halfMax) * static_cast<float>(m_FrameCount));
-        RTEAssert(newFrame <= m_FrameCount, "Arm frame is out of bounds for " + GetClassName() + ": " + GetPresetName() + ".");
-        m_Frame = std::clamp(static_cast<unsigned int>(newFrame), 0U, m_FrameCount - 1);
+        float newFrame = std::floor(((m_HandOffset.GetMagnitude() - halfMax) / halfMax) * static_cast<float>(m_FrameCount));
+        m_Frame = static_cast<unsigned int>(std::clamp(newFrame, 0.0F, static_cast<float>(m_FrameCount - 1)));
     }
 }
 
@@ -441,7 +473,8 @@ void Arm::UpdateArmFrame() {
 void Arm::Draw(BITMAP *pTargetBitmap, const Vector &targetPos, DrawMode mode, bool onlyPhysical) const {
     Attachable::Draw(pTargetBitmap, targetPos, mode, onlyPhysical);
 
-    if (!onlyPhysical && (mode == g_DrawColor || mode == g_DrawWhite || mode == g_DrawTrans) && (!m_Parent || m_pHeldMO || (!m_pHeldMO && !m_DidReach))) {
+    //if (!onlyPhysical && (mode == g_DrawColor || mode == g_DrawWhite || mode == g_DrawTrans) && (!m_Parent || m_pHeldMO || (!m_pHeldMO && !m_DidReach))) {
+    if (!onlyPhysical && (mode == g_DrawColor || mode == g_DrawWhite || mode == g_DrawTrans)) {
         DrawHand(pTargetBitmap, targetPos, mode);
         if (m_pHeldMO && m_pHeldMO->IsDrawnAfterParent()) { m_pHeldMO->Draw(pTargetBitmap, targetPos, mode, onlyPhysical); }
     }
@@ -451,8 +484,8 @@ void Arm::Draw(BITMAP *pTargetBitmap, const Vector &targetPos, DrawMode mode, bo
 
 void Arm::DrawHand(BITMAP *targetBitmap, const Vector &targetPos, DrawMode mode) const {
     Vector handPos(m_JointPos + m_HandOffset + (m_Recoiled ? m_RecoilOffset : Vector()) - targetPos);
-    handPos.m_X -= static_cast<float>((m_pHand->w / 2) + 1);
-    handPos.m_Y -= static_cast<float>((m_pHand->h / 2) + 1);
+    handPos.m_X -= static_cast<float>((m_pHand->w / 2));
+    handPos.m_Y -= static_cast<float>((m_pHand->h / 2));
 
     if (!m_HFlipped) {
         if (mode == g_DrawWhite) {

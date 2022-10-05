@@ -1,5 +1,6 @@
 #include "Atom.h"
 #include "SLTerrain.h"
+#include "MovableMan.h"
 #include "MovableObject.h"
 #include "MOSRotating.h"
 #include "PresetMan.h"
@@ -38,6 +39,7 @@ namespace RTE {
 		*/
 		m_TrailColor.Reset();
 		m_TrailLength = 0;
+		m_TrailLengthVariation = 0.0F;
 		m_NumPenetrations = 0;
 		m_ChangedDir = true;
 		m_ResultWrapped = false;
@@ -46,6 +48,13 @@ namespace RTE {
 		m_SegProgress = 0.0F;
 
 		m_IgnoreMOIDsByGroup = 0;
+
+		// Note: These fields must be cleared to avoid a very edge case bug.
+		// While an AtomGroup is travelling, the OnCollideWithTerrain Lua function can run, which will in turn force Create to run if it hasn't already.
+		// If this Create function adds to an AtomGroup (e.g. adds an Attachable to it), there will be problems.
+		// Setting these values in Clear doesn't help if Atoms are removed at this point, but helps if Atoms are added, since these values mean the added Atoms won't try to step forwards.
+		//m_Dom = 0;
+		//m_Delta[m_Dom] = 0;
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -73,6 +82,7 @@ namespace RTE {
 		m_SubgroupID = reference.m_SubgroupID;
 		m_TrailColor = reference.m_TrailColor;
 		m_TrailLength = reference.m_TrailLength;
+		m_TrailLengthVariation = reference.m_TrailLengthVariation;
 
 		// These need to be set manually by the new owner.
 		m_OwnerMO = 0;
@@ -98,6 +108,8 @@ namespace RTE {
 			reader >> m_TrailColor;
 		} else if (propName == "TrailLength") {
 			reader >> m_TrailLength;
+		} else if (propName == "TrailLengthVariation") {
+			reader >> m_TrailLengthVariation;
 		} else {
 			return Serializable::ReadProperty(propName, reader);
 		}
@@ -114,6 +126,7 @@ namespace RTE {
 		writer.NewPropertyWithValue("Material", m_Material);
 		writer.NewPropertyWithValue("TrailColor", m_TrailColor);
 		writer.NewPropertyWithValue("TrailLength", m_TrailLength);
+		writer.NewPropertyWithValue("TrailLengthVariation", m_TrailLengthVariation);
 
 		return 0;
 	}
@@ -544,7 +557,16 @@ namespace RTE {
 				}
 				return hitStep;
 			}
-			RTEAssert(0, "Atom shouldn't be taking steps beyond the trajectory!");
+			std::string abortString = "Atom shouldn't be taking steps beyond the trajectory!";
+			if (m_OwnerMO) {
+				abortString += "\nRoot owner is " + m_OwnerMO->GetPresetName() + ".";
+				if (m_SubgroupID != 0) {
+					const MovableObject *realOwner = g_MovableMan.FindObjectByUniqueID(m_SubgroupID);
+					abortString += " Owner is " + realOwner->GetPresetName() + ".";
+				}
+			}
+			abortString += "\n\nDomSteps: " + std::to_string(m_DomSteps) + ", Dominant Direction: " + std::to_string(m_Dom) + ", Delta[Dom]: " + std::to_string(m_Delta[m_Dom]) + ", Trajectory: (" + std::to_string(m_SegTraj.m_X) + ", " + std::to_string(m_SegTraj.m_Y) + ")";
+			RTEAbort(abortString);
 			m_OwnerMO->SetToDelete();
 		}
 		m_StepWasTaken = false;
@@ -657,6 +679,7 @@ namespace RTE {
 
 			delta[X] = std::floor(position.m_X + segTraj.m_X) - intPos[X];
 			delta[Y] = std::floor(position.m_Y + segTraj.m_Y) - intPos[Y];
+			RTEAssert(std::abs(delta[X]) < 2500 && std::abs(delta[Y] < 2500), "Extremely long difference trajectory found during Atom::Travel. Owner is " + m_OwnerMO->GetPresetName() + ", with Vel (" + std::to_string(velocity.GetX()) + ", " + std::to_string(velocity.GetY()) + ").");
 
 			//segProgress = 0.0F;
 			//delta2[X] = 0;
@@ -880,7 +903,7 @@ namespace RTE {
 						if (m_Material->GetStickiness() >= RandomNum() && velocity.GetLargest() > 0.5F) {
 							// SPLAT, so update position, apply to terrain and delete, and stop traveling
 							m_OwnerMO->SetPos(Vector(intPos[X], intPos[Y]));
-							g_SceneMan.GetTerrain()->ApplyMovableObject(m_OwnerMO);
+							m_OwnerMO->DrawToTerrain(g_SceneMan.GetTerrain());
 							m_OwnerMO->SetToDelete(true);
 							m_LastHit.Terminate[HITOR] = hit[dom] = hit[sub] = true;
 							break;
@@ -962,7 +985,7 @@ namespace RTE {
 
 		// Draw the trail
 		if (g_TimerMan.DrawnSimUpdate() && m_TrailLength) {
-			int length = m_TrailLength /* + 3 * RandomNum()*/;
+			int length = static_cast<int>(static_cast<float>(m_TrailLength) * RandomNum(1.0F - m_TrailLengthVariation, 1.0F));
 			for (int i = trailPoints.size() - std::min(length, static_cast<int>(trailPoints.size())); i < trailPoints.size(); ++i) {
 				putpixel(trailBitmap, trailPoints[i].first, trailPoints[i].second, m_TrailColor.GetIndex());
 			}

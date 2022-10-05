@@ -21,7 +21,7 @@
 namespace RTE
 {
 
-class Actor;
+class ACraft;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -31,9 +31,7 @@ class Actor;
 // Parent(s):       GameActivity.
 // Class history:   07/03/2008 GAScripted created.
 
-class GAScripted:
-    public GameActivity
-{
+class GAScripted : public GameActivity {
 
     friend class LuaMan;
     friend class ActivityMan;
@@ -45,9 +43,9 @@ public:
 
 
 // Concrete allocation and cloning definitions
-EntityAllocation(GAScripted)
-SerializableOverrideMethods
-ClassInfoGetters
+EntityAllocation(GAScripted);
+SerializableOverrideMethods;
+ClassInfoGetters;
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Constructor:     GAScripted
@@ -159,14 +157,14 @@ ClassInfoGetters
 //                  but only for a limited number of teams. If -1, not applicable.
 // Return value:    Whether the Scene has the right stuff.
 
-	bool SceneIsCompatible(Scene *pScene, short teams = -1) override;
+	bool SceneIsCompatible(Scene *pScene, int teams = -1) override;
 
 
     /// <summary>
-    /// Indicates an Actor as having left the game scene and entered orbit.  OWNERSHIP IS NOT transferred, as the Actor's inventory is just 'unloaded'.
+	/// Handles when an ACraft has left the game scene and entered orbit, though does not delete it. Ownership is NOT transferred, as the ACraft's inventory is just 'unloaded'.
     /// </summary>
-    /// <param name="orbitedCraft">The actor instance that entered orbit. Ownership IS NOT TRANSFERRED!</param>
-	void EnteredOrbit(Actor *orbitedCraft) override;
+    /// <param name="orbitedCraft">The ACraft instance that entered orbit. Ownership is NOT transferred!</param>
+	void HandleCraftEnteringOrbit(ACraft *orbitedCraft) override;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -219,13 +217,6 @@ ClassInfoGetters
 // Return value:    None.
 
 	void UpdateGlobalScripts(bool lateUpdate);
-
-
-    /// <summary>
-    /// Calls this to be processed by derived classes to enable pie-menu dynamic change.
-    /// </summary>
-    /// <param name="pieMenuActor">The actor which triggered the pie menu event.</param>
-	void OnPieMenu(Actor *pieMenuActor) override;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -290,6 +281,7 @@ protected:
     std::string m_LuaClassName;
     // The list of Area:s required in a Scene to play this Activity on it
     std::set<std::string> m_RequiredAreas;
+	std::vector<std::unique_ptr<PieSlice>> m_PieSlicesToAdd; //!< A vector of PieSlices that should be added to any PieMenus opened while this GAScripted is running.
     // The list of global scripts allowed to run during this activity
     std::vector<GlobalScript *> m_GlobalScriptsList;
 
@@ -299,6 +291,10 @@ protected:
 
 private:
 
+	/// <summary>
+	/// Adds this GAScripted's PieSlices, and any active GlobalScripts' PieSlices, to any active PieMenus.
+	/// </summary>
+	void AddPieSlicesToActiveActorPieMenus();
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          Clear

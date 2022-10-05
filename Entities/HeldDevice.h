@@ -16,7 +16,6 @@
 
 #include "Attachable.h"
 #include "Actor.h"
-#include "PieMenuGUI.h"
 
 namespace RTE
 {
@@ -37,9 +36,7 @@ enum HeldDeviceType
 // Class history:   06/2/2002 HeldDevice created.
 //                  01/31/2007 Made concrete so Shields can be jsut HeldDevice:s
 
-class HeldDevice:
-    public Attachable
-{
+class HeldDevice : public Attachable {
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -49,9 +46,9 @@ public:
 
 
 // Concrete allocation and cloning definitions
-EntityAllocation(HeldDevice)
-SerializableOverrideMethods
-ClassInfoGetters
+EntityAllocation(HeldDevice);
+SerializableOverrideMethods;
+ClassInfoGetters;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -252,6 +249,13 @@ ClassInfoGetters
     void SetSharpLength(float newLength) { m_MaxSharpLength = newLength; }
 
 
+	/// <summary>
+	/// Gets whether this HeldDevice is currently supported by a second hand.
+	/// </summary>
+	/// <returns>Whether the device is supported or not.</returns>
+	bool GetSupported() const { return m_Supported; }
+
+
 //////////////////////////////////////////////////////////////////////////////////////////
 // Virtual method:  SetSupported
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -402,7 +406,7 @@ ClassInfoGetters
 // Arguments:       None.
 // Return value:    One handed device or not.
 
-    bool IsOneHanded() { return m_OneHanded; }
+    bool IsOneHanded() const { return m_OneHanded; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -414,17 +418,6 @@ ClassInfoGetters
 // Return value:    None.
 
     void SetOneHanded(bool newValue) { m_OneHanded = newValue; }
-	
-	
-	
-//////////////////////////////////////////////////////////////////////////////////////////
-// Method:  AddPieMenuSlices
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Adds all slices this needs on a pie menu.
-// Arguments:       The pie menu to add slices to. Ownership is NOT transferred!
-// Return value:    Whether any slices were added.
-
-   bool AddPieMenuSlices(PieMenuGUI *pPieMenu);
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -522,7 +515,13 @@ ClassInfoGetters
 // Arguments:       None.
 // Return value:    Whetehr magazine is full or not.
 
-    virtual bool IsFull() { return false; }
+	virtual bool IsFull() const { return true; }
+
+	/// <summary>
+	/// Tells whether this HeldDevice is currently empty of ammo.
+	/// </summary>
+	/// <returns>Whether this HeldDevice is empty.</returns>
+	virtual bool IsEmpty() const { return false; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -628,15 +627,15 @@ protected:
     // If this HeldDevice is currently being supported by a second hand.
     bool m_Supported;
     bool m_IsUnPickupable; //!< Whether or not this HeldDevice should be able to be picked up at all.
+	//TODO: move this smelly thing elsewhere
+	std::array<bool, Players::MaxPlayerCount> m_SeenByPlayer; //!< An array of players that can currently see the pickup HUD of this HeldDevice.
     std::unordered_set<std::string> m_PickupableByPresetNames; //!< The unordered set of PresetNames that can pick up this HeldDevice if it's dropped. An empty set means there are no PresetName limitations.
     float m_GripStrengthMultiplier; //!< The multiplier for how well this HeldDevice can be gripped by Arms.
     // Blink timer for the icon
     Timer m_BlinkTimer;
-    // Extra pie menu options that this should add to any actor who holds this device
-    std::list<PieMenuGUI::Slice> m_PieSlices;
     // How loud this device is when activated. 0 means perfectly quiet 0.5 means half of normal (normal equals audiable from ~half a screen)
     float m_Loudness;
-    // If this weapon belongs to the "Explosive Weapons" grroup or not
+    // If this weapon belongs to the "Explosive Weapons" group or not
     bool m_IsExplosiveWeapon;
 
 
