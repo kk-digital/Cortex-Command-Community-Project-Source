@@ -14,7 +14,15 @@ namespace RTE {
 	std::array<std::unordered_map<std::string, BITMAP *>, ContentFile::BitDepths::BitDepthCount> ContentFile::s_LoadedBitmaps;
 	std::unordered_map<std::string, FMOD::Sound *> ContentFile::s_LoadedSamples;
 	std::unordered_map<size_t, std::string> ContentFile::s_PathHashes;
+	std::vector<GLTextureInfo> ContentFile::s_GLTextures;
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	GLTextureInfo::GLTextureInfo(GLuint textureID): m_TexturePtr(textureID) {}
+
+	GLTextureInfo::~GLTextureInfo() {
+		glDeleteTextures(1, &m_TexturePtr);
+		m_TexturePtr = 0;
+	}
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void ContentFile::Clear() {
@@ -25,7 +33,6 @@ namespace RTE {
 		m_DataPathAndReaderPosition.clear();
 		m_DataModuleID = 0;
 	}
-
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	int ContentFile::Create(const char *filePath) {
@@ -187,6 +194,17 @@ namespace RTE {
 		set_color_conversion((conversionMode == 0) ? COLORCONV_MOST : conversionMode);
 		returnBitmap = load_bitmap(dataPathToLoad.c_str(), currentPalette);
 		RTEAssert(returnBitmap, "Failed to load image file with following path and name:\n\n" + m_DataPathAndReaderPosition + "\nThe file may be corrupt, incorrectly converted or saved with unsupported parameters.");
+
+		if(bitmap_color_depth(returnBitmap) == 32) {
+			GLuint glTexture;
+			glGenTextures(1, &glTexture);
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, glTexture);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, returnBitmap->w, returnBitmap->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, returnBitmap->line[0]);
+
+			s_GLTextures.emplace_back(glTexture);
+			returnBitmap->extra = static_cast<void*>(&(s_GLTextures.back()));
+		}
 
 		return returnBitmap;
 	}

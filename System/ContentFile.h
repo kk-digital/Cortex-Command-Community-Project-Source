@@ -8,6 +8,26 @@ struct BITMAP;
 
 namespace RTE {
 
+	///<summary>
+	/// Struct to pass around GL information in BITMAP->extra.
+	///</summary>
+	struct GLTextureInfo {
+		///<summary>
+		/// Creates a GLTextureInfo and adopts the texture pointer, OWNERSHIP IS TRANSFERRED.
+		///</summary>
+		///<param name="textureID">
+		/// The texture pointer to adopt.
+		///</param>
+		GLTextureInfo(GLuint textureID);
+
+		///<summary>
+		/// Destroy the GLTextureInfo and the associated texture. This invalidates the texture pointer.
+		///</summary>
+		~GLTextureInfo();
+
+		GLuint m_TexturePtr; //!< The GL texture pointer.
+	};
+
 	/// <summary>
 	/// A representation of a content file that is stored directly on disk.
 	/// </summary>
@@ -154,6 +174,7 @@ namespace RTE {
 
 		static std::unordered_map<size_t, std::string> s_PathHashes; //!< Static map containing the hash values of paths of all loaded data files.
 		static std::array<std::unordered_map<std::string, BITMAP *>, BitDepths::BitDepthCount> s_LoadedBitmaps; //!< Static map containing all the already loaded BITMAPs and their paths for each bit depth.
+		static std::vector<GLTextureInfo> s_GLTextures; //<! Static map containing all OpenGL texture information.
 		static std::unordered_map<std::string, FMOD::Sound *> s_LoadedSamples; //!< Static map containing all the already loaded FSOUND_SAMPLEs and their paths.
 
 		std::string m_DataPath; //!< The path to this ContentFile's data file. In the case of an animation, this filename/name will be appended with 000, 001, 002 etc.
