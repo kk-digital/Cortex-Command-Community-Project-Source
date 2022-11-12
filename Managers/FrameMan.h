@@ -19,7 +19,7 @@ namespace RTE {
 	class AllegroScreen;
 	class AllegroBitmap;
 	class GUIFont;
-	class ScreenShader;
+	class Shader;
 
 	struct SdlWindowDeleter {
 		void operator()(SDL_Window *window);
@@ -210,6 +210,16 @@ namespace RTE {
 		/// The new verticla resolution.
 		/// </param>
 		void WindowResizedCallback(int newResX, int newResY);
+
+
+		///TODO: TEMP begin
+
+		Shader *GetDefaultShader() { return m_ScreenShader.get(); }
+		GLuint GetDefaultQuadArray() { return m_ScreenVAO; }
+		GLuint GetPostprocessFBO() { return m_Framebuffers[0]; }
+
+		/// TODO: TEMP end
+
 #pragma endregion
 
 #pragma region Split-Screen Handling
@@ -592,9 +602,12 @@ namespace RTE {
 		std::vector<std::unique_ptr<SDL_Window, SdlWindowDeleter>> m_MultiWindows; //!< Additional windows for multi display fullscreen.
 		std::vector<glm::mat4> m_WindowView; //!< The projection matrices for each window. Index 0 should always be the main window.
 		std::vector<glm::mat4> m_WindowTransforms; //!< The UV transforms for each window. Index 0 should always be the main window.
+		std::vector<GLuint> m_Framebuffers; //!< Store all generated framebuffers.
+		std::vector<GLuint> m_FramebufferColor;
+		std::vector<GLuint> m_FramebufferDepth;
 		std::unique_ptr<void, SdlContextDeleter> m_GLContext; //!< Opaque GL context pointer.
 		GLuint m_ScreenTexture; //!< GL pointer to the screen texture.
-		std::unique_ptr<ScreenShader> m_ScreenShader; //!< The copy shader to bring the backbuffer to the screen.
+		std::unique_ptr<Shader> m_ScreenShader; //!< The copy shader to bring the backbuffer to the screen.
 		GLuint m_ScreenVBO; //!< The vertex buffer object that stores the vertices.
 		GLuint m_ScreenVAO; //!< The array buffer that defines the vertex array for gl to draw.
 		std::vector<float> m_ScreenVertices; //!< Simple triangle strip quad.

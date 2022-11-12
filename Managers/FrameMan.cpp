@@ -16,7 +16,7 @@
 #include "AllegroScreen.h"
 
 #include <SDL2/SDL.h>
-#include "ScreenShader.h"
+#include "Shader.h"
 
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtx/matrix_query.hpp"
@@ -123,6 +123,10 @@ namespace RTE {
 		m_TempBackBuffer32 = nullptr;
 		m_TempOverlayBitmap32 = nullptr;
 		m_TempPlayerScreen = nullptr;
+
+		if(!m_Framebuffers.empty()) {
+			glDeleteFramebuffers(m_Framebuffers.size(), m_Framebuffers.data());
+		}
 
 		for (int screenCount = 0; screenCount < c_MaxScreenCount; ++screenCount) {
 			m_ScreenText[screenCount].clear();
@@ -353,7 +357,8 @@ namespace RTE {
 
 		SDL_GL_SetSwapInterval(0);
 
-		m_ScreenShader = std::make_unique<ScreenShader>();
+		m_ScreenShader = std::make_unique<Shader>("Base.rte/Shaders/Base.vert", "Base.rte/Shaders/Rgba32Base.frag");
+
 		glGenTextures(1, &m_ScreenTexture);
 		glBindTexture(GL_TEXTURE_2D, m_ScreenTexture);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -372,6 +377,15 @@ namespace RTE {
 		glEnableVertexAttribArray(0);
 		glEnableVertexAttribArray(1);
 		glBindVertexArray(0);
+
+		GLuint postprocessFBO;
+		glGenFramebuffers(1, &postprocessFBO);
+		m_Framebuffers.push_back(postprocessFBO);
+		m_FramebufferColor.resize(1);
+		m_FramebufferDepth.resize(1);
+		glGenTextures(1, m_FramebufferColor.data());
+		glGenTextures(1, m_FramebufferDepth.data());
+
 		SetInitialGraphicsDriver();
 		set_color_depth(m_BPP);
 
@@ -460,6 +474,19 @@ namespace RTE {
 		}
 
 		m_ScreenDumpBuffer = create_bitmap_ex(24, m_BackBuffer32->w, m_BackBuffer32->h);
+
+		for (size_t i= 0; i < m_Framebuffers.size(); ++i) {
+			glBindFramebuffer(GL_FRAMEBUFFER, m_Framebuffers[i]);
+			glBindTexture(GL_TEXTURE_2D, m_FramebufferColor[i]);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m_ResX, m_ResY, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+			glBindTexture(GL_TEXTURE_2D, m_FramebufferDepth[i]);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m_ResX, m_ResY, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_FramebufferColor[i], 0);
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_FramebufferDepth[i], 0);
+			glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+			glBindTexture(GL_TEXTURE_2D, 0);
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		}
 
 		return 0;
 	}
@@ -581,7 +608,6 @@ namespace RTE {
 		delete m_LargeFont;
 		delete m_SmallFont;
 
-		m_ScreenShader->Destroy();
 		glDeleteTextures(1, &m_ScreenTexture);
 		glDeleteVertexArrays(1, &m_ScreenVAO);
 		glDeleteBuffers(1, &m_ScreenVBO);
