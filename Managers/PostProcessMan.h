@@ -5,9 +5,13 @@
 #include "Box.h"
 #include "SceneMan.h"
 
+#include "glm/glm.hpp"
+
 #define g_PostProcessMan PostProcessMan::Instance()
 
 namespace RTE {
+
+	class Shader;
 
 	/// <summary>
 	/// Structure for storing a post-process screen effect to be applied at the last stage of 32bpp rendering.
@@ -36,7 +40,7 @@ namespace RTE {
 		/// <summary>
 		/// Constructor method used to instantiate a PostProcessMan object in system memory. Create() should be called before using the object.
 		/// </summary>
-		PostProcessMan() { Clear(); }
+		PostProcessMan();
 
 		/// <summary>
 		/// Makes the PostProcessMan object ready for use.
@@ -49,7 +53,7 @@ namespace RTE {
 		/// <summary>
 		/// Destructor method used to clean up a PostProcessMan object before deletion from system memory.
 		/// </summary>
-		~PostProcessMan() { Destroy(); }
+		~PostProcessMan();
 
 		/// <summary>
 		/// Destroys and resets (through Clear()) the PostProcessMan object.
@@ -199,6 +203,8 @@ namespace RTE {
 		size_t m_BlueGlowHash; //!< Hash value for the blue dot glow effect bitmap.
 
 		std::unordered_map<int, BITMAP *> m_TempEffectBitmaps; //!< Stores temporary bitmaps to rotate post effects in for quick access.
+
+		std::unique_ptr<Shader> m_PostProcessShader;
 
 	private:
 

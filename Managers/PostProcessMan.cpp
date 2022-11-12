@@ -4,9 +4,19 @@
 #include "ContentFile.h"
 #include "Matrix.h"
 
+#include "glm/gtc/matrix_transform.hpp"
+#include "glm/gtc/type_ptr.hpp"
+#include "BlendMode.h"
+#include "Shader.h"
+
+
 namespace RTE {
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	PostProcessMan::PostProcessMan() { Clear(); }
+
+	PostProcessMan::~PostProcessMan() { Destroy(); }
+
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void PostProcessMan::Clear() {
 		m_PostScreenEffects.clear();
@@ -36,6 +46,8 @@ namespace RTE {
 		glowFile.SetDataPath("Base.rte/Effects/Glows/BlueTiny.png");
 		m_BlueGlow = glowFile.GetAsBitmap();
 		m_BlueGlowHash = glowFile.GetHash();
+
+		m_PostProcessShader = std::make_unique<Shader>("Base.rte/Shaders/PostProcessInstanced.vert", "Base.rte/Shaders/Rgba32Base.frag");
 
 		// Create temporary bitmaps to rotate post effects in.
 		m_TempEffectBitmaps = {
@@ -303,6 +315,7 @@ namespace RTE {
 		int endX = 0;
 		int endY = 0;
 		int testpixel = 0;
+		std::vector<glm::mat4> positionsYellow;
 
 		// Randomly sample the entire backbuffer, looking for pixels to put a glow on.
 		// NOTE THIS IS SLOW, especially on higher resolutions!
@@ -329,7 +342,7 @@ namespace RTE {
 
 					// YELLOW
 					if ((testpixel == g_YellowGlowColor && RandomNum() < 0.9F) || testpixel == 98 || (testpixel == 120 && RandomNum() < 0.7F)) {
-						draw_trans_sprite(g_FrameMan.GetBackBuffer32(), m_YellowGlow, x - 2, y - 2);
+						positionsYellow.push_back(glm::translate<float>(glm::mat4(1.0f), {x - 2, y - 2, 0.0f}));
 					}
 					// TODO: Enable and add more colors once we actually have something that needs these.
 					// RED
@@ -344,6 +357,21 @@ namespace RTE {
 					*/
 				}
 			}
+
+			m_PostProcessShader->Use();
+			glBindFramebuffer(GL_FRAMEBUFFER, g_FrameMan.GetPostprocessFBO());
+			BlendModes::Screen.Enable();
+			glBindVertexArray(g_FrameMan.GetDefaultQuadArray());
+
+			glm::mat4 proj = glm::ortho(0,g_FrameMan.GetResX(), 0, g_FrameMan.GetResY(), -1, 1);
+			m_PostProcessShader->SetMatrix4f(m_PostProcessShader->GetProjectionUniform(), proj);
+
+			for(size_t instance = 0; instance < positionsYellow.size(); instance+=256) {
+				m_PostProcessShader->SetNMatrix(m_PostProcessShader->GetTransformUniform(),std::abs(static_cast<int>(positionsYellow.size() - instance)), glm::value_ptr(positionsYellow[instance]));
+				glDrawArraysInstanced(GL_TRIANGLE_STRIP, instance, 4, std::min<int>(256, std::abs(static_cast<int>(positionsYellow.size() - instance))));
+			}
+			glBindVertexArray(0);
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		}
 	}
 
@@ -355,6 +383,9 @@ namespace RTE {
 		int effectPosY = 0;
 		int effectStrength = 0;
 
+		std::vector<GLuint> textures;
+		std::vector<std::vector<glm::mat4>> positions;
+
 		for (const PostEffect &postEffect : m_PostScreenEffects) {
 			if (postEffect.m_Bitmap) {
 				effectBitmap = postEffect.m_Bitmap;
@@ -362,6 +393,9 @@ namespace RTE {
 				effectPosX = postEffect.m_Pos.GetFloorIntX() - (effectBitmap->w / 2);
 				effectPosY = postEffect.m_Pos.GetFloorIntY() - (effectBitmap->h / 2);
 				set_screen_blender(effectStrength, effectStrength, effectStrength, effectStrength);
+				BlendModes::Screen.Enable();
+
+				RTEAssert(bitmap_color_depth(effectBitmap) == 32, "Screen Effect not 32-bit color compatible!");
 
 				// Draw all the scene screen effects accumulated this frame
 				if (postEffect.m_Angle == 0) {
