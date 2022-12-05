@@ -1,0 +1,113 @@
+name: Build
+# Controls when the action will run.
+on:
+  # Triggers the workflow on push to the development or master branches
+  push:
+    branches: [master, development]
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build-release-linux:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-20.04
+    name: Linux Release Build
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update -yq
+          sudo apt-get install --no-install-recommends wget liballegro4-dev libloadpng4-dev libflac++-dev luajit-5.1-dev liblua5.2-dev libminizip-dev liblz4-dev libpng++-dev libx11-dev libboost-dev
+
+      - name: Install Clang
+        # You may pin to the exact commit or the version.
+        # uses: egor-tensin/setup-clang@d16e36d5f8a7eb00aa6627c1a536d94dfc4a913d
+        uses: egor-tensin/setup-clang@v1
+        with:
+          # Set up cc/c++ executables
+          cc: 1 # optional, default is 1
+
+      - name: Setup ccache
+        uses: hendrikmuhs/ccache-action@v1
+        with:
+          key: build-release-${{runner.os}}
+          max-size: 5G
+
+      - name: Build
+        # You may pin to the exact commit or the version.
+        # uses: BSFishy/meson-build@6f1930d878fd3eed3853c1c91285ec604c37f3a5
+        uses: BSFishy/meson-build@v1.0.3
+        env:
+          CC: "clang"
+          CXX: "clang++"
+          CCACHE_SLOPPINESS: pch_defines,time_macros,include_file_mtime,include_file_ctime
+        with:
+          # The action to run
+          setup-options: --buildtype=release -Dinstall_data=false -Dinstall_runner=false -Dfmod_dir=/usr/lib/ --prefix=/usr/
+          meson-version: 0.60.0
+          ninja-version: 1.10.2
+          action: build
+
+      - name: Create AppDir
+        run: |
+          echo "Setting output prefix"
+          DESTDIR=${GITHUB_WORKSPACE}/build/AppDir meson install -C $GITHUB_WORKSPACE"/build"
+
+      - name: Download linuxdeploy
+        working-directory: ${{env.GITHUB_WORKSPACE}}
+        run: |
+          wget https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage -O lindeploy
+          chmod +x lindeploy
+
+      - name: Create AppImage
+        working-directory: ${{env.GITHUB_WORKSPACE}}
+        env:
+          LD_LIBRARY_PATH: ./external/lib/linux/x86_64/
+          OUTPUT: CortexCommand.AppImage
+        run: |
+          echo ${LD_LIBRARY_PATH}
+          ./lindeploy --appdir=build/AppDir --output appimage
+
+      - name: Upload Appimage
+        uses: actions/upload-artifact@v2
+        with:
+          name: CortexCommand.AppImage
+          path: CortexCommand.AppImage
+
+  build-release-windows:
+    env:
+      # Path to the solution file relative to the root of the project.
+      SOLUTION_FILE_PATH: RTEA.sln
+
+      # Configuration type to build.
+      # You can convert this to a build matrix if you need coverage of multiple configuration types.
+      # https://docs.github.com/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
+      BUILD_CONFIGURATION: "Final"
+
+    runs-on: windows-latest
+    name: Windows Release Build
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Add MSBuild to PATH
+        uses: microsoft/setup-msbuild@v1
+
+      - name: Build
+        working-directory: ${{env.GITHUB_WORKSPACE}}
+        # Add additional options to the MSBuild command line here (like platform or verbosity level).
+        # See https://docs.microsoft.com/visualstudio/msbuild/msbuild-command-line-reference
+        run: msbuild /m /p:Configuration="${{env.BUILD_CONFIGURATION}}" ${{env.SOLUTION_FILE_PATH}}
+
+      - name: Upload Artifact2
+        uses: actions/upload-artifact@v2.2.2
+        with:
+          name: Cortex Command.exe
+          path: D:/a/Cortex-Command-Community-Project-Source/Cortex-Command-Community-Project-Data/Cortex Command x64.exe
+          if-no-files-found: warn
