@@ -68,7 +68,7 @@ jobs:
       ########
 
       - name: Set Version
-        run: echo "version"
+        run: sed -i 's/(c_GameVersion = ")([^"]*)(";)/$1${{${{needs.get-version.outputs.new-release-version}}}}$3/g' ${{env.GITHUB_WORKSPACE}}/System/Constants.h
 
       ########
 
@@ -137,7 +137,7 @@ jobs:
       ########
 
       - name: Set Version
-        run: echo "version"
+        run: sed -i 's/(c_GameVersion = ")([^"]*)(";)/$1${{${{needs.get-version.outputs.new-release-version}}}}$3/g' ${{env.GITHUB_WORKSPACE}}/System/Constants.h
 
       ########
 
@@ -181,7 +181,7 @@ jobs:
       ########
 
       - name: Set Version
-        run: echo "version"
+        run: sed -i 's/(c_GameVersion = ")([^"]*)(";)/$1${{${{needs.get-version.outputs.new-release-version}}}}$3/g' ${{env.GITHUB_WORKSPACE}}/System/Constants.h
 
       ########
 
