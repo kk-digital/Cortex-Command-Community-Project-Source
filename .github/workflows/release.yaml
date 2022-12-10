@@ -173,10 +173,14 @@ jobs:
       - name: Install Node Dependencies
         run: npm install -g --save-dev semantic-release @semantic-release/git semantic-release-export-data
 
+      - run: mkdir release
+
       - name: Download build artefacts
         uses: actions/download-artifact@v3
+        with:
+          path: release
 
-      - run: ls -R
+      - run: ls -R release
 
       ########
 
