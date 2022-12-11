@@ -34,7 +34,6 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 16
-          cache: "npm"
 
       - name: Install Node Dependencies
         run: npm install -g --save-dev semantic-release@${{env.SEMANTIC_RELEASE_CORE_VERSION}} @semantic-release/git@${{env.SEMANTIC_RELEASE_GIT_VERSION}} semantic-release-export-data@${{env.SEMANTIC_RELEASE_EXPORT_VERSION}}
@@ -180,7 +179,6 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 16
-          cache: "npm"
 
       - name: Install Node Dependencies
         run: npm install -g --save-dev semantic-release@${{env.SEMANTIC_RELEASE_CORE_VERSION}} @semantic-release/git@${{env.SEMANTIC_RELEASE_GIT_VERSION}} semantic-release-export-data@${{env.SEMANTIC_RELEASE_EXPORT_VERSION}}
