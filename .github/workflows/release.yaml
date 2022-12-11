@@ -12,6 +12,8 @@ concurrency:
 
 #trigger new dev release again
 env:
+  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   SEMANTIC_RELEASE_CORE_VERSION: 19
   SEMANTIC_RELEASE_EXPORT_VERSION: 1
   SEMANTIC_RELEASE_GIT_VERSION: 10
