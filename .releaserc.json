@@ -3,7 +3,7 @@
         "master",
         {
             "name": "development",
-            "prerelease": true
+            "prerelease": "pre"
         }
     ],
     "repositoryUrl": "https://github.com/cortex-command-community/Cortex-Command-Community-Project-Source",
@@ -27,7 +27,12 @@
                     {
                         "path": "release/**"
                     }
-                ]
+                ],
+                "successComment": false,
+                "failComment": false,
+                "failTitle": false,
+                "releasedLabels": false,
+                "labels": false
             }
         ]
     ]
