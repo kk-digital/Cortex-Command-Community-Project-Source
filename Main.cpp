@@ -282,8 +282,6 @@ namespace RTE {
 						}
 					}
 				}
-
-				g_UInputMan.UpdateSim();
 			}
 		});
 
