@@ -2749,7 +2749,7 @@ void SceneMan::Update(int screenId) {
 	SLTerrain *terrain = m_pCurrentScene->GetTerrain();
 
     const Vector& offset = g_CameraMan.GetOffset(screenId);
-	m_pMOColorLayer->SetOffset(offset);
+	m_pMOColorLayerBack->SetOffset(offset);
 	m_pMOIDLayer->SetOffset(offset);
 	if (m_pDebugLayer) { 
         m_pDebugLayer->SetOffset(offset);
