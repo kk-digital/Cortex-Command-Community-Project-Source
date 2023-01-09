@@ -1893,14 +1893,6 @@ void MovableMan::Update()
 		}
 	}
 
-    if (g_TimerMan.DrawnSimUpdate()) {
-        g_SceneMan.ClearMOColorLayer();
-        Draw(g_SceneMan.GetMOColorBitmap());
-
-        // Swap so the render thread starts rendering with this one instead
-        g_SceneMan.SwapMOColorBitmap();
-    }
-
     // Sort team rosters if necessary
     {
         if (m_SortTeamRoster[Activity::TeamOne])
