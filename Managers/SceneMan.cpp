@@ -2733,7 +2733,7 @@ bool SceneMan::AddSceneObject(SceneObject *sceneObject) {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void SceneMan::Update(int screenId) {
-	if (!m_pCurrentScene) {
+    if (g_FrameMan.GetDrawableGameState().m_Scene == nullptr) {
 		return;
 	}
 
@@ -2741,12 +2741,15 @@ void SceneMan::Update(int screenId) {
 
 	// Update the scene, only if doing the first screen, since it only needs done once per update.
 	if (screenId == 0) { 
-        m_pCurrentScene->Update(); 
+        g_FrameMan.GetDrawableGameState().m_Scene->Update(); 
     }
 
     g_CameraMan.Update(screenId);
 
-	SLTerrain *terrain = m_pCurrentScene->GetTerrain();
+	SLTerrain *terrain = g_FrameMan.GetDrawableGameState().m_Scene->GetTerrain();
+    if (!terrain) {
+        return;
+    }
 
     const Vector& offset = g_CameraMan.GetOffset(screenId);
 	m_pMOColorLayerBack->SetOffset(offset);
@@ -2780,10 +2783,11 @@ void SceneMan::Update(int screenId) {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void SceneMan::Draw(BITMAP *targetBitmap, BITMAP *targetGUIBitmap, const Vector &targetPos, bool skipBackgroundLayers, bool skipTerrain) {
-	if (!m_pCurrentScene) {
-		return;
-	}
-	SLTerrain *terrain = m_pCurrentScene->GetTerrain();
+	SLTerrain *terrain = g_FrameMan.GetDrawableGameState().m_Scene->GetTerrain();
+    if (!terrain) {
+        return;
+    }
+
 	// Set up the target box to draw to on the target bitmap, if it is larger than the scene in either dimension.
 	Box targetBox(Vector(), static_cast<float>(targetBitmap->w), static_cast<float>(targetBitmap->h));
 
@@ -2829,7 +2833,7 @@ void SceneMan::Draw(BITMAP *targetBitmap, BITMAP *targetGUIBitmap, const Vector 
 
 			g_MovableMan.DrawHUD(targetGUIBitmap, targetPos, m_LastUpdatedScreen);
 			g_PrimitiveMan.DrawPrimitives(m_LastUpdatedScreen, targetGUIBitmap, targetPos);
-			g_ActivityMan.GetActivity()->DrawGUI(targetGUIBitmap, targetPos, m_LastUpdatedScreen);
+			g_FrameMan.GetDrawableGameState().m_Activity->DrawGUI(targetGUIBitmap, targetPos, m_LastUpdatedScreen);
 
 			if (m_pDebugLayer) { 
                 m_pDebugLayer->Draw(targetBitmap, targetBox); 

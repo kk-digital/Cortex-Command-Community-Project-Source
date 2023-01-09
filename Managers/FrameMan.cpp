@@ -124,6 +124,10 @@ namespace RTE {
 		m_SmallFont = nullptr;
 		m_TextBlinkTimer.Reset();
 
+		m_GameState.reset();
+		m_GameStateBack.reset();
+		m_NewSimFrame = false;
+
 		m_TempBackBuffer8 = nullptr;
 		m_TempBackBuffer32 = nullptr;
 		m_TempOverlayBitmap32 = nullptr;
@@ -373,6 +377,9 @@ namespace RTE {
 		create_trans_table(&m_MoreTransTable, ccPalette, 64, 64, 64, nullptr);
 		// Set the one Allegro currently uses
 		color_map = &m_HalfTransTable;
+
+		m_GameState.reset(new RenderableGameState());
+		m_GameStateBack.reset(new RenderableGameState());
 
 		CreateBackBuffers();
 		ClearFrame();
@@ -1035,6 +1042,20 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    void FrameMan::NewSimFrameToDraw()
+    {
+		std::lock_guard<std::mutex> lock(m_GameStateCopyMutex);
+
+		// Copy game state into our current buffer
+		m_GameState->m_Activity.reset(dynamic_cast<Activity*>(g_ActivityMan.GetActivity()->Clone()));
+		m_GameState->m_Scene.reset(dynamic_cast<Scene*>(g_SceneMan.GetScene()->Clone()));
+
+		// Mark that we have a new sim frame, so we can swap rendered game state at the start of the new render
+		m_NewSimFrame = true;
+    }
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 	int FrameMan::SaveBitmap(SaveBitmapMode modeToSave, const char *nameBase, BITMAP *bitmapToSave) {
 		if ((modeToSave == WorldDump || modeToSave == ScenePreviewDump) && !g_ActivityMan.ActivityRunning()) {
 			return 0;
@@ -1296,6 +1317,13 @@ namespace RTE {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void FrameMan::Draw() {
+		bool hadNewSimFrame = m_NewSimFrame;
+		if (m_NewSimFrame) {
+			std::lock_guard<std::mutex> lock(m_GameStateCopyMutex);
+			std::swap(m_GameState, m_GameStateBack);
+			m_NewSimFrame = false;
+		}
+
 		// Count how many split screens we'll need
 		int screenCount = (m_HSplit ? 2 : 1) * (m_VSplit ? 2 : 1);
 		RTEAssert(screenCount <= 1 || m_PlayerScreen, "Splitscreen surface not ready when needed!");
@@ -1306,7 +1334,7 @@ namespace RTE {
 		std::list<PostEffect> screenRelativeEffects;
 		std::list<Box> screenRelativeGlowBoxes;
 
-		const Activity *pActivity = g_ActivityMan.GetActivity();
+		const Activity *pActivity = GetDrawableGameState().m_Activity.get();
 
 		for (int playerScreen = 0; playerScreen < screenCount; ++playerScreen) {
 			screenRelativeEffects.clear();
@@ -1416,7 +1444,7 @@ namespace RTE {
 			}
 		}
 
-		if (IsInMultiplayerMode()) { PrepareFrameForNetwork(); }
+		if (IsInMultiplayerMode() && hadNewSimFrame) { PrepareFrameForNetwork(); }
 
 		if (g_ActivityMan.IsInActivity()) { g_PostProcessMan.PostProcess(); }
 

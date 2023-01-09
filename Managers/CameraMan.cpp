@@ -44,7 +44,11 @@ namespace RTE {
 
     void CameraMan::Update(int screenId) {
         Screen& screen = m_Screens[screenId];
-        const SLTerrain* terrain = g_SceneMan.GetScene()->GetTerrain();
+
+        const SLTerrain* terrain = g_FrameMan.GetDrawableGameState().m_Scene->GetTerrain();
+        if (!terrain) {
+            return;
+        }
 
         const float screenShakeDecay = g_SettingsMan.GetScreenShakeDecay();
 
@@ -120,7 +124,7 @@ namespace RTE {
 
     Vector CameraMan::GetUnwrappedOffset(int screenId) const {
         const Screen& screen = m_Screens[screenId];
-        const SLTerrain* pTerrain = g_SceneMan.GetScene()->GetTerrain();
+        const SLTerrain* pTerrain = g_FrameMan.GetDrawableGameState().m_Scene->GetTerrain();
         return Vector(screen.m_Offset.GetX() + static_cast<float>(pTerrain->GetBitmap()->w * screen.m_SeamCrossCount[X]),
             screen.m_Offset.GetY() + static_cast<float>(pTerrain->GetBitmap()->h * screen.m_SeamCrossCount[Y]));
     }
@@ -216,12 +220,10 @@ namespace RTE {
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     void CameraMan::CheckOffset(int screenId) {
-        RTEAssert(g_SceneMan.GetScene(), "Trying to check offset before there is a scene or terrain!");
-
         Screen& screen = m_Screens[screenId];
 
         // Handy
-        const SLTerrain* pTerrain = g_SceneMan.GetScene()->GetTerrain();
+        const SLTerrain* pTerrain = g_FrameMan.GetDrawableGameState().m_Scene->GetTerrain();
         RTEAssert(pTerrain, "Trying to get terrain matter before there is a scene or terrain!");
 
         if (!pTerrain->WrapsX() && screen.m_Offset.m_X < 0) {
