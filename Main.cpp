@@ -214,6 +214,8 @@ namespace RTE {
 					g_PerformanceMan.UpdateMSPSU();
 					g_TimerMan.UpdateSim();
 
+					g_SceneMan.GetScene()->UpdateSim();
+
 					g_PerformanceMan.StartPerformanceMeasurement(PerformanceMan::SimTotal);
 
 					// It is vital that server is updated after input manager but before activity because input manager will clear received pressed and released events on next update.
@@ -280,20 +282,20 @@ namespace RTE {
 						}
 					}
 				}
+
+				g_UInputMan.UpdateSim();
 			}
 		});
+
 		simThread.detach();
 
 		while (!System::IsSetToQuit()) {
-			g_FrameMan.ClearFrame();
-
 			g_TimerMan.Update();
-			g_FrameMan.ClearFrame();
-			
 			g_UInputMan.Update();
 
 			long long drawStartTime = g_TimerMan.GetAbsoluteTime();
 
+			g_FrameMan.ClearFrame();
 			g_FrameMan.Draw();
 			g_FrameMan.FlipFrameBuffers();
 			g_FrameMan.SwapWindow();

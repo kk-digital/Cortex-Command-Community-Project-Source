@@ -3061,8 +3061,12 @@ void Scene::Unlock()
 // Description:     Updates the state of this Scene. Supposed to be done every frame
 //                  before drawing.
 
-void Scene::Update()
-{
+
+void Scene::Update() {
+
+}
+
+void Scene::UpdateSim() {
     m_PathfindingUpdated = false;
 
 	if (g_SettingsMan.BlipOnRevealUnseen())
@@ -3081,7 +3085,7 @@ void Scene::Update()
 	}
 
     // Occasionally update pathfinding. There's a tradeoff between how often updates occur vs how big the multithreaded batched node lists to update are.
-    if (m_PartialPathUpdateTimer.IsPastRealMS(100)) {
+    if (m_PartialPathUpdateTimer.IsPastSimMS(100)) {
         UpdatePathFinding();
     }
 }

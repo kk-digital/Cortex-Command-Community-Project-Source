@@ -690,9 +690,10 @@ namespace RTE {
 		}
 		m_TextInput.clear();
 		m_MouseWheelChange = 0;
-		m_RawMouseMovement.Reset();
 
 		SDL_Event e;
+
+		Vector mouseMovement(0.0F, 0.0F);
 
 		while (SDL_PollEvent(&e)) {
 			if (e.type == SDL_QUIT) {
@@ -714,7 +715,7 @@ namespace RTE {
 				}
 			}
 			if (e.type == SDL_MOUSEMOTION) {
-				m_RawMouseMovement += Vector(e.motion.xrel, e.motion.yrel);
+				mouseMovement += Vector(e.motion.xrel, e.motion.yrel);
 				m_AbsoluteMousePos.SetXY(e.motion.x, e.motion.y);
 				if (g_FrameMan.IsWindowFullscreen() && SDL_GetNumVideoDisplays() > 1) {
 					int x{0};
@@ -768,8 +769,8 @@ namespace RTE {
 				}
 			}
 			if (e.type == SDL_CONTROLLERBUTTONDOWN || e.type == SDL_CONTROLLERBUTTONUP || e.type == SDL_JOYBUTTONDOWN || e.type == SDL_JOYBUTTONUP) {
-				SDL_JoystickID id = e.type == SDL_CONTROLLERBUTTONDOWN || e.type == SDL_CONTROLLERBUTTONUP ? e.cbutton.which : e.jbutton.which;
-				std::vector<Gamepad>::iterator device = std::find(s_PrevJoystickStates.begin(), s_PrevJoystickStates.end(), id);
+                SDL_JoystickID id = e.type == SDL_CONTROLLERBUTTONDOWN || e.type == SDL_CONTROLLERBUTTONUP ? e.cbutton.which : e.jbutton.which;
+                std::vector<Gamepad>::iterator device = std::find(s_PrevJoystickStates.begin(), s_PrevJoystickStates.end(), id);
 				if (device != s_PrevJoystickStates.end()) {
 					int button = -1;
 					int state = -1;
@@ -811,14 +812,17 @@ namespace RTE {
 			}
 		}
 		// TODO: Add sensitivity slider to settings menu
-		m_RawMouseMovement *= m_MouseSensitivity;
+		mouseMovement *= m_MouseSensitivity;
+
 		m_FrameLostFocus = false;
 		// NETWORK SERVER: Apply mouse input received from client or collect mouse input
 		if (IsInMultiplayerMode()) {
 			UpdateNetworkMouseMovement();
 		} else {
-			m_NetworkAccumulatedRawMouseMovement[Players::PlayerOne] += m_RawMouseMovement;
+			m_NetworkAccumulatedRawMouseMovement[Players::PlayerOne] += mouseMovement;
 		}
+
+		m_RawMouseMovement = mouseMovement;
 		UpdateMouseInput();
 		HandleSpecialInput();
 		StoreInputEventsForNextUpdate();
