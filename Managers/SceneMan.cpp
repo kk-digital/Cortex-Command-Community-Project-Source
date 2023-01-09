@@ -70,7 +70,8 @@ void SceneMan::Clear()
     m_PlaceObjects = true;
 	m_PlaceUnits = true;
     m_pCurrentScene = 0;
-    m_pMOColorLayer = 0;
+    m_pMOColorLayer = nullptr;
+    m_pMOColorLayerBack = nullptr;
     m_pMOIDLayer = 0;
     m_MOIDsGrid = SpatialPartitionGrid();
     m_pDebugLayer = nullptr;
@@ -194,7 +195,11 @@ int SceneMan::LoadScene(Scene *pNewScene, bool placeObjects, bool placeUnits) {
     clear_to_color(pBitmap, g_MaskColor);
     m_pMOColorLayer = new SceneLayerTracked();
     m_pMOColorLayer->Create(pBitmap, true, Vector(), m_pCurrentScene->WrapsX(), m_pCurrentScene->WrapsY(), Vector(1.0, 1.0));
-    pBitmap = 0;
+    pBitmap = nullptr;
+
+    delete m_pMOColorLayerBack;
+    m_pMOColorLayerBack = new SceneLayerTracked();
+    m_pMOColorLayerBack->Create(*m_pMOColorLayer);
 
     // Re-create the MoveableObject:s ID SceneLayer
     delete m_pMOIDLayer;
@@ -202,7 +207,7 @@ int SceneMan::LoadScene(Scene *pNewScene, bool placeObjects, bool placeUnits) {
     clear_to_color(pBitmap, g_NoMOID);
     m_pMOIDLayer = new SceneLayerTracked();
     m_pMOIDLayer->Create(pBitmap, false, Vector(), m_pCurrentScene->WrapsX(), m_pCurrentScene->WrapsY(), Vector(1.0, 1.0));
-    pBitmap = 0;
+    pBitmap = nullptr;
 
     const int cellSize = 20;
     m_MOIDsGrid = SpatialPartitionGrid(GetSceneWidth(), GetSceneHeight(), cellSize);
@@ -363,6 +368,7 @@ void SceneMan::Destroy()
     delete m_pDebugLayer;
     delete m_pMOIDLayer;
     delete m_pMOColorLayer;
+    delete m_pMOColorLayerBack;
     delete m_pUnseenRevealSound;
 
 	destroy_bitmap(m_pOrphanSearchBitmap);
@@ -446,6 +452,18 @@ SLTerrain * SceneMan::GetTerrain()
 
 BITMAP * SceneMan::GetMOColorBitmap() const {
     return m_pMOColorLayer->GetBitmap();
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+BITMAP * SceneMan::GetMOColorBitmapBack() const {
+    return m_pMOColorLayerBack->GetBitmap();
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void SceneMan::SwapMOColorBitmap() {
+    std::swap(m_pMOColorLayer, m_pMOColorLayerBack);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2796,7 +2814,7 @@ void SceneMan::Draw(BITMAP *targetBitmap, BITMAP *targetGUIBitmap, const Vector 
 				terrain->SetLayerToDraw(SLTerrain::LayerType::BackgroundLayer);
 				terrain->Draw(targetBitmap, targetBox);
 			}
-			m_pMOColorLayer->Draw(targetBitmap, targetBox);
+			m_pMOColorLayerBack->Draw(targetBitmap, targetBox);
 
 			if (!skipTerrain) {
 				terrain->SetLayerToDraw(SLTerrain::LayerType::ForegroundLayer);

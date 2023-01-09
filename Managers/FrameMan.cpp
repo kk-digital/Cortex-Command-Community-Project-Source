@@ -1524,7 +1524,7 @@ namespace RTE {
 			Vector targetPos(0, 0);
 
 			// Draw objects
-			draw_sprite(m_WorldDumpBuffer, g_SceneMan.GetMOColorBitmap(), 0, 0);
+			draw_sprite(m_WorldDumpBuffer, g_SceneMan.GetMOColorBitmapBack(), 0, 0);
 
 			// Draw post-effects
 			g_PostProcessMan.GetPostScreenEffectsWrapped(targetPos, worldBitmapWidth, worldBitmapHeight, postEffectsList, -1);

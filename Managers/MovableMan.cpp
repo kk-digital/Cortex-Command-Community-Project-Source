@@ -1543,11 +1543,6 @@ void MovableMan::Update()
 
 	m_SimUpdateFrameNumber++;
 
-    // Clear the MO color layer only if this is a drawn update
-    if (g_TimerMan.DrawnSimUpdate()) {
-        g_SceneMan.ClearMOColorLayer();
-    }
-
     // If this is the first sim update since a drawn one, then clear the post effects
     if (g_TimerMan.SimUpdatesSinceDrawn() == 0) {
         g_PostProcessMan.ClearScenePostEffects();
@@ -1898,12 +1893,13 @@ void MovableMan::Update()
 		}
 	}
 
-
-    ////////////////////////////////////////////////////////////////////
-    // Draw the MO colors ONLY if this is a drawn update!
-
-    if (g_TimerMan.DrawnSimUpdate())
+    if (g_TimerMan.DrawnSimUpdate()) {
+        g_SceneMan.ClearMOColorLayer();
         Draw(g_SceneMan.GetMOColorBitmap());
+
+        // Swap so the render thread starts rendering with this one instead
+        g_SceneMan.SwapMOColorBitmap();
+    }
 
     // Sort team rosters if necessary
     {
