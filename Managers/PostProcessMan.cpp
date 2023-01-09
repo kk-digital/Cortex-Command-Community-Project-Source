@@ -284,8 +284,9 @@ namespace RTE {
 		//acquire_bitmap(m_BackBuffer8);
 		//acquire_bitmap(m_BackBuffer32);
 
-		DrawDotGlowEffects();
-		DrawPostScreenEffects();
+		// TODO_MULTITHREAD: add post processing effects to RenderableGameState
+		//DrawDotGlowEffects();
+		//DrawPostScreenEffects();
 
 		// Reference. Do not remove.
 		//release_bitmap(m_BackBuffer32);
@@ -294,7 +295,7 @@ namespace RTE {
 		//set_trans_blender(128, 128, 128, 128);
 
 		// Clear the effects list for this frame
-		m_PostScreenEffects.clear();
+		//m_PostScreenEffects.clear();
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
