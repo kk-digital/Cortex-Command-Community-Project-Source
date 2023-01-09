@@ -99,6 +99,8 @@ namespace RTE {
 
 		RTEAssert(timeIncrease > 0, "It seems your CPU is giving bad timing data to the game, this is known to happen on some multi-core processors. This may be fixed by downloading the latest CPU drivers from AMD or Intel.");
 
+		m_DrawDeltaTimeS = static_cast<float>(timeIncrease) / 1000.0F;
+
 		// If not paused, add the new time difference to the sim accumulator, scaling by the TimeScale.
 		if (!m_SimPaused) { m_SimAccumulator += static_cast<long long>(static_cast<float>(timeIncrease) * m_TimeScale); }
 
