@@ -609,12 +609,14 @@ namespace RTE {
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 	int UInputMan::GetJoystickAxisCount(int whichJoy) const {
 		if(whichJoy >= 0 && whichJoy < s_PrevJoystickStates.size()) {
 			return s_PrevJoystickStates[whichJoy].m_Axis.size();
 		}
 		return 0;
 	}
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	bool UInputMan::GetJoystickButtonState(int whichJoy, int whichButton, InputState whichState) const {
@@ -765,9 +767,9 @@ namespace RTE {
 						UpdateJoystickAxis(device, e.caxis.axis, e.caxis.value);
 					} else if (!SDL_IsGameController(device->m_DeviceIndex)) {
 						UpdateJoystickAxis(device, e.jaxis.axis, e.jaxis.value);
-					}
-				}
-			}
+                    }
+                }
+            }
 			if (e.type == SDL_CONTROLLERBUTTONDOWN || e.type == SDL_CONTROLLERBUTTONUP || e.type == SDL_JOYBUTTONDOWN || e.type == SDL_JOYBUTTONUP) {
                 SDL_JoystickID id = e.type == SDL_CONTROLLERBUTTONDOWN || e.type == SDL_CONTROLLERBUTTONUP ? e.cbutton.which : e.jbutton.which;
                 std::vector<Gamepad>::iterator device = std::find(s_PrevJoystickStates.begin(), s_PrevJoystickStates.end(), id);
