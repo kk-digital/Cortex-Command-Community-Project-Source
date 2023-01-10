@@ -16,6 +16,7 @@
 #include "SceneMan.h"
 #include "PresetMan.h"
 #include "FrameMan.h"
+#include "ThreadMan.h"
 #include "ActivityMan.h"
 #include "UInputMan.h"
 #include "CameraMan.h"
@@ -2733,7 +2734,7 @@ bool SceneMan::AddSceneObject(SceneObject *sceneObject) {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void SceneMan::Update(int screenId) {
-    SLTerrain *terrain = g_FrameMan.GetDrawableGameState().m_Terrain.get();
+    SLTerrain *terrain = g_ThreadMan.GetDrawableGameState().m_Terrain.get();
     if (!terrain) {
 		return;
 	}
@@ -2773,7 +2774,7 @@ void SceneMan::Update(int screenId) {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void SceneMan::Draw(BITMAP *targetBitmap, BITMAP *targetGUIBitmap, const Vector &targetPos, bool skipBackgroundLayers, bool skipTerrain) {
-	SLTerrain *terrain = g_FrameMan.GetDrawableGameState().m_Terrain.get();
+	SLTerrain *terrain = g_ThreadMan.GetDrawableGameState().m_Terrain.get();
     if (!terrain) {
         return;
     }
@@ -2824,7 +2825,7 @@ void SceneMan::Draw(BITMAP *targetBitmap, BITMAP *targetGUIBitmap, const Vector 
             // TODO_MULTITHREAD
 			g_MovableMan.DrawHUD(targetGUIBitmap, targetPos, m_LastUpdatedScreen);
 			g_PrimitiveMan.DrawPrimitives(m_LastUpdatedScreen, targetGUIBitmap, targetPos);
-			//g_FrameMan.GetDrawableGameState().m_Activity->DrawGUI(targetGUIBitmap, targetPos, m_LastUpdatedScreen);
+			//g_ThreadMan.GetDrawableGameState().m_Activity->DrawGUI(targetGUIBitmap, targetPos, m_LastUpdatedScreen);
 			g_ActivityMan.GetActivity()->DrawGUI(targetGUIBitmap, targetPos, m_LastUpdatedScreen);
 
 			if (m_pDebugLayer) { 
