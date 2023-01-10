@@ -272,8 +272,7 @@ namespace RTE {
 					}
 
 					if (g_TimerMan.DrawnSimUpdate()) {
-						// Copy over any information that we'll need for our draw
-						g_ThreadMan.NewSimFrameToDraw();
+						g_ThreadMan.TransferSimStateToRenderer();
 					}
 
 					long long updateEndTime = g_TimerMan.GetAbsoluteTime();
