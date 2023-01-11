@@ -14,6 +14,7 @@
 #include "MovableMan.h"
 #include "PostProcessMan.h"
 #include "PerformanceMan.h"
+#include "ThreadMan.h"
 #include "PresetMan.h"
 #include "AHuman.h"
 #include "MOPixel.h"
@@ -1697,8 +1698,9 @@ void MovableMan::Update()
     //////////////////////////////////////////////////////////////////////
     // TRANSFER ALL MOs ADDED THIS FRAME
     // All Actors, Items, and Particles added this frame now are officially added
-
     {
+        std::lock_guard<std::mutex> lock(g_ThreadMan.GetMODeletedMutex());
+
         // Actors
         for (aIt = m_AddedActors.begin(); aIt != m_AddedActors.end(); ++aIt)
         {
@@ -1737,12 +1739,10 @@ void MovableMan::Update()
                 delete (*parIt);
         }
         m_AddedParticles.clear();
-    }
 
-    ////////////////////////////////////////////////////////////////////////////
-    // Copy (Settle) Pass
+        ////////////////////////////////////////////////////////////////////////////
+        // Copy (Settle) Pass
 
-    {
         g_SceneMan.UnlockScene();
         acquire_bitmap(g_SceneMan.GetTerrain()->GetMaterialBitmap());
 
@@ -1838,34 +1838,34 @@ void MovableMan::Update()
         while (parIt != m_Particles.end())
             delete *(parIt++);
         m_Particles.erase(midIt, m_Particles.end());
+
+        // SETTLE PARTICLES //////////////////////////////////////////////////
+        // Only settle after all updates and deletions are done
+        if (m_SettlingEnabled) {
+            parIt = partition(m_Particles.begin(), m_Particles.end(), std::not_fn(std::mem_fn(&MovableObject::ToSettle)));
+            midIt = parIt;
+
+            while (parIt != m_Particles.end()) {
+                Vector parPos((*parIt)->GetPos());
+                Material const * terrMat = g_SceneMan.GetMaterialFromID(g_SceneMan.GetTerrain()->GetMaterialPixel(parPos.GetFloorIntX(), parPos.GetFloorIntY()));
+                int piling = (*parIt)->GetMaterial()->GetPiling();
+                if (piling > 0) {
+                    for (int s = 0; s < piling && (terrMat->GetIndex() == (*parIt)->GetMaterial()->GetIndex() || terrMat->GetIndex() == (*parIt)->GetMaterial()->GetSettleMaterial()); ++s) {
+                        if ((piling - s) % 2 == 0) {
+                            parPos.m_Y -= 1.0F;
+                        } else {
+                            parPos.m_X += (RandomNum() >= 0.5F ? 1.0F : -1.0F);
+                        }
+                        terrMat = g_SceneMan.GetMaterialFromID(g_SceneMan.GetTerrain()->GetMaterialPixel(parPos.GetFloorIntX(), parPos.GetFloorIntY()));
+                    }
+                    (*parIt)->SetPos(parPos.GetFloored());
+                }
+                if ((*parIt)->GetDrawPriority() >= terrMat->GetPriority()) { (*parIt)->DrawToTerrain(g_SceneMan.GetTerrain()); }
+                delete *(parIt++);
+            }
+            m_Particles.erase(midIt, m_Particles.end());
+        }
     }
-
-    // SETTLE PARTICLES //////////////////////////////////////////////////
-    // Only settle after all updates and deletions are done
-	if (m_SettlingEnabled) {
-		parIt = partition(m_Particles.begin(), m_Particles.end(), std::not_fn(std::mem_fn(&MovableObject::ToSettle)));
-		midIt = parIt;
-
-		while (parIt != m_Particles.end()) {
-			Vector parPos((*parIt)->GetPos());
-			Material const * terrMat = g_SceneMan.GetMaterialFromID(g_SceneMan.GetTerrain()->GetMaterialPixel(parPos.GetFloorIntX(), parPos.GetFloorIntY()));
-			int piling = (*parIt)->GetMaterial()->GetPiling();
-			if (piling > 0) {
-				for (int s = 0; s < piling && (terrMat->GetIndex() == (*parIt)->GetMaterial()->GetIndex() || terrMat->GetIndex() == (*parIt)->GetMaterial()->GetSettleMaterial()); ++s) {
-					if ((piling - s) % 2 == 0) {
-						parPos.m_Y -= 1.0F;
-					} else {
-						parPos.m_X += (RandomNum() >= 0.5F ? 1.0F : -1.0F);
-					}
-					terrMat = g_SceneMan.GetMaterialFromID(g_SceneMan.GetTerrain()->GetMaterialPixel(parPos.GetFloorIntX(), parPos.GetFloorIntY()));
-				}
-				(*parIt)->SetPos(parPos.GetFloored());
-			}
-			if ((*parIt)->GetDrawPriority() >= terrMat->GetPriority()) { (*parIt)->DrawToTerrain(g_SceneMan.GetTerrain()); }
-			delete *(parIt++);
-		}
-		m_Particles.erase(midIt, m_Particles.end());
-	}
 
     release_bitmap(g_SceneMan.GetTerrain()->GetMaterialBitmap());
 
@@ -2018,15 +2018,23 @@ void MovableMan::UpdateDrawMOIDs(BITMAP *pTargetBitmap)
 
 void MovableMan::Draw(BITMAP *pTargetBitmap, const Vector &targetPos)
 {
+    std::lock_guard<std::mutex> lock(g_ThreadMan.GetMODeletedMutex());
+
     // Draw objects to accumulation bitmap, in reverse order so actors appear on top.
-    for (std::deque<MovableObject *>::iterator parIt = m_Particles.begin(); parIt != m_Particles.end(); ++parIt)
+    for (std::deque<MovableObject *>::iterator parIt = m_Particles.begin(); parIt != m_Particles.end(); ++parIt) {
+        (*parIt)->UpdateDraw();
         (*parIt)->Draw(pTargetBitmap, targetPos);
+    }
 
-	for (std::deque<MovableObject *>::reverse_iterator itmIt = m_Items.rbegin(); itmIt != m_Items.rend(); ++itmIt)
+	for (std::deque<MovableObject *>::reverse_iterator itmIt = m_Items.rbegin(); itmIt != m_Items.rend(); ++itmIt) {
+        (*itmIt)->UpdateDraw();
         (*itmIt)->Draw(pTargetBitmap, targetPos);
+    }
 
-    for (std::deque<Actor *>::reverse_iterator aIt = m_Actors.rbegin(); aIt != m_Actors.rend(); ++aIt)
+    for (std::deque<Actor *>::reverse_iterator aIt = m_Actors.rbegin(); aIt != m_Actors.rend(); ++aIt) {
+        (*aIt)->UpdateDraw();
         (*aIt)->Draw(pTargetBitmap, targetPos);
+    }
 }
 
 

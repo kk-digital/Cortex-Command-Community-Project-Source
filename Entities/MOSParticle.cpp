@@ -213,7 +213,7 @@ namespace RTE {
 					break;
 			}
 
-			g_SceneMan.RegisterDrawing(targetBitmap, mode == g_DrawNoMOID ? g_NoMOID : m_MOID, spriteX, spriteY, spriteX + m_aSprite[m_Frame]->w, spriteY + m_aSprite[m_Frame]->h);
+			g_SceneMan.RegisterDrawing(targetBitmap, mode == g_DrawMOID ? m_MOID : g_NoMOID, spriteX, spriteY, spriteX + m_aSprite[m_Frame]->w, spriteY + m_aSprite[m_Frame]->h);
 		}
 
 		if (m_pScreenEffect && mode == g_DrawColor && !onlyPhysical) { SetPostScreenEffectToDraw(); }
