@@ -1,6 +1,8 @@
 #include "UInputMan.h"
+
 #include "SceneMan.h"
 #include "ActivityMan.h"
+#include "ThreadMan.h"
 #include "MetaMan.h"
 #include "FrameMan.h"
 #include "ConsoleMan.h"
@@ -864,10 +866,10 @@ namespace RTE {
 		if (FlagCtrlState() && !FlagAltState()) {
 			// Ctrl+S to save continuous ScreenDumps
 			if (KeyHeld(SDLK_s)) {
-				g_FrameMan.SaveScreenToPNG("ScreenDump");
+				g_ThreadMan.QueueInSimulationThread([]() { g_FrameMan.SaveScreenToPNG("ScreenDump"); });
 			// Ctrl+W to save a WorldDump
 			} else if (KeyPressed(SDLK_w)) {
-				g_FrameMan.SaveWorldToPNG("WorldDump");
+				g_ThreadMan.QueueInSimulationThread([]() { g_FrameMan.SaveWorldToPNG("WorldDump"); });
 			// Ctrl+M to cycle draw modes
 			} else if (KeyPressed(SDLK_m)) {
 				g_SceneMan.SetLayerDrawMode((g_SceneMan.GetLayerDrawMode() + 1) % 3);
@@ -878,9 +880,9 @@ namespace RTE {
 			} else if (KeyPressed(SDLK_o)) {
 				g_TimerMan.SetOneSimUpdatePerFrame(!g_TimerMan.IsOneSimUpdatePerFrame());
 			} else if (KeyPressed(SDLK_F2)) {
-				g_PresetMan.QuickReloadEntityPreset();
+				g_ThreadMan.QueueInSimulationThread([]() { g_PresetMan.QuickReloadEntityPreset(); });
 			} else if (KeyPressed(SDLK_F9)) {
-				g_ActivityMan.LoadAndLaunchGame("AutoSave");
+				g_ThreadMan.QueueInSimulationThread([]() { g_ActivityMan.LoadAndLaunchGame("AutoSave"); });
 			} else if (g_PerformanceMan.IsShowingPerformanceStats()) {
 				if (KeyHeld(SDLK_1)) {
 					g_TimerMan.SetTimeScale(1.0F);
@@ -896,7 +898,7 @@ namespace RTE {
 				g_FrameMan.ChangeResolutionMultiplier((g_FrameMan.GetResMultiplier() >= 2) ? 1 : 2);
 			// Alt+W to save ScenePreviewDump (miniature WorldDump)
 			} else if (KeyPressed(SDLK_w)) {
-				g_FrameMan.SaveWorldPreviewToPNG("ScenePreviewDump");
+				g_ThreadMan.QueueInSimulationThread([]() { g_FrameMan.SaveWorldPreviewToPNG("ScenePreviewDump"); });
 			} else if (g_PerformanceMan.IsShowingPerformanceStats()) {
 				if (KeyPressed(SDLK_p)) {
 					g_PerformanceMan.ShowAdvancedPerformanceStats(!g_PerformanceMan.AdvancedPerformanceStatsEnabled());
@@ -909,16 +911,16 @@ namespace RTE {
 			} else if (KeyPressed(SDLK_F1)) {
 				g_ConsoleMan.ShowShortcuts();
 			} else if (KeyPressed(SDLK_F2)) {
-				g_PresetMan.ReloadAllScripts();
+				g_ThreadMan.QueueInSimulationThread([]() { g_PresetMan.ReloadAllScripts(); });
 				g_ConsoleMan.PrintString("SYSTEM: Scripts reloaded!");
 			} else if (KeyPressed(SDLK_F3)) {
 				g_ConsoleMan.SaveAllText("Console.dump.log");
 			} else if (KeyPressed(SDLK_F4)) {
 				g_ConsoleMan.SaveInputLog("Console.input.log");
 			} else if (KeyPressed(SDLK_F5)) {
-				g_ActivityMan.SaveCurrentGame("QuickSave");
+				g_ThreadMan.QueueInSimulationThread([]() { g_ActivityMan.SaveCurrentGame("QuickSave"); });
 			} else if (KeyPressed(SDLK_F9)) {
-				g_ActivityMan.LoadAndLaunchGame("QuickSave");
+				g_ThreadMan.QueueInSimulationThread([]() { g_ActivityMan.LoadAndLaunchGame("QuickSave"); });
 			} else if (KeyPressed(SDLK_F10)) {
 				g_ConsoleMan.ClearLog();
 			}
