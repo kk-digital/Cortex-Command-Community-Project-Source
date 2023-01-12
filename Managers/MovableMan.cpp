@@ -901,6 +901,7 @@ bool MovableMan::RemoveActor(MovableObject *pActorToRem)
         {
             if (*itr == pActorToRem)
             {
+                std::lock_guard<std::mutex> lock(g_ThreadMan.GetMODeletedMutex());
                 m_Actors.erase(itr);
                 removed = true;
                 break;
@@ -942,6 +943,7 @@ bool MovableMan::RemoveItem(MovableObject *pItemToRem)
         {
             if (*itr == pItemToRem)
             {
+                std::lock_guard<std::mutex> lock(g_ThreadMan.GetMODeletedMutex());
                 m_Items.erase(itr);
                 removed = true;
                 break;
@@ -1044,6 +1046,7 @@ bool MovableMan::RemoveParticle(MovableObject *pMOToRem)
         {
             if (*itr == pMOToRem)
             {
+                std::lock_guard<std::mutex> lock(g_ThreadMan.GetMODeletedMutex());
                 m_Particles.erase(itr);
                 removed = true;
                 break;
@@ -2046,6 +2049,8 @@ void MovableMan::Draw(BITMAP *pTargetBitmap, const Vector &targetPos)
 
 void MovableMan::DrawHUD(BITMAP *pTargetBitmap, const Vector &targetPos, int which, bool playerControlled)
 {
+    std::lock_guard<std::mutex> lock(g_ThreadMan.GetMODeletedMutex());
+
     // Draw HUD elements
 	for (std::deque<MovableObject *>::reverse_iterator itmIt = m_Items.rbegin(); itmIt != m_Items.rend(); ++itmIt)
         (*itmIt)->DrawHUD(pTargetBitmap, targetPos, which);

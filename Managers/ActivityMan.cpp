@@ -363,11 +363,6 @@ namespace RTE {
 			m_InActivity = true;
 			m_ActivityNeedsResume = false;
 
-			// TODO_MULTITHREAD is this necessary?
-			//g_FrameMan.ClearBackBuffer8();
-			//g_FrameMan.FlipFrameBuffers();
-			//g_FrameMan.SwapWindow();
-
 			PauseActivity(false);
 			g_TimerMan.PauseSim(false);
 		}
@@ -378,10 +373,6 @@ namespace RTE {
 	bool ActivityMan::RestartActivity() {
 		m_ActivityNeedsRestart = false;
 		g_ConsoleMan.PrintString("SYSTEM: Activity was reset!");
-
-		g_FrameMan.ClearBackBuffer8();
-		g_FrameMan.FlipFrameBuffers();
-		g_FrameMan.SwapWindow();
 
 		g_AudioMan.StopAll();
 		g_MovableMan.PurgeAllMOs();
