@@ -1813,13 +1813,13 @@ void MOSRotating::Draw(BITMAP *pTargetBitmap,
                 if (targetPos.m_X < 0)
                 {
                     aDrawPos[passes] = aDrawPos[0];
-                    aDrawPos[passes].m_X += g_SceneMan.GetSceneWidth();
+                    aDrawPos[passes].m_X -= g_SceneMan.GetSceneWidth();
                     passes++;
                 }
                 if (targetPos.m_X + pTargetBitmap->w > g_SceneMan.GetSceneWidth())
                 {
                     aDrawPos[passes] = aDrawPos[0];
-                    aDrawPos[passes].m_X -= g_SceneMan.GetSceneWidth();
+                    aDrawPos[passes].m_X += g_SceneMan.GetSceneWidth();
                     passes++;
                 }
             }
@@ -1849,13 +1849,13 @@ void MOSRotating::Draw(BITMAP *pTargetBitmap,
                 if (targetPos.m_Y < 0)
                 {
                     aDrawPos[passes] = aDrawPos[0];
-                    aDrawPos[passes].m_Y += g_SceneMan.GetSceneHeight();
+                    aDrawPos[passes].m_Y -= g_SceneMan.GetSceneHeight();
                     passes++;
                 }
                 if (targetPos.m_Y + pTargetBitmap->h > g_SceneMan.GetSceneHeight())
                 {
                     aDrawPos[passes] = aDrawPos[0];
-                    aDrawPos[passes].m_Y -= g_SceneMan.GetSceneHeight();
+                    aDrawPos[passes].m_Y += g_SceneMan.GetSceneHeight();
                     passes++;
                 }
             }
