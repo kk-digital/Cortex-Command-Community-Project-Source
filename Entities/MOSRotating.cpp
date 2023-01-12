@@ -1399,11 +1399,6 @@ bool MOSRotating::DeepCheck(bool makeMOPs, int skipMOP, int maxMOPs)
 
 void MOSRotating::PreTravel() {
 	MOSprite::PreTravel();
-
-#ifdef DRAW_MOID_LAYER
-	// If this is going slow enough, check for and redraw the MOID representations of any other MOSRotatings that may be overlapping this
-	if (m_GetsHitByMOs && m_HitsMOs && m_Vel.GetX() < 2.0F && m_Vel.GetY() < 2.0F) { g_MovableMan.RedrawOverlappingMOIDs(this); }
-#endif
 }
 
 
@@ -1563,37 +1558,6 @@ void MOSRotating::Update() {
     }
 
     if (m_HFlipped && !m_pFlipBitmap && m_aSprite[0]) { m_pFlipBitmap = create_bitmap_ex(8, m_aSprite[0]->w, m_aSprite[0]->h); }
-}
-
-
-//////////////////////////////////////////////////////////////////////////////////////////
-// Virtual method:  DrawMOIDIfOverlapping
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Draws the MOID representation of this to the SceneMan's MOID layer if
-//                  this is found to potentially overlap another MovableObject.
-
-bool MOSRotating::DrawMOIDIfOverlapping(MovableObject *pOverlapMO)
-{
-    if (pOverlapMO == this || !m_GetsHitByMOs || !pOverlapMO->GetsHitByMOs()) {
-        return false;
-    }
-
-    if (m_IgnoresTeamHits && pOverlapMO->IgnoresTeamHits() && m_Team == pOverlapMO->GetTeam()) {
-        return false;
-    }
-
-    float combinedRadii = GetRadius() + pOverlapMO->GetRadius();
-    Vector otherPos = pOverlapMO->GetPos();
-
-    // Check if the offset is within the combined radii of the two object, and therefore might be overlapping
-    if (g_SceneMan.ShortestDistance(m_Pos, otherPos, g_SceneMan.SceneWrapsX()).MagnitudeIsLessThan(combinedRadii))
-    {
-        // They may be overlapping, so draw the MOID rep of this to the MOID layer
-        Draw(g_SceneMan.GetMOIDBitmap(), Vector(), g_DrawMOID, true);
-        return true;
-    }
-
-    return false;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1772,8 +1736,9 @@ void MOSRotating::Draw(BITMAP *pTargetBitmap,
     RTEAssert(m_Frame >= 0 && m_Frame < m_FrameCount, "Frame is out of bounds!");
 
     // Only draw MOID if this gets hit by MO's and it has a valid MOID assigned to it
-    if (mode == g_DrawMOID && (!m_GetsHitByMOs || m_MOID == g_NoMOID))
+    if (mode == g_DrawMOID && (!m_GetsHitByMOs || m_MOID == g_NoMOID)) {
         return;
+    }
 
     // Draw all the attached wound emitters, and only if the mode is g_DrawColor and not onlyphysical
     // Only draw attachables and emitters which are not drawn after parent, so we draw them before
@@ -1799,12 +1764,7 @@ void MOSRotating::Draw(BITMAP *pTargetBitmap,
     }
 
     // If we're drawing a material silhouette, then create an intermediate material bitmap as well
-#ifdef DRAW_MOID_LAYER
-    bool intermediateBitmapUsed = mode != g_DrawColor && mode != g_DrawTrans;
-#else
     bool intermediateBitmapUsed = mode != g_DrawColor && mode != g_DrawTrans && mode != g_DrawMOID;
-    RTEAssert(mode != g_DrawNoMOID, "DrawNoMOID drawing mode used with no MOID layer!");
-#endif
     if (intermediateBitmapUsed) {
         clear_to_color(pTempBitmap, keyColor);
 
@@ -1814,10 +1774,6 @@ void MOSRotating::Draw(BITMAP *pTargetBitmap,
             draw_character_ex(pTempBitmap, m_aSprite[m_Frame], 0, 0, m_SettleMaterialDisabled ? GetMaterial()->GetIndex() : GetMaterial()->GetSettleMaterial(), -1);
         } else if (mode == g_DrawWhite) {
             draw_character_ex(pTempBitmap, m_aSprite[m_Frame], 0, 0, g_WhiteColor, -1);
-        } else if (mode == g_DrawMOID) {
-            draw_character_ex(pTempBitmap, m_aSprite[m_Frame], 0, 0, m_MOID, -1);
-        } else if (mode == g_DrawNoMOID) {
-            draw_character_ex(pTempBitmap, m_aSprite[m_Frame], 0, 0, g_NoMOID, -1);
         } else if (mode == g_DrawDoor) {
 			draw_character_ex(pTempBitmap, m_aSprite[m_Frame], 0, 0, g_MaterialDoor, -1);
         } else {
@@ -1915,11 +1871,11 @@ void MOSRotating::Draw(BITMAP *pTargetBitmap,
                 int spriteX = aDrawPos[i].GetFloorIntX();
                 int spriteY = aDrawPos[i].GetFloorIntY();
                 g_SceneMan.RegisterDrawing(pTargetBitmap, mode == g_DrawMOID ? m_MOID : g_NoMOID, spriteX - m_SpriteRadius + m_SpriteOffset.m_X, spriteY - m_SpriteRadius + m_SpriteOffset.m_Y, spriteX + m_SpriteRadius - m_SpriteOffset.m_X, spriteY + m_SpriteRadius - m_SpriteOffset.m_Y);
-#ifndef DRAW_MOID_LAYER
+                
                 if (mode == g_DrawMOID) {
                     continue;
                 }
-#endif
+
                 // Take into account the h-flipped pivot point
                 pivot_scaled_sprite(pTargetBitmap,
                                     pFlipBitmap,
@@ -1972,11 +1928,11 @@ void MOSRotating::Draw(BITMAP *pTargetBitmap,
                 int spriteX = aDrawPos[i].GetFloorIntX();
                 int spriteY = aDrawPos[i].GetFloorIntY();
                 g_SceneMan.RegisterDrawing(pTargetBitmap, mode == g_DrawMOID ? m_MOID : g_NoMOID, spriteX - m_SpriteRadius + m_SpriteOffset.m_X, spriteY - m_SpriteRadius + m_SpriteOffset.m_Y, spriteX + m_SpriteRadius - m_SpriteOffset.m_X, spriteY + m_SpriteRadius - m_SpriteOffset.m_Y);
-#ifndef DRAW_MOID_LAYER
+
                 if (mode == g_DrawMOID) {
                     continue;
                 }
-#endif
+
                 pivot_scaled_sprite(pTargetBitmap,
                                     mode == g_DrawColor ? m_aSprite[m_Frame] : pTempBitmap,
                                     spriteX,

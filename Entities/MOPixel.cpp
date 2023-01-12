@@ -237,20 +237,12 @@ namespace RTE {
 			case g_DrawMaterial:
 				drawColor = m_Atom->GetMaterial()->GetSettleMaterial();
 				break;
-			case g_DrawMOID:
-				drawColor = m_MOID;
-				break;
-			case g_DrawNoMOID:
-				drawColor = g_NoMOID;
-				break;
 			default:
 				drawColor = m_Color.GetIndex();
 				break;
 		}
 
-#ifndef DRAW_MOID_LAYER
 		if (mode != g_DrawMOID)
-#endif
 		{
 			acquire_bitmap(targetBitmap);
 			putpixel(targetBitmap, m_Pos.GetFloorIntX() - targetPos.m_X, m_Pos.GetFloorIntY() - targetPos.m_Y, drawColor);

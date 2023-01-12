@@ -558,7 +558,6 @@ bool LimbPath::RestartFree(Vector &limbPos, MOID MOIDToIgnore, int ignoreTeam)
     float result = 0;
 
     g_SceneMan.GetTerrain()->LockBitmaps();
-    acquire_bitmap(g_SceneMan.GetMOIDBitmap());
     
     if (IsStaticPoint())
 	{
@@ -634,7 +633,7 @@ bool LimbPath::RestartFree(Vector &limbPos, MOID MOIDToIgnore, int ignoreTeam)
             found = true;
         }
     }
-    release_bitmap(g_SceneMan.GetMOIDBitmap());
+    
     g_SceneMan.GetTerrain()->UnlockBitmaps();
 
     if (found)

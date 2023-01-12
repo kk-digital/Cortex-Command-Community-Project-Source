@@ -64,12 +64,6 @@ namespace RTE {
 		int RecommendedMOIDCount() const { return m_RecommendedMOIDCount; }
 
 		/// <summary>
-		/// Gets whether simplified collision detection (reduced MOID layer sampling) is enabled.
-		/// </summary>
-		/// <returns>Whether simplified collision detection is enabled or not.</returns>
-		bool SimplifiedCollisionDetection() const { return m_SimplifiedCollisionDetection; }
-
-		/// <summary>
 		/// Gets the Scene background layer auto-scaling mode.
 		/// </summary>
 		/// <returns>The Scene background layer auto-scaling mode. 0 for off, 1 for fit screen dimensions and 2 for always upscaled to x2.</returns>
@@ -560,7 +554,6 @@ namespace RTE {
 		bool m_ShowMetaScenes; //!< Show MetaScenes in editors and activities.
 
 		int m_RecommendedMOIDCount; //!< Recommended max MOID's before removing actors from scenes.
-		bool m_SimplifiedCollisionDetection; //!< Whether simplified collision detection (reduced MOID layer sampling) is enabled.
 		int m_SceneBackgroundAutoScaleMode; //!< Scene background layer auto-scaling mode. 0 for off, 1 for fit screen dimensions and 2 for always upscaled to x2.
 		bool m_DisableFactionBuyMenuThemes; //!< Whether faction BuyMenu theme support is disabled.
 		int m_PathFinderGridNodeSize; //!< The grid size used by the PathFinder, in pixels.

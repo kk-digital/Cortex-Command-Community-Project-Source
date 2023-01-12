@@ -49,7 +49,6 @@ namespace RTE {
 		m_ShowMetaScenes = false;
 
 		m_RecommendedMOIDCount = 240;
-		m_SimplifiedCollisionDetection = false;
 		m_SceneBackgroundAutoScaleMode = 1;
 		m_DisableFactionBuyMenuThemes = false;
 		m_PathFinderGridNodeSize = c_PPM;
@@ -191,8 +190,6 @@ namespace RTE {
 			reader >> g_LuaMan.m_DisableLuaJIT;
 		} else if (propName == "RecommendedMOIDCount") {
 			reader >> m_RecommendedMOIDCount;
-		} else if (propName == "SimplifiedCollisionDetection") {
-			reader >> m_SimplifiedCollisionDetection;
 		} else if (propName == "SceneBackgroundAutoScaleMode") {
 			SetSceneBackgroundAutoScaleMode(std::stoi(reader.ReadPropValue()));
 		} else if (propName == "DisableFactionBuyMenuThemes") {
@@ -386,7 +383,6 @@ namespace RTE {
 		writer.NewLine(false);
 		writer.NewPropertyWithValue("DisableLuaJIT", g_LuaMan.m_DisableLuaJIT);
 		writer.NewPropertyWithValue("RecommendedMOIDCount", m_RecommendedMOIDCount);
-		writer.NewPropertyWithValue("SimplifiedCollisionDetection", m_SimplifiedCollisionDetection);
 		writer.NewPropertyWithValue("SceneBackgroundAutoScaleMode", m_SceneBackgroundAutoScaleMode);
 		writer.NewPropertyWithValue("DisableFactionBuyMenuThemes", m_DisableFactionBuyMenuThemes);
 		writer.NewPropertyWithValue("PathFinderGridNodeSize", m_PathFinderGridNodeSize);

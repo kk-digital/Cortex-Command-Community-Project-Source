@@ -1507,33 +1507,6 @@ void MovableMan::OverrideMaterialDoors(bool eraseDoorMaterial, int team) const {
 	}
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-//////////////////////////////////////////////////////////////////////////////////////////
-// Method:          RedrawOverlappingMOIDs
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Forces all objects potnetially overlapping a specific MO to re-draw
-//                  this MOID representations onto the MOID bitmap.
-
-void MovableMan::RedrawOverlappingMOIDs(MovableObject *pOverlapsThis)
-{
-    for (std::deque<Actor *>::iterator aIt = m_Actors.begin(); aIt != m_Actors.end(); ++aIt)
-    {
-        (*aIt)->DrawMOIDIfOverlapping(pOverlapsThis);
-    }
-
-    for (std::deque<MovableObject *>::iterator iIt = m_Items.begin(); iIt != m_Items.end(); ++iIt)
-    {
-        (*iIt)->DrawMOIDIfOverlapping(pOverlapsThis);
-    }
-
-    for (std::deque<MovableObject *>::iterator parIt = m_Particles.begin(); parIt != m_Particles.end(); ++parIt)
-    {
-        (*parIt)->DrawMOIDIfOverlapping(pOverlapsThis);
-    }
-}
-
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          Update
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -1588,14 +1561,6 @@ void MovableMan::Update()
                 {
                     (*aIt)->ApplyForces();
                     (*aIt)->PreTravel();
-        /*
-                    if (aIt == m_Actors.begin())
-                    {
-                        PALETTE palette;
-                        get_palette(palette);
-                        save_bmp("poop.bmp", g_SceneMan.GetMOIDBitmap(), palette);
-                    }
-        */
                     (*aIt)->Travel();
                     (*aIt)->PostTravel();
                 }
@@ -1875,7 +1840,7 @@ void MovableMan::Update()
     ////////////////////////////////////////////////////////////////////////
     // Draw the MO matter and IDs to their layers for next frame
 
-    UpdateDrawMOIDs(g_SceneMan.GetMOIDBitmap());
+    UpdateDrawMOIDs();
 
 	// COUNT MOID USAGE PER TEAM  //////////////////////////////////////////////////
 	{
@@ -1964,10 +1929,9 @@ void MovableMan::VerifyMOIDIndex()
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          UpdateDrawMOIDs
 //////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Updates the MOIDs of all current MOs and draws their ID's to a BITMAP
-//                  of choice.
+// Description:     Updates the MOIDs of all current MOs and draws their ID's to the MOID grid
 
-void MovableMan::UpdateDrawMOIDs(BITMAP *pTargetBitmap)
+void MovableMan::UpdateDrawMOIDs()
 {
     // Clear the index each frame and do it over because MO's get added and deleted between each frame.
     m_MOIDIndex.clear();
@@ -1984,7 +1948,7 @@ void MovableMan::UpdateDrawMOIDs(BITMAP *pTargetBitmap)
         m_ContiguousActorIDs[actor] = actorID++;
 		if (actor->GetsHitByMOs() && !actor->IsSetToDelete()) {
             actor->UpdateMOID(m_MOIDIndex);
-            actor->Draw(pTargetBitmap, Vector(), g_DrawMOID, true);
+            actor->Draw(nullptr, Vector(), g_DrawMOID, true);
             currentMOID = m_MOIDIndex.size();
         } else {
             actor->SetAsNoID();
@@ -1994,7 +1958,7 @@ void MovableMan::UpdateDrawMOIDs(BITMAP *pTargetBitmap)
     for (MovableObject *item : m_Items) {
         if (item->GetsHitByMOs() && !item->IsSetToDelete()) {
             item->UpdateMOID(m_MOIDIndex);
-            item->Draw(pTargetBitmap, Vector(), g_DrawMOID, true);
+            item->Draw(nullptr, Vector(), g_DrawMOID, true);
             currentMOID = m_MOIDIndex.size();
         } else {
             item->SetAsNoID();
@@ -2004,7 +1968,7 @@ void MovableMan::UpdateDrawMOIDs(BITMAP *pTargetBitmap)
     for (MovableObject *particle : m_Particles) {
         if (particle->GetsHitByMOs() && !particle->IsSetToDelete()) {
             particle->UpdateMOID(m_MOIDIndex);
-            particle->Draw(pTargetBitmap, Vector(), g_DrawMOID, true);
+            particle->Draw(nullptr, Vector(), g_DrawMOID, true);
             currentMOID = m_MOIDIndex.size();
         } else {
             particle->SetAsNoID();
