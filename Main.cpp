@@ -247,9 +247,7 @@ namespace RTE {
 						break;
 					}
 
-					if (g_TimerMan.DrawnSimUpdate()) {
-						g_ThreadMan.TransferSimStateToRenderer();
-					}
+					g_ThreadMan.TransferSimStateToRenderer();
 
 					g_ThreadMan.RunSimulationThreadFunctions();
 
@@ -257,7 +255,7 @@ namespace RTE {
 					g_PerformanceMan.NewPerformanceSample();
 					g_PerformanceMan.UpdateMSPU(updateEndTime - updateStartTime);
 
-					if (g_NetworkServer.IsServerModeEnabled() && g_TimerMan.DrawnSimUpdate()) {
+					if (g_NetworkServer.IsServerModeEnabled()) {
 						// Pause sim while we're waiting for scene transmission or scene will start changing before clients receive them and those changes will be lost.
 						g_TimerMan.PauseSim(!(g_NetworkServer.ReadyForSimulation() && g_ActivityMan.IsInActivity()));
 

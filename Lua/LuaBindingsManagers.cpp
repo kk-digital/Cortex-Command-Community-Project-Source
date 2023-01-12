@@ -361,12 +361,10 @@ namespace RTE {
 		.property("DeltaTimeMS", &TimerMan::GetDeltaTimeMS)
 		.property("AIDeltaTimeSecs", &TimerMan::GetAIDeltaTimeSecs)
 		.property("AIDeltaTimeMS", &TimerMan::GetAIDeltaTimeMS)
-		.property("OneSimUpdatePerFrame", &TimerMan::IsOneSimUpdatePerFrame, &TimerMan::SetOneSimUpdatePerFrame)
 
 		.property("TicksPerSecond", &LuaAdaptersTimerMan::GetTicksPerSecond)
 
-		.def("TimeForSimUpdate", &TimerMan::TimeForSimUpdate)
-		.def("DrawnSimUpdate", &TimerMan::DrawnSimUpdate);
+		.def("TimeForSimUpdate", &TimerMan::TimeForSimUpdate);
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

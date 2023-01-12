@@ -1788,38 +1788,41 @@ void MOSRotating::Draw(BITMAP *pTargetBitmap,
     aDrawPos[0] = spritePos;
 
     // Only bother with wrap drawing if the scene actually wraps around
-    if (g_SceneMan.SceneWrapsX())
-    {
-        // See if need to double draw this across the scene seam if we're being drawn onto a scenewide bitmap
-        if (targetPos.IsZero() && m_WrapDoubleDraw)
+    if (pTargetBitmap) {
+        // TODO - Y wrapping
+        if (g_SceneMan.SceneWrapsX())
         {
-            if (spritePos.m_X < m_SpriteDiameter)
+            // See if need to double draw this across the scene seam if we're being drawn onto a scenewide bitmap
+            if (targetPos.IsZero() && m_WrapDoubleDraw)
             {
-                aDrawPos[passes] = spritePos;
-                aDrawPos[passes].m_X += pTargetBitmap->w;
-                passes++;
+                if (spritePos.m_X < m_SpriteDiameter)
+                {
+                    aDrawPos[passes] = spritePos;
+                    aDrawPos[passes].m_X += pTargetBitmap->w;
+                    passes++;
+                }
+                else if (spritePos.m_X > pTargetBitmap->w - m_SpriteDiameter)
+                {
+                    aDrawPos[passes] = spritePos;
+                    aDrawPos[passes].m_X -= pTargetBitmap->w;
+                    passes++;
+                }
             }
-            else if (spritePos.m_X > pTargetBitmap->w - m_SpriteDiameter)
+            // Only screenwide target bitmap, so double draw within the screen if the screen is straddling a scene seam
+            else if (m_WrapDoubleDraw)
             {
-                aDrawPos[passes] = spritePos;
-                aDrawPos[passes].m_X -= pTargetBitmap->w;
-                passes++;
-            }
-        }
-        // Only screenwide target bitmap, so double draw within the screen if the screen is straddling a scene seam
-        else if (m_WrapDoubleDraw)
-        {
-            if (targetPos.m_X < 0)
-            {
-                aDrawPos[passes] = aDrawPos[0];
-                aDrawPos[passes].m_X -= g_SceneMan.GetSceneWidth();
-                passes++;
-            }
-            if (targetPos.m_X + pTargetBitmap->w > g_SceneMan.GetSceneWidth())
-            {
-                aDrawPos[passes] = aDrawPos[0];
-                aDrawPos[passes].m_X += g_SceneMan.GetSceneWidth();
-                passes++;
+                if (targetPos.m_X < 0)
+                {
+                    aDrawPos[passes] = aDrawPos[0];
+                    aDrawPos[passes].m_X -= g_SceneMan.GetSceneWidth();
+                    passes++;
+                }
+                if (targetPos.m_X + pTargetBitmap->w > g_SceneMan.GetSceneWidth())
+                {
+                    aDrawPos[passes] = aDrawPos[0];
+                    aDrawPos[passes].m_X += g_SceneMan.GetSceneWidth();
+                    passes++;
+                }
             }
         }
     }

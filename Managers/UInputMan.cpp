@@ -882,9 +882,6 @@ namespace RTE {
 			// Ctrl+P to toggle performance stats
 			} else if (KeyPressed(SDLK_p)) {
 				g_PerformanceMan.ShowPerformanceStats(!g_PerformanceMan.IsShowingPerformanceStats());
-			// Ctrl+O to toggle one sim update per frame
-			} else if (KeyPressed(SDLK_o)) {
-				g_TimerMan.SetOneSimUpdatePerFrame(!g_TimerMan.IsOneSimUpdatePerFrame());
 			} else if (KeyPressed(SDLK_F2)) {
 				g_ThreadMan.QueueInSimulationThread([]() { g_PresetMan.QuickReloadEntityPreset(); });
 			} else if (KeyPressed(SDLK_F9)) {
