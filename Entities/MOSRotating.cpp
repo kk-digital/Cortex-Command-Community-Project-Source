@@ -1757,6 +1757,12 @@ void MOSRotating::Draw(BITMAP *targetBitmap,
             }
         }
 
+        bool hFlipped = m_HFlipped;
+        bool wrapDoubleDraw = m_WrapDoubleDraw;
+        Vector spriteOffset = m_SpriteOffset;
+        Matrix rotation = m_Rotation;
+        float scale = m_Scale;
+
         auto renderFunc = [=]() {
             BITMAP* pTargetBitmap = targetBitmap;
             Vector renderPos = spritePos;
@@ -1769,7 +1775,7 @@ void MOSRotating::Draw(BITMAP *targetBitmap,
             std::array<Vector, 4> drawPositions = { renderPos };
             int drawPasses = 1;
             if (g_SceneMan.SceneWrapsX()) {
-                if (renderPos.IsZero() && m_WrapDoubleDraw) {
+                if (renderPos.IsZero() && wrapDoubleDraw) {
                     if (spritePos.GetFloorIntX() < currentFrame->w) {
                         drawPositions[drawPasses] = spritePos;
                         drawPositions[drawPasses].m_X += static_cast<float>(pTargetBitmap->w);
@@ -1779,7 +1785,7 @@ void MOSRotating::Draw(BITMAP *targetBitmap,
                         drawPositions[drawPasses].m_X -= static_cast<float>(pTargetBitmap->w);
                         drawPasses++;
                     }
-                } else if (m_WrapDoubleDraw) {
+                } else if (wrapDoubleDraw) {
                     if (renderPos.m_X < 0) {
                         drawPositions[drawPasses] = drawPositions[0];
                         drawPositions[drawPasses].m_X += static_cast<float>(g_SceneMan.GetSceneWidth());
@@ -1793,7 +1799,7 @@ void MOSRotating::Draw(BITMAP *targetBitmap,
                 }
             }
             if (g_SceneMan.SceneWrapsY()) {
-                if (renderPos.IsZero() && m_WrapDoubleDraw) {
+                if (renderPos.IsZero() && wrapDoubleDraw) {
                     if (spritePos.GetFloorIntY() < currentFrame->h) {
                         drawPositions[drawPasses] = spritePos;
                         drawPositions[drawPasses].m_Y += static_cast<float>(pTargetBitmap->h);
@@ -1803,7 +1809,7 @@ void MOSRotating::Draw(BITMAP *targetBitmap,
                         drawPositions[drawPasses].m_Y -= static_cast<float>(pTargetBitmap->h);
                         drawPasses++;
                     }
-                } else if (m_WrapDoubleDraw) {
+                } else if (wrapDoubleDraw) {
                     if (renderPos.m_Y < 0) {
                         drawPositions[drawPasses] = drawPositions[0];
                         drawPositions[drawPasses].m_Y += static_cast<float>(g_SceneMan.GetSceneHeight());
@@ -1819,7 +1825,7 @@ void MOSRotating::Draw(BITMAP *targetBitmap,
 
             //////////////////
             // FLIPPED
-            if (m_HFlipped)
+            if (hFlipped)
             {
                 bool tempBitmap = false;
                 BITMAP* usedFlipBitmap = pFlipBitmap;
@@ -1828,7 +1834,7 @@ void MOSRotating::Draw(BITMAP *targetBitmap,
                     tempBitmap = true;
                 }
 
-                // Don't size the intermediate bitmaps to the m_Scale, because the scaling happens after they are done
+                // Don't size the intermediate bitmaps to the scale, because the scaling happens after they are done
                 clear_to_color(usedFlipBitmap, keyColor);
                 // Draw either the source color bitmap or the intermediate material bitmap onto the intermediate flipping bitmap
                 if (mode == g_DrawColor || mode == g_DrawTrans) {
@@ -1849,10 +1855,10 @@ void MOSRotating::Draw(BITMAP *targetBitmap,
                                         usedFlipBitmap,
                                         pTempBitmap->w / 2,
                                         pTempBitmap->h / 2,
-                                        usedFlipBitmap->w + m_SpriteOffset.m_X,
-                                        -(m_SpriteOffset.m_Y),
-                                        ftofix(m_Rotation.GetAllegroAngle()),
-                                        ftofix(m_Scale));
+                                        usedFlipBitmap->w + spriteOffset.m_X,
+                                        -(spriteOffset.m_Y),
+                                        ftofix(rotation.GetAllegroAngle()),
+                                        ftofix(scale));
 
                     // Draw the now rotated object's temporary bitmap onto the final drawing bitmap with transperency
                     // Do the passes loop in here so the intermediate drawing doesn't get done multiple times
@@ -1877,10 +1883,10 @@ void MOSRotating::Draw(BITMAP *targetBitmap,
                                             usedFlipBitmap,
                                             spriteX,
                                             spriteY,
-                                            usedFlipBitmap->w + m_SpriteOffset.m_X,
-                                            -(m_SpriteOffset.m_Y),
-                                            ftofix(m_Rotation.GetAllegroAngle()),
-                                            ftofix(m_Scale));
+                                            usedFlipBitmap->w + spriteOffset.m_X,
+                                            -(spriteOffset.m_Y),
+                                            ftofix(rotation.GetAllegroAngle()),
+                                            ftofix(scale));
                     }
                 }
 
@@ -1903,10 +1909,10 @@ void MOSRotating::Draw(BITMAP *targetBitmap,
                                         currentFrame,
                                         pTempBitmap->w / 2,
                                         pTempBitmap->h / 2,
-                                        -(m_SpriteOffset.m_X),
-                                        -(m_SpriteOffset.m_Y),
-                                        ftofix(m_Rotation.GetAllegroAngle()),
-                                        ftofix(m_Scale));
+                                        -(spriteOffset.m_X),
+                                        -(spriteOffset.m_Y),
+                                        ftofix(rotation.GetAllegroAngle()),
+                                        ftofix(scale));
 
                     // Draw the now rotated object's temporary bitmap onto the final drawing bitmap with transperency
                     // Do the passes loop in here so the intermediate drawing doesn't get done multiple times
@@ -1929,10 +1935,10 @@ void MOSRotating::Draw(BITMAP *targetBitmap,
                                             mode == g_DrawColor ? currentFrame : pTempBitmap,
                                             spriteX,
                                             spriteY,
-                                            -(m_SpriteOffset.m_X),
-                                            -(m_SpriteOffset.m_Y),
-                                            ftofix(m_Rotation.GetAllegroAngle()),
-                                            ftofix(m_Scale)); 
+                                            -(spriteOffset.m_X),
+                                            -(spriteOffset.m_Y),
+                                            ftofix(rotation.GetAllegroAngle()),
+                                            ftofix(scale)); 
                     }
                 }
             }

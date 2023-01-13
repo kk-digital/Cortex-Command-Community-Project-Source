@@ -536,6 +536,9 @@ void MOSprite::Draw(BITMAP * targetBitmap,
 		return;
 	}
 
+    bool hFlipped = m_HFlipped;
+    bool wrapDoubleDraw = m_WrapDoubleDraw;
+
     auto renderFunc = [=]() {
         BITMAP* pTargetBitmap = targetBitmap;
         Vector renderPos = spritePos;
@@ -548,7 +551,7 @@ void MOSprite::Draw(BITMAP * targetBitmap,
         std::array<Vector, 4> drawPositions = { renderPos };
         int drawPasses = 1;
         if (g_SceneMan.SceneWrapsX()) {
-            if (renderPos.IsZero() && m_WrapDoubleDraw) {
+            if (renderPos.IsZero() && wrapDoubleDraw) {
                 if (spritePos.GetFloorIntX() < currentFrame->w) {
                     drawPositions[drawPasses] = spritePos;
                     drawPositions[drawPasses].m_X += static_cast<float>(pTargetBitmap->w);
@@ -558,7 +561,7 @@ void MOSprite::Draw(BITMAP * targetBitmap,
                     drawPositions[drawPasses].m_X -= static_cast<float>(pTargetBitmap->w);
                     drawPasses++;
                 }
-            } else if (m_WrapDoubleDraw) {
+            } else if (wrapDoubleDraw) {
                 if (renderPos.m_X < 0) {
                     drawPositions[drawPasses] = drawPositions[0];
                     drawPositions[drawPasses].m_X += static_cast<float>(g_SceneMan.GetSceneWidth());
@@ -572,7 +575,7 @@ void MOSprite::Draw(BITMAP * targetBitmap,
             }
         }
         if (g_SceneMan.SceneWrapsY()) {
-            if (renderPos.IsZero() && m_WrapDoubleDraw) {
+            if (renderPos.IsZero() && wrapDoubleDraw) {
                 if (spritePos.GetFloorIntY() < currentFrame->h) {
                     drawPositions[drawPasses] = spritePos;
                     drawPositions[drawPasses].m_Y += static_cast<float>(pTargetBitmap->h);
@@ -582,7 +585,7 @@ void MOSprite::Draw(BITMAP * targetBitmap,
                     drawPositions[drawPasses].m_Y -= static_cast<float>(pTargetBitmap->h);
                     drawPasses++;
                 }
-            } else if (m_WrapDoubleDraw) {
+            } else if (wrapDoubleDraw) {
                 if (renderPos.m_Y < 0) {
                     drawPositions[drawPasses] = drawPositions[0];
                     drawPositions[drawPasses].m_Y += static_cast<float>(g_SceneMan.GetSceneHeight());
@@ -616,7 +619,7 @@ void MOSprite::Draw(BITMAP * targetBitmap,
                     draw_trans_sprite(pTargetBitmap, currentFrame, spriteX, spriteY);
                     break;
                 default:
-                    if (!m_HFlipped) {
+                    if (!hFlipped) {
                         draw_sprite(pTargetBitmap, currentFrame, spriteX, spriteY);
                     } else {
                         draw_sprite_h_flip(pTargetBitmap, currentFrame, spriteX, spriteY);
