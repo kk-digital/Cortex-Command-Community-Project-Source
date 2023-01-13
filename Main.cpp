@@ -213,7 +213,6 @@ namespace RTE {
 					long long updateStartTime = g_TimerMan.GetAbsoluteTime();
 					serverUpdated = false;
 
-					//g_PerformanceMan.UpdateMSPSU();
 					g_TimerMan.UpdateSim();
 
 					g_SceneMan.GetScene()->UpdateSim();
@@ -279,6 +278,8 @@ namespace RTE {
 		simThread.detach();
 
 		while (!System::IsSetToQuit()) {
+			long long frameStartTime = g_TimerMan.GetAbsoluteTime();
+
 			if (!g_ActivityMan.IsInActivity()) {
 				g_TimerMan.PauseSim(true);
 				if (g_MetaMan.GameInProgress()) {
@@ -315,13 +316,8 @@ namespace RTE {
 			g_FrameMan.FlipFrameBuffers();
 			g_FrameMan.SwapWindow();
 
-			// TODO_MULTITHREAD
-			// Fix performance measurements - FPS should probably just be the full frame time, no sim insolved
-			// UPS should be purely based on true UPS, including TimeForSimUpdate throttling
-			// Draw time should be draw unincluding sync
-			// Update time should be single update iteration time
-			//long long drawEndTime = g_TimerMan.GetAbsoluteTime();
-			//g_PerformanceMan.UpdateMSPD(drawEndTime - drawStartTime);
+			long long frameEndTime = g_TimerMan.GetAbsoluteTime();
+			g_PerformanceMan.UpdateMSPF(frameEndTime - frameStartTime);
 		}
 	}
 }
