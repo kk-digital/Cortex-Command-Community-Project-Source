@@ -167,7 +167,6 @@ namespace RTE {
 			g_FrameMan.ClearFrame();
 			g_UInputMan.Update();
 			g_TimerMan.Update();
-			g_TimerMan.UpdateSim();
 			g_AudioMan.Update();
 
 			if (g_FrameMan.ResolutionChanged()) {

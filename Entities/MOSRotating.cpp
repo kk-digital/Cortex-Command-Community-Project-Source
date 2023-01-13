@@ -12,6 +12,7 @@
 // Inclusions of header files
 
 #include "MOSRotating.h"
+
 #include "CameraMan.h"
 #include "SettingsMan.h"
 #include "AtomGroup.h"
@@ -21,6 +22,7 @@
 #include "AEmitter.h"
 #include "Attachable.h"
 #include "HDFirearm.h"
+#include "ThreadMan.h"
 
 #include "RTEError.h"
 
@@ -29,12 +31,14 @@ namespace RTE {
 ConcreteClassInfo(MOSRotating, MOSprite, 500);
 
 // Temp drawing bitmaps shared between all MOSRotatings
-static BITMAP *m_spTempBitmap16 = nullptr;
-static BITMAP *m_spTempBitmap32 = nullptr;
-static BITMAP *m_spTempBitmap64 = nullptr;
-static BITMAP *m_spTempBitmap128 = nullptr;
-static BITMAP *m_spTempBitmap256 = nullptr;
-static BITMAP *m_spTempBitmap512 = nullptr;
+thread_local bool s_BitmapsInitialised = false;
+
+thread_local BITMAP *s_pTempBitmap16 = nullptr;
+thread_local BITMAP *s_pTempBitmap32 = nullptr;
+thread_local BITMAP *s_pTempBitmap64 = nullptr;
+thread_local BITMAP *s_pTempBitmap128 = nullptr;
+thread_local BITMAP *s_pTempBitmap256 = nullptr;
+thread_local BITMAP *s_pTempBitmap512 = nullptr;
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          Clear
@@ -73,8 +77,8 @@ void MOSRotating::Clear()
 	m_GibAtEndOfLifetime = false;
     m_GibSound = nullptr;
     m_EffectOnGib = true;
-    m_pFlipBitmap = 0;
-	m_pTempBitmap = 0;
+	m_pTempBitmap = nullptr;
+    m_pFlipBitmap = nullptr;
     m_LoudnessOnGib = 1;
 	m_DamageMultiplier = 0;
     m_NoSetDamageMultiplier = true;
@@ -112,53 +116,31 @@ int MOSRotating::Create()
     m_SpriteCenter.SetXY(m_aSprite[m_Frame]->w / 2, m_aSprite[m_Frame]->h / 2);
     m_SpriteCenter += m_SpriteOffset;
 
-/* Allocated in lazy fashion as needed when drawing flipped
-    if (!m_pFlipBitmap && m_aSprite[0])
-        m_pFlipBitmap = create_bitmap_ex(8, m_aSprite[0]->w, m_aSprite[0]->h);
-*/
-/* Not anymore; points to shared static bitmaps
-    if (!m_pTempBitmap && m_aSprite[0])
-        m_pTempBitmap = create_bitmap_ex(8, m_aSprite[0]->w, m_aSprite[0]->h);
-*/
-
     // Can't create these earlier in the static declaration because allegro_init needs to be called before create_bitmap
-    if (!m_spTempBitmap16)
-        m_spTempBitmap16 = create_bitmap_ex(8, 16, 16);
-    if (!m_spTempBitmap32)
-        m_spTempBitmap32 = create_bitmap_ex(8, 32, 32);
-    if (!m_spTempBitmap64)
-        m_spTempBitmap64 = create_bitmap_ex(8, 64, 64);
-    if (!m_spTempBitmap128)
-        m_spTempBitmap128 = create_bitmap_ex(8, 128, 128);
-    if (!m_spTempBitmap256)
-        m_spTempBitmap256 = create_bitmap_ex(8, 256, 256);
-    if (!m_spTempBitmap512)
-        m_spTempBitmap512 = create_bitmap_ex(8, 512, 512);
+    if (!s_BitmapsInitialised) {
+        s_BitmapsInitialised = true;
+
+        s_pTempBitmap16 = create_bitmap_ex(8, 16, 16);
+        s_pTempBitmap32 = create_bitmap_ex(8, 32, 32);
+        s_pTempBitmap64 = create_bitmap_ex(8, 64, 64);
+        s_pTempBitmap128 = create_bitmap_ex(8, 128, 128);
+        s_pTempBitmap256 = create_bitmap_ex(8, 256, 256);
+        s_pTempBitmap512 = create_bitmap_ex(8, 512, 512);
+    }
 
     // Choose an appropriate size for this' diameter
-    if (m_SpriteDiameter >= 256)
-	{
-        m_pTempBitmap = m_spTempBitmap512;
-	}
-    else if (m_SpriteDiameter >= 128)
-	{
-        m_pTempBitmap = m_spTempBitmap256;
-	}
-    else if (m_SpriteDiameter >= 64)
-	{
-        m_pTempBitmap = m_spTempBitmap128;
-	}
-    else if (m_SpriteDiameter >= 32)
-	{
-        m_pTempBitmap = m_spTempBitmap64;
-	}
-    else if (m_SpriteDiameter >= 16)
-	{
-        m_pTempBitmap = m_spTempBitmap32;
-	}
-    else
-	{
-		m_pTempBitmap = m_spTempBitmap16;
+    if (m_SpriteDiameter >= 256) {
+        m_pTempBitmap = s_pTempBitmap512;
+	} else if (m_SpriteDiameter >= 128) {
+        m_pTempBitmap = s_pTempBitmap256;
+	} else if (m_SpriteDiameter >= 64) {
+        m_pTempBitmap = s_pTempBitmap128;
+	} else if (m_SpriteDiameter >= 32) {
+        m_pTempBitmap = s_pTempBitmap64;
+    } else if (m_SpriteDiameter >= 16) {
+        m_pTempBitmap = s_pTempBitmap32;
+	} else {
+		m_pTempBitmap = s_pTempBitmap16;
 	}
 
     return 0;
@@ -246,14 +228,6 @@ int MOSRotating::Create(const MOSRotating &reference) {
 	m_DamageMultiplier = reference.m_DamageMultiplier;
     m_NoSetDamageMultiplier = reference.m_NoSetDamageMultiplier;
 
-/* Allocated in lazy fashion as needed when drawing flipped
-    if (!m_pFlipBitmap && m_aSprite[0])
-        m_pFlipBitmap = create_bitmap_ex(8, m_aSprite[0]->w, m_aSprite[0]->h);
-*/
-/* Not anymore; points to shared static bitmaps
-    if (!m_pTempBitmap && m_aSprite[0])
-        m_pTempBitmap = create_bitmap_ex(8, m_aSprite[0]->w, m_aSprite[0]->h);
-*/
     m_pTempBitmap = reference.m_pTempBitmap;
 
     return 0;
@@ -577,9 +551,6 @@ void MOSRotating::Destroy(bool notInherited)
     }
 
     destroy_bitmap(m_pFlipBitmap);
-
-// Not anymore; point to shared static bitmaps
-//    destroy_bitmap(m_pTempBitmap);
 
 	delete m_GibSound;
 
@@ -1302,11 +1273,13 @@ void MOSRotating::EraseFromTerrain()
     {
         // Create intermediate flipping bitmap if there isn't one yet
         // Don't size the intermediate bitmaps to teh m_Scale, because the scaling happens after they are done
-        if (!m_pFlipBitmap)
+        if (!m_pFlipBitmap) {
             m_pFlipBitmap = create_bitmap_ex(8, m_aSprite[m_Frame]->w, m_aSprite[m_Frame]->h);
+        }
+
         clear_to_color(m_pFlipBitmap, g_MaskColor);
 
-        // Draw eitehr the source color bitmap or the intermediate material bitmap onto the intermediate flipping bitmap
+        // Draw either the source color bitmap or the intermediate material bitmap onto the intermediate flipping bitmap
         draw_sprite_h_flip(m_pFlipBitmap, m_aSprite[m_Frame], 0, 0);
 
         pivot.m_X = m_pFlipBitmap->w + m_SpriteOffset.m_X;
@@ -1343,12 +1316,13 @@ bool MOSRotating::DeepCheck(bool makeMOPs, int skipMOP, int maxMOPs)
         if (m_HFlipped)
         {
             // Create intermediate flipping bitmap if there isn't one yet
-            // Don't size the intermediate bitmaps to teh m_Scale, because the scaling happens after they are done
-            if (!m_pFlipBitmap)
+            // Don't size the intermediate bitmaps to the m_Scale, because the scaling happens after they are done
+            if (!m_pFlipBitmap) {
                 m_pFlipBitmap = create_bitmap_ex(8, m_aSprite[m_Frame]->w, m_aSprite[m_Frame]->h);
+            }
             clear_to_color(m_pFlipBitmap, g_MaskColor);
 
-            // Draw eitehr the source color bitmap or the intermediate material bitmap onto the intermediate flipping bitmap
+            // Draw either the source color bitmap or the intermediate material bitmap onto the intermediate flipping bitmap
             draw_sprite_h_flip(m_pFlipBitmap, m_aSprite[m_Frame], 0, 0);
 
             pivot.m_X = m_pFlipBitmap->w + m_SpriteOffset.m_X;
@@ -1727,7 +1701,7 @@ void MOSRotating::SetWhichMOToNotHit(MovableObject *moToNotHit, float forHowLong
 // Description:     Draws this MOSRotating's current graphical representation to a
 //                  BITMAP of choice.
 
-void MOSRotating::Draw(BITMAP *pTargetBitmap,
+void MOSRotating::Draw(BITMAP *targetBitmap,
                        const Vector &targetPos,
                        DrawMode mode,
                        bool onlyPhysical) const
@@ -1735,27 +1709,18 @@ void MOSRotating::Draw(BITMAP *pTargetBitmap,
     RTEAssert(!m_aSprite.empty(), "No sprite bitmaps loaded to draw!");
     RTEAssert(m_Frame >= 0 && m_Frame < m_FrameCount, "Frame is out of bounds!");
 
-    // Only draw MOID if this gets hit by MO's and it has a valid MOID assigned to it
-    if (mode == g_DrawMOID && (!m_GetsHitByMOs || m_MOID == g_NoMOID)) {
-        return;
-    }
-
     // Draw all the attached wound emitters, and only if the mode is g_DrawColor and not onlyphysical
     // Only draw attachables and emitters which are not drawn after parent, so we draw them before
     if (mode == g_DrawColor || (!onlyPhysical && mode == g_DrawMaterial)) {
         for (const AEmitter *woundToDraw : m_Wounds) {
-            if (!woundToDraw->IsDrawnAfterParent()) { woundToDraw->Draw(pTargetBitmap, targetPos, mode, onlyPhysical); }
+            if (!woundToDraw->IsDrawnAfterParent()) { woundToDraw->Draw(targetBitmap, targetPos, mode, onlyPhysical); }
         }
     }
 
     // Draw all the attached attachables
     for (const Attachable *attachableToDraw : m_Attachables) {
-        if (!attachableToDraw->IsDrawnAfterParent() && attachableToDraw->IsDrawnNormallyByParent()) { attachableToDraw->Draw(pTargetBitmap, targetPos, mode, onlyPhysical); }
+        if (!attachableToDraw->IsDrawnAfterParent() && attachableToDraw->IsDrawnNormallyByParent()) { attachableToDraw->Draw(targetBitmap, targetPos, mode, onlyPhysical); }
     }
-
-	BITMAP * pTempBitmap = m_pTempBitmap;
-	BITMAP * pFlipBitmap = m_pFlipBitmap;
-	int keyColor = g_MaskColor;
 
     Vector spritePos(m_Pos.GetRounded() - targetPos);
 
@@ -1763,46 +1728,68 @@ void MOSRotating::Draw(BITMAP *pTargetBitmap,
         spritePos += m_RecoilOffset;
     }
 
+    // TODO_MULTITHREAD
+    // I've broken physics detection. Fix!
+    if (mode == g_DrawMOID) {
+        g_SceneMan.RegisterMOIDDrawing(m_MOID, 
+            spritePos.GetX() - m_SpriteRadius + m_SpriteOffset.m_X, spritePos.GetY() - m_SpriteRadius + m_SpriteOffset.m_Y, 
+            spritePos.GetX() + m_SpriteRadius - m_SpriteOffset.m_X, spritePos.GetY() + m_SpriteRadius - m_SpriteOffset.m_Y);
+        return;
+    }
+
+    BITMAP * pTempBitmap = m_pTempBitmap;
+	BITMAP * pFlipBitmap = targetBitmap ? m_pFlipBitmap : nullptr;
+	int keyColor = g_MaskColor;
+
+    BITMAP *currentFrame = m_aSprite[m_Frame];
+
     // If we're drawing a material silhouette, then create an intermediate material bitmap as well
-    bool intermediateBitmapUsed = mode != g_DrawColor && mode != g_DrawTrans && mode != g_DrawMOID;
+    bool intermediateBitmapUsed = mode != g_DrawColor && mode != g_DrawTrans;
     if (intermediateBitmapUsed) {
         clear_to_color(pTempBitmap, keyColor);
 
         // TODO: Fix that MaterialAir and KeyColor don't work at all because they're drawing 0 to a field of 0's
         // Draw the requested material silhouette on the material bitmap
         if (mode == g_DrawMaterial) {
-            draw_character_ex(pTempBitmap, m_aSprite[m_Frame], 0, 0, m_SettleMaterialDisabled ? GetMaterial()->GetIndex() : GetMaterial()->GetSettleMaterial(), -1);
+            draw_character_ex(pTempBitmap, currentFrame, 0, 0, m_SettleMaterialDisabled ? GetMaterial()->GetIndex() : GetMaterial()->GetSettleMaterial(), -1);
         } else if (mode == g_DrawWhite) {
-            draw_character_ex(pTempBitmap, m_aSprite[m_Frame], 0, 0, g_WhiteColor, -1);
+            draw_character_ex(pTempBitmap, currentFrame, 0, 0, g_WhiteColor, -1);
         } else if (mode == g_DrawDoor) {
-			draw_character_ex(pTempBitmap, m_aSprite[m_Frame], 0, 0, g_MaterialDoor, -1);
+			draw_character_ex(pTempBitmap, currentFrame, 0, 0, g_MaterialDoor, -1);
         } else {
             RTEAbort("Unknown draw mode selected in MOSRotating::Draw()!");
         }
     }
 
-    // Take care of wrapping situations
-    Vector aDrawPos[4];
-    int passes = 1;
+    auto renderFunc = [=]() {
+        BITMAP* pTargetBitmap = targetBitmap;
+        Vector renderPos = spritePos;
+        if (targetBitmap == nullptr) {
+            pTargetBitmap = g_ThreadMan.GetRenderTarget();
+            renderPos -= g_ThreadMan.GetRenderOffset();
+        }
 
-    aDrawPos[0] = spritePos;
+        // Take care of wrapping situations
+        Vector aDrawPos[4];
+        int passes = 1;
 
-    // Only bother with wrap drawing if the scene actually wraps around
-    if (pTargetBitmap) {
+        aDrawPos[0] = renderPos;
+
+        // Only bother with wrap drawing if the scene actually wraps around
         if (g_SceneMan.SceneWrapsX())
         {
             // See if need to double draw this across the scene seam if we're being drawn onto a scenewide bitmap
             if (targetPos.IsZero() && m_WrapDoubleDraw)
             {
-                if (spritePos.m_X < m_SpriteDiameter)
+                if (renderPos.m_X < m_SpriteDiameter)
                 {
-                    aDrawPos[passes] = spritePos;
+                    aDrawPos[passes] = renderPos;
                     aDrawPos[passes].m_X += pTargetBitmap->w;
                     passes++;
                 }
-                else if (spritePos.m_X > pTargetBitmap->w - m_SpriteDiameter)
+                else if (renderPos.m_X > pTargetBitmap->w - m_SpriteDiameter)
                 {
-                    aDrawPos[passes] = spritePos;
+                    aDrawPos[passes] = renderPos;
                     aDrawPos[passes].m_X -= pTargetBitmap->w;
                     passes++;
                 }
@@ -1830,15 +1817,15 @@ void MOSRotating::Draw(BITMAP *pTargetBitmap,
             // See if need to double draw this across the scene seam if we're being drawn onto a scenewide bitmap
             if (targetPos.IsZero() && m_WrapDoubleDraw)
             {
-                if (spritePos.m_Y < m_SpriteDiameter)
+                if (renderPos.m_Y < m_SpriteDiameter)
                 {
-                    aDrawPos[passes] = spritePos;
+                    aDrawPos[passes] = renderPos;
                     aDrawPos[passes].m_Y += pTargetBitmap->h;
                     passes++;
                 }
-                else if (spritePos.m_Y > pTargetBitmap->h - m_SpriteDiameter)
+                else if (renderPos.m_Y > pTargetBitmap->h - m_SpriteDiameter)
                 {
-                    aDrawPos[passes] = spritePos;
+                    aDrawPos[passes] = renderPos;
                     aDrawPos[passes].m_Y -= pTargetBitmap->h;
                     passes++;
                 }
@@ -1860,145 +1847,150 @@ void MOSRotating::Draw(BITMAP *pTargetBitmap,
                 }
             }
         }
-    }
 
-    //////////////////
-    // FLIPPED
-    if (m_HFlipped && pFlipBitmap)
-    {
-        // Don't size the intermediate bitmaps to the m_Scale, because the scaling happens after they are done
-        clear_to_color(pFlipBitmap, keyColor);
-        // Draw eitehr the source color bitmap or the intermediate material bitmap onto the intermediate flipping bitmap
-        if (mode == g_DrawColor || mode == g_DrawTrans)
-            draw_sprite_h_flip(pFlipBitmap, m_aSprite[m_Frame], 0, 0);
-        // If using the temp bitmap (which is always larger than the sprite) make sure the flipped image ends up in the upper right corner as if it was just as small as the sprite bitmap
-        else
-            draw_sprite_h_flip(pFlipBitmap, pTempBitmap, -(pTempBitmap->w - m_aSprite[m_Frame]->w), 0);
-
-        // Transparent mode
-        if (mode == g_DrawTrans)
+        //////////////////
+        // FLIPPED
+        if (m_HFlipped)
         {
-            clear_to_color(pTempBitmap, keyColor);
-            // Draw the rotated thing onto the intermediate bitmap so its COM position aligns with the middle of the temp bitmap.
-            // The temp bitmap should be able to hold the full size since it is larger than the max diameter.
-            // Take into account the h-flipped pivot point
-            pivot_scaled_sprite(pTempBitmap,
-                                pFlipBitmap,
-                                pTempBitmap->w / 2,
-                                pTempBitmap->h / 2,
-                                pFlipBitmap->w + m_SpriteOffset.m_X,
-                                -(m_SpriteOffset.m_Y),
-                                ftofix(m_Rotation.GetAllegroAngle()),
-                                ftofix(m_Scale));
-
-            // Draw the now rotated object's temporary bitmap onto the final drawing bitmap with transperency
-            // Do the passes loop in here so the intermediate drawing doesn't get done multiple times
-            for (int i = 0; i < passes; ++i) {
-                int spriteX = aDrawPos[i].GetFloorIntX() - (pTempBitmap->w / 2);
-                int spriteY = aDrawPos[i].GetFloorIntY() - (pTempBitmap->h / 2);
-                g_SceneMan.RegisterDrawing(pTargetBitmap, mode == g_DrawMOID ? m_MOID : g_NoMOID, spriteX, spriteY, spriteX + pTempBitmap->w, spriteY + pTempBitmap->h);
-                draw_trans_sprite(pTargetBitmap, pTempBitmap, spriteX, spriteY);
+            bool tempBitmap = false;
+            BITMAP* usedFlipBitmap = pFlipBitmap;
+            if (!usedFlipBitmap) {
+                usedFlipBitmap = create_bitmap_ex(8, currentFrame->w, currentFrame->h);
+                tempBitmap = true;
             }
-        }
-        // Non-transparent mode
-        else
-        {
-            // Do the passes loop in here so the flipping operation doesn't get done multiple times
-            for (int i = 0; i < passes; ++i)
-            {
-                int spriteX = aDrawPos[i].GetFloorIntX();
-                int spriteY = aDrawPos[i].GetFloorIntY();
-                g_SceneMan.RegisterDrawing(pTargetBitmap, mode == g_DrawMOID ? m_MOID : g_NoMOID, spriteX - m_SpriteRadius + m_SpriteOffset.m_X, spriteY - m_SpriteRadius + m_SpriteOffset.m_Y, spriteX + m_SpriteRadius - m_SpriteOffset.m_X, spriteY + m_SpriteRadius - m_SpriteOffset.m_Y);
-                
-                if (mode == g_DrawMOID) {
-                    continue;
-                }
 
+            // Don't size the intermediate bitmaps to the m_Scale, because the scaling happens after they are done
+            clear_to_color(usedFlipBitmap, keyColor);
+            // Draw either the source color bitmap or the intermediate material bitmap onto the intermediate flipping bitmap
+            if (mode == g_DrawColor || mode == g_DrawTrans) {
+                draw_sprite_h_flip(usedFlipBitmap, currentFrame, 0, 0);
+            // If using the temp bitmap (which is always larger than the sprite) make sure the flipped image ends up in the upper right corner as if it was just as small as the sprite bitmap
+            } else {
+                draw_sprite_h_flip(usedFlipBitmap, pTempBitmap, -(pTempBitmap->w - currentFrame->w), 0);
+            }
+
+            // Transparent mode
+            if (mode == g_DrawTrans)
+            {
+                clear_to_color(pTempBitmap, keyColor);
+                // Draw the rotated thing onto the intermediate bitmap so its COM position aligns with the middle of the temp bitmap.
+                // The temp bitmap should be able to hold the full size since it is larger than the max diameter.
                 // Take into account the h-flipped pivot point
-                pivot_scaled_sprite(pTargetBitmap,
-                                    pFlipBitmap,
-                                    spriteX,
-                                    spriteY,
-                                    pFlipBitmap->w + m_SpriteOffset.m_X,
+                pivot_scaled_sprite(pTempBitmap,
+                                    usedFlipBitmap,
+                                    pTempBitmap->w / 2,
+                                    pTempBitmap->h / 2,
+                                    usedFlipBitmap->w + m_SpriteOffset.m_X,
                                     -(m_SpriteOffset.m_Y),
                                     ftofix(m_Rotation.GetAllegroAngle()),
                                     ftofix(m_Scale));
+
+                // Draw the now rotated object's temporary bitmap onto the final drawing bitmap with transperency
+                // Do the passes loop in here so the intermediate drawing doesn't get done multiple times
+                for (int i = 0; i < passes; ++i) {
+                    int spriteX = aDrawPos[i].GetFloorIntX() - (pTempBitmap->w / 2);
+                    int spriteY = aDrawPos[i].GetFloorIntY() - (pTempBitmap->h / 2);
+
+                    draw_trans_sprite(pTargetBitmap, pTempBitmap, spriteX, spriteY);
+                }
+            }
+            // Non-transparent mode
+            else
+            {
+                // Do the passes loop in here so the flipping operation doesn't get done multiple times
+                for (int i = 0; i < passes; ++i)
+                {
+                    int spriteX = aDrawPos[i].GetFloorIntX();
+                    int spriteY = aDrawPos[i].GetFloorIntY();
+
+                    // Take into account the h-flipped pivot point
+                    pivot_scaled_sprite(pTargetBitmap,
+                                        usedFlipBitmap,
+                                        spriteX,
+                                        spriteY,
+                                        usedFlipBitmap->w + m_SpriteOffset.m_X,
+                                        -(m_SpriteOffset.m_Y),
+                                        ftofix(m_Rotation.GetAllegroAngle()),
+                                        ftofix(m_Scale));
+                }
+            }
+
+            if (tempBitmap) {
+                destroy_bitmap(usedFlipBitmap);
             }
         }
-    }
-    /////////////////
-    // NON-FLIPPED
-    else
-    {
-//        spritePos += m_SpriteOffset;
-//        spritePos += (m_SpriteCenter * m_Rotation - m_SpriteCenter);
-
-        // Transparent mode
-        if (mode == g_DrawTrans)
-        {
-            clear_to_color(pTempBitmap, keyColor);
-            // Draw the rotated thing onto the intermediate bitmap so its COM position aligns with the middle of the temp bitmap.
-            // The temp bitmap should be able to hold the full size since it is larger than the max diameter.
-            // Take into account the h-flipped pivot point
-            pivot_scaled_sprite(pTempBitmap,
-                                m_aSprite[m_Frame],
-                                pTempBitmap->w / 2,
-                                pTempBitmap->h / 2,
-                                -(m_SpriteOffset.m_X),
-                                -(m_SpriteOffset.m_Y),
-                                ftofix(m_Rotation.GetAllegroAngle()),
-                                ftofix(m_Scale));
-
-            // Draw the now rotated object's temporary bitmap onto the final drawing bitmap with transperency
-            // Do the passes loop in here so the intermediate drawing doesn't get done multiple times
-            for (int i = 0; i < passes; ++i) {
-                int spriteX = aDrawPos[i].GetFloorIntX() - (pTempBitmap->w / 2);
-                int spriteY = aDrawPos[i].GetFloorIntY() - (pTempBitmap->h / 2);
-                g_SceneMan.RegisterDrawing(pTargetBitmap, mode == g_DrawMOID ? m_MOID : g_NoMOID, spriteX, spriteY, spriteX + pTempBitmap->w, spriteY + pTempBitmap->h);
-                draw_trans_sprite(pTargetBitmap, pTempBitmap, spriteX, spriteY);
-            }
-        }
-        // Non-transparent mode
+        /////////////////
+        // NON-FLIPPED
         else
         {
-            for (int i = 0; i < passes; ++i)
+            // Transparent mode
+            if (mode == g_DrawTrans)
             {
-                int spriteX = aDrawPos[i].GetFloorIntX();
-                int spriteY = aDrawPos[i].GetFloorIntY();
-                g_SceneMan.RegisterDrawing(pTargetBitmap, mode == g_DrawMOID ? m_MOID : g_NoMOID, spriteX - m_SpriteRadius + m_SpriteOffset.m_X, spriteY - m_SpriteRadius + m_SpriteOffset.m_Y, spriteX + m_SpriteRadius - m_SpriteOffset.m_X, spriteY + m_SpriteRadius - m_SpriteOffset.m_Y);
-
-                if (mode == g_DrawMOID) {
-                    continue;
-                }
-
-                pivot_scaled_sprite(pTargetBitmap,
-                                    mode == g_DrawColor ? m_aSprite[m_Frame] : pTempBitmap,
-                                    spriteX,
-                                    spriteY,
+                clear_to_color(pTempBitmap, keyColor);
+                // Draw the rotated thing onto the intermediate bitmap so its COM position aligns with the middle of the temp bitmap.
+                // The temp bitmap should be able to hold the full size since it is larger than the max diameter.
+                // Take into account the h-flipped pivot point
+                pivot_scaled_sprite(pTempBitmap,
+                                    currentFrame,
+                                    pTempBitmap->w / 2,
+                                    pTempBitmap->h / 2,
                                     -(m_SpriteOffset.m_X),
                                     -(m_SpriteOffset.m_Y),
                                     ftofix(m_Rotation.GetAllegroAngle()),
                                     ftofix(m_Scale));
+
+                // Draw the now rotated object's temporary bitmap onto the final drawing bitmap with transperency
+                // Do the passes loop in here so the intermediate drawing doesn't get done multiple times
+                for (int i = 0; i < passes; ++i) {
+                    int spriteX = aDrawPos[i].GetFloorIntX() - (pTempBitmap->w / 2);
+                    int spriteY = aDrawPos[i].GetFloorIntY() - (pTempBitmap->h / 2);
+
+                    draw_trans_sprite(pTargetBitmap, pTempBitmap, spriteX, spriteY);
+                }
+            }
+            // Non-transparent mode
+            else
+            {
+                for (int i = 0; i < passes; ++i)
+                {
+                    int spriteX = aDrawPos[i].GetFloorIntX();
+                    int spriteY = aDrawPos[i].GetFloorIntY();
+
+                    pivot_scaled_sprite(pTargetBitmap,
+                                        mode == g_DrawColor ? currentFrame : pTempBitmap,
+                                        spriteX,
+                                        spriteY,
+                                        -(m_SpriteOffset.m_X),
+                                        -(m_SpriteOffset.m_Y),
+                                        ftofix(m_Rotation.GetAllegroAngle()),
+                                        ftofix(m_Scale)); 
+                }
             }
         }
-    }
+    };
+
+    if (targetBitmap == nullptr) {
+		g_ThreadMan.GetSimRenderQueue().push_back(renderFunc);
+	} else {
+		renderFunc();
+	}
 
     // Draw all the attached wound emitters, and only if the mode is g_DrawColor and not onlyphysical
     // Only draw attachables and emitters which are not drawn after parent, so we draw them before
     if (mode == g_DrawColor || (!onlyPhysical && mode == g_DrawMaterial)) {
         for (const AEmitter *woundToDraw : m_Wounds) {
-            if (woundToDraw->IsDrawnAfterParent()) { woundToDraw->Draw(pTargetBitmap, targetPos, mode, onlyPhysical); }
+            if (woundToDraw->IsDrawnAfterParent()) { woundToDraw->Draw(targetBitmap, targetPos, mode, onlyPhysical); }
         }
     }
 
     // Draw all the attached attachables
     for (const Attachable *attachableToDraw : m_Attachables) {
-        if (attachableToDraw->IsDrawnAfterParent() && attachableToDraw->IsDrawnNormallyByParent()) { attachableToDraw->Draw(pTargetBitmap, targetPos, mode, onlyPhysical); }
+        if (attachableToDraw->IsDrawnAfterParent() && attachableToDraw->IsDrawnNormallyByParent()) { attachableToDraw->Draw(targetBitmap, targetPos, mode, onlyPhysical); }
     }
 
     if (mode == g_DrawColor && !onlyPhysical && m_pAtomGroup && g_SettingsMan.DrawAtomGroupVisualizations() && GetRootParent() == this) {
-        m_pAtomGroup->Draw(pTargetBitmap, targetPos, false, 122);
-        //m_pDeepGroup->Draw(pTargetBitmap, targetPos, false, 13);
+        m_pAtomGroup->Draw(targetBitmap, targetPos, false, 122);
+        //m_pDeepGroup->Draw(targetBitmap, targetPos, false, 13);
     }
 }
 
