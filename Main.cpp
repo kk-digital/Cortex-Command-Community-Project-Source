@@ -213,6 +213,8 @@ namespace RTE {
 					long long updateStartTime = g_TimerMan.GetAbsoluteTime();
 					serverUpdated = false;
 
+					g_TimerMan.UpdateSim();
+
 					g_SceneMan.GetScene()->UpdateSim();
 
 					g_PerformanceMan.StartPerformanceMeasurement(PerformanceMan::SimTotal);
@@ -229,11 +231,6 @@ namespace RTE {
 					g_PerformanceMan.StopPerformanceMeasurement(PerformanceMan::ActivityUpdate);
 					g_MovableMan.Update();
 
-					// We want the timer update as close as possible to the sim state transfer, to ensure
-					// where the render interpolation resets to 0 only after we have a new state to render
-					g_ThreadMan.TransferSimStateToRenderer();
-					g_TimerMan.UpdateSim();
-
 					g_AudioMan.Update();
 
 					g_ActivityMan.LateUpdateGlobalScripts();
@@ -249,6 +246,8 @@ namespace RTE {
 					}
 
 					g_ThreadMan.RunSimulationThreadFunctions();
+
+					g_ThreadMan.TransferSimStateToRenderer();
 
 					long long updateEndTime = g_TimerMan.GetAbsoluteTime();
 					g_PerformanceMan.NewPerformanceSample();

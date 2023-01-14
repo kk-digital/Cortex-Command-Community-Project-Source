@@ -9,6 +9,7 @@
 namespace RTE {
 
 	class Vector;
+	class Matrix;
 
 	extern std::mt19937 g_RNG; //!< The random number generator used for all random functions.
 
@@ -109,6 +110,18 @@ namespace RTE {
 	/// <param name="progressScalar">How far your Lerp has progressed. Automatically normalized through use of scaleStart and scaleEnd.</param>
 	/// <returns>Interpolated value.</returns>
 	Vector Lerp(float scaleStart, float scaleEnd, Vector startPos, Vector endPos, float progressScalar);
+
+	/// <summary>
+	/// Simple Linear Interpolation, with an added bonus: scaleStart and scaleEnd let you define your scale, where 0 and 1 would be standard scale.
+	/// This scale is used to normalize your progressScalar value and Lerp accordingly.
+	/// </summary>
+	/// <param name="scaleStart">The start of the scale to Lerp along.</param>
+	/// <param name="scaleEnd">The end of the scale to Lerp along.</param>
+	/// <param name="startRot">The start rotation of your Lerp.</param>
+	/// <param name="endRot">The end rotation of your Lerp.</param>
+	/// <param name="progressScalar">How far your Lerp has progressed. Automatically normalized through use of scaleStart and scaleEnd.</param>
+	/// <returns>Interpolated value.</returns>
+	Matrix Lerp(float scaleStart, float scaleEnd, Matrix startRot, Matrix endRot, float progressScalar);
 
 	/// <summary>
 	/// Nonlinear ease-in interpolation. Starts slow.

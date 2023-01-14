@@ -368,7 +368,9 @@ namespace RTE {
 		// If we're attached to something, MovableMan doesn't own us, and therefore isn't calling our UpdateScripts method (and neither is our parent), so we should here.
 		if (m_Parent && GetRootParent()->HasEverBeenAddedToMovableMan()) { UpdateScripts(); }
 
-		m_PrevPos = m_Pos;
+		// TODO_MULTITHREAD Being done in draw for now...
+		//m_PrevPos = m_Pos;
+
 		m_PrevVel = m_Vel;
 		m_PrevParentOffset = m_ParentOffset;
 		m_PrevJointOffset = m_JointOffset;
@@ -380,7 +382,10 @@ namespace RTE {
 	void Attachable::PreUpdate() {
 		if (!m_PreUpdateHasRunThisFrame) {
 			if (m_Parent) {
-				if (InheritsHFlipped() != 0) { m_HFlipped = m_InheritsHFlipped == 1 ? m_Parent->IsHFlipped() : !m_Parent->IsHFlipped(); }
+				if (InheritsHFlipped() != 0) { 
+					m_HFlipped = m_InheritsHFlipped == 1 ? m_Parent->IsHFlipped() : !m_Parent->IsHFlipped(); 
+				}
+
 				if (InheritsRotAngle()) {
 					SetRotAngle(m_Parent->GetRotAngle() + m_InheritedRotAngleOffset * m_Parent->GetFlipFactor());
 					m_AngularVel = 0.0F;
