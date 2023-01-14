@@ -737,7 +737,7 @@ namespace RTE {
 				if (sqrDistanceToPlayer < (m_MinimumDistanceForPanning * m_MinimumDistanceForPanning)) {
 					soundChannel->set3DLevel(0);
 				} else if (sqrDistanceToPlayer < (doubleMinimumDistanceForPanning * doubleMinimumDistanceForPanning)) {
-					soundChannel->set3DLevel(LERP(0, 1, 0, m_SoundPanningEffectStrength, channel3dLevel));
+					soundChannel->set3DLevel(Lerp(0, 1, 0, m_SoundPanningEffectStrength, channel3dLevel));
 				} else {
 					soundChannel->set3DLevel(m_SoundPanningEffectStrength);
 				}

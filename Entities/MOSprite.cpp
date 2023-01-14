@@ -146,6 +146,7 @@ int MOSprite::Create(const MOSprite &reference)
     m_SpriteDiameter = reference.m_SpriteDiameter;
 
     m_Rotation = reference.m_Rotation;
+    m_PrevRotation = reference.m_PrevRotation;
     m_AngularVel = reference.m_AngularVel;
     m_SettleMaterialDisabled = reference.m_SettleMaterialDisabled;
     m_pEntryWound = reference.m_pEntryWound;
@@ -529,6 +530,7 @@ void MOSprite::Draw(BITMAP * targetBitmap,
         spriteOffset = m_SpriteOffset;
     }
 
+    Vector prevSpritePos(m_PrevPos + spriteOffset - targetPos);
     Vector spritePos(m_Pos + spriteOffset - targetPos);
 
     if (mode == g_DrawMOID) {
@@ -539,9 +541,9 @@ void MOSprite::Draw(BITMAP * targetBitmap,
     bool hFlipped = m_HFlipped;
     bool wrapDoubleDraw = m_WrapDoubleDraw;
 
-    auto renderFunc = [=]() {
+    auto renderFunc = [=](float interpolationAmount) {
         BITMAP* pTargetBitmap = targetBitmap;
-        Vector renderPos = spritePos;
+        Vector renderPos = Lerp(0.0F, 1.0F, prevSpritePos, spritePos, interpolationAmount);
         if (targetBitmap == nullptr) {
             pTargetBitmap = g_ThreadMan.GetRenderTarget();
             renderPos -= g_ThreadMan.GetRenderOffset();
@@ -631,7 +633,7 @@ void MOSprite::Draw(BITMAP * targetBitmap,
     if (targetBitmap == nullptr) {
         g_ThreadMan.GetSimRenderQueue().push_back(renderFunc);
     } else {
-        renderFunc();
+        renderFunc(1.0F);
     }
 }
 

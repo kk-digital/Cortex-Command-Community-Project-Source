@@ -355,9 +355,12 @@ namespace RTE {
 		// TODO
 		// Wrapping?!
 
+		// MULTITHREAD_TODO
+		// Proper interpolation
+
 		BITMAP* handSpriteBitmap = m_HandSpriteBitmap;
 
-		auto renderFunc = [=]() {
+		auto renderFunc = [=](float interpolation) {
 			BITMAP* pTargetBitmap = targetBitmap;
 			Vector renderPos = handPos;
 			if (targetBitmap == nullptr) {
@@ -384,7 +387,7 @@ namespace RTE {
 		if (targetBitmap == nullptr) {
 			g_ThreadMan.GetSimRenderQueue().push_back(renderFunc);
 		} else {
-			renderFunc();
+			renderFunc(1.0F);
 		}
 	}
 
