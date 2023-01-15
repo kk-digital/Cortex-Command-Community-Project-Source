@@ -1949,10 +1949,6 @@ void MOSRotating::Draw(BITMAP *targetBitmap,
         };
 
         if (targetBitmap == nullptr) {
-            // TODO_MULTITHREAD: HUUUUGE hack to update this here, but it's the safest way for now... The game is super inconsistent about updating the previous position/rotation of things.
-            // It differs depending on what things are attached to etc. Doing it here means it gives the nicest result for render interpolation.
-            const_cast<MOSRotating*>(this)->m_PrevPos = m_Pos;
-            const_cast<MOSRotating*>(this)->m_PrevRotation = m_Rotation;
             g_ThreadMan.GetSimRenderQueue().push_back(renderFunc);
         } else {
             renderFunc(1.0F);
@@ -2008,13 +2004,13 @@ void MOSRotating::CorrectAttachableAndWoundPositionsAndRotations() const {
 	for (Attachable *attachable : m_Attachables) {
 		attachable->PreUpdate();
 		attachable->m_PreUpdateHasRunThisFrame = false;
-		attachable->UpdatePositionAndJointPositionBasedOnOffsets();
+		attachable->UpdatePositionAndJointPositionBasedOnOffsets(true);
 		attachable->CorrectAttachableAndWoundPositionsAndRotations();
 	}
 	for (Attachable *wound : m_Wounds) {
 		wound->PreUpdate();
 		wound->m_PreUpdateHasRunThisFrame = false;
-		wound->UpdatePositionAndJointPositionBasedOnOffsets();
+		wound->UpdatePositionAndJointPositionBasedOnOffsets(true);
 		wound->CorrectAttachableAndWoundPositionsAndRotations();
 	}
 }
@@ -2169,6 +2165,19 @@ bool MOSRotating::ObjectValueExists(std::string key) const
 	if (m_ObjectValueMap.find(key) != m_ObjectValueMap.end())
 		return true;
 	return false;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void MOSRotating::NewFrame() {
+    MOSprite::NewFrame();
+
+    for (Attachable *attachable : m_Attachables) {
+		attachable->NewFrame();
+	}
+	for (Attachable *wound : m_Wounds) {
+		wound->NewFrame();
+	}
 }
 
 } // namespace RTE

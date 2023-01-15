@@ -1512,8 +1512,9 @@ void MovableMan::OverrideMaterialDoors(bool eraseDoorMaterial, int team) const {
 void MovableMan::Update()
 {
     // Don't update if paused
-    if (g_ActivityMan.GetActivity() && g_ActivityMan.ActivityPaused())
+    if (g_ActivityMan.GetActivity() && g_ActivityMan.ActivityPaused()) {
         return;
+    }
 
 	m_SimUpdateFrameNumber++;
 
@@ -1551,14 +1552,11 @@ void MovableMan::Update()
         {
             for (aIt = m_Actors.begin(); aIt != m_Actors.end(); ++aIt)
             {
-                if (!((*aIt)->IsUpdated()))
-                {
-                    (*aIt)->ApplyForces();
-                    (*aIt)->PreTravel();
-                    (*aIt)->Travel();
-                    (*aIt)->PostTravel();
-                }
                 (*aIt)->NewFrame();
+                (*aIt)->ApplyForces();
+                (*aIt)->PreTravel();
+                (*aIt)->Travel();
+                (*aIt)->PostTravel();
             }
         }
 		g_PerformanceMan.StopPerformanceMeasurement(PerformanceMan::ActorsTravel);
@@ -1567,14 +1565,11 @@ void MovableMan::Update()
         {
             for (iIt = m_Items.begin(); iIt != m_Items.end(); ++iIt)
             {
-                if (!((*iIt)->IsUpdated()))
-                {
-                    (*iIt)->ApplyForces();
-                    (*iIt)->PreTravel();
-                    (*iIt)->Travel();
-                    (*iIt)->PostTravel();
-                }
                 (*iIt)->NewFrame();
+                (*iIt)->ApplyForces();
+                (*iIt)->PreTravel();
+                (*iIt)->Travel();
+                (*iIt)->PostTravel();
             }
         }
 
@@ -1583,14 +1578,11 @@ void MovableMan::Update()
         {
             for (parIt = m_Particles.begin(); parIt != m_Particles.end(); ++parIt)
             {
-                if (!((*parIt)->IsUpdated()))
-                {
-                    (*parIt)->ApplyForces();
-                    (*parIt)->PreTravel();
-                    (*parIt)->Travel();
-                    (*parIt)->PostTravel();
-                }
                 (*parIt)->NewFrame();
+                (*parIt)->ApplyForces();
+                (*parIt)->PreTravel();
+                (*parIt)->Travel();
+                (*parIt)->PostTravel();
             }
         }
 		g_PerformanceMan.StopPerformanceMeasurement(PerformanceMan::ParticlesTravel);

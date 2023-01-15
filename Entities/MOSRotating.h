@@ -911,6 +911,10 @@ ClassInfoGetters;
 	/// </summary>
 	virtual void CorrectAttachableAndWoundPositionsAndRotations() const;
 
+    /// <summary>
+    /// Notify that a new frame has started, allowing us to update information like our previous state.
+    /// </summary>
+    void NewFrame() override;
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Protected member variable and method declarations
