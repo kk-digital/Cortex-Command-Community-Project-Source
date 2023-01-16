@@ -163,6 +163,8 @@ namespace RTE {
 		g_UInputMan.DisableKeys(false);
 		g_UInputMan.TrapMousePos(false);
 
+		g_TimerMan.PauseSim(true);
+
 		while (!System::IsSetToQuit()) {
 			g_FrameMan.ClearFrame();
 			g_UInputMan.Update();
@@ -177,6 +179,7 @@ namespace RTE {
 			}
 
 			if (g_MenuMan.Update()) {
+				g_TimerMan.PauseSim(false);
 				break;
 			}
 			g_ConsoleMan.Update();
