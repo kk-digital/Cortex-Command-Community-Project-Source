@@ -4101,12 +4101,14 @@ void AHuman::Draw(BITMAP *pTargetBitmap, const Vector &targetPos, DrawMode mode,
 void AHuman::DrawHUD(BITMAP *pTargetBitmap, const Vector &targetPos, int whichScreen, bool playerControlled) {
 	m_HUDStack = -m_CharHeight / 2;
 
-    if (!m_HUDVisible)
+    if (!m_HUDVisible) {
         return;
+    }
 
     // Only do HUD if on a team
-    if (m_Team < 0)
+    if (m_Team < 0) {
         return;
+    }
 
 	// Only draw if the team viewing this is on the same team OR has seen the space where this is located.
 	int viewingTeam = g_ActivityMan.GetActivity()->GetTeamOfPlayer(g_ActivityMan.GetActivity()->PlayerOfScreen(whichScreen));
@@ -4171,11 +4173,6 @@ void AHuman::DrawHUD(BITMAP *pTargetBitmap, const Vector &targetPos, int whichSc
     if (m_Controller.IsPlayerControlled() && g_ActivityMan.GetActivity()->ScreenOfPlayer(m_Controller.GetPlayer()) == whichScreen && pSmallFont && pSymbolFont)
     {
         AllegroBitmap allegroBitmap(pTargetBitmap);
-/*
-        // Device aiming reticle
-        if (m_Controller.IsState(AIM_SHARP) &&
-            m_pFGArm && m_pFGArm->IsAttached() && m_pFGArm->HoldsHeldDevice())
-            m_pFGArm->GetHeldDevice()->DrawHUD(pTargetBitmap, targetPos, whichScreen);*/
 
         Vector drawPos = m_Pos - targetPos;
 
@@ -4276,29 +4273,9 @@ void AHuman::DrawHUD(BITMAP *pTargetBitmap, const Vector &targetPos, int whichSc
             }
 
 			if (m_Controller.IsState(PIE_MENU_ACTIVE) || !m_EquipHUDTimer.IsPastRealMS(700)) {
-/*
-                // Display Gold tally if gold chunk is in hand
-                if (m_pFGArm->HoldsSomething() && m_pFGArm->GetHeldMO()->IsGold() && GetGoldCarried() > 0)
-                {
-                    str[0] = m_GoldPicked ? -57 : -58; str[1] = 0;
-                    pSymbolFont->DrawAligned(&allegroBitmap, drawPos.m_X - 11, drawPos.m_Y + m_HUDStack, str, GUIFont::Left);
-                    std::snprintf(str, sizeof(str), "%.0f oz", GetGoldCarried());
-                    pSmallFont->DrawAligned(&allegroBitmap, drawPos.m_X - 0, drawPos.m_Y + m_HUDStack + 2, str, GUIFont::Left);
-
-                    m_HUDStack -= 11;
-                }
-*/
 				std::string equippedItemsString = (m_pFGArm && m_pFGArm->GetHeldDevice() ? m_pFGArm->GetHeldDevice()->GetPresetName() : "EMPTY") + (m_pBGArm && m_pBGArm->GetHeldDevice() ? " | " + m_pBGArm->GetHeldDevice()->GetPresetName() : "");
 				pSmallFont->DrawAligned(&allegroBitmap, drawPos.GetFloorIntX() + 1, drawPos.GetFloorIntY() + m_HUDStack + 3, equippedItemsString, GUIFont::Centre);
 				m_HUDStack -= 9;
-/*
-                // Reload GUI, only show when there's nothing to pick up
-                if (!m_pItemInReach && m_pFGArm->HoldsSomething() && pHeldFirearm && !pHeldFirearm->IsFull())
-                {
-                    std::snprintf(str, sizeof(str), " œ Reload", pHeldFirearm);
-                    pSmallFont->DrawAligned(&allegroBitmap, drawPos.m_X - 12, drawPos.m_Y + m_HUDStack + 3, str, GUIFont::Left);
-                }
-*/
             }
         }
         else
@@ -4313,54 +4290,6 @@ void AHuman::DrawHUD(BITMAP *pTargetBitmap, const Vector &targetPos, int whichSc
             std::snprintf(str, sizeof(str), " %c %s", -49, m_pItemInReach->GetPresetName().c_str());
             pSmallFont->DrawAligned(&allegroBitmap, drawPos.GetFloorIntX(), drawPos.GetFloorIntY() + m_HUDStack + 3, str, GUIFont::Centre);
         }
-/*
-        // AI Mode select GUI HUD
-        if (m_Controller.IsState(AI_MODE_SET))
-        {
-            int iconOff = m_apAIIcons[0]->w + 2;
-            int iconColor = m_Team == Activity::TeamOne ? AIICON_RED : AIICON_GREEN;
-            Vector iconPos = GetCPUPos() - targetPos;
-            
-            if (m_AIMode == AIMODE_SENTRY)
-            {
-                std::snprintf(str, sizeof(str), "%s", "Sentry");
-                pSmallFont->DrawAligned(&allegroBitmap, iconPos.m_X, iconPos.m_Y - 18, str, GUIFont::Centre);
-            }
-            else if (m_AIMode == AIMODE_PATROL)
-            {
-                std::snprintf(str, sizeof(str), "%s", "Patrol");
-                pSmallFont->DrawAligned(&allegroBitmap, iconPos.m_X - 9, iconPos.m_Y - 5, str, GUIFont::Right);
-            }
-            else if (m_AIMode == AIMODE_BRAINHUNT)
-            {
-                std::snprintf(str, sizeof(str), "%s", "Brainhunt");
-                pSmallFont->DrawAligned(&allegroBitmap, iconPos.m_X + 9, iconPos.m_Y - 5, str, GUIFont::Left);
-            }
-            else if (m_AIMode == AIMODE_GOLDDIG)
-            {
-                std::snprintf(str, sizeof(str), "%s", "Gold Dig");
-                pSmallFont->DrawAligned(&allegroBitmap, iconPos.m_X, iconPos.m_Y + 8, str, GUIFont::Centre);
-            }
-
-            // Draw the mode alternatives if they are not the current one
-            if (m_AIMode != AIMODE_SENTRY)
-            {
-                draw_sprite(pTargetBitmap, m_apAIIcons[AIMODE_SENTRY], iconPos.m_X - 6, iconPos.m_Y - 6 - iconOff);
-            }
-            if (m_AIMode != AIMODE_PATROL)
-            {
-                draw_sprite(pTargetBitmap, m_apAIIcons[AIMODE_PATROL], iconPos.m_X - 6 - iconOff, iconPos.m_Y - 6);
-            }
-            if (m_AIMode != AIMODE_BRAINHUNT)
-            {
-                draw_sprite(pTargetBitmap, m_apAIIcons[AIMODE_BRAINHUNT], iconPos.m_X - 6 + iconOff, iconPos.m_Y - 6);
-            }
-            if (m_AIMode != AIMODE_GOLDDIG)
-            {
-                draw_sprite(pTargetBitmap, m_apAIIcons[AIMODE_GOLDDIG], iconPos.m_X - 6, iconPos.m_Y - 6 + iconOff);
-            }
-        }
-*/
     }
 
     // AI mode state debugging
