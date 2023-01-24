@@ -385,11 +385,7 @@ namespace RTE {
 
 		switch (m_MenuMode) {
 			case MenuMode::Carousel:
-				if (!m_InventoryActor || m_InventoryActor->IsInventoryEmpty()) {
-					return;
-				}
-				// Logically this should no longer be needed
-				if (!m_InventoryActor || (m_InventoryActor->IsInventoryEmpty() && m_InventoryActorEquippedItems.empty() && m_EnabledState != EnabledState::Disabling)) {
+				if (!m_InventoryActor || m_InventoryActor->IsInventoryEmpty() || (m_InventoryActorEquippedItems.empty() && m_EnabledState != EnabledState::Disabling)) {
 					return;
 				}
 				drawPos -= Vector(0, c_CarouselMenuVerticalOffset + c_CarouselBoxMaxSize.GetY() * 0.5F);
