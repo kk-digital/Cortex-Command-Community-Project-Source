@@ -3630,7 +3630,7 @@ void AHuman::Update()
                 m_Paths[FGROUND][CLIMB].Terminate();
                 m_Paths[BGROUND][CLIMB].Terminate();
 			}
-            // Disabling this walk stride reset reduces stumbing on flat ground
+            // Disabling this walk stride reset reduces stumbing on flat ground, and improves stairs/ladder climbing
 			// TODO: Consider incrementing 1.1F or even checking if the actor is missing legs instead of disabling?
             /* else if (m_StrideTimer.IsPastSimMS(static_cast<double>(m_Paths[FGROUND][WALK].GetTotalPathTime() * 1.1F))) {
 				// Reset the walking stride if it's taking longer than it should.
