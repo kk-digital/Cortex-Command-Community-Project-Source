@@ -129,9 +129,8 @@ namespace RTE {
     void CameraMan::CheckOffset(int screenId) {
         Screen &screen = m_Screens[screenId];
 
-        // Handy
-        const SLTerrain* pTerrain = g_ThreadMan.GetDrawableGameState().m_Terrain.get();
-        RTEAssert(pTerrain, "Trying to get terrain matter before there is a scene or terrain!");
+        const SLTerrain* terrain = g_ThreadMan.GetDrawableGameState().m_Terrain.get();
+        RTEAssert(terrain, "Trying to get terrain matter before there is a scene or terrain!");
 
 		if (!terrain->WrapsX() && screen.Offset.GetX() < 0) {
 			screen.Offset.SetX(0.0F);
@@ -220,20 +219,18 @@ namespace RTE {
 		screenShakeOffset.RadRotate(RandomNormalNum() * c_PI);
 		screenShakeOffset *= screen.ScreenShakeMagnitude * m_ScreenShakeStrength * screenShakeScale;
 
-		if (g_TimerMan.DrawnSimUpdate()) {
-			// Adjust for wrapping if the scroll target jumped a seam this frame, as reported by whatever screen set it (the scroll target) this frame. This is to avoid big, scene-wide jumps in scrolling when traversing the seam.
+		// Adjust for wrapping if the scroll target jumped a seam this frame, as reported by whatever screen set it (the scroll target) this frame. This is to avoid big, scene-wide jumps in scrolling when traversing the seam.
+		if (screen.TargetWrapped) {
 			const SLTerrain *terrain = g_ThreadMan.GetDrawableGameState().m_Terrain.get();
-			if (screen.TargetWrapped) {
-				if (terrain->WrapsX()) {
-					int wrappingScrollDirection = (screen.ScrollTarget.GetFloorIntX() < (terrain->GetBitmap()->w / 2)) ? 1 : -1;
-					screen.Offset.SetX(screen.Offset.GetX() - (static_cast<float>(terrain->GetBitmap()->w * wrappingScrollDirection)));
-					screen.SeamCrossCount[Axes::X] += wrappingScrollDirection;
-				}
-				if (terrain->WrapsY()) {
-					int wrappingScrollDirection = (screen.ScrollTarget.GetFloorIntY() < (terrain->GetBitmap()->h / 2)) ? 1 : -1;
-					screen.Offset.SetY(screen.Offset.GetY() - (static_cast<float>(terrain->GetBitmap()->h * wrappingScrollDirection)));
-					screen.SeamCrossCount[Axes::Y] += wrappingScrollDirection;
-				}
+			if (terrain->WrapsX()) {
+				int wrappingScrollDirection = (screen.ScrollTarget.GetFloorIntX() < (terrain->GetBitmap()->w / 2)) ? 1 : -1;
+				screen.Offset.SetX(screen.Offset.GetX() - (static_cast<float>(terrain->GetBitmap()->w * wrappingScrollDirection)));
+				screen.SeamCrossCount[Axes::X] += wrappingScrollDirection;
+			}
+			if (terrain->WrapsY()) {
+				int wrappingScrollDirection = (screen.ScrollTarget.GetFloorIntY() < (terrain->GetBitmap()->h / 2)) ? 1 : -1;
+				screen.Offset.SetY(screen.Offset.GetY() - (static_cast<float>(terrain->GetBitmap()->h * wrappingScrollDirection)));
+				screen.SeamCrossCount[Axes::Y] += wrappingScrollDirection;
 			}
 			screen.TargetWrapped = false;
 		}

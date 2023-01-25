@@ -2627,7 +2627,6 @@ void SceneMan::Update(int screenId) {
         m_pDebugLayer->SetOffset(offset);
     }
 
-	SLTerrain *terrain = m_pCurrentScene->GetTerrain();
 	terrain->SetOffset(offset);
 	terrain->Update();
 
