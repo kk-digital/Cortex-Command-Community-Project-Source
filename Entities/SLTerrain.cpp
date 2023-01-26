@@ -151,12 +151,6 @@ namespace RTE {
 		std::array<int, c_PaletteEntriesNumber> materialColors;
 		materialColors.fill(0);
 
-		// Reference. Do not remove.
-		//acquire_bitmap(m_MainBitmap);
-		//acquire_bitmap(m_FGColorLayer->GetBitmap());
-		//acquire_bitmap(m_BGColorLayer->GetBitmap());
-		//acquire_bitmap(defaultBGLayerTexture);
-
 		// Go through each pixel on the main bitmap, which contains all the material pixels loaded from the bitmap.
 		// Place texture pixels on the FG layer corresponding to the materials on the main material bitmap.
 		for (int xPos = 0; xPos < m_MainBitmap->w; ++xPos) {
@@ -206,19 +200,6 @@ namespace RTE {
 				_putpixel(m_BGColorLayer->GetBitmap(), xPos, yPos, bgPixelColor);
 			}
 		}
-		// Reference. Do not remove.
-		//release_bitmap(m_MainBitmap);
-		//release_bitmap(m_FGColorLayer->GetBitmap());
-		//release_bitmap(m_BGColorLayer->GetBitmap());
-		//release_bitmap(defaultBGLayerTexture);
-		/*
-		for (BITMAP *fgTextureBitmap : materialFGTextures) {
-			release_bitmap(fgTextureBitmap);
-		}
-		for (BITMAP *bgTextureBitmap : materialBGTextures) {
-			release_bitmap(bgTextureBitmap);
-		}
-		*/
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -297,10 +278,6 @@ namespace RTE {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void SLTerrain::CleanAir() {
-		// Reference. Do not remove.
-		//acquire_bitmap(m_MainBitmap);
-		//acquire_bitmap(m_FGColorLayer->GetBitmap());
-
 		int width = m_MainBitmap->w;
 		int height = m_MainBitmap->h;
 
@@ -314,18 +291,11 @@ namespace RTE {
 				if (matPixel == MaterialColorKeys::g_MaterialAir) { _putpixel(m_FGColorLayer->GetBitmap(), x, y, ColorKeys::g_MaskColor); }
 			}
 		}
-		// Reference. Do not remove.
-		//release_bitmap(m_MainBitmap);
-		//release_bitmap(m_FGColorLayer->GetBitmap());
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void SLTerrain::CleanAirBox(const Box &box, bool wrapsX, bool wrapsY) {
-		// Reference. Do not remove.
-		//acquire_bitmap(m_MainBitmap);
-		//acquire_bitmap(m_FGColorLayer->GetBitmap());
-
 		int width = m_MainBitmap->w;
 		int height = m_MainBitmap->h;
 
@@ -352,9 +322,6 @@ namespace RTE {
 				}
 			}
 		}
-		// Reference. Do not remove.
-		//release_bitmap(m_MainBitmap);
-		//release_bitmap(m_FGColorLayer->GetBitmap());
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

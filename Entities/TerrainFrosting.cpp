@@ -59,11 +59,6 @@ namespace RTE {
 		bool applyingFrosting = false;
 		int appliedThickness = 0;
 
-		// Reference. Do not remove.
-		//acquire_bitmap(matBitmap);
-		//acquire_bitmap(fgColorBitmap);
-		//if (frostingTexture) { acquire_bitmap(frostingTexture); }
-
 		for (int xPos = 0; xPos < matBitmap->w; ++xPos) {
 			int thicknessGoal = RandomNum(m_MinThickness, m_MaxThickness);
 
@@ -86,9 +81,5 @@ namespace RTE {
 				}
 			}
 		}
-		// Reference. Do not remove.
-		//if (frostingTexture) { release_bitmap(frostingTexture); }
-		//release_bitmap(fgColorBitmap);
-		//release_bitmap(matBitmap);
 	}
 }
