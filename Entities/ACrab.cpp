@@ -2731,13 +2731,16 @@ void ACrab::DrawHUD(BITMAP *pTargetBitmap, const Vector &targetPos, int whichScr
 		// Weight and jetpack energy
 		if (m_pJetpack && m_pJetpack->IsAttached() && m_Controller.IsState(BODY_JUMP)) {
 			float mass = GetMass();
-			if (m_JetTimeLeft < 100) {
+			if (m_JetTimeLeft < 100.0F) {
 				// Draw empty fuel indicator
 				str[0] = m_IconBlinkTimer.AlternateSim(100) ? -26 : -25;
 			} else {
 				// Display normal jet icons
 				// TODO: Don't hardcode the mass indicator! Figure out how to calculate the jetpack threshold values
-				str[0] = mass < 135 ? -31 : (mass < 150 ? -30 : (mass < 165 ? -29 : -28));
+				str[0] = mass < 135.0F ? -31 : 
+                         mass < 150.0F ? -30 : 
+                         mass < 165.0F ? -29 : 
+                                         -28;
 				// Do the blinky blink
 				if ((str[0] == -28 || str[0] == -29) && m_IconBlinkTimer.AlternateSim(250)) { str[0] = -27; }
 			}
