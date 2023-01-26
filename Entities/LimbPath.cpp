@@ -658,9 +658,9 @@ bool LimbPath::RestartFree(Vector &limbPos, MOID MOIDToIgnore, int ignoreTeam)
 
 void LimbPath::Draw(BITMAP *pTargetBitmap,
                     const Vector &targetPos,
-                    unsigned char color) const
-{
-    acquire_bitmap(pTargetBitmap);
+                    unsigned char color) const {
+    // TODO_MULTITHREAD. Fix this
+
     Vector prevPoint = m_JointPos.GetFloored() + (m_Start * m_Rotation) - targetPos;
     Vector nextPoint = prevPoint;
     for (std::deque<Vector>::const_iterator itr = m_Segments.begin(); itr != m_Segments.end(); ++itr)
@@ -669,8 +669,6 @@ void LimbPath::Draw(BITMAP *pTargetBitmap,
         line(pTargetBitmap, prevPoint.m_X, prevPoint.m_Y, nextPoint.m_X, nextPoint.m_Y, color);
         prevPoint += (*itr) * m_Rotation;
     }
-
-    release_bitmap(pTargetBitmap);
 }
 
 } // namespace RTE
