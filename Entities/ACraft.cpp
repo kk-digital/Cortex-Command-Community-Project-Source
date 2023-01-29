@@ -796,21 +796,6 @@ float ACraft::GetCollectedInventoryMass() const {
 
 bool ACraft::OnMOHit(MovableObject *pOtherMO)
 {
-/* Obviously don't put craft into craft
-    // See if we hit any craft with open doors to get sucked into
-    ACraft *pCraft = dynamic_cast<ACraft *>(pOtherMO);
-
-    // Don't let things of wrong teams get sucked into other team's craft
-    if (!IsSetToDelete() && pCraft && m_Team == pCraft->GetTeam() && (pCraft->GetHatchState() == ACraft::OPEN || pCraft->GetHatchState() == ACraft::OPENING))
-    {
-        // Add (copy) to the ship's inventory
-        pCraft->AddInventoryItem(dynamic_cast<MovableObject *>(this->Clone()));
-        // Delete the original from scene - this is safer than 'removing' or handing over ownership halfway through MovableMan's update
-        this->SetToDelete();
-        // Terminate; we got sucked into the craft; so communicate this out
-        return true;
-    }
-*/
     // Don't terminate, continue travel
     return false;
 }

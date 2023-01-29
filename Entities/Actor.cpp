@@ -1074,16 +1074,6 @@ void Actor::GibThis(const Vector &impactImpulse, MovableObject *movableObjectToI
 bool Actor::CollideAtPoint(HitData &hd)
 {
     return MOSRotating::CollideAtPoint(hd);
-
-//    if (hd.ResImpulse[HITEE].MagnitudeIsGreaterThan(GetMaterial().strength)) {
-//        m_pParent->
-//    }
-/* Obsolete
-    // Set item as being reached if it collides with us
-    if (hd.Body[HITOR]->IsHeldDevice())
-        m_pItemInReach = dynamic_cast<HeldDevice *>(hd.Body[HITOR]);
-*/
-//    if (Status != ACTIVE)
 }
 
 
@@ -1126,25 +1116,6 @@ bool Actor::ParticlePenetration(HitData &hd) {
 
 bool Actor::OnMOHit(MovableObject *pOtherMO)
 {
-/* The ACraft now actively suck things in with cast rays instead
-    // See if we hit any craft with open doors to get sucked into
-    ACraft *pCraft = dynamic_cast<ACraft *>(pOtherMO);
-
-    // Don't let things of wrong teams get sucked into other team's craft
-    if (!IsSetToDelete() && pCraft && m_Team == pCraft->GetTeam() && (pCraft->GetHatchState() == ACraft::OPEN || pCraft->GetHatchState() == ACraft::OPENING))
-    {
-        // Switch control to the craft we just entered, if this is currently player controlled
-        // Set AI controller of this one going into the ship
-        if (g_ActivityMan.GetActivity() && this->GetController()->IsPlayerControlled())
-            g_ActivityMan.GetActivity()->SwitchToActor(pCraft, this->GetController()->GetPlayer(), this->GetTeam());
-        // Add (copy) to the ship's inventory
-        pCraft->AddInventoryItem(dynamic_cast<MovableObject *>(this->Clone()));
-        // Delete the original from scene - this is safer than 'removing' or handing over ownership halfway through MovableMan's update
-        this->SetToDelete();
-        // Terminate; we got sucked into the craft; so communicate this out
-        return true;
-    }
-*/
     // Don't terminate, continue travel
     return false;
 }
