@@ -90,9 +90,6 @@
     <ClInclude Include="managers\FrameMan.h">
       <Filter>Managers</Filter>
     </ClInclude>
-    <ClInclude Include="managers\ThreadMan.h">
-      <Filter>Managers</Filter>
-    </ClInclude>
     <ClInclude Include="Managers\LuaMan.h">
       <Filter>Managers</Filter>
     </ClInclude>
@@ -570,6 +567,9 @@
     <ClInclude Include="Managers\CameraMan.h">
       <Filter>Managers</Filter>
     </ClInclude>
+    <ClInclude Include="Managers\ThreadMan.h">
+      <Filter>Managers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="System\Box.cpp">
@@ -621,9 +621,6 @@
       <Filter>Managers</Filter>
     </ClCompile>
     <ClCompile Include="managers\FrameMan.cpp">
-      <Filter>Managers</Filter>
-    </ClCompile>
-    <ClCompile Include="managers\ThreadMan.cpp">
       <Filter>Managers</Filter>
     </ClCompile>
     <ClCompile Include="Managers\LuaMan.cpp">
@@ -1109,6 +1106,9 @@
     </ClCompile>
     <ClCompile Include="System\glad\gl.c">
       <Filter>System\glad</Filter>
+    </ClCompile>
+    <ClCompile Include="Managers\ThreadMan.cpp">
+      <Filter>Managers</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
