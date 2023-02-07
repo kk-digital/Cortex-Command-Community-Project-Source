@@ -382,21 +382,27 @@ public:
     unsigned char GetTerrMatter(int pixelX, int pixelY);
 
 
-//////////////////////////////////////////////////////////////////////////////////////////
-// Method:          GetMOIDPixel
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Gets a MOID from pixel coordinates in the Scene. LockScene() must be
-//                  called before using this method.
-// Arguments:       The X and Y coordinates of screen Scene pixel to get the MO from.
-// Return value:    The MOID currently at the specified pixel location.
-
+	/// <summary>
+	/// Gets a MOID from pixel coordinates in the Scene. LockScene() must be called before using this method.
+	/// </summary>
+	/// <param name="pixelX">The X coordinate of the Scene pixel to test.</param>
+	/// <param name="pixelY">The Y coordinate of the Scene pixel to test.</param>
+	/// <param name="ignoreTeam">The team to ignore.</param>
+	/// <returns>The MOID currently at the specified pixel coordinates.</returns>
     MOID GetMOIDPixel(int pixelX, int pixelY, int ignoreTeam);
+
+    /// <summary>
+    /// Gets a MOID from pixel coordinates in the Scene. LockScene() must be called before using this method.
+    /// </summary>
+    /// <param name="pixelX">The X coordinate of the Scene pixel to test.</param>
+    /// <param name="pixelY">The Y coordinate of the Scene pixel to test.</param>
+    /// <returns>The MOID currently at the specified pixel coordinates.</returns>
     MOID GetMOIDPixel(int pixelX, int pixelY) { return GetMOIDPixel(pixelX, pixelY, Activity::NoTeam); }
 
     /// <summary>
-    /// Gets this scene's MOID spatial partitioning grid
+    /// Gets this Scene's MOID SpatialPartitionGrid.
     /// </summary>
-    /// <returns>This scene's MOID spatial partitioning grid</returns>
+    /// <returns>This Scene's MOID SpatialPartitionGrid.</returns>
     const SpatialPartitionGrid & GetMOIDGrid() const { return m_MOIDsGrid; }
 
 
@@ -482,7 +488,7 @@ public:
     /// <summary>
     /// Registers a moid being drawn, so it can be added to our spatial partitioning grid.
     /// </summary>
-    /// <param name="moid">The moid.</param>
+    /// <param name="moid">The MOID.</param>
     /// <param name="left">The left boundary of the draw area.</param>
     /// <param name="top">The top boundary of the drawn area.</param>
     /// <param name="right">The right boundary of the draw area.</param>
@@ -492,7 +498,7 @@ public:
     /// <summary>
     /// Registers a moid being drawn, so it can be added to our spatial partitioning grid.
     /// </summary>
-    /// <param name="moid">The moid.</param>
+    /// <param name="moid">The MOID.</param>
     /// <param name="center">The centre position of the drawn area.</param>
     /// <param name="radius">The radius of the drawn area.</param>
     void RegisterMOIDDrawing(int moid, const Vector &center, float radius);
@@ -1361,7 +1367,7 @@ public:
 
     // MovableObject ID layer
     SceneLayerTracked *m_pMOIDLayer;
-    // A spatial partitioning grid of moids, used to optimize collision and distance queries
+    // A spatial partitioning grid of MOIDs, used to optimize collision and distance queries
     SpatialPartitionGrid m_MOIDsGrid;
 
     // Debug layer for seeing cast rays etc

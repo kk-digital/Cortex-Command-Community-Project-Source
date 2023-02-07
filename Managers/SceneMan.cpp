@@ -46,31 +46,13 @@ namespace RTE
 const std::string SceneMan::c_ClassName = "SceneMan";
 std::vector<std::pair<int, BITMAP *>> SceneMan::m_IntermediateSettlingBitmaps;
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-bool IntRect::IntersectionCut(const IntRect &rhs)
-{
-    if (Intersects(rhs))
-    {
-        m_Left = MAX(m_Left, rhs.m_Left);
-        m_Right = MIN(m_Right, rhs.m_Right);
-        m_Top = MAX(m_Top, rhs.m_Top);
-        m_Bottom = MIN(m_Bottom, rhs.m_Bottom);
-        return true;
-    }
-
-    return false;
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 void SceneMan::Clear()
 {
     m_DefaultSceneName = "Tutorial Bunker";
-    m_pSceneToLoad = 0;
+    m_pSceneToLoad = nullptr;
     m_PlaceObjects = true;
 	m_PlaceUnits = true;
-    m_pCurrentScene = 0;
+    m_pCurrentScene = nullptr;
     m_MOIDsGrid = SpatialPartitionGrid();
     m_pDebugLayer = nullptr;
     m_LastRayHitPos.Reset();
@@ -83,7 +65,7 @@ void SceneMan::Clear()
 
 	m_MaterialCopiesVector.clear();
 
-    m_pUnseenRevealSound = 0;
+    m_pUnseenRevealSound = nullptr;
     m_DrawRayCastVisualizations = false;
     m_DrawPixelCheckVisualizations = false;
     m_LastUpdatedScreen = 0;
@@ -530,7 +512,7 @@ bool SceneMan::SceneIsLocked() const
 void SceneMan::RegisterMOIDDrawing(int moid, int left, int top, int right, int bottom) {
     if (moid != g_NoMOID) {
         const MovableObject *mo = g_MovableMan.GetMOFromID(moid);
-        RTEAssert(mo, "Trying to register a no MOID to the MOID grid! This is not allowed.")
+        RTEAssert(mo, "Trying to register a null MOID to the MOID grid! This is not allowed.")
         IntRect rect(left, top, right, bottom);
         m_MOIDsGrid.Add(rect, *mo);
     }
