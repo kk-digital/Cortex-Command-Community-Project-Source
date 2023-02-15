@@ -449,7 +449,7 @@ MOID SceneMan::GetMOIDPixel(int pixelX, int pixelY, int ignoreTeam)
         m_pDebugLayer->SetPixel(pixelX, pixelY, 5); 
     }
 
-    const std::vector<MOID> &moidList = m_MOIDsGrid.GetMOIDsAtPosition(pixelX, pixelY, ignoreTeam);
+    const std::vector<MOID> &moidList = m_MOIDsGrid.GetMOIDsAtPosition(pixelX, pixelY, ignoreTeam, true);
     MOID moid = g_MovableMan.GetMOIDPixel(pixelX, pixelY, moidList);
 
 	return moid;
