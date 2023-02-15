@@ -12,8 +12,10 @@
 // Inclusions of header files
 
 #include "Scene.h"
+
 #include "PresetMan.h"
 #include "MovableMan.h"
+#include "FrameMan.h"
 #include "ConsoleMan.h"
 #include "SettingsMan.h"
 #include "MetaMan.h"
@@ -43,6 +45,9 @@ namespace RTE {
 
 ConcreteClassInfo(Scene, Entity, 0);
 const std::string Scene::Area::c_ClassName = "Area";
+
+// Holds the path calculated by CalculateScenePath
+thread_local std::list<Vector> s_ScenePath;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -468,7 +473,6 @@ void Scene::Clear()
 	m_AreaList.clear();
     m_Locked = false;
     m_GlobalAcc.Reset();
-    m_ScenePath.clear();
 	m_SelectedAssemblies.clear();
     m_AssembliesCounts.clear();
 	m_pPreviewBitmap = 0;
@@ -922,13 +926,8 @@ int Scene::LoadData(bool placeObjects, bool initPathfinding, bool placeUnits)
 		// Create the pathfinding stuff based on the current scene
 		int pathFinderGridNodeSize = g_SettingsMan.GetPathFinderGridNodeSize();
 
-		// TODO: test dynamically setting this. The code below sets it based on map area and block size, with a hefty upper limit.
-		//int sceneArea = GetWidth() * GetHeight();
-		//unsigned int numberOfBlocksToAllocate = std::min(128000, sceneArea / (pathFinderGridNodeSize * pathFinderGridNodeSize));
-		unsigned int numberOfBlocksToAllocate = 4000;
-
         for (int i = 0; i < m_pPathFinders.size(); ++i) {
-            m_pPathFinders[i] = std::make_unique<PathFinder>(pathFinderGridNodeSize, numberOfBlocksToAllocate);
+            m_pPathFinders[i] = std::make_unique<PathFinder>(pathFinderGridNodeSize);
         }
         ResetPathFinding();
     }
@@ -2989,7 +2988,7 @@ float Scene::CalculatePath(const Vector &start, const Vector &end, std::list<Vec
 //////////////////////////////////////////////////////////////////////////////////////////
 // Description:     Calculates the least difficult path between two points on
 //                  the current scene. Takes both distance and materials into account.
-//                  A list of waypoints can be retrived from m_ScenePath;
+//                  A list of waypoints can be retrived from s_ScenePath;
 //                  For exposing CalculatePath to Lua.
 
 int Scene::CalculateScenePath(const Vector &start, const Vector &end, bool movePathToGround, float digStrength) {
@@ -2997,22 +2996,29 @@ int Scene::CalculateScenePath(const Vector &start, const Vector &end, bool moveP
 
 	if (const std::unique_ptr<PathFinder> &pathFinder = GetPathFinder(Activity::Teams::NoTeam)) {
         float notUsed;
-        pathFinder->CalculatePath(start, end, m_ScenePath, notUsed, digStrength);
+        pathFinder->CalculatePath(start, end, s_ScenePath, notUsed, digStrength);
 
         // Process the new path we now have, if any
-        if (!m_ScenePath.empty()) {
-            pathSize = m_ScenePath.size();
+        if (!s_ScenePath.empty()) {
+            pathSize = s_ScenePath.size();
             if (movePathToGround) {
                 // Smash all airborne waypoints down to just above the ground
-                std::list<Vector>::iterator finalItr = m_ScenePath.end();
-				for (std::list<Vector>::iterator lItr = m_ScenePath.begin(); lItr != finalItr; ++lItr) {
-					(*lItr) = g_SceneMan.MovePointToGround((*lItr), 20, 15);
+                for (auto itr = s_ScenePath.begin(), itrEnd = s_ScenePath.end(); itr != itrEnd; ++itr) {
+					(*itr) = g_SceneMan.MovePointToGround((*itr), 20, 15);
 				}
             }
         }
     }
 
     return pathSize;
+}
+
+int Scene::GetScenePathSize() const {
+    return s_ScenePath.size();
+}
+
+std::list<Vector>& Scene::GetScenePath() {
+    return s_ScenePath;
 }
 
 

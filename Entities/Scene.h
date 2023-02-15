@@ -1214,7 +1214,9 @@ const SceneObject * PickPlacedActorInRange(int whichSet, Vector &scenePoint, int
 // Arguments:       None.
 // Return value:    The number of waypoints in the ScenePath.
 
-	int GetScenePathSize() const { return m_ScenePath.size(); }
+    int GetScenePathSize() const;
+
+    std::list<Vector>& GetScenePath();
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -1311,8 +1313,6 @@ const SceneObject * PickPlacedActorInRange(int whichSet, Vector &scenePoint, int
 
 	BITMAP * GetPreviewBitmap() const { return m_pPreviewBitmap; };
 
-    // Holds the path calculated by CalculateScenePath
-    std::list<Vector> m_ScenePath;
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Protected member variable and method declarations

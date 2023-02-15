@@ -8,7 +8,10 @@
 
 namespace RTE {
 
-	const std::array<std::string, PerformanceMan::PerformanceCounters::PerfCounterCount> PerformanceMan::m_PerfCounterNames = { "Total", "Act AI", "Act Travel", "Act Update", "Prt Travel", "Prt Update", "Activity" };
+	const std::array<std::string, PerformanceMan::PerformanceCounters::PerfCounterCount> PerformanceMan::m_PerfCounterNames = { "Total", "Act AI", "Act Travel", "Act Update", "Prt Travel", "Prt Update", "Activity", "Scripts"};
+
+	thread_local std::array<uint64_t, PerformanceMan::PerformanceCounters::PerfCounterCount> s_PerfMeasureStart; //!< Current measurement start time in microseconds.
+	thread_local std::array<uint64_t, PerformanceMan::PerformanceCounters::PerfCounterCount> s_PerfMeasureStop; //!< Current measurement stop time in microseconds.
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -33,15 +36,15 @@ namespace RTE {
 	void PerformanceMan::Initialize() {
 		m_SimUpdateTimer = std::make_unique<Timer>();
 
-		m_IntermediateDrawBitmap = create_bitmap_ex(8, 280, 380);
-		m_ColorConversionBitmap = create_bitmap_ex(32, 280, 380);
+		m_IntermediateDrawBitmap = create_bitmap_ex(8, 280, 480);
+		m_ColorConversionBitmap = create_bitmap_ex(32, 280, 480);
 
 		for (int counter = 0; counter < PerformanceCounters::PerfCounterCount; ++counter) {
-			m_PerfData[counter].fill(0);
+			for (int i = 0; i < c_MaxSamples; ++i) {
+				m_PerfData[counter][i] = 0;
+			}
 			m_PerfPercentages[counter].fill(0);
 		}
-		m_PerfMeasureStart.fill(0);
-		m_PerfMeasureStop.fill(0);
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -55,14 +58,14 @@ namespace RTE {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void PerformanceMan::StartPerformanceMeasurement(PerformanceCounters counter) {
-		m_PerfMeasureStart[counter] = g_TimerMan.GetAbsoluteTime();
+		s_PerfMeasureStart[counter] = g_TimerMan.GetAbsoluteTime();
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void PerformanceMan::StopPerformanceMeasurement(PerformanceCounters counter) {
-		m_PerfMeasureStop[counter] = g_TimerMan.GetAbsoluteTime();
-		AddPerformanceSample(counter, m_PerfMeasureStop[counter] - m_PerfMeasureStart[counter]);
+		s_PerfMeasureStop[counter] = g_TimerMan.GetAbsoluteTime();
+		AddPerformanceSample(counter, s_PerfMeasureStop[counter] - s_PerfMeasureStart[counter]);
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -12,6 +12,7 @@
 // Inclusions of header files
 
 #include "ACrab.h"
+
 #include "AtomGroup.h"
 #include "Attachable.h"
 #include "ThrownDevice.h"
@@ -24,6 +25,7 @@
 #include "Scene.h"
 #include "SettingsMan.h"
 #include "PresetMan.h"
+#include "FrameMan.h"
 
 #include "GUI.h"
 #include "AllegroBitmap.h"
@@ -1028,12 +1030,12 @@ void ACrab::UpdateAI()
     ///////////////////////////////////////////////
     // React to relevant AlarmEvents
 
-    const std::list<AlarmEvent> &events = g_MovableMan.GetAlarmEvents();
+    const std::vector<AlarmEvent> &events = g_MovableMan.GetAlarmEvents();
     if (!events.empty())
     {
         Vector alarmVec;
         Vector sensorPos = GetEyePos();
-        for (std::list<AlarmEvent>::const_iterator aeItr = events.begin(); aeItr != events.end(); ++aeItr)
+        for (std::vector<AlarmEvent>::const_iterator aeItr = events.begin(); aeItr != events.end(); ++aeItr)
         {
             // Caused by some other team's activites - alarming!
             if (aeItr->m_Team != m_Team)

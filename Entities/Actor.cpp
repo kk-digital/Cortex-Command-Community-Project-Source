@@ -12,9 +12,11 @@
 // Inclusions of header files
 
 #include "Actor.h"
+
 #include "UInputMan.h"
 #include "ActivityMan.h"
 #include "CameraMan.h"
+#include "Singleton.h"
 #include "GameActivity.h"
 #include "ACrab.h"
 #include "ACraft.h"
@@ -29,6 +31,7 @@
 #include "MOPixel.h"
 #include "Scene.h"
 #include "SettingsMan.h"
+#include "FrameMan.h"
 #include "PerformanceMan.h"
 
 #include "GUI.h"
@@ -1241,9 +1244,7 @@ bool Actor::UpdateAIScripted() {
 		status = InitializeObjectScripts();
 	}
 	if (status >= 0) {
-		g_PerformanceMan.StartPerformanceMeasurement(PerformanceMan::ActorsAIUpdate);
 		status = RunScriptedFunctionInAppropriateScripts("UpdateAI", false, true);
-		g_PerformanceMan.StopPerformanceMeasurement(PerformanceMan::ActorsAIUpdate);
 	}
 
     return status >= 0;
@@ -1339,10 +1340,6 @@ void Actor::VerifyMOIDs()
 
 void Actor::Update()
 {
-    //TODO This should be after MOSRotating::Update call. It's here because this lets Attachable scripts affect their parent's control states, but this is a bad, hacky solution.
-	//See https://github.com/cortex-command-community/Cortex-Command-Community-Project-Source/commit/ea20b6d790cd4cbb41eb923057b3db9982f6545d
-    m_Controller.Update();
-
     /////////////////////////////////
     // Hit Body update and handling
     MOSRotating::Update();

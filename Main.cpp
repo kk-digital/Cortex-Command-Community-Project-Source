@@ -36,6 +36,7 @@
 #include "PresetMan.h"
 #include "UInputMan.h"
 #include "PerformanceMan.h"
+#include "FrameMan.h"
 #include "ThreadMan.h"
 #include "MetaMan.h"
 #include "NetworkServer.h"
@@ -255,9 +256,10 @@ namespace RTE {
 
 				g_FrameMan.Update();
 				g_LuaMan.Update();
-				g_PerformanceMan.StartPerformanceMeasurement(PerformanceMan::ActivityUpdate);
+
+				g_MovableMan.UpdateControllers();
 				g_ActivityMan.Update();
-				g_PerformanceMan.StopPerformanceMeasurement(PerformanceMan::ActivityUpdate);
+				g_MovableMan.Travel();
 				g_MovableMan.Update();
 
 				g_AudioMan.Update();

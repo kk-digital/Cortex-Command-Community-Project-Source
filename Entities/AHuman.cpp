@@ -12,12 +12,14 @@
 // Inclusions of header files
 
 #include "AHuman.h"
+
 #include "AtomGroup.h"
 #include "ThrownDevice.h"
 #include "Arm.h"
 #include "Leg.h"
 #include "Controller.h"
 #include "MOPixel.h"
+#include "FrameMan.h"
 #include "AEmitter.h"
 #include "HDFirearm.h"
 #include "SLTerrain.h"
@@ -1832,7 +1834,7 @@ void AHuman::UpdateAI()
     ///////////////////////////////////////////////
     // React to relevant AlarmEvents
 
-	const std::list<AlarmEvent> &events = g_MovableMan.GetAlarmEvents();
+	const std::vector<AlarmEvent> &events = g_MovableMan.GetAlarmEvents();
 	if (!events.empty()) {
 		Vector alarmVec;
 		Vector sensorPos = GetEyePos();

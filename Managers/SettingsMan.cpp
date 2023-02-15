@@ -42,6 +42,7 @@ namespace RTE {
 		m_ShowForeignItems = true;
 		m_ShowMetaScenes = false;
 
+		m_DisableLuaJIT = false;
 		m_RecommendedMOIDCount = 240;
 		m_SceneBackgroundAutoScaleMode = 1;
 		m_DisableFactionBuyMenuThemes = false;
@@ -181,7 +182,7 @@ namespace RTE {
 		} else if (propName == "DefaultSceneName") {
 			reader >> g_SceneMan.m_DefaultSceneName;
 		} else if (propName == "DisableLuaJIT") {
-			reader >> g_LuaMan.m_DisableLuaJIT;
+			reader >> m_DisableLuaJIT;
 		} else if (propName == "RecommendedMOIDCount") {
 			reader >> m_RecommendedMOIDCount;
 		} else if (propName == "SceneBackgroundAutoScaleMode") {
@@ -375,7 +376,7 @@ namespace RTE {
 		writer.NewDivider(false);
 		writer.NewLineString("// Engine Settings", false);
 		writer.NewLine(false);
-		writer.NewPropertyWithValue("DisableLuaJIT", g_LuaMan.m_DisableLuaJIT);
+		writer.NewPropertyWithValue("DisableLuaJIT", m_DisableLuaJIT);
 		writer.NewPropertyWithValue("RecommendedMOIDCount", m_RecommendedMOIDCount);
 		writer.NewPropertyWithValue("SceneBackgroundAutoScaleMode", m_SceneBackgroundAutoScaleMode);
 		writer.NewPropertyWithValue("DisableFactionBuyMenuThemes", m_DisableFactionBuyMenuThemes);

@@ -8,21 +8,18 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void LuaMan::Clear() {
-		m_MasterState = nullptr;
-		m_DisableLuaJIT = false;
-		m_LastError.clear();
+	void LuaStateWrapper::Clear() {
+		m_State = nullptr;
 		m_TempEntity = nullptr;
 		m_TempEntityVector.clear();
-
-		m_OpenedFiles.fill(nullptr);
+		m_LastError.clear();
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void LuaMan::Initialize() {
-		m_MasterState = luaL_newstate();
-		luabind::open(m_MasterState);
+	void LuaStateWrapper::Initialize() {
+		m_State = luaL_newstate();
+		luabind::open(m_State);
 
 		const luaL_Reg libsToLoad[] = {
 			{ LUA_COLIBNAME, luaopen_base },
@@ -36,26 +33,26 @@ namespace RTE {
 		};
 
 		for (const luaL_Reg *lib = libsToLoad; lib->func; lib++) {
-			if (m_DisableLuaJIT && lib->name == LUA_JITLIBNAME) {
+			if (g_SettingsMan.DisableLuaJIT() && strcmp(lib->name, LUA_JITLIBNAME) == 0) {
 				continue;
 			}
-			lua_pushcfunction(m_MasterState, lib->func);
-			lua_pushstring(m_MasterState, lib->name);
-			lua_call(m_MasterState, 1, 0);
+			lua_pushcfunction(m_State, lib->func);
+			lua_pushstring(m_State, lib->name);
+			lua_call(m_State, 1, 0);
 		}
 
 		// LuaJIT should start automatically after we load the library (if we loaded it) but we're making sure it did anyway.
-		if (!m_DisableLuaJIT && !luaJIT_setmode(m_MasterState, 0, LUAJIT_MODE_ENGINE | LUAJIT_MODE_ON)) { RTEAbort("Failed to initialize LuaJIT!\nIf this error persists, please disable LuaJIT with \"Settings.ini\" property \"DisableLuaJIT\"."); }
+		if (!g_SettingsMan.DisableLuaJIT() && !luaJIT_setmode(m_State, 0, LUAJIT_MODE_ENGINE | LUAJIT_MODE_ON)) { RTEAbort("Failed to initialize LuaJIT!\nIf this error persists, please disable LuaJIT with \"Settings.ini\" property \"DisableLuaJIT\"."); }
 
 		// From LuaBind documentation:
 		// As mentioned in the Lua documentation, it is possible to pass an error handler function to lua_pcall(). LuaBind makes use of lua_pcall() internally when calling member functions and free functions.
 		// It is possible to set the error handler function that LuaBind will use globally:
 		//set_pcall_callback(&AddFileAndLineToError); // NOTE: this seems to do nothing because retrieving the error from the lua stack wasn't done correctly. The current error handling works just fine but might look into doing this properly sometime later.
 
-		// Register all relevant bindings to the master state. Note that the order of registration is important, as bindings can't derive from an unregistered type (inheritance and all that).
-		luabind::module(m_MasterState)[luabind::class_<LuaMan>("LuaManager")
-				.property("TempEntity", &LuaMan::GetTempEntity)
-				.def_readonly("TempEntities", &LuaMan::m_TempEntityVector, luabind::return_stl_iterator)
+		// Register all relevant bindings to the state. Note that the order of registration is important, as bindings can't derive from an unregistered type (inheritance and all that).
+		luabind::module(m_State)[luabind::class_<LuaStateWrapper>("LuaManager")
+				.property("TempEntity", &LuaStateWrapper::GetTempEntity)
+				.def("TempEntities", &LuaStateWrapper::GetTempEntityVector, luabind::return_stl_iterator)
 				.def("GetDirectoryList", &LuaMan::DirectoryList, luabind::return_stl_iterator)
 				.def("GetFileList", &LuaMan::FileList, luabind::return_stl_iterator)
 				.def("FileOpen", &LuaMan::FileOpen)
@@ -185,23 +182,23 @@ namespace RTE {
 		];
 
 		// Assign the manager instances to globals in the lua master state
-		luabind::globals(m_MasterState)["TimerMan"] = &g_TimerMan;
-		luabind::globals(m_MasterState)["FrameMan"] = &g_FrameMan;
-		luabind::globals(m_MasterState)["PostProcessMan"] = &g_PostProcessMan;
-		luabind::globals(m_MasterState)["PrimitiveMan"] = &g_PrimitiveMan;
-		luabind::globals(m_MasterState)["PresetMan"] = &g_PresetMan;
-		luabind::globals(m_MasterState)["AudioMan"] = &g_AudioMan;
-		luabind::globals(m_MasterState)["UInputMan"] = &g_UInputMan;
-		luabind::globals(m_MasterState)["SceneMan"] = &g_SceneMan;
-		luabind::globals(m_MasterState)["ActivityMan"] = &g_ActivityMan;
-		luabind::globals(m_MasterState)["MetaMan"] = &g_MetaMan;
-		luabind::globals(m_MasterState)["MovableMan"] = &g_MovableMan;
-		luabind::globals(m_MasterState)["CameraMan"] = &g_CameraMan;
-		luabind::globals(m_MasterState)["ConsoleMan"] = &g_ConsoleMan;
-		luabind::globals(m_MasterState)["LuaMan"] = &g_LuaMan;
-		luabind::globals(m_MasterState)["SettingsMan"] = &g_SettingsMan;
+		luabind::globals(m_State)["TimerMan"] = &g_TimerMan;
+		luabind::globals(m_State)["FrameMan"] = &g_FrameMan;
+		luabind::globals(m_State)["PostProcessMan"] = &g_PostProcessMan;
+		luabind::globals(m_State)["PrimitiveMan"] = &g_PrimitiveMan;
+		luabind::globals(m_State)["PresetMan"] = &g_PresetMan;
+		luabind::globals(m_State)["AudioMan"] = &g_AudioMan;
+		luabind::globals(m_State)["UInputMan"] = &g_UInputMan;
+		luabind::globals(m_State)["SceneMan"] = &g_SceneMan;
+		luabind::globals(m_State)["ActivityMan"] = &g_ActivityMan;
+		luabind::globals(m_State)["MetaMan"] = &g_MetaMan;
+		luabind::globals(m_State)["MovableMan"] = &g_MovableMan;
+		luabind::globals(m_State)["CameraMan"] = &g_CameraMan;
+		luabind::globals(m_State)["ConsoleMan"] = &g_ConsoleMan;
+		luabind::globals(m_State)["LuaMan"] = this;
+		luabind::globals(m_State)["SettingsMan"] = &g_SettingsMan;
 
-		luaL_dostring(m_MasterState,
+		luaL_dostring(m_State,
 			// Add package path to the defaults.
 			"package.path = package.path .. \";Base.rte/?.lua\";"
 			"\n"
@@ -218,9 +215,77 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void LuaMan::Destroy() {
-		lua_close(m_MasterState);
+	void LuaStateWrapper::Destroy() {
+		lua_close(m_State);
+	}
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	void LuaMan::Clear() {
+		m_OpenedFiles.fill(nullptr);
+	}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	void LuaMan::Initialize() {
+		m_MasterScriptState.Initialize();
+		for (LuaStateWrapper &luaState : m_ScriptStates) {
+			luaState.Initialize();
+		}
+	}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	LuaStateWrapper & LuaMan::GetMasterScriptState() {
+        return m_MasterScriptState;
+    }
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    LuaStatesArray & LuaMan::GetThreadedScriptStates() {
+		return m_ScriptStates;
+	}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	thread_local LuaStateWrapper * s_luaStateOverride = nullptr;
+	void LuaMan::SetThreadLuaStateOverride(LuaStateWrapper * luaState) {
+		s_luaStateOverride = luaState;
+	}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	LuaStateWrapper * LuaMan::GetAndLockFreeScriptState() {
+		if (s_luaStateOverride) {
+			// We're creating this object in a multithreaded environment, ensure that it's assigned to the same script state as us
+			bool success = s_luaStateOverride->GetMutex().try_lock();
+			RTEAssert(success, "Our lua state override for our thread already belongs to another thread!")
+			return s_luaStateOverride;
+		}
+
+		LuaStatesArray& luaStates = g_LuaMan.GetThreadedScriptStates();
+
+		int ourState = m_LastAssignedLuaState;
+		m_LastAssignedLuaState = (m_LastAssignedLuaState + 1) % c_NumThreadedLuaStates;
+
+		bool success = luaStates[ourState].GetMutex().try_lock();
+		RTEAssert(success, "Script mutex was already locked while in a non-multithreaded environment!");
+
+		return &luaStates[ourState];;
+	}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    void LuaMan::ClearUserModuleCache() {
+		m_MasterScriptState.ClearUserModuleCache();
+		for (LuaStateWrapper &luaState : m_ScriptStates) {
+			luaState.ClearUserModuleCache();
+		}
+    }
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	void LuaMan::Destroy() {
 		for (int i = 0; i < c_MaxOpenFiles; ++i) {
 			FileClose(i);
 		}
@@ -229,22 +294,40 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void LuaMan::ClearUserModuleCache() {
-		luaL_dostring(m_MasterState, "for m, n in pairs(package.loaded) do if type(n) == \"boolean\" then package.loaded[m] = nil; end; end;");
+	void LuaStateWrapper::ClearUserModuleCache() {
+		luaL_dostring(m_State, "for m, n in pairs(package.loaded) do if type(n) == \"boolean\" then package.loaded[m] = nil; end; end;");
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void LuaMan::SetTempEntityVector(const std::vector<const Entity *> &entityVector) {
+    Entity *LuaStateWrapper::GetTempEntity() const {
+        return m_TempEntity;
+    }
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    void LuaStateWrapper::SetTempEntity(Entity *entity) {
+		m_TempEntity = entity;
+    }
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    const std::vector<Entity *> & LuaStateWrapper::GetTempEntityVector() const {
+        return m_TempEntityVector;
+    }
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	void LuaStateWrapper::SetTempEntityVector(const std::vector<const Entity *> &entityVector) {
 		m_TempEntityVector.reserve(entityVector.size());
 		for (const Entity *entity : entityVector) {
-			m_TempEntityVector.emplace_back(const_cast<Entity *>(entity));
+			m_TempEntityVector.push_back(const_cast<Entity *>(entity));
 		}
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	int LuaMan::RunScriptFunctionString(const std::string &functionName, const std::string &selfObjectName, const std::vector<std::string_view> &variablesToSafetyCheck, const std::vector<const Entity *> &functionEntityArguments, const std::vector<std::string_view> &functionLiteralArguments) {
+	int LuaStateWrapper::RunScriptFunctionString(const std::string &functionName, const std::string &selfObjectName, const std::vector<std::string_view> &variablesToSafetyCheck, const std::vector<const Entity *> &functionEntityArguments, const std::vector<std::string_view> &functionLiteralArguments) {
 		std::stringstream scriptString;
 		if (!variablesToSafetyCheck.empty()) {
 			scriptString << "if ";
@@ -255,6 +338,9 @@ namespace RTE {
 			scriptString << " then ";
 		}
 		if (!functionEntityArguments.empty()) { scriptString << "local entityArguments = LuaMan.TempEntities; "; }
+
+		std::lock_guard<std::recursive_mutex> lock(m_Mutex);
+		// Lock here, even though we also lock in RunScriptString(), to ensure that the temp entity vector isn't stomped by separate threads.
 
 		scriptString << functionName + "(";
 		if (!selfObjectName.empty()) { scriptString << selfObjectName; }
@@ -285,18 +371,20 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	int LuaMan::RunScriptString(const std::string &scriptString, bool consoleErrors) {
+	int LuaStateWrapper::RunScriptString(const std::string &scriptString, bool consoleErrors) {
 		if (scriptString.empty()) {
 			return -1;
 		}
 		int error = 0;
 
-		lua_pushcfunction(m_MasterState, &AddFileAndLineToError);
+		std::lock_guard<std::recursive_mutex> lock(m_Mutex);
+
+		lua_pushcfunction(m_State, &AddFileAndLineToError);
 		// Load the script string onto the stack and then execute it with pcall. Pcall will call the file and line error handler if there's an error by pointing 2 up the stack to it.
-		if (luaL_loadstring(m_MasterState, scriptString.c_str()) || lua_pcall(m_MasterState, 0, LUA_MULTRET, -2)) {
+		if (luaL_loadstring(m_State, scriptString.c_str()) || lua_pcall(m_State, 0, LUA_MULTRET, -2)) {
 			// Retrieve the error message then pop it off the stack to clean it up
-			m_LastError = lua_tostring(m_MasterState, -1);
-			lua_pop(m_MasterState, 1);
+			m_LastError = lua_tostring(m_State, -1);
+			lua_pop(m_State, 1);
 			if (consoleErrors) {
 				g_ConsoleMan.PrintString("ERROR: " + m_LastError);
 				ClearErrors();
@@ -304,60 +392,62 @@ namespace RTE {
 			error = -1;
 		}
 		// Pop the file and line error handler off the stack to clean it up
-		lua_pop(m_MasterState, 1);
+		lua_pop(m_State, 1);
 
 		return error;
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	int LuaMan::RunScriptFunctionObject(const LuabindObjectWrapper *functionObject, const std::string &selfGlobalTableName, const std::string &selfGlobalTableKey, const std::vector<const Entity*> &functionEntityArguments, const std::vector<std::string_view> &functionLiteralArguments) {
+	int LuaStateWrapper::RunScriptFunctionObject(const LuabindObjectWrapper *functionObject, const std::string &selfGlobalTableName, const std::string &selfGlobalTableKey, const std::vector<const Entity*> &functionEntityArguments, const std::vector<std::string_view> &functionLiteralArguments) {
 		int status = 0;
 
-		lua_pushcfunction(m_MasterState, &AddFileAndLineToError);
-		functionObject->GetLuabindObject()->push(m_MasterState);
+		std::lock_guard<std::recursive_mutex> lock(m_Mutex);
+
+		lua_pushcfunction(m_State, &AddFileAndLineToError);
+		functionObject->GetLuabindObject()->push(m_State);
 
 		int argumentCount = functionEntityArguments.size() + functionLiteralArguments.size();
 		if (!selfGlobalTableName.empty() && TableEntryIsDefined(selfGlobalTableName, selfGlobalTableKey)) {
-			lua_getglobal(m_MasterState, selfGlobalTableName.c_str());
-			lua_getfield(m_MasterState, -1, selfGlobalTableKey.c_str());
-			lua_remove(m_MasterState, -2);
+			lua_getglobal(m_State, selfGlobalTableName.c_str());
+			lua_getfield(m_State, -1, selfGlobalTableKey.c_str());
+			lua_remove(m_State, -2);
 			argumentCount++;
 		}
 
 		for (const Entity *functionEntityArgument : functionEntityArguments) {
-			std::unique_ptr<LuabindObjectWrapper> downCastEntityAsLuabindObjectWrapper(LuaAdaptersEntityCast::s_EntityToLuabindObjectCastFunctions.at(functionEntityArgument->GetClassName())(const_cast<Entity *>(functionEntityArgument), m_MasterState));
-			downCastEntityAsLuabindObjectWrapper->GetLuabindObject()->push(m_MasterState);
+			std::unique_ptr<LuabindObjectWrapper> downCastEntityAsLuabindObjectWrapper(LuaAdaptersEntityCast::s_EntityToLuabindObjectCastFunctions.at(functionEntityArgument->GetClassName())(const_cast<Entity *>(functionEntityArgument), m_State));
+			downCastEntityAsLuabindObjectWrapper->GetLuabindObject()->push(m_State);
 		}
 
 		for (const std::string_view &functionLiteralArgument : functionLiteralArguments) {
 			char *stringToDoubleConversionFailed = nullptr;
 			if (functionLiteralArgument == "nil") {
-				lua_pushnil(m_MasterState);
+				lua_pushnil(m_State);
 			} else if (functionLiteralArgument == "true" || functionLiteralArgument == "false") {
-				lua_pushboolean(m_MasterState, functionLiteralArgument == "true" ? 1 : 0);
+				lua_pushboolean(m_State, functionLiteralArgument == "true" ? 1 : 0);
 			} else if (double argumentAsNumber = std::strtod(functionLiteralArgument.data(), &stringToDoubleConversionFailed); !*stringToDoubleConversionFailed) {
-				lua_pushnumber(m_MasterState, argumentAsNumber);
+				lua_pushnumber(m_State, argumentAsNumber);
 			} else {
-				lua_pushlstring(m_MasterState, functionLiteralArgument.data(), functionLiteralArgument.size());
+				lua_pushlstring(m_State, functionLiteralArgument.data(), functionLiteralArgument.size());
 			}
 		}
 
-		if (lua_pcall(m_MasterState, argumentCount, LUA_MULTRET, -argumentCount - 2) > 0) {
-			m_LastError = lua_tostring(m_MasterState, -1);
-			lua_pop(m_MasterState, 1);
+		if (lua_pcall(m_State, argumentCount, LUA_MULTRET, -argumentCount - 2) > 0) {
+			m_LastError = lua_tostring(m_State, -1);
+			lua_pop(m_State, 1);
 			g_ConsoleMan.PrintString("ERROR: " + m_LastError);
 			ClearErrors();
 			status = -1;
 		}
-		lua_pop(m_MasterState, 1);
+		lua_pop(m_State, 1);
 
 		return status;
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	int LuaMan::RunScriptFile(const std::string &filePath, bool consoleErrors) {
+	int LuaStateWrapper::RunScriptFile(const std::string &filePath, bool consoleErrors) {
 		if (filePath.empty()) {
 			m_LastError = "Can't run a script file with an empty filepath!";
 			return -1;
@@ -374,11 +464,13 @@ namespace RTE {
 
 		int error = 0;
 
-		lua_pushcfunction(m_MasterState, &AddFileAndLineToError);
+		std::lock_guard<std::recursive_mutex> lock(m_Mutex);
+
+		lua_pushcfunction(m_State, &AddFileAndLineToError);
 		// Load the script file's contents onto the stack and then execute it with pcall. Pcall will call the file and line error handler if there's an error by pointing 2 up the stack to it.
-		if (luaL_loadfile(m_MasterState, filePath.c_str()) || lua_pcall(m_MasterState, 0, LUA_MULTRET, -2)) {
-			m_LastError = lua_tostring(m_MasterState, -1);
-			lua_pop(m_MasterState, 1);
+		if (luaL_loadfile(m_State, filePath.c_str()) || lua_pcall(m_State, 0, LUA_MULTRET, -2)) {
+			m_LastError = lua_tostring(m_State, -1);
+			lua_pop(m_State, 1);
 			if (consoleErrors) {
 				g_ConsoleMan.PrintString("ERROR: " + m_LastError);
 				ClearErrors();
@@ -386,20 +478,22 @@ namespace RTE {
 			error = -1;
 		}
 		// Pop the file and line error handler off the stack to clean it up
-		lua_pop(m_MasterState, 1);
+		lua_pop(m_State, 1);
 
 		return error;
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	int LuaMan::RunScriptFileAndRetrieveFunctions(const std::string &filePath, const std::vector<std::string> &functionNamesToLookFor, std::unordered_map<std::string, LuabindObjectWrapper *> &outFunctionNamesAndObjects) {
+	int LuaStateWrapper::RunScriptFileAndRetrieveFunctions(const std::string &filePath, const std::vector<std::string> &functionNamesToLookFor, std::unordered_map<std::string, LuabindObjectWrapper *> &outFunctionNamesAndObjects) {
 		if (int error = RunScriptFile(filePath); error < 0) {
 			return error;
 		}
 
+		std::lock_guard<std::recursive_mutex> lock(m_Mutex);
+
 		for (const std::string &functionName : functionNamesToLookFor) {
-			luabind::object functionObject = luabind::globals(m_MasterState)[functionName];
+			luabind::object functionObject = luabind::globals(m_State)[functionName];
 			if (luabind::type(functionObject) == LUA_TFUNCTION) {
 				luabind::object *functionObjectCopyForStoring = new luabind::object(functionObject);
 				outFunctionNamesAndObjects.try_emplace(functionName, new LuabindObjectWrapper(functionObjectCopyForStoring, filePath));
@@ -411,16 +505,25 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	bool LuaMan::ExpressionIsTrue(const std::string &expression, bool consoleErrors) {
-		if (expression.empty()) {
+    void LuaStateWrapper::Update() {
+
+    }
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    bool LuaStateWrapper::ExpressionIsTrue(const std::string &expression, bool consoleErrors)
+    {
+        if (expression.empty()) {
 			return false;
 		}
 		bool result = false;
 
+		std::lock_guard<std::recursive_mutex> lock(m_Mutex);
+
 		// Push the script string onto the stack so we can execute it, and then actually try to run it. Assign the result to a dedicated temp global variable.
-		if (luaL_dostring(m_MasterState, std::string("ExpressionResult = " + expression + ";").c_str())) {
-			m_LastError = std::string("When evaluating Lua expression: ") + lua_tostring(m_MasterState, -1);
-			lua_pop(m_MasterState, 1);
+		if (luaL_dostring(m_State, std::string("ExpressionResult = " + expression + ";").c_str())) {
+			m_LastError = std::string("When evaluating Lua expression: ") + lua_tostring(m_State, -1);
+			lua_pop(m_State, 1);
 			if (consoleErrors) {
 				g_ConsoleMan.PrintString("ERROR: " + m_LastError);
 				ClearErrors();
@@ -428,75 +531,131 @@ namespace RTE {
 			return false;
 		}
 		// Put the result of the expression on the lua stack and check its value. Need to pop it off the stack afterwards so it leaves the stack unchanged.
-		lua_getglobal(m_MasterState, "ExpressionResult");
-		result = lua_toboolean(m_MasterState, -1);
-		lua_pop(m_MasterState, 1);
+		lua_getglobal(m_State, "ExpressionResult");
+		result = lua_toboolean(m_State, -1);
+		lua_pop(m_State, 1);
 
 		return result;
-	}
+    }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void LuaMan::SavePointerAsGlobal(void *objectToSave, const std::string &globalName) {
+	void LuaStateWrapper::SavePointerAsGlobal(void *objectToSave, const std::string &globalName) {
+		std::lock_guard<std::recursive_mutex> lock(m_Mutex);
+
 		// Push the pointer onto the Lua stack.
-		lua_pushlightuserdata(m_MasterState, objectToSave);
+		lua_pushlightuserdata(m_State, objectToSave);
 		// Pop and assign that pointer to a global var in the Lua state.
-		lua_setglobal(m_MasterState, globalName.c_str());
+		lua_setglobal(m_State, globalName.c_str());
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	bool LuaMan::GlobalIsDefined(const std::string &globalName) {
+	bool LuaStateWrapper::GlobalIsDefined(const std::string &globalName) {
+		std::lock_guard<std::recursive_mutex> lock(m_Mutex);
+
 		// Get the var you want onto the stack so we can check it.
-		lua_getglobal(m_MasterState, globalName.c_str());
+		lua_getglobal(m_State, globalName.c_str());
 		// Now report if it is nil/null or not.
-		bool isDefined = !lua_isnil(m_MasterState, -1);
+		bool isDefined = !lua_isnil(m_State, -1);
 		// Pop the var so this operation is balanced and leaves the stack as it was.
-		lua_pop(m_MasterState, 1);
+		lua_pop(m_State, 1);
 
 		return isDefined;
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	bool LuaMan::TableEntryIsDefined(const std::string &tableName, const std::string &indexName) {
+	bool LuaStateWrapper::TableEntryIsDefined(const std::string &tableName, const std::string &indexName) {
+		std::lock_guard<std::recursive_mutex> lock(m_Mutex);
+		
 		// Push the table onto the stack, checking if it even exists.
-		lua_getglobal(m_MasterState, tableName.c_str());
-		if (!lua_istable(m_MasterState, -1)) {
+		lua_getglobal(m_State, tableName.c_str());
+		if (!lua_istable(m_State, -1)) {
 			// Clean up and report that there was nothing properly defined here.
-			lua_pop(m_MasterState, 1);
+			lua_pop(m_State, 1);
 			return false;
 		}
 		// Push the value at the requested index onto the stack so we can check if it's anything.
-		lua_getfield(m_MasterState, -1, indexName.c_str());
+		lua_getfield(m_State, -1, indexName.c_str());
 		// Now report if it is nil/null or not
-		bool isDefined = !lua_isnil(m_MasterState, -1);
+		bool isDefined = !lua_isnil(m_State, -1);
 		// Pop both the var and the table so this operation is balanced and leaves the stack as it was.
-		lua_pop(m_MasterState, 2);
+		lua_pop(m_State, 2);
 
 		return isDefined;
+	}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    bool LuaStateWrapper::ErrorExists() const {
+        return !m_LastError.empty();;
+    }
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    std::string LuaStateWrapper::GetLastError() const {
+        return m_LastError;
+    }
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    void LuaStateWrapper::ClearErrors() {
+		m_LastError.clear();
+    }
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	std::string LuaStateWrapper::DescribeLuaStack() {
+		int indexOfTopOfStack = lua_gettop(m_State);
+		if (indexOfTopOfStack == 0) {
+			return "The Lua stack is empty.";
+		}
+		std::stringstream stackDescription;
+		stackDescription << "The Lua stack contains " + std::to_string(indexOfTopOfStack) + " elements. From top to bottom, they are:\n";
+
+		for (int i = indexOfTopOfStack; i > 0; --i) {
+			switch (int type = lua_type(m_State, i)) {
+				case LUA_TBOOLEAN:
+					stackDescription << (lua_toboolean(m_State, i) ? "true" : "false");
+					break;
+				case LUA_TNUMBER:
+					stackDescription << std::to_string(lua_tonumber(m_State, i));
+					break;
+				case LUA_TSTRING:
+					stackDescription << lua_tostring(m_State, i);
+					break;
+				default:
+					stackDescription << lua_typename(m_State, type);
+					break;
+			}
+			if (i - 1 > 0) { stackDescription << "\n"; }
+		}
+		return stackDescription.str();
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	const std::vector<std::string> & LuaMan::DirectoryList(const std::string &filePath) {
-		m_FileOrDirectoryPaths.clear();
+		thread_local std::vector<std::string> directoryPaths;
+		directoryPaths.clear();
 
 		for (const std::filesystem::directory_entry &directoryEntry : std::filesystem::directory_iterator(System::GetWorkingDirectory() + filePath)) {
-			if (directoryEntry.is_directory()) { m_FileOrDirectoryPaths.emplace_back(directoryEntry.path().filename().generic_string()); }
+			if (directoryEntry.is_directory()) { directoryPaths.emplace_back(directoryEntry.path().filename().generic_string()); }
 		}
-		return m_FileOrDirectoryPaths;
+		return directoryPaths;
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	const std::vector<std::string> & LuaMan::FileList(const std::string &filePath) {
-		m_FileOrDirectoryPaths.clear();
+		thread_local std::vector<std::string> filePaths;
+		filePaths.clear();
 
 		for (const std::filesystem::directory_entry &directoryEntry : std::filesystem::directory_iterator(System::GetWorkingDirectory() + filePath)) {
-			if (directoryEntry.is_regular_file()) { m_FileOrDirectoryPaths.emplace_back(directoryEntry.path().filename().generic_string()); }
+			if (directoryEntry.is_regular_file()) { filePaths.emplace_back(directoryEntry.path().filename().generic_string()); }
 		}
-		return m_FileOrDirectoryPaths;
+		return filePaths;
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -620,37 +779,14 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void LuaMan::Update() const {
-		lua_gc(m_MasterState, LUA_GCSTEP, 1);
+	void LuaMan::Update() {
+		m_MasterScriptState.Update();
+		for (LuaStateWrapper &luaState : m_ScriptStates) {
+			luaState.Update();
+		}
+
+		// Apply all deletions queued from lua
+    	LuabindObjectWrapper::ApplyQueuedDeletions();
 	}
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-	std::string LuaMan::DescribeLuaStack() {
-		int indexOfTopOfStack = lua_gettop(m_MasterState);
-		if (indexOfTopOfStack == 0) {
-			return "The Lua stack is empty.";
-		}
-		std::stringstream stackDescription;
-		stackDescription << "The Lua stack contains " + std::to_string(indexOfTopOfStack) + " elements. From top to bottom, they are:\n";
-
-		for (int i = indexOfTopOfStack; i > 0; --i) {
-			switch (int type = lua_type(m_MasterState, i)) {
-				case LUA_TBOOLEAN:
-					stackDescription << (lua_toboolean(m_MasterState, i) ? "true" : "false");
-					break;
-				case LUA_TNUMBER:
-					stackDescription << std::to_string(lua_tonumber(m_MasterState, i));
-					break;
-				case LUA_TSTRING:
-					stackDescription << lua_tostring(m_MasterState, i);
-					break;
-				default:
-					stackDescription << lua_typename(m_MasterState, type);
-					break;
-			}
-			if (i - 1 > 0) { stackDescription << "\n"; }
-		}
-		return stackDescription.str();
-	}
 }
