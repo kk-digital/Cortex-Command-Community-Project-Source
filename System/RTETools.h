@@ -11,72 +11,114 @@ namespace RTE {
 	class Vector;
 	class Matrix;
 
-	extern std::mt19937 g_RNG; //!< The random number generator used for all random functions.
-
 #pragma region Random Numbers
+	class RandomGenerator {
+		std::mt19937 m_RNG; //!< The random number generator used for all random functions.
+
+	public:
+		/// <summary>
+		/// Seed the random number generator.
+		/// </summary>
+		void Seed(uint64_t seed) { m_RNG.seed(seed); };
+
+		/// <summary>
+		/// Function template which returns a uniformly distributed random number in the range [-1, 1].
+		/// </summary>
+		/// <returns>Uniformly distributed random number in the range [-1, 1].</returns>
+		template <typename floatType = float>
+		typename std::enable_if<std::is_floating_point<floatType>::value, floatType>::type RandomNormalNum() {
+			return std::uniform_real_distribution<floatType>(floatType(-1.0), std::nextafter(floatType(1.0), std::numeric_limits<floatType>::max()))(m_RNG);
+		}
+
+		/// <summary>
+		/// Function template specialization for int types which returns a uniformly distributed random number in the range [-1, 1].
+		/// </summary>
+		/// <returns>Uniformly distributed random number in the range [-1, 1].</returns>
+		template <typename intType>
+		typename std::enable_if<std::is_integral<intType>::value, intType>::type RandomNormalNum() {
+			return std::uniform_int_distribution<intType>(intType(-1), intType(1))(m_RNG);
+		}
+
+		/// <summary>
+		/// Function template which returns a uniformly distributed random number in the range [0, 1].
+		/// </summary>
+		/// <returns>Uniformly distributed random number in the range [0, 1].</returns>
+		template <typename floatType = float>
+		typename std::enable_if<std::is_floating_point<floatType>::value, floatType>::type RandomNum() {
+			return std::uniform_real_distribution<floatType>(floatType(0.0), std::nextafter(floatType(1.0), std::numeric_limits<floatType>::max()))(m_RNG);
+		}
+
+		/// <summary>
+		/// Function template specialization for int types which returns a uniformly distributed random number in the range [0, 1].
+		/// </summary>
+		/// <returns>Uniformly distributed random number in the range [0, 1].</returns>
+		template <typename intType>
+		typename std::enable_if<std::is_integral<intType>::value, intType>::type RandomNum() {
+			return std::uniform_int_distribution<intType>(intType(0), intType(1))(m_RNG);
+		}
+
+		/// <summary>
+		/// Function template which returns a uniformly distributed random number in the range [min, max].
+		/// </summary>
+		/// <param name="min">Lower boundary of the range to pick a number from.</param>
+		/// <param name="max">Upper boundary of the range to pick a number from.</param>
+		/// <returns>Uniformly distributed random number in the range [min, max].</returns>
+		template <typename floatType = float>
+		typename std::enable_if<std::is_floating_point<floatType>::value, floatType>::type RandomNum(floatType min, floatType max) {
+			if (max < min) { std::swap(min, max); }
+			return (std::uniform_real_distribution<floatType>(floatType(0.0), std::nextafter(max - min, std::numeric_limits<floatType>::max()))(m_RNG) + min);
+		}
+
+		/// <summary>
+		/// Function template specialization for int types which returns a uniformly distributed random number in the range [min, max].
+		/// </summary>
+		/// <param name="min">Lower boundary of the range to pick a number from.</param>
+		/// <param name="max">Upper boundary of the range to pick a number from.</param>
+		/// <returns>Uniformly distributed random number in the range [min, max].</returns>
+		template <typename intType>
+		typename std::enable_if<std::is_integral<intType>::value, intType>::type RandomNum(intType min, intType max) {
+			if (max < min) { std::swap(min, max); }
+			return (std::uniform_int_distribution<intType>(intType(0), max - min)(m_RNG) + min);
+		}
+	};
+
+	extern RandomGenerator g_RandomGenerator; //!< The global random number generator used in our simulation thread. 
+
 	/// <summary>
-	/// Seed the mt19937 random number generator. mt19937 is the standard mersenne_twister_engine.
+	/// Seed global the global random number generators.
 	/// </summary>
 	void SeedRNG();
 
-	/// <summary>
-	/// Function template which returns a uniformly distributed random number in the range [-1, 1].
-	/// </summary>
-	/// <returns>Uniformly distributed random number in the range [-1, 1].</returns>
+	// TODO: Maybe remove these passthrough functions and force the user to manually specify if they want the simulation thread random,
+	// Or, in future, a render-thread random, as right now determinism isn't viable because framerate affects sim updates per draw
 	template <typename floatType = float>
 	typename std::enable_if<std::is_floating_point<floatType>::value, floatType>::type RandomNormalNum() {
-		return std::uniform_real_distribution<floatType>(floatType(-1.0), std::nextafter(floatType(1.0), std::numeric_limits<floatType>::max()))(g_RNG);
+		return g_RandomGenerator.RandomNormalNum();
 	}
 
-	/// <summary>
-	/// Function template specialization for int types which returns a uniformly distributed random number in the range [-1, 1].
-	/// </summary>
-	/// <returns>Uniformly distributed random number in the range [-1, 1].</returns>
 	template <typename intType>
 	typename std::enable_if<std::is_integral<intType>::value, intType>::type RandomNormalNum() {
-		return std::uniform_int_distribution<intType>(intType(-1), intType(1))(g_RNG);
+		return g_RandomGenerator.RandomNormalNum();
 	}
 
-	/// <summary>
-	/// Function template which returns a uniformly distributed random number in the range [0, 1].
-	/// </summary>
-	/// <returns>Uniformly distributed random number in the range [0, 1].</returns>
 	template <typename floatType = float>
 	typename std::enable_if<std::is_floating_point<floatType>::value, floatType>::type RandomNum() {
-		return std::uniform_real_distribution<floatType>(floatType(0.0), std::nextafter(floatType(1.0), std::numeric_limits<floatType>::max()))(g_RNG);
+		return g_RandomGenerator.RandomNum();
 	}
 
-	/// <summary>
-	/// Function template specialization for int types which returns a uniformly distributed random number in the range [0, 1].
-	/// </summary>
-	/// <returns>Uniformly distributed random number in the range [0, 1].</returns>
 	template <typename intType>
 	typename std::enable_if<std::is_integral<intType>::value, intType>::type RandomNum() {
-		return std::uniform_int_distribution<intType>(intType(0), intType(1))(g_RNG);
+		return g_RandomGenerator.RandomNum();
 	}
 
-	/// <summary>
-	/// Function template which returns a uniformly distributed random number in the range [min, max].
-	/// </summary>
-	/// <param name="min">Lower boundary of the range to pick a number from.</param>
-	/// <param name="max">Upper boundary of the range to pick a number from.</param>
-	/// <returns>Uniformly distributed random number in the range [min, max].</returns>
 	template <typename floatType = float>
 	typename std::enable_if<std::is_floating_point<floatType>::value, floatType>::type RandomNum(floatType min, floatType max) {
-		if (max < min) { std::swap(min, max); }
-		return (std::uniform_real_distribution<floatType>(floatType(0.0), std::nextafter(max - min, std::numeric_limits<floatType>::max()))(g_RNG) + min);
+		return g_RandomGenerator.RandomNum(min, max);
 	}
 
-	/// <summary>
-	/// Function template specialization for int types which returns a uniformly distributed random number in the range [min, max].
-	/// </summary>
-	/// <param name="min">Lower boundary of the range to pick a number from.</param>
-	/// <param name="max">Upper boundary of the range to pick a number from.</param>
-	/// <returns>Uniformly distributed random number in the range [min, max].</returns>
 	template <typename intType>
 	typename std::enable_if<std::is_integral<intType>::value, intType>::type RandomNum(intType min, intType max) {
-		if (max < min) { std::swap(min, max); }
-		return (std::uniform_int_distribution<intType>(intType(0), max - min)(g_RNG) + min);
+		return g_RandomGenerator.RandomNum(min, max);
 	}
 #pragma endregion
 
