@@ -168,9 +168,6 @@ int MOSRotating::Create(ContentFile spriteFile,
 	if (!m_pFlipBitmap && m_aSprite[0]) {
 		m_pFlipBitmap = create_bitmap_ex(8, m_aSprite[0]->w, m_aSprite[0]->h);
 	}
-	if (!m_pFlipBitmapS && m_aSprite[0]) {
-		m_pFlipBitmapS = create_bitmap_ex(c_MOIDLayerBitDepth, m_aSprite[0]->w, m_aSprite[0]->h);
-	}
 
     return 0;
 }
