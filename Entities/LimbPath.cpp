@@ -678,7 +678,8 @@ Vector LimbPath::GetBottomMiddle() const
 
 void LimbPath::Draw(BITMAP *pTargetBitmap,
                     const Vector &targetPos,
-                    unsigned char color) const {
+                    unsigned char color) const
+{
     // TODO_MULTITHREAD. Fix this
 
     Vector prevPoint = m_Start;
