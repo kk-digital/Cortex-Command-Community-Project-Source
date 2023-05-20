@@ -194,13 +194,16 @@ namespace RTE {
 		g_SceneMan.SetSceneToLoad(m_SelectedScene, true, m_DeployUnitsCheckbox->GetCheck());
 
 		gameActivity->ClearPlayers(false);
+
+		gameActivity->AddPlayer(Players::PlayerOne, true, Activity::Teams::TeamOne, 0);
+
 		for (int player = Players::PlayerOne; player < PlayerColumns::PlayerColumnCount; ++player) {
 			for (int team = Activity::Teams::TeamOne; team < Activity::Teams::MaxTeamCount; ++team) {
 				if (m_PlayerBoxes.at(player).at(team)->GetDrawType() == GUICollectionBox::Image) {
 					if (player == PlayerColumns::PlayerCPU) {
 						gameActivity->SetCPUTeam(team);
 					} else {
-						gameActivity->AddPlayer(player, true, team, 0);
+						//gameActivity->AddPlayer(player, true, team, 0);
 						break;
 					}
 				}
@@ -374,6 +377,15 @@ namespace RTE {
 
 	bool ScenarioActivityConfigGUI::HandleInputEvents() {
 		GUIEvent guiEvent;
+
+		
+		g_GUISound.ButtonPressSound()->Play();
+		StartGame();
+		SetEnabled(false);
+		return true;
+		
+		m_ActivityDifficultyLabel->SetText("Test Diff");
+
 		while (m_GUIControlManager->GetEvent(&guiEvent)) {
 			if (guiEvent.GetType() == GUIEvent::Command) {
 				if (guiEvent.GetControl() == m_CancelConfigButton) {
@@ -387,7 +399,8 @@ namespace RTE {
 				}
 			} else if (guiEvent.GetType() == GUIEvent::Notification) {
 				if (guiEvent.GetControl() == m_ActivityDifficultySlider) {
-					m_ActivityDifficultyLabel->SetText(" " + Activity::GetDifficultyString(m_ActivityDifficultySlider->GetValue()));
+					//m_ActivityDifficultyLabel->SetText(" " + Activity::GetDifficultyString(m_ActivityDifficultySlider->GetValue()));
+					
 					if (!m_StartingGoldAdjustedManually) { UpdateStartingGoldSliderAndLabel(); }
 				} else if (guiEvent.GetControl() == m_StartingGoldSlider) {
 					if (guiEvent.GetMsg() == GUISlider::Clicked) { m_StartingGoldAdjustedManually = true; }

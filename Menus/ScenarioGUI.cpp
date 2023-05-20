@@ -404,7 +404,7 @@ namespace RTE {
 			HandleInputEvents(mousePosX, mousePosY);
 
 			if (m_SceneInfoBox->GetVisible()) {
-				m_StartActivityConfigButton->SetText(m_BlinkTimer.AlternateReal(333) ? "Start Here" : "> Start Here <");
+				m_StartActivityConfigButton->SetText(m_BlinkTimer.AlternateReal(333) ? "Test Start Here" : "> Test0Start Here <");
 
 				if (m_DrawDefaultScenePreview && m_ScenePreviewAnimTimer.GetElapsedRealTimeMS() > m_DefaultScenePreview.GetSpriteAnimDuration() / m_DefaultScenePreview.GetFrameCount()) {
 					m_DefaultScenePreview.SetNextFrame();

@@ -75,6 +75,10 @@ namespace RTE {
 
 		m_StationOrbitTimer.SetElapsedRealTimeS(15);
 
+		SetTitleTransitionState(TitleTransition::MainMenu);
+		m_FinishedPlayingIntro = true;
+
+		/*
 		if (!g_FrameMan.ResolutionChanged()) {
 			if (!g_SettingsMan.SkipIntro() && !g_ActivityMan.IsSetToLaunchIntoActivity()) {
 				m_IntroTextFont = std::make_unique<GUIFont>("FontLarge");
@@ -87,6 +91,7 @@ namespace RTE {
 			SetTitleTransitionState(TitleTransition::MainMenu);
 			m_FinishedPlayingIntro = true;
 		}
+		*/
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -43,7 +43,7 @@ namespace RTE {
 		m_RecommendedMOIDCount = 240;
 		m_SimplifiedCollisionDetection = false;
 
-		m_SkipIntro = false;
+		m_SkipIntro = true;
 		m_ShowToolTips = true;
 		m_DisableLoadingScreenProgressReport = true;
 		m_LoadingScreenProgressReportPrecision = 100;
@@ -92,6 +92,7 @@ namespace RTE {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	int SettingsMan::ReadProperty(const std::string_view &propName, Reader &reader) {
+		
 		if (propName == "PaletteFile") {
 			reader >> g_FrameMan.m_PaletteFile;
 		} else if (propName == "ResolutionX") {
@@ -361,7 +362,7 @@ namespace RTE {
 		writer.NewDivider(false);
 		writer.NewLineString("// Misc Settings", false);
 		writer.NewLine(false);
-		writer.NewPropertyWithValue("SkipIntro", m_SkipIntro);
+		writer.NewPropertyWithValue("SkipIntro", true);
 		writer.NewPropertyWithValue("ShowToolTips", m_ShowToolTips);
 		writer.NewPropertyWithValue("CaseSensitiveFilePaths", System::FilePathsCaseSensitive());
 		writer.NewPropertyWithValue("DisableLoadingScreenProgressReport", m_DisableLoadingScreenProgressReport);
