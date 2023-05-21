@@ -130,7 +130,7 @@ namespace RTE {
 				m_TitleScreen->SetTitleTransitionState(TitleScreen::TitleTransition::MainMenuToMetaGame);
 				break;
 			case MainMenuGUI::MainMenuUpdateResult::ScenarioStarted:
-				//return false;
+				return false;
 				m_TitleScreen->SetTitleTransitionState(TitleScreen::TitleTransition::MainMenuToScenario);
 				break;
 			case MainMenuGUI::MainMenuUpdateResult::EnterCreditsScreen:

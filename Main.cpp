@@ -35,7 +35,31 @@
 #include "UInputMan.h"
 #include "PerformanceMan.h"
 #include "MetaMan.h"
+#include "MenuMan.h"
 #include "NetworkServer.h"
+#include "ScenarioGUI.h";
+#include "ScenarioActivityConfigGUI.h";
+
+#include "FrameMan.h"
+#include "PresetMan.h"
+#include "ActivityMan.h"
+#include "UInputMan.h"
+#include "SettingsMan.h"
+#include "ConsoleMan.h"
+
+#include "GameActivity.h"
+#include "Entity.h"
+#include "Scene.h"
+
+#include "GUI.h"
+#include "AllegroBitmap.h"
+#include "AllegroScreen.h"
+#include "AllegroInput.h"
+#include "GUICollectionBox.h"
+#include "GUIComboBox.h"
+#include "GUIButton.h"
+#include "GUILabel.h"
+#include "GameActivity.h"
 
 extern "C" { FILE __iob_func[3] = { *stdin,*stdout,*stderr }; }
 
@@ -48,6 +72,9 @@ namespace RTE {
 	/// <summary>
 	/// Initializes all the essential managers.
 	/// </summary>
+	/// 
+	/// 
+
 	void InitializeManagers() {
 		g_SettingsMan.Initialize();
 
@@ -72,6 +99,76 @@ namespace RTE {
 		if (g_SettingsMan.SettingsNeedOverwrite()) { g_SettingsMan.UpdateSettingsFile(); }
 
 		g_FrameMan.PrintForcedGfxDriverMessage();
+		
+		//m_SelectedActivity
+		g_PresetMan.LoadDataModule("Scenes.rte", false);
+		g_PresetMan.LoadDataModule("Base.rte", false);
+		auto mypreset = g_PresetMan.GetDataModuleName();
+		auto m_ModuleSpaceID = g_PresetMan.GetModuleID("Scenes.rte");
+		auto mytestmid = m_ModuleSpaceID;
+		const Activity* pActivityPreset = dynamic_cast<const Activity*>(g_PresetMan.GetEntityPreset("GAScripted", "Skirmish Defense")->Clone());
+		Activity* pActivity = dynamic_cast<Activity*>(pActivityPreset->Clone());
+		GameActivity* pTestGame = dynamic_cast<GameActivity*>(pActivity);
+		RTEAssert(pTestGame, "Couldn't find the \"Skirmish Defense\" GAScripted Activity! Has it been defined?");
+		pTestGame->ClearPlayers(false);
+
+		pTestGame->AddPlayer(Players::PlayerOne, true, Activity::Teams::TeamOne, 0);
+
+		pTestGame->SetTeamOfPlayer(0, 0);
+		pTestGame->SetCPUTeam(1);
+		pTestGame->SetStartingGold(10000);
+		pTestGame->SetFogOfWarEnabled(false);
+		pTestGame->SetDifficulty(Activity::DifficultySetting::MediumDifficulty);
+		g_ActivityMan.SetStartActivity(pTestGame);
+		//g_ActivityMan.SetRestartActivity();
+
+			/*
+		GameActivity* gameActivity = dynamic_cast<GameActivity*>(m_SelectedActivity->Clone());
+
+		gameActivity->SetDifficulty(m_ActivityDifficultySlider->GetValue());
+		gameActivity->SetStartingGold((m_StartingGoldSlider->GetValue() == m_StartingGoldSlider->GetMaximum()) ? 1000000000 : m_StartingGoldSlider->GetValue() - (m_StartingGoldSlider->GetValue() % 500));
+
+		gameActivity->SetRequireClearPathToOrbit(m_RequireClearPathToOrbitCheckbox->GetCheck());
+		gameActivity->SetFogOfWarEnabled(m_FogOfWarCheckbox->GetCheck());
+		g_SceneMan.SetSceneToLoad(m_SelectedScene, true, m_DeployUnitsCheckbox->GetCheck());
+
+		gameActivity->ClearPlayers(false);
+
+		gameActivity->AddPlayer(Players::PlayerOne, true, Activity::Teams::TeamOne, 0);
+
+		for (int player = Players::PlayerOne; player < PlayerColumns::PlayerColumnCount; ++player) {
+			for (int team = Activity::Teams::TeamOne; team < Activity::Teams::MaxTeamCount; ++team) {
+				if (m_PlayerBoxes.at(player).at(team)->GetDrawType() == GUICollectionBox::Image) {
+					if (player == PlayerColumns::PlayerCPU) {
+						gameActivity->SetCPUTeam(team);
+					}
+					else {
+						//gameActivity->AddPlayer(player, true, team, 0);
+						break;
+					}
+				}
+			}
+		}
+
+		for (int team = Activity::Teams::TeamOne; team < Activity::Teams::MaxTeamCount; ++team) {
+			if (const GUIListPanel::Item* techItem = m_TeamTechComboBoxes.at(team)->GetSelectedItem()) {
+				if (techItem->m_ExtraIndex == -2) {
+					gameActivity->SetTeamTech(team, "-All-");
+				}
+				else if (techItem->m_ExtraIndex == -1) {
+					gameActivity->SetTeamTech(team, g_PresetMan.GetDataModuleName(m_TeamTechComboBoxes.at(team)->GetItem(RandomNum<int>(2, m_TeamTechComboBoxes.at(team)->GetListPanel()->GetItemList()->size() - 1))->m_ExtraIndex));
+				}
+				else {
+					gameActivity->SetTeamTech(team, g_PresetMan.GetDataModuleName(techItem->m_ExtraIndex));
+				}
+			}
+			gameActivity->SetTeamAISkill(team, (m_TeamAISkillSliders.at(team)->IsEnabled()) ? m_TeamAISkillSliders.at(team)->GetValue() : Activity::AISkillSetting::DefaultSkill);
+		}
+		*/
+		
+		g_LuaMan.FileCloseAll();
+		//g_ActivityMan.SetStartActivity(gameActivity);
+
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
