@@ -326,7 +326,11 @@ int main(int argc, char **argv) {
 	RTEAssert(pTestGame, "Couldn't find the \"RefactorDebug Preset\" GAScripted Activity! Has it been defined?");
 	pTestGame->ClearPlayers(false);
 
+	// Add PlayerOne and isHuman is true
 	pTestGame->AddPlayer(Players::PlayerOne, true, Activity::Teams::TeamOne, 0);
+
+	// Add PlayerTwo and isHuman is false(CPU)
+	pTestGame->AddPlayer(Players::PlayerTwo, false, Activity::Teams::TeamOne, 0);
 
 	pTestGame->SetTeamOfPlayer(0, 0);
 	pTestGame->SetCPUTeam(1);
