@@ -537,6 +537,9 @@
     <ClInclude Include="Lua\LuaAdapters.h">
       <Filter>Lua</Filter>
     </ClInclude>
+    <ClInclude Include="RefactorDebug.h">
+      <Filter>Managers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="System\Box.cpp">
@@ -1034,6 +1037,9 @@
     </ClCompile>
     <ClCompile Include="Lua\LuaBindingsSystem.cpp">
       <Filter>Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="RefactorDebug.cpp">
+      <Filter>Managers</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

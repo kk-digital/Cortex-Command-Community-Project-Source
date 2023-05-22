@@ -51,15 +51,7 @@
 #include "Entity.h"
 #include "Scene.h"
 
-#include "GUI.h"
-#include "AllegroBitmap.h"
-#include "AllegroScreen.h"
-#include "AllegroInput.h"
-#include "GUICollectionBox.h"
-#include "GUIComboBox.h"
-#include "GUIButton.h"
-#include "GUILabel.h"
-#include "GameActivity.h"
+#include "RefactorDebug.h"
 
 extern "C" { FILE __iob_func[3] = { *stdin,*stdout,*stderr }; }
 
@@ -110,31 +102,7 @@ namespace RTE {
 
 		g_FrameMan.PrintForcedGfxDriverMessage();
 		
-		//m_SelectedActivity
-		g_PresetMan.LoadDataModule("Scenes.rte", false);
 		FindAndExtractZippedModules();
-		//g_PresetMan.LoadDataModule("", false);
-		//g_PresetMan.LoadAllDataModules();
-		//g_PresetMan.LoadDataModule("Metagames.rte", false);
-		/*
-		g_PresetMan.LoadDataModule("Coalition.rte", false);
-		g_PresetMan.LoadDataModule("Imperatus.rte", false);
-		g_PresetMan.LoadDataModule("Techion.rte", false);
-		g_PresetMan.LoadDataModule("Dummy.rte", false);
-		g_PresetMan.LoadDataModule("Ronin.rte", false);
-		g_PresetMan.LoadDataModule("Browncoats.rte", false);
-		g_PresetMan.LoadDataModule("Uzira.rte", false);
-		g_PresetMan.LoadDataModule("MuIlaak.rte", false);
-		g_PresetMan.LoadDataModule("Missions.rte", false);
-		*/
-		//std::array<std::string, 10> officialModules = { "Base.rte", "Coalition.rte", "Imperatus.rte", "Techion.rte", "Dummy.rte", "Ronin.rte", "Browncoats.rte", "Uzira.rte", "MuIlaak.rte", "Missions.rte" };
-		
-
-		//auto mypreset = g_PresetMan.GetDataModuleName();
-		//auto m_ModuleSpaceID = g_PresetMan.GetModuleID("Scenes.rte");
-		//auto mytestmid = m_ModuleSpaceID;
-
-
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -345,6 +313,8 @@ namespace RTE {
 /// Implementation of the main function.
 /// </summary>
 int main(int argc, char **argv) {
+
+	bool LoadDefaultScenario = true;
 	set_config_file("Base.rte/AllegroConfig.txt");
 	allegro_init();
 	loadpng_init();
@@ -360,7 +330,9 @@ int main(int argc, char **argv) {
 	g_PresetMan.LoadAllDataModules();
 
 	//Load Activity
-	const Activity* pActivityPreset = dynamic_cast<const Activity*>(g_PresetMan.GetEntityPreset("GAScripted", "Skirmish Defense")->Clone());
+	RTE::RefactorDebug* RteDbg;
+	RteDbg = new RefactorDebug();
+	const Activity* pActivityPreset = dynamic_cast<const Activity*>(g_PresetMan.GetEntityPreset(RteDbg->DefaultScenario_type, RteDbg->DefaultScenario_preset)->Clone());
 	Activity* pActivity = dynamic_cast<Activity*>(pActivityPreset->Clone());
 	GameActivity* pTestGame = dynamic_cast<GameActivity*>(pActivity);
 	RTEAssert(pTestGame, "Couldn't find the \"Skirmish Defense\" GAScripted Activity! Has it been defined?");
@@ -378,50 +350,6 @@ int main(int argc, char **argv) {
 	if (g_MetaMan.GameInProgress())
 		g_MetaMan.EndGame();
 
-		/*
-	GameActivity* gameActivity = dynamic_cast<GameActivity*>(m_SelectedActivity->Clone());
-
-	gameActivity->SetDifficulty(m_ActivityDifficultySlider->GetValue());
-	gameActivity->SetStartingGold((m_StartingGoldSlider->GetValue() == m_StartingGoldSlider->GetMaximum()) ? 1000000000 : m_StartingGoldSlider->GetValue() - (m_StartingGoldSlider->GetValue() % 500));
-
-	gameActivity->SetRequireClearPathToOrbit(m_RequireClearPathToOrbitCheckbox->GetCheck());
-	gameActivity->SetFogOfWarEnabled(m_FogOfWarCheckbox->GetCheck());
-	g_SceneMan.SetSceneToLoad(m_SelectedScene, true, m_DeployUnitsCheckbox->GetCheck());
-
-	gameActivity->ClearPlayers(false);
-
-	gameActivity->AddPlayer(Players::PlayerOne, true, Activity::Teams::TeamOne, 0);
-
-	for (int player = Players::PlayerOne; player < PlayerColumns::PlayerColumnCount; ++player) {
-		for (int team = Activity::Teams::TeamOne; team < Activity::Teams::MaxTeamCount; ++team) {
-			if (m_PlayerBoxes.at(player).at(team)->GetDrawType() == GUICollectionBox::Image) {
-				if (player == PlayerColumns::PlayerCPU) {
-					gameActivity->SetCPUTeam(team);
-				}
-				else {
-					//gameActivity->AddPlayer(player, true, team, 0);
-					break;
-				}
-			}
-		}
-	}
-
-	for (int team = Activity::Teams::TeamOne; team < Activity::Teams::MaxTeamCount; ++team) {
-		if (const GUIListPanel::Item* techItem = m_TeamTechComboBoxes.at(team)->GetSelectedItem()) {
-			if (techItem->m_ExtraIndex == -2) {
-				gameActivity->SetTeamTech(team, "-All-");
-			}
-			else if (techItem->m_ExtraIndex == -1) {
-				gameActivity->SetTeamTech(team, g_PresetMan.GetDataModuleName(m_TeamTechComboBoxes.at(team)->GetItem(RandomNum<int>(2, m_TeamTechComboBoxes.at(team)->GetListPanel()->GetItemList()->size() - 1))->m_ExtraIndex));
-			}
-			else {
-				gameActivity->SetTeamTech(team, g_PresetMan.GetDataModuleName(techItem->m_ExtraIndex));
-			}
-		}
-		gameActivity->SetTeamAISkill(team, (m_TeamAISkillSliders.at(team)->IsEnabled()) ? m_TeamAISkillSliders.at(team)->GetValue() : Activity::AISkillSetting::DefaultSkill);
-	}
-	*/
-
 	g_LuaMan.FileCloseAll();
 	//g_ActivityMan.SetStartActivity(gameActivity);	
 	// Load the different input device icons. This can't be done during UInputMan::Create() because the icon presets don't exist so we need to do this after modules are loaded.
@@ -437,9 +365,12 @@ int main(int argc, char **argv) {
 		if (std::filesystem::exists(System::GetWorkingDirectory() + "LogLoadingWarning.txt")) { std::remove("LogLoadingWarning.txt"); }
 	}
 
-	if (!g_ActivityMan.Initialize()) {
-		//RunMenuLoop(); 
+	if (!LoadDefaultScenario) {
+		if (!g_ActivityMan.Initialize()) {
+			RunMenuLoop(); 
+		}
 	}
+	
 	RunGameLoop();
 
 	DestroyManagers();
