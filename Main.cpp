@@ -67,16 +67,6 @@ namespace RTE {
 	/// 
 	/// 
 
-	void FindAndExtractZippedModules() {
-		for (const std::filesystem::directory_entry& directoryEntry : std::filesystem::directory_iterator(System::GetWorkingDirectory())) {
-			std::string zippedModulePath = std::filesystem::path(directoryEntry).generic_string();
-			if (zippedModulePath.find(System::GetZippedModulePackageExtension()) == zippedModulePath.length() - System::GetZippedModulePackageExtension().length()) {
-				//LoadingScreen::LoadingSplashProgressReport("Extracting Data Module from: " + directoryEntry.path().filename().generic_string(), true);
-				//LoadingScreen::LoadingSplashProgressReport(System::ExtractZippedDataModule(zippedModulePath), true);
-			}
-		}
-	}
-
 	void InitializeManagers() {
 		g_SettingsMan.Initialize();
 
@@ -101,8 +91,6 @@ namespace RTE {
 		if (g_SettingsMan.SettingsNeedOverwrite()) { g_SettingsMan.UpdateSettingsFile(); }
 
 		g_FrameMan.PrintForcedGfxDriverMessage();
-		
-		FindAndExtractZippedModules();
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -329,13 +317,13 @@ int main(int argc, char **argv) {
 
 	g_PresetMan.LoadAllDataModules();
 
-	//Load Activity
+	//Load Activity and get RefactorDebug params
 	RTE::RefactorDebug* RteDbg;
 	RteDbg = new RefactorDebug();
 	const Activity* pActivityPreset = dynamic_cast<const Activity*>(g_PresetMan.GetEntityPreset(RteDbg->DefaultScenario_type, RteDbg->DefaultScenario_preset)->Clone());
 	Activity* pActivity = dynamic_cast<Activity*>(pActivityPreset->Clone());
 	GameActivity* pTestGame = dynamic_cast<GameActivity*>(pActivity);
-	RTEAssert(pTestGame, "Couldn't find the \"Skirmish Defense\" GAScripted Activity! Has it been defined?");
+	RTEAssert(pTestGame, "Couldn't find the \"RefactorDebug Preset\" GAScripted Activity! Has it been defined?");
 	pTestGame->ClearPlayers(false);
 
 	pTestGame->AddPlayer(Players::PlayerOne, true, Activity::Teams::TeamOne, 0);
@@ -351,7 +339,6 @@ int main(int argc, char **argv) {
 		g_MetaMan.EndGame();
 
 	g_LuaMan.FileCloseAll();
-	//g_ActivityMan.SetStartActivity(gameActivity);	
 	// Load the different input device icons. This can't be done during UInputMan::Create() because the icon presets don't exist so we need to do this after modules are loaded.
 	g_UInputMan.LoadDeviceIcons();
 
