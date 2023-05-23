@@ -317,6 +317,8 @@ int main(int argc, char **argv) {
 
 	g_PresetMan.LoadAllDataModules();
 
+#ifdef _REFACTORDEBUG_
+
 	//Load Activity and get RefactorDebug params
 	RTE::RefactorDebug* RteDbg;
 	RteDbg = new RefactorDebug();
@@ -339,6 +341,9 @@ int main(int argc, char **argv) {
 	pTestGame->SetDifficulty(Activity::DifficultySetting::MediumDifficulty);
 	g_ActivityMan.SetStartActivity(pTestGame);
 	g_ActivityMan.SetRestartActivity();
+
+#endif // _REFACTORDEBUG_
+
 	if (g_MetaMan.GameInProgress())
 		g_MetaMan.EndGame();
 
@@ -356,11 +361,12 @@ int main(int argc, char **argv) {
 		if (std::filesystem::exists(System::GetWorkingDirectory() + "LogLoadingWarning.txt")) { std::remove("LogLoadingWarning.txt"); }
 	}
 
-	if (!LoadDefaultScenario) {
-		if (!g_ActivityMan.Initialize()) {
-			RunMenuLoop(); 
-		}
+#ifndef _REFACTORDEBUG_
+	if (!g_ActivityMan.Initialize()) {
+		RunMenuLoop();
 	}
+#endif // _REFACTORDEBUG_
+
 	
 	RunGameLoop();
 
