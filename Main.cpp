@@ -35,20 +35,7 @@
 #include "UInputMan.h"
 #include "PerformanceMan.h"
 #include "MetaMan.h"
-#include "MenuMan.h"
 #include "NetworkServer.h"
-#include "ScenarioGUI.h";
-#include "ScenarioActivityConfigGUI.h";
-
-#include "FrameMan.h"
-#include "PresetMan.h"
-#include "ActivityMan.h"
-#include "UInputMan.h"
-#include "SettingsMan.h"
-#include "ConsoleMan.h"
-
-#include "GameActivity.h"
-#include "Entity.h"
 #include "Scene.h"
 
 #include "RefactorDebug.h"
@@ -322,25 +309,7 @@ int main(int argc, char **argv) {
 	//Load Activity and get RefactorDebug params
 	RTE::RefactorDebug* RteDbg;
 	RteDbg = new RefactorDebug();
-	const Activity* pActivityPreset = dynamic_cast<const Activity*>(g_PresetMan.GetEntityPreset(RteDbg->DefaultScenario_type, RteDbg->DefaultScenario_preset)->Clone());
-	Activity* pActivity = dynamic_cast<Activity*>(pActivityPreset->Clone());
-	GameActivity* pTestGame = dynamic_cast<GameActivity*>(pActivity);
-	RTEAssert(pTestGame, "Couldn't find the \"RefactorDebug Preset\" GAScripted Activity! Has it been defined?");
-	pTestGame->ClearPlayers(false);
-
-	// Add PlayerOne and isHuman is true
-	pTestGame->AddPlayer(Players::PlayerOne, true, Activity::Teams::TeamOne, 0);
-
-	// Add PlayerTwo and isHuman is false(CPU)
-	pTestGame->AddPlayer(Players::PlayerTwo, false, Activity::Teams::TeamOne, 0);
-
-	pTestGame->SetTeamOfPlayer(0, 0);
-	pTestGame->SetCPUTeam(1);
-	pTestGame->SetStartingGold(10000);
-	pTestGame->SetFogOfWarEnabled(false);
-	pTestGame->SetDifficulty(Activity::DifficultySetting::MediumDifficulty);
-	g_ActivityMan.SetStartActivity(pTestGame);
-	g_ActivityMan.SetRestartActivity();
+	RteDbg->StartGameWithoutGui("GAScripted", "Default Preset");
 
 #endif // _REFACTORDEBUG_
 

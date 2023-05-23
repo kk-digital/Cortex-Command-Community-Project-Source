@@ -8,6 +8,7 @@ namespace RTE
 		string DefaultScenario_type = "GAScripted";
 		string DefaultScenario_preset = "Default Preset";
 		bool LoadDefaultScenario = true;
+		void StartGameWithoutGui(string DefaultScenario_type, string DefaultScenario_preset);
 	};
 }
 #endif // File
