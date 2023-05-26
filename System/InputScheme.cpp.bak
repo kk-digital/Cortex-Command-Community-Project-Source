@@ -251,10 +251,10 @@ namespace RTE {
 				m_InputMappings.at(InputElements::INPUT_NEXT).SetKey(KEY_E);
 				m_InputMappings.at(InputElements::INPUT_PREV).SetKey(KEY_Q);
 				m_InputMappings.at(InputElements::INPUT_WEAPON_RELOAD).SetKey(KEY_R);
-				m_InputMappings.at(InputElements::INPUT_WEAPON_PICKUP).SetKey(KEY_E);
+				m_InputMappings.at(InputElements::INPUT_WEAPON_PICKUP).SetKey(KEY_F);
 				m_InputMappings.at(InputElements::INPUT_WEAPON_DROP).SetKey(KEY_G);
-				m_InputMappings.at(InputElements::INPUT_WEAPON_CHANGE_PREV).SetKey(KEY_F);
-				m_InputMappings.at(InputElements::INPUT_WEAPON_CHANGE_NEXT).SetKey(KEY_T);
+				m_InputMappings.at(InputElements::INPUT_WEAPON_CHANGE_PREV).SetKey(KEY_1);
+				m_InputMappings.at(InputElements::INPUT_WEAPON_CHANGE_NEXT).SetKey(KEY_2);
 				break;
 			case InputPreset::PresetGenericDPad:
 				// TODO: Don't have any SNES style controllers to test with so no idea what would work or make sense here.
