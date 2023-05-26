@@ -35,5 +35,8 @@ namespace RTE {
 		pTestGame->SetDifficulty(Activity::DifficultySetting::MediumDifficulty);
 		g_ActivityMan.SetStartActivity(pTestGame);
 		g_ActivityMan.SetRestartActivity();
+
+		//Change Input keys scheme
+		// \Cortex-Command-Community-Project-Source\System\InputScheme.cpp
 	}
 }
