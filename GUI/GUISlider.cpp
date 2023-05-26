@@ -170,7 +170,7 @@ void GUISlider::BuildBitmap() {
 
 	// Create the indicator bitmap
 	m_KnobImage = m_Skin->CreateBitmap(Values[2], Values[3]);
-	SrcImage->Draw(m_KnobImage, 0, 0, &Rect);
+	SrcImage->Draw(m_KnobImage, 0, 0);
 
 	unsigned long ColorKey;
 	m_Skin->GetValue(Section, "ColorKeyIndex", &ColorKey);
@@ -201,18 +201,18 @@ void GUISlider::BuildLine(const std::string &Section, GUIBitmap *SrcImage) {
 	SetRect(&Rect, Values[0], Values[1], Values[0] + Values[2], Values[1] + Values[3]);
 	if (m_Orientation == Horizontal) {
 		for (int i = 0; i < m_Width; i += Values[2]) {
-			SrcImage->Draw(m_DrawBitmap, i, 0, &Rect);
+			SrcImage->Draw(m_DrawBitmap, i, 0);
 		}
 	} else {
 		for (int i = 0; i < m_Height; i += Values[3]) {
-			SrcImage->Draw(m_DrawBitmap, 0, i, &Rect);
+			SrcImage->Draw(m_DrawBitmap, 0, i);
 		}
 	}
 
 	// Draw the start
 	m_Skin->GetValue(Section, "Start", Values, 4);
 	SetRect(&Rect, Values[0], Values[1], Values[0] + Values[2], Values[1] + Values[3]);
-	SrcImage->Draw(m_DrawBitmap, 0, 0, &Rect);
+	SrcImage->Draw(m_DrawBitmap, 0, 0);
 
 	m_EndThickness = m_Orientation == Horizontal ? Values[2] : Values[3];
 
@@ -226,7 +226,7 @@ void GUISlider::BuildLine(const std::string &Section, GUIBitmap *SrcImage) {
 	} else {
 		Y = m_Height - Values[3];
 	}
-	SrcImage->Draw(m_DrawBitmap, X, Y, &Rect);
+	SrcImage->Draw(m_DrawBitmap, X, Y);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -242,7 +242,7 @@ void GUISlider::Draw(GUIScreen *Screen) {
 	}
 
 	// Draw the base
-	Screen->DrawBitmap(m_DrawBitmap, m_X + X, m_Y + Y, nullptr);
+	Screen->DrawBitmap(m_DrawBitmap, m_X + X, m_Y + Y);
 
 	// Draw the indicator
 	if (!m_KnobImage) {
@@ -256,9 +256,9 @@ void GUISlider::Draw(GUIScreen *Screen) {
 		Half = m_DrawBitmap->GetWidth() / 2;
 	}
 	if (m_Orientation == Horizontal) {
-		m_KnobImage->DrawTrans(Screen->GetBitmap(), m_X + m_KnobPosition, m_Y + Y + Half - m_KnobImage->GetHeight() / 2, nullptr);
+		m_KnobImage->DrawTrans(Screen->GetBitmap(), m_X + m_KnobPosition, m_Y + Y + Half - m_KnobImage->GetHeight() / 2);
 	} else {
-		m_KnobImage->DrawTrans(Screen->GetBitmap(), m_X + X + Half - m_KnobImage->GetWidth() / 2, m_Y + m_KnobPosition, nullptr);
+		m_KnobImage->DrawTrans(Screen->GetBitmap(), m_X + X + Half - m_KnobImage->GetWidth() / 2, m_Y + m_KnobPosition);
 	}
 	GUIPanel::Draw(Screen);
 }

@@ -10,7 +10,7 @@
 namespace RTE {
 
 	class AllegroScreen;
-	class GUIFont;
+	//class GUIFont;
 
 	/// <summary>
 	/// Handling for the title screen scene composition, intro sequence and transitions between menu screens.
@@ -192,7 +192,7 @@ namespace RTE {
 		float m_PreMainMenuScrollOffsetY; //!< The title screen scene scroll position before scrolling to and activating the main menu.
 		float m_SlideFadeInDuration; //!< How many seconds the duration of a slideshow slide fade in is supposed to elapse.
 		float m_SlideFadeOutDuration; //!< How many seconds the duration of a slideshow slide fade out is supposed to elapse.
-		std::unique_ptr<GUIFont> m_IntroTextFont; //!< The GUIFont used for drawing text during the logo splash screens and slideshow.
+		//std::unique_ptr<GUIFont> m_IntroTextFont; //!< The GUIFont used for drawing text during the logo splash screens and slideshow.
 		std::string m_SlideshowSlideText; //!< String containing the slide text during each section of the slideshow.
 		BITMAP *m_DataRealmsLogo; //!< The DataRealms logo bitmap used in the logo splash screen. Not Owned.
 		BITMAP *m_FmodLogo; //!< The Fmod logo bitmap used in the logo splash screen. Not Owned.

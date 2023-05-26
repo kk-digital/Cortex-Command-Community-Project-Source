@@ -148,10 +148,10 @@ void GUIPanel::Draw(GUIScreen *Screen) {
 
 	// Calculate this panel's clipping region - set the clipping rect to be the intersection of what
 	// was already set by the parent, and the dimensions of this panel.
-	Screen->GetBitmap()->AddClipRect(GetRect());
+	Screen->GetBitmap()->AddClipRect();
 	// Now save this intersection clipping rect so we can re-set it before each new child is drawn
 	GUIRect thisClip;
-	Screen->GetBitmap()->GetClipRect(&thisClip);
+	Screen->GetBitmap()->GetClipRect();
 
 	// Draw children
 	std::vector<GUIPanel *>::iterator it;
@@ -160,13 +160,13 @@ void GUIPanel::Draw(GUIScreen *Screen) {
 
 		if (P->_GetVisible()) {
 			// Re-set the clipping rect of this panel since the last child has messed with it
-			Screen->GetBitmap()->SetClipRect(&thisClip);
+			Screen->GetBitmap()->SetClipRect();
 			P->Draw(Screen);
 		}
 	}
 
 	// Get rid of the clipping rect since the parent will re-set it if necessary
-	Screen->GetBitmap()->SetClipRect(nullptr);
+	Screen->GetBitmap()->SetClipRect();
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

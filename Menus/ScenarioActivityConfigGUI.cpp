@@ -20,52 +20,6 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	ScenarioActivityConfigGUI::ScenarioActivityConfigGUI(GUIControlManager *parentControlManager) : m_GUIControlManager(parentControlManager) {
-		m_ActivityConfigBox = dynamic_cast<GUICollectionBox *>(m_GUIControlManager->GetControl("CollectionBoxActivityConfig"));
-		m_ActivityConfigBox->CenterInParent(true, true);
-		m_ActivityConfigBox->SetVisible(false);
-
-		m_CancelConfigButton = dynamic_cast<GUIButton *>(m_GUIControlManager->GetControl("ButtonCancelConfig"));
-
-		m_ActivityDifficultyLabel = dynamic_cast<GUILabel *>(m_GUIControlManager->GetControl("LabelActivityDifficultyValue"));
-		m_ActivityDifficultySlider = dynamic_cast<GUISlider *>(m_GUIControlManager->GetControl("SliderActivityDifficulty"));
-		m_StartingGoldLabel = dynamic_cast<GUILabel *>(m_GUIControlManager->GetControl("LabelStartingGoldValue"));
-		m_StartingGoldSlider = dynamic_cast<GUISlider *>(m_GUIControlManager->GetControl("SliderStartingGold"));
-
-		m_RequireClearPathToOrbitCheckbox = dynamic_cast<GUICheckbox *>(m_GUIControlManager->GetControl("CheckboxRequireClearPathToOrbit"));
-		m_FogOfWarCheckbox = dynamic_cast<GUICheckbox *>(m_GUIControlManager->GetControl("CheckboxFogOfWar"));
-		m_DeployUnitsCheckbox = dynamic_cast<GUICheckbox *>(m_GUIControlManager->GetControl("CheckboxDeployUnits"));
-
-		m_PlayersAndTeamsConfigBox = dynamic_cast<GUICollectionBox *>(m_GUIControlManager->GetControl("CollectionBoxPlayersAndTeamsConfig"));
-		m_TeamIconBoxes.at(TeamRows::DisabledTeam) = dynamic_cast<GUICollectionBox *>(m_GUIControlManager->GetControl("CollectionBoxDisabledTeamIcon"));
-		m_TeamNameLabels.at(TeamRows::DisabledTeam) = dynamic_cast<GUILabel *>(m_GUIControlManager->GetControl("LabelDisabledTeam"));
-
-		GUILabel *teamTechLabel = dynamic_cast<GUILabel *>(m_GUIControlManager->GetControl("LabelTeamTech"));
-		for (int team = Activity::Teams::TeamOne; team < Activity::Teams::MaxTeamCount; ++team) {
-			std::string teamNumber = std::to_string(team + 1);
-			m_TeamIconBoxes.at(team) = dynamic_cast<GUICollectionBox *>(m_GUIControlManager->GetControl("CollectionBoxTeam" + teamNumber + "Icon"));
-			m_TeamNameLabels.at(team) = dynamic_cast<GUILabel *>(m_GUIControlManager->GetControl("LabelTeam" + teamNumber));
-
-			m_TeamTechComboBoxes.at(team) = dynamic_cast<GUIComboBox *>(m_GUIControlManager->GetControl("ComboBoxTeam" + teamNumber + "Tech"));
-			m_TeamTechComboBoxes.at(team)->Move(teamTechLabel->GetXPos(), teamTechLabel->GetYPos() + teamTechLabel->GetHeight() + 5 + (25 * (team + 1)));
-			m_TeamTechComboBoxes.at(team)->SetVisible(false);
-
-			m_TeamAISkillSliders.at(team) = dynamic_cast<GUISlider *>(m_GUIControlManager->GetControl("SliderTeam" + teamNumber + "AISkill"));
-			m_TeamAISkillSliders.at(team)->SetValue(Activity::AISkillSetting::DefaultSkill);
-			m_TeamAISkillLabels.at(team) = dynamic_cast<GUILabel *>(m_GUIControlManager->GetControl("LabelTeam" + teamNumber + "AISkill"));
-			m_TeamAISkillLabels.at(team)->SetText(Activity::GetAISkillString(m_TeamAISkillSliders.at(team)->GetValue()));
-		}
-		for (int player = Players::PlayerOne; player < PlayerColumns::PlayerColumnCount; ++player) {
-			for (int team = Activity::Teams::TeamOne; team < TeamRows::TeamRowCount; ++team) {
-				m_PlayerBoxes.at(player).at(team) = dynamic_cast<GUICollectionBox *>(m_GUIControlManager->GetControl("P" + std::to_string(player + 1) + "T" + std::to_string(team + 1) + "Box"));
-			}
-		}
-		m_CPULockLabel = dynamic_cast<GUILabel *>(m_GUIControlManager->GetControl("LabelCPUTeamLock"));
-		m_StartErrorLabel = dynamic_cast<GUILabel *>(m_GUIControlManager->GetControl("LabelStartError"));
-		m_StartGameButton = dynamic_cast<GUIButton *>(m_GUIControlManager->GetControl("ButtonStartGame"));
-
-		m_TechListFetched = false;
-	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -265,7 +219,9 @@ namespace RTE {
 		m_StartErrorLabel->SetVisible(!errorMessage.empty());
 		m_StartGameButton->SetVisible(errorMessage.empty());
 
-		if (m_StartGameButton->GetVisible()) { m_GUIControlManager->GetManager()->SetFocus(m_StartGameButtonBlinkTimer.AlternateReal(500) ? m_StartGameButton : nullptr); }
+		if (m_StartGameButton->GetVisible()) { 
+			//m_GUIControlManager->GetManager()->SetFocus(m_StartGameButtonBlinkTimer.AlternateReal(500) ? m_StartGameButton : nullptr); 
+		}
 
 		return HandleInputEvents();
 	}
@@ -302,28 +258,7 @@ namespace RTE {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void ScenarioActivityConfigGUI::UpdatePlayerTeamSetupCell(int mouseX, int mouseY) {
-		if (const GUICollectionBox *hoveredCell = dynamic_cast<GUICollectionBox *>(m_GUIControlManager->GetControlUnderPoint(mouseX, mouseY, m_PlayersAndTeamsConfigBox, 1))) {
-			int hoveredPlayer = PlayerColumns::PlayerColumnCount;
-			int hoveredTeam = TeamRows::TeamRowCount;
-			for (int player = Players::PlayerOne; player < PlayerColumns::PlayerColumnCount; ++player) {
-				for (int team = Activity::Teams::TeamOne; team < TeamRows::TeamRowCount; ++team) {
-					if (m_PlayerBoxes.at(player).at(team) == hoveredCell) {
-						hoveredPlayer = player;
-						hoveredTeam = team;
-					} else if (m_PlayerBoxes.at(player).at(team)->GetDrawType() == GUICollectionBox::Color) {
-						m_PlayerBoxes.at(player).at(team)->SetDrawColor(c_GUIColorBlue);
-					}
-				}
-			}
-			if ((m_SelectedActivity->TeamActive(hoveredTeam) || hoveredTeam == TeamRows::DisabledTeam) && hoveredTeam != m_LockedCPUTeam && (m_LockedCPUTeam == Activity::Teams::NoTeam || hoveredPlayer != PlayerColumns::PlayerCPU) && m_PlayerBoxes.at(hoveredPlayer).at(hoveredTeam)->GetDrawType() != GUICollectionBox::Image) {
-				if (g_UInputMan.MenuButtonReleased(UInputMan::MENU_PRIMARY)) {
-					HandleClickOnPlayerTeamSetupCell(hoveredPlayer, hoveredTeam);
-				} else if (m_PlayerBoxes.at(hoveredPlayer).at(hoveredTeam)->GetDrawType() == GUICollectionBox::Color && m_PlayerBoxes.at(hoveredPlayer).at(hoveredTeam)->GetDrawColor() != c_GUIColorLightBlue) {
-					m_PlayerBoxes.at(hoveredPlayer).at(hoveredTeam)->SetDrawColor(c_GUIColorLightBlue);
-					g_GUISound.SelectionChangeSound()->Play();
-				}
-			}
-		}
+		
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -386,39 +321,14 @@ namespace RTE {
 		
 		m_ActivityDifficultyLabel->SetText("Test Diff");
 
-		while (m_GUIControlManager->GetEvent(&guiEvent)) {
-			if (guiEvent.GetType() == GUIEvent::Command) {
-				if (guiEvent.GetControl() == m_CancelConfigButton) {
-					g_GUISound.BackButtonPressSound()->Play();
-					SetEnabled(false);
-				} else if (guiEvent.GetControl() == m_StartGameButton) {
-					g_GUISound.ButtonPressSound()->Play();
-					StartGame();
-					SetEnabled(false);
-					return true;
-				}
-			} else if (guiEvent.GetType() == GUIEvent::Notification) {
-				if (guiEvent.GetControl() == m_ActivityDifficultySlider) {
-					//m_ActivityDifficultyLabel->SetText(" " + Activity::GetDifficultyString(m_ActivityDifficultySlider->GetValue()));
-					
-					if (!m_StartingGoldAdjustedManually) { UpdateStartingGoldSliderAndLabel(); }
-				} else if (guiEvent.GetControl() == m_StartingGoldSlider) {
-					if (guiEvent.GetMsg() == GUISlider::Clicked) { m_StartingGoldAdjustedManually = true; }
-					UpdateStartingGoldSliderAndLabel();
-				} else if (guiEvent.GetMsg() == GUISlider::Changed) {
-					for (int team = Activity::Teams::TeamOne; team < Activity::Teams::MaxTeamCount; team++) {
-						if (guiEvent.GetControl() == m_TeamAISkillSliders.at(team)) { m_TeamAISkillLabels.at(team)->SetText(Activity::GetAISkillString(m_TeamAISkillSliders.at(team)->GetValue())); }
-					}
-				}
-			}
-		}
+		
 		return false;
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void ScenarioActivityConfigGUI::Draw() {
-		m_GUIControlManager->Draw();
+		//m_GUIControlManager->Draw();
 
 		int rectPosY = 50;
 		// Apply a colored overlay on top of team rows that are locked or disabled by the Activity and are not modifiable.
@@ -441,14 +351,7 @@ namespace RTE {
 
 		// The colored overlay is semi-transparent and is drawn on top of GUI elements, so we need to redraw the relevant elements again so they aren't affected.
 		for (int team = Activity::Teams::MaxTeamCount - 1; team >= Activity::Teams::TeamOne; --team) {
-			if (m_TeamTechComboBoxes.at(team)->GetVisible()) {
-				m_TeamTechComboBoxes.at(team)->Draw(m_GUIControlManager->GetScreen());
-				if (m_TeamTechComboBoxes.at(team)->IsDropped()) { m_TeamTechComboBoxes.at(team)->GetListPanel()->Draw(m_GUIControlManager->GetScreen()); }
-			}
-			if (m_TeamAISkillSliders.at(team)->GetVisible()) {
-				m_TeamAISkillSliders.at(team)->Draw(m_GUIControlManager->GetScreen());
-				m_TeamAISkillLabels.at(team)->Draw(m_GUIControlManager->GetScreen());
-			}
+			
 		}
 	}
 }

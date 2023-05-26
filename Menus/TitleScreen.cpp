@@ -55,7 +55,7 @@ namespace RTE {
 		m_PreMainMenuScrollOffsetY = 100;
 		m_SlideFadeInDuration = 0;
 		m_SlideFadeOutDuration = 0;
-		m_IntroTextFont = nullptr;
+		//m_IntroTextFont = nullptr;
 		m_SlideshowSlideText.clear();
 		m_DataRealmsLogo = nullptr;
 		m_FmodLogo = nullptr;
@@ -516,11 +516,11 @@ namespace RTE {
 				std::string copyrightNotice(64, '\0');
 				std::snprintf(copyrightNotice.data(), copyrightNotice.size(), "Cortex Command is TM and %c 2017 Data Realms, LLC", -35);
 				AllegroBitmap guiBackBuffer(g_FrameMan.GetBackBuffer32());
-				m_IntroTextFont->DrawAligned(&guiBackBuffer, g_FrameMan.GetResX() / 2, g_FrameMan.GetResY() - m_IntroTextFont->GetFontHeight() - 5, copyrightNotice, GUIFont::Centre);
+				//m_IntroTextFont->DrawAligned(&guiBackBuffer, g_FrameMan.GetResX() / 2, g_FrameMan.GetResY() - m_IntroTextFont->GetFontHeight() - 5, copyrightNotice, GUIFont::Centre);
 			} else if (m_IntroSequenceState >= IntroSequence::FmodLogoFadeIn && m_IntroSequenceState <= IntroSequence::FmodLogoFadeOut) {
 				draw_sprite(g_FrameMan.GetBackBuffer32(), m_FmodLogo, (g_FrameMan.GetResX() - m_FmodLogo->w) / 2, (g_FrameMan.GetResY() - m_FmodLogo->h) / 2);
 				AllegroBitmap guiBackBuffer(g_FrameMan.GetBackBuffer32());
-				m_IntroTextFont->DrawAligned(&guiBackBuffer, g_FrameMan.GetResX() / 2, g_FrameMan.GetResY() - m_IntroTextFont->GetFontHeight() - 5, "Made with FMOD Studio by Firelight Technologies Pty Ltd.", GUIFont::Centre);
+				//m_IntroTextFont->DrawAligned(&guiBackBuffer, g_FrameMan.GetResX() / 2, g_FrameMan.GetResY() - m_IntroTextFont->GetFontHeight() - 5, "Made with FMOD Studio by Firelight Technologies Pty Ltd.", GUIFont::Centre);
 			} else if (m_IntroSequenceState >= IntroSequence::ShowSlide1 && m_IntroSequenceState <= IntroSequence::ShowSlide8) {
 				DrawSlideshowSlide();
 			} else if (m_IntroSequenceState == IntroSequence::SlideshowEnd) {
@@ -605,7 +605,7 @@ namespace RTE {
 
 		if (!m_SlideshowSlideText.empty()) {
 			AllegroBitmap guiBackBuffer(g_FrameMan.GetBackBuffer32());
-			m_IntroTextFont->DrawAligned(&guiBackBuffer, g_FrameMan.GetResX() / 2, (g_FrameMan.GetResY() / 2) + (m_IntroSlides.at(slide)->h / 2) + 12, m_SlideshowSlideText, GUIFont::Centre);
+			//m_IntroTextFont->DrawAligned(&guiBackBuffer, g_FrameMan.GetResX() / 2, (g_FrameMan.GetResY() / 2) + (m_IntroSlides.at(slide)->h / 2) + 12, m_SlideshowSlideText, GUIFont::Centre);
 		}
 	}
 

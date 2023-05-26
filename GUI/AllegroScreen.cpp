@@ -27,31 +27,20 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void AllegroScreen::DrawBitmap(GUIBitmap *guiBitmap, int destX, int destY, GUIRect *srcPosAndSizeRect) {
+	void AllegroScreen::DrawBitmap(GUIBitmap *guiBitmap, int destX, int destY) {
 		if (!guiBitmap) {
 			return;
-		}
-		if (BITMAP *sourceBitmap = dynamic_cast<AllegroBitmap *>(guiBitmap)->GetBitmap()) {
-			if (srcPosAndSizeRect) {
-				blit(sourceBitmap, m_BackBufferBitmap->GetBitmap(), srcPosAndSizeRect->left, srcPosAndSizeRect->top, destX, destY, srcPosAndSizeRect->right - srcPosAndSizeRect->left, srcPosAndSizeRect->bottom - srcPosAndSizeRect->top);
-			} else {
-				blit(sourceBitmap, m_BackBufferBitmap->GetBitmap(), 0, 0, destX, destY, sourceBitmap->w, sourceBitmap->h);
-			}
 		}
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void AllegroScreen::DrawBitmapTrans(GUIBitmap *guiBitmap, int destX, int destY, GUIRect *srcPosAndSizeRect) {
+	void AllegroScreen::DrawBitmapTrans(GUIBitmap *guiBitmap, int destX, int destY) {
 		if (!guiBitmap) {
 			return;
 		}
 		if (BITMAP *sourceBitmap = dynamic_cast<AllegroBitmap *>(guiBitmap)->GetBitmap()) {
-			if (srcPosAndSizeRect) {
-				masked_blit(sourceBitmap, m_BackBufferBitmap->GetBitmap(), srcPosAndSizeRect->left, srcPosAndSizeRect->top, destX, destY, srcPosAndSizeRect->right - srcPosAndSizeRect->left, srcPosAndSizeRect->bottom - srcPosAndSizeRect->top);
-			} else {
-				masked_blit(sourceBitmap, m_BackBufferBitmap->GetBitmap(), 0, 0, destX, destY, sourceBitmap->w, sourceBitmap->h);
-			}
+			
 		}
 	}
 

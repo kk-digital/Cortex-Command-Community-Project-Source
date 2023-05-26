@@ -140,7 +140,7 @@ void GUICheckbox::Draw(GUIScreen *Screen) {
 	}
 
 	// Setup the clipping
-	Screen->GetBitmap()->SetClipRect(GetRect());
+	Screen->GetBitmap()->SetClipRect();
 
 	// Calculate the y position of the base
 	// Make it centered vertically
@@ -148,18 +148,18 @@ void GUICheckbox::Draw(GUIScreen *Screen) {
 
 	// Draw the base
 	if (m_Mouseover) {
-		m_Image->Draw(Screen->GetBitmap(), m_X, YPos, &m_ImageRects[1]);
+		m_Image->Draw(Screen->GetBitmap(), m_X, YPos);
 	} else {
-		m_Image->Draw(Screen->GetBitmap(), m_X, YPos, &m_ImageRects[0]);
+		m_Image->Draw(Screen->GetBitmap(), m_X, YPos);
 	}
 
 	// Draw the check
 	switch (m_Check) {
 		case Checked:
-			m_Image->DrawTrans(Screen->GetBitmap(), m_X, YPos, &m_ImageRects[2]);
+			m_Image->DrawTrans(Screen->GetBitmap(), m_X, YPos);
 			break;
 		case Greycheck:
-			m_Image->DrawTrans(Screen->GetBitmap(), m_X, YPos, &m_ImageRects[3]);
+			m_Image->DrawTrans(Screen->GetBitmap(), m_X, YPos);
 			break;
 		default:
 			break;
@@ -175,7 +175,7 @@ void GUICheckbox::Draw(GUIScreen *Screen) {
 		m_Font->SetKerning(m_FontKerning);
 		m_Font->Draw(Screen->GetBitmap(), m_X + (m_ImageRects[0].right - m_ImageRects[0].left) + 2, m_Y + (m_Height / 2) - (m_Font->GetFontHeight() / 2) - 1, Text, m_FontShadow);
 	}
-	Screen->GetBitmap()->SetClipRect(nullptr);
+	Screen->GetBitmap()->SetClipRect();
 
 	GUIPanel::Draw(Screen);
 }

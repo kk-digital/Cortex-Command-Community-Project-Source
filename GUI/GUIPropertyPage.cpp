@@ -183,7 +183,7 @@ void GUIPropertyPage::BuildBitmap() {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void GUIPropertyPage::Draw(GUIScreen *Screen) {
-	if (m_DrawBitmap) { m_DrawBitmap->Draw(Screen->GetBitmap(), m_X, m_Y, nullptr); }
+	if (m_DrawBitmap) { m_DrawBitmap->Draw(Screen->GetBitmap(), m_X, m_Y); }
 
 	// Check the font first
 	if (!m_Font) {

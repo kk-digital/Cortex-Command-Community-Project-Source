@@ -142,18 +142,18 @@ void GUIProgressBar::BuildBitmap() {
 
 	for (int y = 0; y < m_IndicatorImage->GetHeight(); y += Values[3]) {
 		for (int x = 0; x < m_IndicatorImage->GetWidth(); x += Values[2]) {
-			Src->Draw(m_IndicatorImage, x, y, &Rect);
+			Src->Draw(m_IndicatorImage, x, y);
 		}
 	}
 
 	// Draw the top & bottom pieces
 	m_Skin->GetValue("ProgressBar_Indicator", "Top", Values, 4);
 	SetRect(&Rect, Values[0], Values[1], Values[0] + Values[2], Values[1] + Values[3]);
-	Src->Draw(m_IndicatorImage, 0, 0, &Rect);
+	Src->Draw(m_IndicatorImage, 0, 0);
 
 	m_Skin->GetValue("ProgressBar_Indicator", "Bottom", Values, 4);
 	SetRect(&Rect, Values[0], Values[1], Values[0] + Values[2], Values[1] + Values[3]);
-	Src->Draw(m_IndicatorImage, 0, m_IndicatorImage->GetHeight() - Values[3], &Rect);
+	Src->Draw(m_IndicatorImage, 0, m_IndicatorImage->GetHeight() - Values[3]);
 
 	m_Skin->GetValue("ProgressBar_Indicator", "Spacing", &m_Spacing);
 }
@@ -162,7 +162,7 @@ void GUIProgressBar::BuildBitmap() {
 
 void GUIProgressBar::Draw(GUIScreen *Screen) {
 	// Draw the base
-	Screen->DrawBitmap(m_DrawBitmap, m_X, m_Y, nullptr);
+	Screen->DrawBitmap(m_DrawBitmap, m_X, m_Y);
 
 	// Draw the indicators
 	if (!m_IndicatorImage) {
@@ -180,16 +180,16 @@ void GUIProgressBar::Draw(GUIScreen *Screen) {
 	GUIRect Rect = *GetRect();
 	Rect.left++;
 	Rect.right -= 2;
-	Screen->GetBitmap()->SetClipRect(&Rect);
+	Screen->GetBitmap()->SetClipRect();
 
 	int x = m_X + 2;
 	int Limit = (int)ceil(Count);
 	for (int i = 0; i < Limit; i++) {
-		m_IndicatorImage->Draw(Screen->GetBitmap(), x, m_Y + 2, nullptr);
+		m_IndicatorImage->Draw(Screen->GetBitmap(), x, m_Y + 2);
 		x += m_IndicatorImage->GetWidth() + m_Spacing;
 	}
 
-	Screen->GetBitmap()->SetClipRect(nullptr);
+	Screen->GetBitmap()->SetClipRect();
 
 	GUIPanel::Draw(Screen);
 }

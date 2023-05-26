@@ -7,7 +7,7 @@ namespace RTE {
 
 	class GameActivity;
 	class AllegroBitmap;
-	class GUIControlManager;
+	//class GUIControlManager;
 	class GUICollectionBox;
 	class GUIComboBox;
 	class GUICheckbox;
@@ -28,7 +28,7 @@ namespace RTE {
 		/// Constructor method used to instantiate a ScenarioActivityConfigGUI object in system memory and make it ready for use.
 		/// </summary>
 		/// <param name="parentControlManager">Pointer to the parent GUIControlManager which owns all the GUIControls of this ScenarioActivityConfigGUI. Ownership is NOT transferred!</param>
-		explicit ScenarioActivityConfigGUI(GUIControlManager *parentControlManager);
+		explicit ScenarioActivityConfigGUI();
 #pragma endregion
 
 #pragma region Getters and Setters
@@ -74,7 +74,7 @@ namespace RTE {
 		/// </summary>
 		enum TeamRows { DisabledTeam = Activity::Teams::MaxTeamCount, TeamRowCount };
 
-		GUIControlManager *m_GUIControlManager; //!< The GUIControlManager which holds all the GUIControls of this menu. Not owned by this.
+		//GUIControlManager *m_GUIControlManager; //!< The GUIControlManager which holds all the GUIControls of this menu. Not owned by this.
 
 		const GameActivity *m_SelectedActivity; //!< The Activity this ScenarioActivityConfigGUI is configuring.
 		Scene *m_SelectedScene; //!< The Scene the selected Activity will be using.

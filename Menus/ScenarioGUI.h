@@ -11,7 +11,7 @@ namespace RTE {
 	class AllegroScreen;
 	class AllegroInput;
 	class AllegroBitmap;
-	class GUIControlManager;
+	//class GUIControlManager;
 	class GUICollectionBox;
 	class GUIComboBox;
 	class GUIButton;
@@ -74,7 +74,7 @@ namespace RTE {
 
 	private:
 
-		std::unique_ptr<GUIControlManager> m_GUIControlManager; //!< The GUIControlManager which owns all the GUIControls of the ScenarioGUI.
+		//std::unique_ptr<GUIControlManager> m_GUIControlManager; //!< The GUIControlManager which owns all the GUIControls of the ScenarioGUI.
 		ScenarioMenuUpdateResult m_UpdateResult; //!< The result of the ScenarioGUI update. See ScenarioMenuUpdateResult enumeration.
 
 		std::map<Activity *, std::vector<Scene *>> m_ScenarioActivities; //!< The map of Activities and the Scenes compatible with each, neither of which are owned here.

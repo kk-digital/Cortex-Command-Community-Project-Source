@@ -75,7 +75,8 @@ namespace RTE {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void AllegroBitmap::GetClipRect(GUIRect *clippingRect) const {
+	void AllegroBitmap::GetClipRect() const {
+		/*
 		if (m_Bitmap && clippingRect) {
 			int x1;
 			int y1;
@@ -87,66 +88,45 @@ namespace RTE {
 			clippingRect->right = x2;
 			clippingRect->bottom = y2;
 		}
+		*/
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void AllegroBitmap::SetClipRect(GUIRect *clippingRect) {
+	void AllegroBitmap::SetClipRect() {
 		if (!m_Bitmap) {
 			return;
 		}
 		set_clip_state(m_Bitmap, 1);
 
-		if (!clippingRect) {
-			set_clip_rect(m_Bitmap, 0, 0, m_Bitmap->w - 1, m_Bitmap->h - 1);
-		} else {
-			set_clip_rect(m_Bitmap, clippingRect->left, clippingRect->top, clippingRect->right, clippingRect->bottom);
-		}
+		
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void AllegroBitmap::AddClipRect(GUIRect *clippingRect) {
+	void AllegroBitmap::AddClipRect() {
 		if (!m_Bitmap) {
 			return;
 		}
 		set_clip_state(m_Bitmap, 1);
-
-		if (!clippingRect) {
-			set_clip_rect(m_Bitmap, 0, 0, m_Bitmap->w - 1, m_Bitmap->h - 1);
-		} else {
-			add_clip_rect(m_Bitmap, clippingRect->left, clippingRect->top, clippingRect->right, clippingRect->bottom);
-		}
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void AllegroBitmap::Draw(GUIBitmap *destBitmap, int destX, int destY, GUIRect *srcPosAndSizeRect) {
+	void AllegroBitmap::Draw(GUIBitmap *destBitmap, int destX, int destY) {
 		if (!m_Bitmap) {
 			return;
 		}
 		RTEAssert(destBitmap && dynamic_cast<AllegroBitmap *>(destBitmap)->GetBitmap(), "Null destination bitmap passed when trying to draw AllegroBitmap");
-
-		if (srcPosAndSizeRect) {
-			blit(m_Bitmap, dynamic_cast<AllegroBitmap *>(destBitmap)->GetBitmap(), srcPosAndSizeRect->left, srcPosAndSizeRect->top, destX, destY, srcPosAndSizeRect->right - srcPosAndSizeRect->left, srcPosAndSizeRect->bottom - srcPosAndSizeRect->top);
-		} else {
-			blit(m_Bitmap, dynamic_cast<AllegroBitmap *>(destBitmap)->GetBitmap(), 0, 0, destX, destY, destBitmap->GetWidth(), destBitmap->GetHeight());
-		}
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	void AllegroBitmap::DrawTrans(GUIBitmap *destBitmap, int destX, int destY, GUIRect *srcPosAndSizeRect) {
+	void AllegroBitmap::DrawTrans(GUIBitmap *destBitmap, int destX, int destY) {
 		if (!m_Bitmap) {
 			return;
 		}
 		RTEAssert(destBitmap && dynamic_cast<AllegroBitmap *>(destBitmap)->GetBitmap(), "Null destination bitmap passed when trying to draw AllegroBitmap");
-
-		if (srcPosAndSizeRect) {
-			masked_blit(m_Bitmap, dynamic_cast<AllegroBitmap *>(destBitmap)->GetBitmap(), srcPosAndSizeRect->left, srcPosAndSizeRect->top, destX, destY, srcPosAndSizeRect->right - srcPosAndSizeRect->left, srcPosAndSizeRect->bottom - srcPosAndSizeRect->top);
-		} else {
-			masked_blit(m_Bitmap, dynamic_cast<AllegroBitmap *>(destBitmap)->GetBitmap(), 0, 0, destX, destY, destBitmap->GetWidth(), destBitmap->GetHeight());
-		}
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

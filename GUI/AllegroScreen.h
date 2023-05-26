@@ -63,7 +63,7 @@ namespace RTE {
 		/// <param name="destX">Destination X position</param>
 		/// <param name="destY">Destination Y position</param>
 		/// <param name="srcPosAndSizeRect">Source bitmap position and size rectangle.</param>
-		void DrawBitmap(GUIBitmap *guiBitmap, int destX, int destY, GUIRect *srcPosAndSizeRect) override;
+		void DrawBitmap(GUIBitmap *guiBitmap, int destX, int destY);
 
 		/// <summary>
 		/// Draws a bitmap onto the back buffer ignoring color-keyed pixels.
@@ -72,7 +72,7 @@ namespace RTE {
 		/// <param name="destX">Destination X position</param>
 		/// <param name="destY">Destination Y position</param>
 		/// <param name="srcPosAndSizeRect">Source bitmap position and size rectangle.</param>
-		void DrawBitmapTrans(GUIBitmap *guiBitmap, int destX, int destY, GUIRect *srcPosAndSizeRect) override;
+		void DrawBitmapTrans(GUIBitmap *guiBitmap, int destX, int destY);
 #pragma endregion
 
 #pragma region Virtual Override Methods
