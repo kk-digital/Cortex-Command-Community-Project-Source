@@ -71,6 +71,7 @@ namespace RTE {
 		//g_ConsoleMan.Initialize();
 		g_MovableMan.Initialize();
 		g_MetaMan.Initialize();
+		//Remove GUIScene
 		//g_MenuMan.Initialize();
 
 		// Overwrite Settings.ini after all the managers are created to fully populate the file. Up until this moment Settings.ini is populated only with minimal required properties to run.
