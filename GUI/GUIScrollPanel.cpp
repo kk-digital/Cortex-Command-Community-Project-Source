@@ -214,8 +214,8 @@ void GUIScrollPanel::BuildButton(const std::string &ArrowName, int Y, int Width,
 	m_Skin->GetValue(ArrowName, "Rect", Values, 4);
 	SetRect(&Rect, Values[0], Values[1], Values[0] + Values[2], Values[1] + Values[3]);
 
-	Arrow->DrawTrans(m_DrawBitmap[ButtonStates], (Width / 2) - (Values[2] / 2), Y + (Height / 2) - (Values[3] / 2), &Rect);
-	Arrow->DrawTrans(m_DrawBitmap[ButtonStates], Width + (Width / 2) - (Values[2] / 2) + 1, Y + (Height / 2) - (Values[3] / 2) + 1, &Rect);
+	Arrow->DrawTrans(m_DrawBitmap[ButtonStates], (Width / 2) - (Values[2] / 2), Y + (Height / 2) - (Values[3] / 2));
+	Arrow->DrawTrans(m_DrawBitmap[ButtonStates], Width + (Width / 2) - (Values[2] / 2) + 1, Y + (Height / 2) - (Values[3] / 2) + 1);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -237,7 +237,7 @@ void GUIScrollPanel::BuildBackground() {
 	// Tile the filler
 	for (int y = 0; y < m_Height; y += Values[3]) {
 		for (int x = 0; x < m_Width; x += Values[2]) {
-			Background->Draw(m_DrawBitmap[Back], x, y, &Rect);
+			Background->Draw(m_DrawBitmap[Back], x, y);
 		}
 	}
 }
@@ -325,24 +325,24 @@ void GUIScrollPanel::Draw(GUIScreen *Screen) {
 	GUIBitmap *Dest = Screen->GetBitmap();
 
 	// Draw the background
-	m_DrawBitmap[Back]->Draw(Dest, m_X, m_Y, 0);
+	m_DrawBitmap[Back]->Draw(Dest, m_X, m_Y);
 
 	// Vertical
 	if (m_Orientation == Vertical) {
 		// Top Button
 		int X = m_ButtonPushed[0] ? m_Width : 0;
 		SetRect(&Rect, X, 0, X + m_Width, m_ButtonSize);
-		m_DrawBitmap[ButtonStates]->Draw(Dest, m_X, m_Y, &Rect);
+		m_DrawBitmap[ButtonStates]->Draw(Dest, m_X, m_Y);
 
 		// Bottom Button
 		X = m_ButtonPushed[1] ? m_Width : 0;
 		SetRect(&Rect, X, m_ButtonSize, X + m_Width, m_ButtonSize * 2);
-		m_DrawBitmap[ButtonStates]->Draw(Dest, m_X, (m_Y + m_Height) - m_ButtonSize, &Rect);
+		m_DrawBitmap[ButtonStates]->Draw(Dest, m_X, (m_Y + m_Height) - m_ButtonSize);
 
 		// Knob
 		if (m_KnobLength > 0) {
 			SetRect(&Rect, 0, 0, m_Width, m_KnobLength);
-			m_DrawBitmap[KnobStates]->Draw(Dest, m_X, m_Y + m_ButtonSize + m_KnobPosition, &Rect);
+			m_DrawBitmap[KnobStates]->Draw(Dest, m_X, m_Y + m_ButtonSize + m_KnobPosition);
 		}
 	}
 
@@ -351,17 +351,17 @@ void GUIScrollPanel::Draw(GUIScreen *Screen) {
 		// Left Button
 		int X = m_ButtonPushed[0] ? m_ButtonSize : 0;
 		SetRect(&Rect, X, 0, X + m_ButtonSize, m_Height);
-		m_DrawBitmap[ButtonStates]->Draw(Dest, m_X, m_Y, &Rect);
+		m_DrawBitmap[ButtonStates]->Draw(Dest, m_X, m_Y);
 
 		// Right Button
 		X = m_ButtonPushed[1] ? m_ButtonSize : 0;
 		SetRect(&Rect, X, m_Height, X + m_ButtonSize, m_Height * 2);
-		m_DrawBitmap[ButtonStates]->Draw(Dest, (m_X + m_Width) - m_ButtonSize, m_Y, &Rect);
+		m_DrawBitmap[ButtonStates]->Draw(Dest, (m_X + m_Width) - m_ButtonSize, m_Y);
 
 		// Knob
 		if (m_KnobLength > 0) {
 			SetRect(&Rect, 0, 0, m_KnobLength, m_Height);
-			m_DrawBitmap[KnobStates]->Draw(Dest, m_X + m_ButtonSize + m_KnobPosition, m_Y, &Rect);
+			m_DrawBitmap[KnobStates]->Draw(Dest, m_X + m_ButtonSize + m_KnobPosition, m_Y);
 		}
 	}
 }

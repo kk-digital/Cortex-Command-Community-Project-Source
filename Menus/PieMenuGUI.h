@@ -9,7 +9,7 @@ namespace RTE {
 
 	class Controller;
 	class MovableObject;
-	class GUIFont;
+	//class GUIFont;
 
 	/// <summary>
 	/// A GUI for displaying pie menus.
@@ -223,7 +223,7 @@ namespace RTE {
 		static std::unordered_map<std::string, PieSlice> s_AllCustomLuaSlices; //!< All Slices ever added to this pie-menu, serves as directory of Slices available to add.
 		static BITMAP *s_CursorBitmap; //!< A static pointer to the bitmap to use as the cursor in any menu.
 
-		GUIFont *m_LargeFont; //!< A pointer to the large font from FrameMan. Not owned here.
+		//GUIFont *m_LargeFont; //!< A pointer to the large font from FrameMan. Not owned here.
 
 		Controller *m_MenuController; //!< The Controller which controls this menu. Separate from the Controller of the affected object (if there is one).
 		MovableObject *m_AffectedObject; //!< The MovableObject this menu affects, if any.

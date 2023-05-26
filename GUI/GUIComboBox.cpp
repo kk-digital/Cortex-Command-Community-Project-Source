@@ -191,10 +191,10 @@ void GUIComboBox::ChangeSkin(GUISkin *Skin) {
 
 void GUIComboBox::Draw(GUIScreen *Screen) {
 	// Draw the background
-	m_DrawBitmap->Draw(Screen->GetBitmap(), m_X, m_Y, nullptr);
+	m_DrawBitmap->Draw(Screen->GetBitmap(), m_X, m_Y);
 
 	// If selected item has a bitmap AND no text to show, just show the bitmap as the selected thing
-	if (m_ListPanel->GetSelected() && m_ListPanel->GetSelected()->m_Name.empty() && m_ListPanel->GetSelected()->m_pBitmap) { m_ListPanel->GetSelected()->m_pBitmap->DrawTrans(Screen->GetBitmap(), m_X + 4, m_Y + 4, nullptr); }
+	if (m_ListPanel->GetSelected() && m_ListPanel->GetSelected()->m_Name.empty() && m_ListPanel->GetSelected()->m_pBitmap) { m_ListPanel->GetSelected()->m_pBitmap->DrawTrans(Screen->GetBitmap(), m_X + 4, m_Y + 4); }
 
 	GUIPanel::Draw(Screen);
 }
@@ -569,9 +569,9 @@ void GUIComboBoxButton::ChangeSkin(GUISkin *Skin) {
 	Skin->GetValue("ComboBox_Arrow", "Rect", Values, 4);
 	SetRect(&Rect, Values[0], Values[1], Values[0] + Values[2], Values[1] + Values[3]);
 
-	Arrow->DrawTrans(m_DrawBitmap, (m_Width / 2) - (Values[2] / 2), (m_Height / 2) - (Values[3] / 2), &Rect);
+	Arrow->DrawTrans(m_DrawBitmap, (m_Width / 2) - (Values[2] / 2), (m_Height / 2) - (Values[3] / 2));
 
-	Arrow->DrawTrans(m_DrawBitmap, (m_Width / 2) - (Values[2] / 2) + 1, m_Height + (m_Height / 2) - (Values[3] / 2) + 1, &Rect);
+	Arrow->DrawTrans(m_DrawBitmap, (m_Width / 2) - (Values[2] / 2) + 1, m_Height + (m_Height / 2) - (Values[3] / 2) + 1);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -580,7 +580,7 @@ void GUIComboBoxButton::Draw(GUIScreen *Screen) {
 	GUIRect Rect;
 	SetRect(&Rect, 0, m_Pushed ? m_Height : 0, m_Width, m_Pushed ? m_Height * 2 : m_Height);
 
-	m_DrawBitmap->Draw(Screen->GetBitmap(), m_X, m_Y, &Rect);
+	//m_DrawBitmap->Draw(Screen->GetBitmap(), m_X, m_Y);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

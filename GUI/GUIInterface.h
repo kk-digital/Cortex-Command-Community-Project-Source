@@ -104,19 +104,19 @@ namespace RTE {
 		/// Gets the clipping rectangle of the bitmap.
 		/// </summary>
 		/// <param name="clippingRect">Pointer to a GUIRect to fill out.</param>
-		virtual void GetClipRect(GUIRect *clippingRect) const = 0;
+		virtual void GetClipRect() const = 0;
 
 		/// <summary>
 		/// Sets the clipping rectangle of the bitmap.
 		/// </summary>
 		/// <param name="clippingRect">Pointer to a GUIRect to use as the clipping rectangle, or nullptr for no clipping.</param>
-		virtual void SetClipRect(GUIRect *clippingRect) = 0;
+		virtual void SetClipRect() = 0;
 
 		/// <summary>
 		/// Sets the clipping rectangle of the specified bitmap as the intersection of its current clipping rectangle and the rectangle described by the passed-in GUIRect. 
 		/// </summary>
 		/// <param name="rect">Rectangle pointer.</param>
-		virtual void AddClipRect(GUIRect *rect) = 0;
+		virtual void AddClipRect() = 0;
 #pragma endregion
 
 #pragma region Drawing
@@ -127,7 +127,7 @@ namespace RTE {
 		/// <param name="destX">Destination X position.</param>
 		/// <param name="destY">Destination Y position.</param>
 		/// <param name="srcPosAndSizeRect">Source bitmap position and size rectangle.</param>
-		virtual void Draw(GUIBitmap *destBitmap, int destX, int destY, GUIRect *srcPosAndSizeRect) = 0;
+		virtual void Draw(GUIBitmap *destBitmap, int destX, int destY) = 0;
 
 		/// <summary>
 		/// Draw a section of this bitmap onto another bitmap ignoring color-keyed pixels.
@@ -136,7 +136,7 @@ namespace RTE {
 		/// <param name="destX">Destination X position.</param>
 		/// <param name="destY">Destination Y position.</param>
 		/// <param name="srcPosAndSizeRect">Source bitmap position and size rectangle.</param>
-		virtual void DrawTrans(GUIBitmap *destBitmap, int destX, int destY, GUIRect *srcPosAndSizeRect) = 0;
+		virtual void DrawTrans(GUIBitmap *destBitmap, int destX, int destY) = 0;
 
 		/// <summary>
 		/// Draw this bitmap scaled onto another bitmap ignoring color-keyed pixels.
@@ -235,7 +235,7 @@ namespace RTE {
 		/// <param name="destX">Destination X position</param>
 		/// <param name="destY">Destination Y position</param>
 		/// <param name="srcPosAndSizeRect">Source bitmap position and size rectangle.</param>
-		virtual void DrawBitmap(GUIBitmap *guiBitmap, int destX, int destY, GUIRect *srcPosAndSizeRect) = 0;
+		virtual void DrawBitmap(GUIBitmap *guiBitmap, int destX, int destY) = 0;
 
 		/// <summary>
 		/// Draws a bitmap onto the back buffer ignoring color-keyed pixels.
@@ -244,7 +244,7 @@ namespace RTE {
 		/// <param name="destX">Destination X position</param>
 		/// <param name="destY">Destination Y position</param>
 		/// <param name="srcPosAndSizeRect">Source bitmap position and size rectangle.</param>
-		virtual void DrawBitmapTrans(GUIBitmap *guiBitmap, int destX, int destY, GUIRect *srcPosAndSizeRect) = 0;
+		virtual void DrawBitmapTrans(GUIBitmap *guiBitmap, int destX, int destY) = 0;
 
 		/// <summary>
 		/// Converts an 8bit palette index to a valid pixel format color.

@@ -51,49 +51,49 @@ namespace RTE {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void ScenarioGUI::Create(AllegroScreen *guiScreen, AllegroInput *guiInput) {
-		m_GUIControlManager = std::make_unique<GUIControlManager>();
-		RTEAssert(m_GUIControlManager->Create(guiScreen, guiInput, "Base.rte/GUIs/Skins/Menus", "MainMenuSubMenuSkin.ini"), "Failed to create GUI Control Manager and load it from Base.rte/GUIs/Skins/Menus/MainMenuSubMenuSkin.ini");
-		m_GUIControlManager->Load("Base.rte/GUIs/ScenarioGUI.ini");
+		//m_GUIControlManager = std::make_unique<GUIControlManager>();
+		//RTEAssert(m_GUIControlManager->Create(guiScreen, guiInput, "Base.rte/GUIs/Skins/Menus", "MainMenuSubMenuSkin.ini"), "Failed to create GUI Control Manager and load it from Base.rte/GUIs/Skins/Menus/MainMenuSubMenuSkin.ini");
+		//m_GUIControlManager->Load("Base.rte/GUIs/ScenarioGUI.ini");
 
-		m_RootBox = dynamic_cast<GUICollectionBox *>(m_GUIControlManager->GetControl("root"));
+		//m_RootBox = dynamic_cast<GUICollectionBox *>(m_GUIControlManager->GetControl("root"));
 		m_RootBox->Resize(g_FrameMan.GetResX(), g_FrameMan.GetResY());
-		m_ActivityConfigBoxRootBox = dynamic_cast<GUICollectionBox *>(m_GUIControlManager->GetControl("ConfigRoot"));
+		//m_ActivityConfigBoxRootBox = dynamic_cast<GUICollectionBox *>(m_GUIControlManager->GetControl("ConfigRoot"));
 		m_ActivityConfigBoxRootBox->Resize(m_RootBox->GetWidth(), m_RootBox->GetHeight());
-		m_BackToMainButton = dynamic_cast<GUIButton *>(m_GUIControlManager->GetControl("BackToMainButton"));
+		//m_BackToMainButton = dynamic_cast<GUIButton *>(m_GUIControlManager->GetControl("BackToMainButton"));
 		m_BackToMainButton->SetPositionRel(m_RootBox->GetWidth() - m_BackToMainButton->GetWidth() - 16, m_RootBox->GetHeight() - m_BackToMainButton->GetHeight() - 22);
-		m_ResumeButton = dynamic_cast<GUIButton *>(m_GUIControlManager->GetControl("ButtonResume"));
+		//m_ResumeButton = dynamic_cast<GUIButton *>(m_GUIControlManager->GetControl("ButtonResume"));
 		m_ResumeButton->SetPositionRel(m_RootBox->GetWidth() - m_ResumeButton->GetWidth() - 16, m_RootBox->GetHeight() - m_ResumeButton->GetHeight() - 47);
 
-		m_SitePointNameLabel = dynamic_cast<GUILabel *>(m_GUIControlManager->GetControl("LabelSceneNameOnPlanet"));
+		//m_SitePointNameLabel = dynamic_cast<GUILabel *>(m_GUIControlManager->GetControl("LabelSceneNameOnPlanet"));
 
 		CreateActivityInfoBox();
 		CreateSceneInfoBox();
 
-		m_ActivityConfigBox = std::make_unique<ScenarioActivityConfigGUI>(m_GUIControlManager.get());
+		//m_ActivityConfigBox = std::make_unique<ScenarioActivityConfigGUI>(m_GUIControlManager.get());
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void ScenarioGUI::CreateActivityInfoBox() {
-		m_ActivityInfoBox = dynamic_cast<GUICollectionBox *>(m_GUIControlManager->GetControl("CollectionBoxActivityInfo"));
+		//m_ActivityInfoBox = dynamic_cast<GUICollectionBox *>(m_GUIControlManager->GetControl("CollectionBoxActivityInfo"));
 		m_ActivityInfoBox->SetPositionRel(16, 16);
-		m_ActivitySelectComboBox = dynamic_cast<GUIComboBox *>(m_GUIControlManager->GetControl("ComboBoxActivitySelect"));
+		//m_ActivitySelectComboBox = dynamic_cast<GUIComboBox *>(m_GUIControlManager->GetControl("ComboBoxActivitySelect"));
 		m_ActivitySelectComboBox->Move(m_ActivityInfoBox->GetXPos() + 8, m_ActivityInfoBox->GetYPos() + 25);
-		m_ActivityDescriptionLabel = dynamic_cast<GUILabel *>(m_GUIControlManager->GetControl("LabelActivityDescription"));
-		m_ActivityDescriptionLabel->SetFont(m_GUIControlManager->GetSkin()->GetFont("FontSmall.png"));
+		//m_ActivityDescriptionLabel = dynamic_cast<GUILabel *>(m_GUIControlManager->GetControl("LabelActivityDescription"));
+		//m_ActivityDescriptionLabel->SetFont(m_GUIControlManager->GetSkin()->GetFont("FontSmall.png"));
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void ScenarioGUI::CreateSceneInfoBox() {
-		m_SceneInfoBox = dynamic_cast<GUICollectionBox *>(m_GUIControlManager->GetControl("CollectionBoxSceneInfo"));
+		//m_SceneInfoBox = dynamic_cast<GUICollectionBox *>(m_GUIControlManager->GetControl("CollectionBoxSceneInfo"));
 		m_SceneInfoBox->SetPositionRel(m_RootBox->GetWidth() - m_SceneInfoBox->GetWidth() - 16, 16);
-		m_SceneBoxCloseButton = dynamic_cast<GUIButton *>(m_GUIControlManager->GetControl("ButtonCloseSceneBox"));
-		m_SceneNameLabel = dynamic_cast<GUILabel *>(m_GUIControlManager->GetControl("LabelSceneName"));
-		m_SceneDescriptionLabel = dynamic_cast<GUILabel *>(m_GUIControlManager->GetControl("LabelSceneDescription"));
-		m_SceneDescriptionLabel->SetFont(m_GUIControlManager->GetSkin()->GetFont("FontSmall.png"));
-		m_ScenePreviewImageBox = dynamic_cast<GUICollectionBox *>(m_GUIControlManager->GetControl("CollectionBoxScenePreview"));
-		m_StartActivityConfigButton = dynamic_cast<GUIButton *>(m_GUIControlManager->GetControl("ButtonStartActivityConfig"));
+		//m_SceneBoxCloseButton = dynamic_cast<GUIButton *>(m_GUIControlManager->GetControl("ButtonCloseSceneBox"));
+		//m_SceneNameLabel = dynamic_cast<GUILabel *>(m_GUIControlManager->GetControl("LabelSceneName"));
+		//m_SceneDescriptionLabel = dynamic_cast<GUILabel *>(m_GUIControlManager->GetControl("LabelSceneDescription"));
+		//m_SceneDescriptionLabel->SetFont(m_GUIControlManager->GetSkin()->GetFont("FontSmall.png"));
+		//m_ScenePreviewImageBox = dynamic_cast<GUICollectionBox *>(m_GUIControlManager->GetControl("CollectionBoxScenePreview"));
+		//m_StartActivityConfigButton = dynamic_cast<GUIButton *>(m_GUIControlManager->GetControl("ButtonStartActivityConfig"));
 
 		m_DefaultScenePreview.Create(ContentFile("Base.rte/GUIs/DefaultPreview.png"), 5);
 		m_DefaultScenePreview.SetSpriteAnimMode(MOSprite::SpriteAnimMode::ALWAYSLOOP);
@@ -126,10 +126,10 @@ namespace RTE {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void ScenarioGUI::SetDraggedBox(int mouseX, int mouseY) {
-		GUICollectionBox *hoveredBox = dynamic_cast<GUICollectionBox *>(m_GUIControlManager->GetControlUnderPoint(mouseX, mouseY, m_RootBox, 1));
-		const GUIControl *hoveredControl = m_GUIControlManager->GetControlUnderPoint(mouseX, mouseY, hoveredBox, 1);
-		bool nonDragControl = (dynamic_cast<const GUIButton *>(hoveredControl) || dynamic_cast<const GUIComboBox *>(hoveredControl));
-		if (hoveredBox && !nonDragControl && !m_DraggedBox && !m_ActivitySelectComboBox->IsDropped()) { m_DraggedBox = hoveredBox; }
+		//GUICollectionBox *hoveredBox = dynamic_cast<GUICollectionBox *>(m_GUIControlManager->GetControlUnderPoint(mouseX, mouseY, m_RootBox, 1));
+		//const GUIControl *hoveredControl = m_GUIControlManager->GetControlUnderPoint(mouseX, mouseY, hoveredBox, 1);
+		//bool nonDragControl = (dynamic_cast<const GUIButton *>(hoveredControl) || dynamic_cast<const GUIComboBox *>(hoveredControl));
+		//if (hoveredBox && !nonDragControl && !m_DraggedBox && !m_ActivitySelectComboBox->IsDropped()) { m_DraggedBox = hoveredBox; }
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -393,8 +393,8 @@ namespace RTE {
 
 		int mousePosX;
 		int mousePosY;
-		m_GUIControlManager->GetManager()->GetInputController()->GetMousePosition(&mousePosX, &mousePosY);
-		m_GUIControlManager->Update();
+		//m_GUIControlManager->GetManager()->GetInputController()->GetMousePosition(&mousePosX, &mousePosY);
+		//m_GUIControlManager->Update();
 
 		if (!m_ActivityConfigBox->IsEnabled()) {
 			m_RootBox->SetVisible(true);
@@ -404,14 +404,16 @@ namespace RTE {
 			HandleInputEvents(mousePosX, mousePosY);
 
 			if (m_SceneInfoBox->GetVisible()) {
-				m_StartActivityConfigButton->SetText(m_BlinkTimer.AlternateReal(333) ? "Start Here" : "> Start Here <");
+				m_StartActivityConfigButton->SetText(m_BlinkTimer.AlternateReal(333) ? "Test Start Here" : "> Test0Start Here <");
 
 				if (m_DrawDefaultScenePreview && m_ScenePreviewAnimTimer.GetElapsedRealTimeMS() > m_DefaultScenePreview.GetSpriteAnimDuration() / m_DefaultScenePreview.GetFrameCount()) {
 					m_DefaultScenePreview.SetNextFrame();
 					m_ScenePreviewAnimTimer.Reset();
 				}
 			}
-			if (m_ResumeButton->GetVisible()) { m_GUIControlManager->GetManager()->SetFocus((m_BlinkTimer.AlternateReal(500)) ? m_ResumeButton : nullptr); }
+			if (m_ResumeButton->GetVisible()) { 
+				//m_GUIControlManager->GetManager()->SetFocus((m_BlinkTimer.AlternateReal(500)) ? m_ResumeButton : nullptr); 
+			}
 		} else {
 			m_RootBox->SetVisible(false);
 			m_ActivityConfigBoxRootBox->SetVisible(true);
@@ -459,30 +461,7 @@ namespace RTE {
 
 	void ScenarioGUI::HandleInputEvents(int mouseX, int mouseY) {
 		GUIEvent guiEvent;
-		while (m_GUIControlManager->GetEvent(&guiEvent)) {
-			if (guiEvent.GetType() == GUIEvent::Command) {
-				if (guiEvent.GetControl() == m_BackToMainButton) {
-					g_GUISound.BackButtonPressSound()->Play();
-					m_UpdateResult = ScenarioMenuUpdateResult::BackToMain;
-				} else if (guiEvent.GetControl() == m_ResumeButton) {
-					g_GUISound.BackButtonPressSound()->Play();
-					m_UpdateResult = ScenarioMenuUpdateResult::ActivityResumed;
-				} else if (guiEvent.GetControl() == m_SceneBoxCloseButton) {
-					g_GUISound.ButtonPressSound()->Play();
-					SetSelectedScene(nullptr);
-				} else if (guiEvent.GetControl() == m_StartActivityConfigButton) {
-					g_GUISound.ButtonPressSound()->Play();
-					m_ActivityConfigBox->SetEnabled(true, m_SelectedActivity, m_SelectedScene);
-				}
-			} else if (guiEvent.GetType() == GUIEvent::Notification) {
-				if (guiEvent.GetMsg() == GUIButton::Focused && dynamic_cast<const GUIButton *>(guiEvent.GetControl())) { g_GUISound.SelectionChangeSound()->Play(); }
-
-				if (guiEvent.GetMsg() == GUIComboBox::Closed && guiEvent.GetControl() == m_ActivitySelectComboBox) {
-					g_GUISound.ItemChangeSound()->Play();
-					SetSelectedActivity((m_ActivitySelectComboBox->GetSelectedItem()) ? dynamic_cast<const Activity *>(m_ActivitySelectComboBox->GetSelectedItem()->m_pEntity) : nullptr);
-				}
-			}
-		}
+		
 		if (g_UInputMan.MouseButtonPressed(UInputMan::MenuCursorButtons::MENU_PRIMARY)) {
 			if (m_HoveredScene) {
 				g_GUISound.ItemChangeSound()->Play();
@@ -511,12 +490,12 @@ namespace RTE {
 				if (m_SelectedScene && m_SceneInfoBox->GetVisible()) { DrawLinesToSitePoint(g_FrameMan.GetBackBuffer32()); }
 				drawing_mode(DRAW_MODE_SOLID, nullptr, 0, 0);
 			}
-			m_GUIControlManager->Draw();
+			//m_GUIControlManager->Draw();
 			if (m_DrawDefaultScenePreview && m_SceneInfoBox->GetVisible()) { m_DefaultScenePreview.Draw(g_FrameMan.GetBackBuffer32()); }
 		} else {
 			m_ActivityConfigBox->Draw();
 		}
-		m_GUIControlManager->DrawMouse();
+		//m_GUIControlManager->DrawMouse();
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

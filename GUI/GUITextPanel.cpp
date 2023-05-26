@@ -107,7 +107,7 @@ void GUITextPanel::Draw(GUIScreen *Screen) {
 	m_CursorX = std::max(m_CursorX, 0);
 
 	// Setup the clipping
-	Screen->GetBitmap()->SetClipRect(GetRect());
+	Screen->GetBitmap()->SetClipRect();
 
 	std::string Text = m_Text.substr(m_StartIndex);
 
@@ -138,7 +138,7 @@ void GUITextPanel::Draw(GUIScreen *Screen) {
 	if (m_GotFocus && (m_CursorBlinkCount++ % 30 > 15)) { Screen->GetBitmap()->DrawRectangle(m_X + m_CursorX + 2, m_Y + hSpacer + m_CursorY + 2, 1, FontHeight - 3, m_CursorColor, true); }
 
 	// Restore normal clipping
-	Screen->GetBitmap()->SetClipRect(nullptr);
+	Screen->GetBitmap()->SetClipRect();
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

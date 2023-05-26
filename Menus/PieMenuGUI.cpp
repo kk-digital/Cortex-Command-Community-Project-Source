@@ -19,7 +19,7 @@ namespace RTE {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void PieMenuGUI::Clear() {
-		m_LargeFont = nullptr;
+		//m_LargeFont = nullptr;
 
 		m_MenuController = nullptr;
 		m_AffectedObject = nullptr;
@@ -53,7 +53,7 @@ namespace RTE {
 
 		if (!s_CursorBitmap) { s_CursorBitmap = ContentFile("Base.rte/GUIs/Skins/PieCursor.png").GetAsBitmap(); }
 
-		if (!m_LargeFont) { m_LargeFont = g_FrameMan.GetLargeFont(); }
+		//if (!m_LargeFont) { m_LargeFont = g_FrameMan.GetLargeFont(); }
 
 		m_MenuController = controller;
 		m_AffectedObject = affectedObject;
@@ -572,7 +572,7 @@ namespace RTE {
 		}
 
 		// Adjust the draw position so that the menu will always be drawn fully inside the player's screen
-		int menuDrawRadius = m_InnerRadius + m_BackgroundThickness + 2 + m_LargeFont->GetFontHeight();
+		int menuDrawRadius = m_InnerRadius + m_BackgroundThickness + 2; //+ m_LargeFont->GetFontHeight();
 		if (drawPos.m_X - static_cast<float>(menuDrawRadius) < 0.0F) {
 			drawPos.m_X = static_cast<float>(menuDrawRadius);
 		} else if (drawPos.m_X + static_cast<float>(menuDrawRadius) > static_cast<float>(targetBitmap->w)) {
@@ -609,7 +609,8 @@ namespace RTE {
 
 		// Align text center, left or right respectively, based on which side of the menu the hovered slice is on.
 		AllegroBitmap allegroBitmap(targetBitmap);
-		Vector textPos = Vector(static_cast<float>(m_InnerRadius + m_BackgroundThickness + m_LargeFont->GetFontHeight()) * 0.5F, 0.0F).RadRotate(m_HoveredSlice->GetMidAngle()) - Vector(0.0F, static_cast<float>(m_LargeFont->GetFontHeight()) * 0.45F);
+		Vector textPos = Vector(static_cast<float>(m_InnerRadius + m_BackgroundThickness) * 0.5F, 0.0F).RadRotate(m_HoveredSlice->GetMidAngle()) - Vector(0.0F, static_cast<float>(12) * 0.45F);
+		/*
 		if (m_HoveredSlice == &m_UpSlice || m_HoveredSlice == &m_DownSlice) {
 			m_LargeFont->DrawAligned(&allegroBitmap, drawPos.GetFloorIntX() + textPos.GetFloorIntX(), drawPos.GetFloorIntY() + textPos.GetFloorIntY(), m_HoveredSlice->GetDescription().c_str(), GUIFont::Centre);
 		} else if (m_CursorAngle < c_HalfPI || m_CursorAngle > c_PI + c_HalfPI) {
@@ -617,6 +618,7 @@ namespace RTE {
 		} else {
 			m_LargeFont->DrawAligned(&allegroBitmap, drawPos.GetFloorIntX() + textPos.GetFloorIntX(), drawPos.GetFloorIntY() + textPos.GetFloorIntY(), m_HoveredSlice->GetDescription().c_str(), GUIFont::Right);
 		}
+		*/
 	}
 
 

@@ -131,7 +131,7 @@ void GUIRadioButton::Draw(GUIScreen *Screen) {
 		return;
 	}
 	// Setup the clipping
-	Screen->GetBitmap()->SetClipRect(GetRect());
+	Screen->GetBitmap()->SetClipRect();
 
 	// Calculate the y position of the base
 	// Make it centered vertically
@@ -139,21 +139,21 @@ void GUIRadioButton::Draw(GUIScreen *Screen) {
 
 	// Draw the base
 	if (m_Mouseover || m_GotFocus) {
-		m_Image->DrawTrans(Screen->GetBitmap(), m_X, YPos, &m_ImageRects[1]);
+		m_Image->DrawTrans(Screen->GetBitmap(), m_X, YPos);
 	} else {
-		m_Image->DrawTrans(Screen->GetBitmap(), m_X, YPos, &m_ImageRects[0]);
+		m_Image->DrawTrans(Screen->GetBitmap(), m_X, YPos);
 	}
 	// Draw the check
 	if (m_Checked) {
 		if (m_Enabled) {
-			m_Image->DrawTrans(Screen->GetBitmap(), m_X, YPos, &m_ImageRects[2]);
+			m_Image->DrawTrans(Screen->GetBitmap(), m_X, YPos);
 		} //else {
 			//m_Image->DrawTrans(Screen->GetBitmap(), m_X, YPos, &m_ImageRects[3]);
 		//}
 	}
 
 	// Should show as grayed out and disabled when it is, regardless of checked or not
-	if (!m_Enabled) { m_Image->DrawTrans(Screen->GetBitmap(), m_X, YPos, &m_ImageRects[3]); }
+	if (!m_Enabled) { m_Image->DrawTrans(Screen->GetBitmap(), m_X, YPos); }
 
 	// Draw the text
 
@@ -167,7 +167,7 @@ void GUIRadioButton::Draw(GUIScreen *Screen) {
 		m_Font->SetKerning(m_FontKerning);
 		m_Font->Draw(Screen->GetBitmap(), m_X + (m_ImageRects[0].right - m_ImageRects[0].left), m_Y + (m_Height / 2) - (m_Font->GetFontHeight() / 2) - 1, Text, m_FontShadow);
 	}
-	Screen->GetBitmap()->SetClipRect(nullptr);
+	Screen->GetBitmap()->SetClipRect();
 
 	GUIPanel::Draw(Screen);
 }

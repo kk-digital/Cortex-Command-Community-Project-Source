@@ -271,12 +271,12 @@ void GUIListPanel::BuildBitmap(bool UpdateBase, bool UpdateText) {
 	}
 
 	if (UpdateText) {
-		m_BaseBitmap->Draw(m_DrawBitmap, 0, 0, nullptr);
+		m_BaseBitmap->Draw(m_DrawBitmap, 0, 0);
 
 		// Draw the text onto the drawing bitmap
 		BuildDrawBitmap();
 
-		m_FrameBitmap->DrawTrans(m_DrawBitmap, 0, 0, nullptr);
+		m_FrameBitmap->DrawTrans(m_DrawBitmap, 0, 0);
 	}
 }
 
@@ -330,10 +330,10 @@ void GUIListPanel::BuildDrawBitmap() {
 					I->m_pBitmap->DrawTransScaled(m_DrawBitmap, 3 - x, bitmapY, bitmapWidth, bitmapHeight);
 					// There's text to compete for space with
 				} else if (!I->m_Name.empty()) {
-					I->m_pBitmap->DrawTrans(m_DrawBitmap, ((thirdWidth / 2) - (bitmapWidth / 2)) - x + 2, bitmapY, 0);
+					I->m_pBitmap->DrawTrans(m_DrawBitmap, ((thirdWidth / 2) - (bitmapWidth / 2)) - x + 2, bitmapY);
 					// No text, just bitmap, so give it more room
 				} else {
-					I->m_pBitmap->DrawTrans(m_DrawBitmap, ((thirdWidth / 2) - (bitmapWidth / 2)) - x + 4, bitmapY, 0);
+					I->m_pBitmap->DrawTrans(m_DrawBitmap, ((thirdWidth / 2) - (bitmapWidth / 2)) - x + 4, bitmapY);
 				}
 			}
 
@@ -395,7 +395,7 @@ void GUIListPanel::BuildDrawBitmap() {
 
 void GUIListPanel::Draw(GUIScreen *Screen) {
 	// Draw the base
-	m_DrawBitmap->Draw(Screen->GetBitmap(), m_X, m_Y, nullptr);
+	m_DrawBitmap->Draw(Screen->GetBitmap(), m_X, m_Y);
 
 	// Draw any children
 	GUIPanel::Draw(Screen);

@@ -191,9 +191,9 @@ void GUIButton::BuildBitmap() {
 	if (hasIcon) {
 		int iconXPos = (m_Width / 2) - static_cast<int>(static_cast<float>(m_Icon->GetWidth()) * iconStretchRatio / 2.0F);
 		if (iconStretchRatio == 1) {
-			m_Icon->DrawTrans(m_DrawBitmap, iconXPos, iconYPos, nullptr);
-			m_Icon->DrawTrans(m_DrawBitmap, iconXPos, m_Height + iconYPos, nullptr);
-			m_Icon->DrawTrans(m_DrawBitmap, iconXPos + 1, (m_Height * 2) + iconYPos + 1, nullptr);
+			m_Icon->DrawTrans(m_DrawBitmap, iconXPos, iconYPos);
+			m_Icon->DrawTrans(m_DrawBitmap, iconXPos, m_Height + iconYPos);
+			m_Icon->DrawTrans(m_DrawBitmap, iconXPos + 1, (m_Height * 2) + iconYPos + 1);
 		} else {
 			int scaledWidth = static_cast<int>(static_cast<float>(m_Icon->GetWidth()) * iconStretchRatio);
 			int scaledHeight = static_cast<int>(static_cast<float>(m_Icon->GetHeight()) * iconStretchRatio);
@@ -233,7 +233,7 @@ void GUIButton::Draw(GUIScreen *Screen) {
 
 	if (m_Text->OverflowScrollIsActivated() && m_Font->CalculateWidth(m_Text->GetText()) > m_Width - m_BorderSizes->left - m_BorderSizes->right) { BuildBitmap(); }
 
-	m_DrawBitmap->DrawTrans(Screen->GetBitmap(), m_X, m_Y, &Rect);
+	//m_DrawBitmap->DrawTrans(Screen->GetBitmap(), m_X, m_Y);
 
 	GUIPanel::Draw(Screen);
 }

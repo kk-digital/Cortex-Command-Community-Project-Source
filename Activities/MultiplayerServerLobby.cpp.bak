@@ -739,7 +739,7 @@ namespace RTE {
 									else */if (team == TEAM_DISABLED)
 									{
 										pIcon = dynamic_cast<const Icon *>(g_PresetMan.GetEntityPreset("Icon", "Disabled Team"));
-										m_apTeamNameLabels[team]->SetText("Test Not Playing:");
+										m_apTeamNameLabels[team]->SetText("Not Playing:");
 									}
 					// Active player team
 									else if (pActivity->TeamActive(team))

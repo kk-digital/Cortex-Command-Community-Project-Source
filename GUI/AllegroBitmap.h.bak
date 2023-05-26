@@ -1,7 +1,7 @@
 #ifndef _ALLEGROBITMAP_
 #define _ALLEGROBITMAP_
 
-#include "GUIInterface.h"
+//#include "GUIInterface.h"
 #include "ContentFile.h"
 
 namespace RTE {
@@ -111,19 +111,19 @@ namespace RTE {
 		/// Gets the clipping rectangle of the bitmap.
 		/// </summary>
 		/// <param name="clippingRect">Pointer to a GUIRect to fill out.</param>
-		void GetClipRect() const override;
+		void GetClipRect(GUIRect *clippingRect) const override;
 
 		/// <summary>
 		/// Sets the clipping rectangle of the bitmap.
 		/// </summary>
 		/// <param name="clippingRect">Pointer to a GUIRect to use as the clipping rectangle, or nullptr for no clipping.</param>
-		void SetClipRect() override;
+		void SetClipRect(GUIRect *clippingRect) override;
 
 		/// <summary>
 		/// Sets the clipping rectangle of the bitmap as the intersection of its current clipping rectangle and the passed-in rectangle.
 		/// </summary>
 		/// <param name="clippingRect">Pointer to a GUIRect to add to the existing clipping rectangle.</param>
-		void AddClipRect() override;
+		void AddClipRect(GUIRect *clippingRect) override;
 #pragma endregion
 
 #pragma region Drawing
@@ -134,7 +134,7 @@ namespace RTE {
 		/// <param name="destX">Destination X position.</param>
 		/// <param name="destY">Destination Y position.</param>
 		/// <param name="srcPosAndSizeRect">Source bitmap position and size rectangle.</param>
-		void Draw(GUIBitmap *destBitmap, int destX, int destY);
+		void Draw(GUIBitmap *destBitmap, int destX, int destY, GUIRect *srcPosAndSizeRect) override;
 
 		/// <summary>
 		/// Draw a section of this bitmap onto another bitmap ignoring color-keyed pixels.
@@ -143,7 +143,7 @@ namespace RTE {
 		/// <param name="destX">Destination X position.</param>
 		/// <param name="destY">Destination Y position.</param>
 		/// <param name="srcPosAndSizeRect">Source bitmap position and size rectangle.</param>
-		void DrawTrans(GUIBitmap *destBitmap, int destX, int destY);
+		void DrawTrans(GUIBitmap *destBitmap, int destX, int destY, GUIRect *srcPosAndSizeRect) override;
 
 		/// <summary>
 		/// Draw this bitmap scaled onto another bitmap ignoring color-keyed pixels.

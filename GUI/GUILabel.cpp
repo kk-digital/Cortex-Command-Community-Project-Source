@@ -112,7 +112,7 @@ void GUILabel::Draw(GUIScreen *Screen) {
 
 void GUILabel::Draw(GUIBitmap *Bitmap, bool overwiteFontColorAndKerning) {
 	// Setup the clipping
-	Bitmap->AddClipRect(GetRect());
+	Bitmap->AddClipRect();
 
 	if (m_Font) {
 		if (overwiteFontColorAndKerning) {
@@ -192,7 +192,7 @@ void GUILabel::Draw(GUIBitmap *Bitmap, bool overwiteFontColorAndKerning) {
 		m_Font->DrawAligned(Bitmap, xPos, yPos, m_Text, m_HorizontalOverflowScroll && textFullWidth > m_Width ? GUIFont::Left : m_HAlignment, m_VerticalOverflowScroll && textFullHeight > m_Height ? GUIFont::Top : m_VAlignment, m_HorizontalOverflowScroll ? textFullWidth : m_Width, m_FontShadow);
 	}
 
-	Bitmap->SetClipRect(nullptr);
+	Bitmap->SetClipRect();
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

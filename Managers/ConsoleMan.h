@@ -9,7 +9,7 @@ namespace RTE {
 
 	class GUIScreen;
 	class GUIInput;
-	class GUIControlManager;
+	//class GUIControlManager;
 	class GUICollectionBox;
 	class GUITextBox;
 	class GUILabel;
@@ -167,7 +167,7 @@ namespace RTE {
 
 		GUIScreen *m_GUIScreen; //!< GUI Screen for use by the in-game GUI.
 		GUIInput *m_GUIInput; //!< GUI Input controller.
-		GUIControlManager *m_GUIControlManager; //!< Manager of the console GUI elements.
+		//GUIControlManager *m_GUIControlManager; //!< Manager of the console GUI elements.
 		GUICollectionBox *m_ParentBox; //!< Collection box of the console GUI.
 		GUILabel *m_ConsoleText; //!< The label which presents the console output.
 		GUITextBox *m_InputTextBox; //!< The TextBox which the user types in the edited line.

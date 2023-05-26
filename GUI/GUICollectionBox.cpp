@@ -116,19 +116,19 @@ void GUICollectionBox::Draw(GUIScreen *Screen) {
 		} else if (m_DrawType == Image) {
 			if (m_DrawBitmap && m_DrawBackground) {
 				// Setup the clipping
-				Screen->GetBitmap()->SetClipRect(GetRect());
+				Screen->GetBitmap()->SetClipRect();
 
 				// Draw the image
-				m_DrawBitmap->DrawTrans(Screen->GetBitmap(), m_X, m_Y, 0);
+				m_DrawBitmap->DrawTrans(Screen->GetBitmap(), m_X, m_Y);
 
 				// Get rid of clipping
-				Screen->GetBitmap()->SetClipRect(0);
+				Screen->GetBitmap()->SetClipRect();
 			}
 		} else if (m_DrawType == Panel && m_DrawBackground) {
 			if (m_DrawBitmap) {
 				GUIRect Rect;
 				SetRect(&Rect, 0, 0, m_Width, m_Height);
-				Screen->DrawBitmapTrans(m_DrawBitmap, m_X, m_Y, &Rect);
+				Screen->DrawBitmapTrans(m_DrawBitmap, m_X, m_Y);
 			}
 		}
 	}

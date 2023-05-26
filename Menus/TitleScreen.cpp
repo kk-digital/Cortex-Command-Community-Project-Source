@@ -55,7 +55,7 @@ namespace RTE {
 		m_PreMainMenuScrollOffsetY = 100;
 		m_SlideFadeInDuration = 0;
 		m_SlideFadeOutDuration = 0;
-		m_IntroTextFont = nullptr;
+		//m_IntroTextFont = nullptr;
 		m_SlideshowSlideText.clear();
 		m_DataRealmsLogo = nullptr;
 		m_FmodLogo = nullptr;
@@ -68,6 +68,7 @@ namespace RTE {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void TitleScreen::Create(AllegroScreen *guiScreen) {
+		return;
 		CreateTitleElements();
 
 		m_IntroScrollStartOffsetY = (static_cast<float>(m_Nebula.GetBitmap()->h) / m_BackdropScrollRatio) - (static_cast<float>(g_FrameMan.GetResY()) / m_BackdropScrollRatio);
@@ -75,6 +76,10 @@ namespace RTE {
 
 		m_StationOrbitTimer.SetElapsedRealTimeS(15);
 
+		SetTitleTransitionState(TitleTransition::MainMenu);
+		m_FinishedPlayingIntro = true;
+
+		/*
 		if (!g_FrameMan.ResolutionChanged()) {
 			if (!g_SettingsMan.SkipIntro() && !g_ActivityMan.IsSetToLaunchIntoActivity()) {
 				m_IntroTextFont = std::make_unique<GUIFont>("FontLarge");
@@ -87,11 +92,13 @@ namespace RTE {
 			SetTitleTransitionState(TitleTransition::MainMenu);
 			m_FinishedPlayingIntro = true;
 		}
+		*/
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void TitleScreen::CreateTitleElements() {
+		return;
 		m_DataRealmsLogo = ContentFile("Base.rte/GUIs/Title/Intro/DRLogo5x.png").GetAsBitmap();
 		m_FmodLogo = ContentFile("Base.rte/GUIs/Title/Intro/FMODLogo.png").GetAsBitmap();
 
@@ -144,6 +151,7 @@ namespace RTE {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void TitleScreen::CreateIntroSequenceSlides() {
+		return;
 		std::string highRes = (g_FrameMan.GetResY() >= 680) ? "HD" : "";
 		for (int slideNum = 0; slideNum < m_IntroSlides.size(); ++slideNum) {
 			m_IntroSlides.at(slideNum) = ContentFile(("Base.rte/GUIs/Title/Intro/IntroSlide" + std::to_string(slideNum + 1) + highRes + ".png").c_str()).GetAsBitmap();
@@ -153,6 +161,7 @@ namespace RTE {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void TitleScreen::Update() {
+		return;
 		if (m_SectionSwitch) { m_SectionTimer.Reset(); }
 		m_SectionElapsedTime = static_cast<float>(m_SectionTimer.GetElapsedRealTimeS());
 		m_SectionProgress = std::min((m_SectionDuration > 0) ? m_SectionElapsedTime / m_SectionDuration : 0, 0.9999F);
@@ -186,6 +195,7 @@ namespace RTE {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void TitleScreen::UpdateIntroLogoSequence(bool skipSection) {
+		return;
 		if (skipSection && m_IntroSequenceState != IntroSequence::FmodLogoFadeOut) {
 			m_SectionSwitch = true;
 			if (m_IntroSequenceState < IntroSequence::DataRealmsLogoFadeOut) {
@@ -232,6 +242,7 @@ namespace RTE {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void TitleScreen::UpdateIntroSlideshowSequence(bool skipSlideshow) {
+		return;
 		if (skipSlideshow && (m_IntroSequenceState > IntroSequence::SlideshowFadeIn && m_IntroSequenceState != IntroSequence::MainMenuAppear)) {
 			m_SectionSwitch = true;
 			m_IntroSequenceState = IntroSequence::MainMenuAppear;
@@ -348,6 +359,7 @@ namespace RTE {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void TitleScreen::UpdateIntroPreMainMenuSequence() {
+		return;
 		switch (m_IntroSequenceState) {
 			case IntroSequence::GameLogoAppear:
 				if (m_SectionSwitch) {
@@ -393,6 +405,7 @@ namespace RTE {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void TitleScreen::UpdateTitleTransitions() {
+		return;
 		switch (m_TitleTransitionState) {
 			case TitleTransition::MainMenu:
 				if (m_SectionSwitch) {
@@ -493,6 +506,7 @@ namespace RTE {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void TitleScreen::Draw() {
+		return;
 		if (!m_FinishedPlayingIntro) {
 			if (m_IntroSequenceState >= IntroSequence::SlideshowFadeIn) { DrawTitleScreenScene(); }
 			if (m_IntroSequenceState >= IntroSequence::GameLogoAppear) { DrawGameLogo(); }
@@ -502,11 +516,11 @@ namespace RTE {
 				std::string copyrightNotice(64, '\0');
 				std::snprintf(copyrightNotice.data(), copyrightNotice.size(), "Cortex Command is TM and %c 2017 Data Realms, LLC", -35);
 				AllegroBitmap guiBackBuffer(g_FrameMan.GetBackBuffer32());
-				m_IntroTextFont->DrawAligned(&guiBackBuffer, g_FrameMan.GetResX() / 2, g_FrameMan.GetResY() - m_IntroTextFont->GetFontHeight() - 5, copyrightNotice, GUIFont::Centre);
+				//m_IntroTextFont->DrawAligned(&guiBackBuffer, g_FrameMan.GetResX() / 2, g_FrameMan.GetResY() - m_IntroTextFont->GetFontHeight() - 5, copyrightNotice, GUIFont::Centre);
 			} else if (m_IntroSequenceState >= IntroSequence::FmodLogoFadeIn && m_IntroSequenceState <= IntroSequence::FmodLogoFadeOut) {
 				draw_sprite(g_FrameMan.GetBackBuffer32(), m_FmodLogo, (g_FrameMan.GetResX() - m_FmodLogo->w) / 2, (g_FrameMan.GetResY() - m_FmodLogo->h) / 2);
 				AllegroBitmap guiBackBuffer(g_FrameMan.GetBackBuffer32());
-				m_IntroTextFont->DrawAligned(&guiBackBuffer, g_FrameMan.GetResX() / 2, g_FrameMan.GetResY() - m_IntroTextFont->GetFontHeight() - 5, "Made with FMOD Studio by Firelight Technologies Pty Ltd.", GUIFont::Centre);
+				//m_IntroTextFont->DrawAligned(&guiBackBuffer, g_FrameMan.GetResX() / 2, g_FrameMan.GetResY() - m_IntroTextFont->GetFontHeight() - 5, "Made with FMOD Studio by Firelight Technologies Pty Ltd.", GUIFont::Centre);
 			} else if (m_IntroSequenceState >= IntroSequence::ShowSlide1 && m_IntroSequenceState <= IntroSequence::ShowSlide8) {
 				DrawSlideshowSlide();
 			} else if (m_IntroSequenceState == IntroSequence::SlideshowEnd) {
@@ -532,6 +546,7 @@ namespace RTE {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void TitleScreen::DrawTitleScreenScene() {
+		return;
 		Vector nebulaPos(0, m_ScrollOffset.GetY() * m_BackdropScrollRatio);
 		if (m_Nebula.GetBitmap()->w != g_FrameMan.GetResX()) { nebulaPos.SetX(static_cast<float>((m_Nebula.GetBitmap()->w - g_FrameMan.GetResX()) / 2)); }
 		Box nebulaTargetBox;
@@ -560,6 +575,7 @@ namespace RTE {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void TitleScreen::DrawGameLogo() {
+		return;
 		m_GameLogo.Draw(g_FrameMan.GetBackBuffer32(), Vector(), DrawMode::g_DrawAlpha);
 		m_GameLogoGlow.SetPos(m_GameLogo.GetPos());
 		int glowIntensity = 220 + RandomNum(-35, 35);
@@ -570,6 +586,7 @@ namespace RTE {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void TitleScreen::DrawSlideshowSlide() {
+		return;
 		int slide = static_cast<int>(m_IntroSequenceState) - static_cast<int>(IntroSequence::ShowSlide1);
 		Vector slidePos(static_cast<float>((g_FrameMan.GetResX() / 2) - (m_IntroSlides.at(slide)->w / 2)), static_cast<float>((g_FrameMan.GetResY() / 2) - (m_IntroSlides.at(slide)->h / 2)));
 
@@ -588,13 +605,14 @@ namespace RTE {
 
 		if (!m_SlideshowSlideText.empty()) {
 			AllegroBitmap guiBackBuffer(g_FrameMan.GetBackBuffer32());
-			m_IntroTextFont->DrawAligned(&guiBackBuffer, g_FrameMan.GetResX() / 2, (g_FrameMan.GetResY() / 2) + (m_IntroSlides.at(slide)->h / 2) + 12, m_SlideshowSlideText, GUIFont::Centre);
+			//m_IntroTextFont->DrawAligned(&guiBackBuffer, g_FrameMan.GetResX() / 2, (g_FrameMan.GetResY() / 2) + (m_IntroSlides.at(slide)->h / 2) + 12, m_SlideshowSlideText, GUIFont::Centre);
 		}
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void TitleScreen::DrawOverlayEffectBitmap() const {
+		return;
 		set_trans_blender(m_FadeAmount, m_FadeAmount, m_FadeAmount, m_FadeAmount);
 		draw_trans_sprite(g_FrameMan.GetBackBuffer32(), g_FrameMan.GetOverlayBitmap32(), 0, 0);
 	}

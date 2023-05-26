@@ -19,16 +19,16 @@
 /// Cortex Command Center - https://discord.gg/SdNnKJN
 /// </summary>
 
-#include "GUI.h"
+//#include "GUI.h"
 #include "AllegroInput.h"
 #include "AllegroScreen.h"
 #include "AllegroBitmap.h"
 
-#include "MainMenuGUI.h"
+//#include "MainMenuGUI.h"
 #include "ScenarioGUI.h"
 #include "TitleScreen.h"
 
-#include "MenuMan.h"
+//#include "MenuMan.h"
 #include "ConsoleMan.h"
 #include "SettingsMan.h"
 #include "PresetMan.h"
@@ -36,6 +36,9 @@
 #include "PerformanceMan.h"
 #include "MetaMan.h"
 #include "NetworkServer.h"
+#include "Scene.h"
+
+#include "RefactorDebug.h"
 
 extern "C" { FILE __iob_func[3] = { *stdin,*stdout,*stderr }; }
 
@@ -48,6 +51,9 @@ namespace RTE {
 	/// <summary>
 	/// Initializes all the essential managers.
 	/// </summary>
+	/// 
+	/// 
+
 	void InitializeManagers() {
 		g_SettingsMan.Initialize();
 
@@ -62,10 +68,11 @@ namespace RTE {
 		if (g_AudioMan.Initialize()) { g_GUISound.Initialize(); }
 
 		g_UInputMan.Initialize();
-		g_ConsoleMan.Initialize();
+		//g_ConsoleMan.Initialize();
 		g_MovableMan.Initialize();
 		g_MetaMan.Initialize();
-		g_MenuMan.Initialize();
+		//Remove GUIScene
+		//g_MenuMan.Initialize();
 
 		// Overwrite Settings.ini after all the managers are created to fully populate the file. Up until this moment Settings.ini is populated only with minimal required properties to run.
 		// If Settings.ini already exists and is fully populated, this will deal with overwriting it to apply any overrides performed by the managers at boot (e.g resolution validation).
@@ -163,18 +170,19 @@ namespace RTE {
 			g_AudioMan.Update();
 
 			if (g_FrameMan.ResolutionChanged()) {
-				g_MenuMan.Reinitialize();
+				//g_MenuMan.Reinitialize();
 				g_ConsoleMan.Destroy();
 				g_ConsoleMan.Initialize();
 				g_FrameMan.DestroyTempBackBuffers();
 			}
-
+			/*
 			if (g_MenuMan.Update()) {
 				break;
 			}
+			*/
 			g_ConsoleMan.Update();
 
-			g_MenuMan.Draw();
+			//g_MenuMan.Draw();
 			g_ConsoleMan.Draw(g_FrameMan.GetBackBuffer32());
 			g_FrameMan.FlipFrameBuffers();
 		}
@@ -192,7 +200,8 @@ namespace RTE {
 		g_PerformanceMan.ResetFrameTimer();
 		g_TimerMan.PauseSim(false);
 
-		if (g_ActivityMan.ActivitySetToRestart() && !g_ActivityMan.RestartActivity()) { g_MenuMan.GetTitleScreen()->SetTitleTransitionState(TitleScreen::TitleTransition::ScrollingFadeIn); }
+		if (g_ActivityMan.ActivitySetToRestart() && !g_ActivityMan.RestartActivity()) { //g_MenuMan.GetTitleScreen()->SetTitleTransitionState(TitleScreen::TitleTransition::ScrollingFadeIn); 
+		}
 
 		while (!System::IsSetToQuit()) {
 			// Need to clear this out; sometimes background layers don't cover the whole back.
@@ -234,14 +243,14 @@ namespace RTE {
 				if (!g_ActivityMan.IsInActivity()) {
 					g_TimerMan.PauseSim(true);
 					if (g_MetaMan.GameInProgress()) {
-						g_MenuMan.GetTitleScreen()->SetTitleTransitionState(TitleScreen::TitleTransition::MetaGameFadeIn);
+						//g_MenuMan.GetTitleScreen()->SetTitleTransitionState(TitleScreen::TitleTransition::MetaGameFadeIn);
 					} else if (!g_ActivityMan.ActivitySetToRestart()) {
 						const Activity *activity = g_ActivityMan.GetActivity();
 						// If we edited something then return to main menu instead of scenario menu.
 						if (activity && activity->GetPresetName() == "None") {
-							g_MenuMan.GetTitleScreen()->SetTitleTransitionState(TitleScreen::TitleTransition::ScrollingFadeIn);
+							//g_MenuMan.GetTitleScreen()->SetTitleTransitionState(TitleScreen::TitleTransition::ScrollingFadeIn);
 						} else {
-							g_MenuMan.GetTitleScreen()->SetTitleTransitionState(TitleScreen::TitleTransition::ScenarioFadeIn);
+							//g_MenuMan.GetTitleScreen()->SetTitleTransitionState(TitleScreen::TitleTransition::ScenarioFadeIn);
 						}
 					}
 					if (!g_ActivityMan.ActivitySetToRestart()) { RunMenuLoop(); }
@@ -282,6 +291,8 @@ namespace RTE {
 /// Implementation of the main function.
 /// </summary>
 int main(int argc, char **argv) {
+
+	bool LoadDefaultScenario = true;
 	set_config_file("Base.rte/AllegroConfig.txt");
 	allegro_init();
 	loadpng_init();
@@ -295,6 +306,20 @@ int main(int argc, char **argv) {
 	HandleMainArgs(argc, argv);
 
 	g_PresetMan.LoadAllDataModules();
+
+#ifdef _REFACTORDEBUG_
+
+	//Load Activity and get RefactorDebug params
+	RTE::RefactorDebug* RteDbg;
+	RteDbg = new RefactorDebug();
+	RteDbg->StartGameWithoutGui("GAScripted", "Default Preset");
+
+#endif // _REFACTORDEBUG_
+
+	if (g_MetaMan.GameInProgress())
+		g_MetaMan.EndGame();
+
+	g_LuaMan.FileCloseAll();
 	// Load the different input device icons. This can't be done during UInputMan::Create() because the icon presets don't exist so we need to do this after modules are loaded.
 	g_UInputMan.LoadDeviceIcons();
 
@@ -308,7 +333,13 @@ int main(int argc, char **argv) {
 		if (std::filesystem::exists(System::GetWorkingDirectory() + "LogLoadingWarning.txt")) { std::remove("LogLoadingWarning.txt"); }
 	}
 
-	if (!g_ActivityMan.Initialize()) { RunMenuLoop(); }
+#ifndef _REFACTORDEBUG_
+	if (!g_ActivityMan.Initialize()) {
+		RunMenuLoop();
+	}
+#endif // _REFACTORDEBUG_
+
+	
 	RunGameLoop();
 
 	DestroyManagers();

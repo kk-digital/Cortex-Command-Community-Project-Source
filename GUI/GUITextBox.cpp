@@ -106,7 +106,7 @@ void GUITextBox::ChangeSkin(GUISkin *Skin) {
 
 void GUITextBox::Draw(GUIScreen *Screen) {
 	// Draw the background
-	m_DrawBitmap->Draw(Screen->GetBitmap(), m_X, m_Y, nullptr);
+	m_DrawBitmap->Draw(Screen->GetBitmap(), m_X, m_Y);
 
 	GUITextPanel::Draw(Screen);
 }

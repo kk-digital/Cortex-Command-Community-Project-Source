@@ -569,6 +569,7 @@
     <ClInclude Include="Menus\SettingsMiscGUI.h" />
     <ClInclude Include="Menus\SettingsVideoGUI.h" />
     <ClInclude Include="Menus\TitleScreen.h" />
+    <ClInclude Include="RefactorDebug.h" />
     <ClInclude Include="Resources\resource.h" />
     <ClInclude Include="System\Atom.h" />
     <ClInclude Include="System\Constants.h" />
@@ -843,6 +844,7 @@
     <ClCompile Include="Menus\SettingsMiscGUI.cpp" />
     <ClCompile Include="Menus\SettingsVideoGUI.cpp" />
     <ClCompile Include="Menus\TitleScreen.cpp" />
+    <ClCompile Include="RefactorDebug.cpp" />
     <ClCompile Include="System\PieSlice.cpp" />
     <ClCompile Include="Menus\InventoryMenuGUI.cpp" />
     <ClCompile Include="System\Atom.cpp" />

@@ -145,10 +145,10 @@ void GUIFont::Draw(GUIBitmap *Bitmap, int X, int Y, const std::string &Text, uns
 		SetRect(&Rect, offX, offY, offX + CharWidth, offY + m_FontHeight);
 
 		// Draw the shadow
-		if (Shadow && FSC) { FSC->m_Bitmap->DrawTrans(Bitmap, X + 1, Y + 1, &Rect); }
+		if (Shadow && FSC) { FSC->m_Bitmap->DrawTrans(Bitmap, X + 1, Y + 1); }
 
 		// Draw the main color
-		Surf->DrawTrans(Bitmap, X, Y, &Rect);
+		//Surf->DrawTrans(Bitmap, X, Y);
 
 		// Find the starting position
 		X += CharWidth + m_Kerning;
@@ -356,7 +356,7 @@ void GUIFont::CacheColor(unsigned long Color) {
 	}
 
 	// Copy the bitmap
-	m_Font->Draw(FC.m_Bitmap, 0, 0, nullptr);
+	m_Font->Draw(FC.m_Bitmap, 0, 0);
 
 	// Set the color key to be the same color as the Top-Right hand corner pixel
 	unsigned long BackG = FC.m_Bitmap->GetPixel(FC.m_Bitmap->GetWidth() - 1, 0);

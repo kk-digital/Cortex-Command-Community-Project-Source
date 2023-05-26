@@ -22,7 +22,7 @@ namespace RTE {
 		m_ConsoleScreenRatio = 0.3F;
 		m_GUIScreen = nullptr;
 		m_GUIInput = nullptr;
-		m_GUIControlManager = nullptr;
+		//m_GUIControlManager = nullptr;
 		m_ParentBox = nullptr;
 		m_ConsoleText = nullptr;
 		m_InputTextBox = nullptr;
@@ -41,26 +41,26 @@ namespace RTE {
 	int ConsoleMan::Initialize() {
 		if (!m_GUIScreen) { m_GUIScreen = new AllegroScreen(g_FrameMan.GetBackBuffer32()); }
 		if (!m_GUIInput) { m_GUIInput = new AllegroInput(-1); }
-		if (!m_GUIControlManager) { m_GUIControlManager = new GUIControlManager(); }
+		//if (!m_GUIControlManager) { m_GUIControlManager = new GUIControlManager(); }
 
-		if (!m_GUIControlManager->Create(m_GUIScreen, m_GUIInput, "Base.rte/GUIs/Skins/Menus", m_ConsoleUseMonospaceFont ? "ConsoleMonospaceSkin.ini" : "ConsoleSkin.ini")) {
-			RTEAbort("Failed to create GUI Control Manager and load it from Base.rte/GUIs/Skins/Menus/ConsoleSkin.ini");
-		}
+		//if (!m_GUIControlManager->Create(m_GUIScreen, m_GUIInput, "Base.rte/GUIs/Skins/Menus", m_ConsoleUseMonospaceFont ? "ConsoleMonospaceSkin.ini" : "ConsoleSkin.ini")) {
+			//RTEAbort("Failed to create GUI Control Manager and load it from Base.rte/GUIs/Skins/Menus/ConsoleSkin.ini");
+		//}
 
-		m_GUIControlManager->Load("Base.rte/GUIs/ConsoleGUI.ini");
-		m_GUIControlManager->EnableMouse(false);
+		//m_GUIControlManager->Load("Base.rte/GUIs/ConsoleGUI.ini");
+		//m_GUIControlManager->EnableMouse(false);
 
 		// Stretch the invisible root box to fill the screen
-		dynamic_cast<GUICollectionBox *>(m_GUIControlManager->GetControl("base"))->SetSize(g_FrameMan.GetResX(), g_FrameMan.GetResY());
+		//dynamic_cast<GUICollectionBox *>(m_GUIControlManager->GetControl("base"))->SetSize(g_FrameMan.GetResX(), g_FrameMan.GetResY());
 
 		if (!m_ParentBox) {
-			m_ParentBox = dynamic_cast<GUICollectionBox *>(m_GUIControlManager->GetControl("ConsoleGUIBox"));
+			//m_ParentBox = dynamic_cast<GUICollectionBox *>(m_GUIControlManager->GetControl("ConsoleGUIBox"));
 			m_ParentBox->SetDrawType(GUICollectionBox::Color);
 		}
-		m_ConsoleText = dynamic_cast<GUILabel *>(m_GUIControlManager->GetControl("ConsoleLabel"));
-		m_InputTextBox = dynamic_cast<GUITextBox *>(m_GUIControlManager->GetControl("InputTB"));
+		//m_ConsoleText = dynamic_cast<GUILabel *>(m_GUIControlManager->GetControl("ConsoleLabel"));
+		//m_InputTextBox = dynamic_cast<GUITextBox *>(m_GUIControlManager->GetControl("InputTB"));
 
-		SetConsoleScreenSize(m_ConsoleScreenRatio);
+		//SetConsoleScreenSize(m_ConsoleScreenRatio);
 
 		m_ParentBox->SetPositionAbs(0, -m_ParentBox->GetHeight());
 		m_ParentBox->SetEnabled(false);
@@ -76,14 +76,14 @@ namespace RTE {
 	void ConsoleMan::Destroy() {
 		if (!g_FrameMan.ResolutionChanged()) { SaveAllText("LogConsole.txt"); }
 
-		delete m_GUIControlManager;
+		//delete m_GUIControlManager;
 		delete m_GUIInput;
 		delete m_GUIScreen;
 
 		if (g_FrameMan.ResolutionChanged()) {
 			m_GUIScreen = nullptr;
 			m_GUIInput = nullptr;
-			m_GUIControlManager = nullptr;
+			//m_GUIControlManager = nullptr;
 			m_ParentBox = nullptr;
 		} else {
 			Clear();
@@ -125,7 +125,7 @@ namespace RTE {
 
 		m_ParentBox->SetSize(g_FrameMan.GetResX(), g_FrameMan.GetResY() * m_ConsoleScreenRatio);
 		m_ConsoleText->SetSize(m_ParentBox->GetWidth() - 4, m_ParentBox->GetHeight() - m_InputTextBox->GetHeight() - 2);
-		m_ConsoleTextMaxNumLines = 5 + (m_ConsoleText->GetHeight() / m_GUIControlManager->GetSkin()->GetFont("FontSmall.png")->GetFontHeight());
+		//m_ConsoleTextMaxNumLines = 5 + (m_ConsoleText->GetHeight() / m_GUIControlManager->GetSkin()->GetFont("FontSmall.png")->GetFontHeight());
 		m_InputTextBox->SetPositionRel(m_InputTextBox->GetRelXPos(), m_ConsoleText->GetHeight());
 		m_InputTextBox->Resize(m_ParentBox->GetWidth() - 3, m_InputTextBox->GetHeight());
 	}
@@ -134,7 +134,7 @@ namespace RTE {
 
 	void ConsoleMan::SetConsoleUseMonospaceFont(bool useFont) {
 		m_ConsoleUseMonospaceFont = useFont;
-		if (m_GUIControlManager) { m_GUIControlManager->ChangeSkin("Base.rte/GUIs/Skins/Menus", m_ConsoleUseMonospaceFont ? "ConsoleMonospaceSkin.ini" : "ConsoleSkin.ini"); }
+		//if (m_GUIControlManager) { m_GUIControlManager->ChangeSkin("Base.rte/GUIs/Skins/Menus", m_ConsoleUseMonospaceFont ? "ConsoleMonospaceSkin.ini" : "ConsoleSkin.ini"); }
 	}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -235,7 +235,7 @@ namespace RTE {
 			if (IsEnabled()) {
 				if (!m_ReadOnly) {
 					m_InputTextBox->SetEnabled(false);
-					m_GUIControlManager->GetManager()->SetFocus(nullptr);
+					//m_GUIControlManager->GetManager()->SetFocus(nullptr);
 					// Save any text being worked on in the input, as the box keeps getting junk added to it
 					m_LastInputString = m_InputTextBox->GetText();
 					SetEnabled(false);
@@ -258,13 +258,13 @@ namespace RTE {
 		for (std::deque<std::string>::iterator logIterator = (m_OutputLog.size() < m_ConsoleTextMaxNumLines) ? m_OutputLog.begin() : m_OutputLog.end() - m_ConsoleTextMaxNumLines; logIterator != m_OutputLog.end(); ++logIterator) {
 			consoleText << *logIterator;
 		}
-		m_ConsoleText->SetText(consoleText.str());
+		//m_ConsoleText->SetText(consoleText.str());
 
 		if (m_ConsoleState != ConsoleState::Enabled) {
 			return;
 		}
 
-		m_GUIControlManager->Update();
+		//m_GUIControlManager->Update();
 
 		if (g_UInputMan.FlagCtrlState() && g_UInputMan.KeyPressed(KEY_DOWN)) {
 			SetConsoleScreenSize(m_ConsoleScreenRatio + 0.05F);
@@ -286,7 +286,7 @@ namespace RTE {
 			RemoveGraveAccents();
 		} else {
 			m_InputTextBox->SetEnabled(false);
-			m_GUIControlManager->GetManager()->SetFocus(nullptr);
+			//m_GUIControlManager->GetManager()->SetFocus(nullptr);
 			return;
 		}
 
@@ -317,7 +317,7 @@ namespace RTE {
 				m_ParentBox->SetEnabled(false);
 				m_ParentBox->SetVisible(false);
 				m_InputTextBox->SetEnabled(false);
-				m_GUIControlManager->GetManager()->SetFocus(nullptr);
+				//m_GUIControlManager->GetManager()->SetFocus(nullptr);
 				m_ConsoleState = ConsoleState::Disabled;
 			}
 		}
@@ -409,7 +409,7 @@ namespace RTE {
 	void ConsoleMan::Draw(BITMAP *targetBitmap) const {
 		if (m_ConsoleState != ConsoleState::Disabled) {
 			AllegroScreen drawScreen(targetBitmap);
-			m_GUIControlManager->Draw(&drawScreen);
+			//m_GUIControlManager->Draw(&drawScreen);
 		}
 	}
 }
