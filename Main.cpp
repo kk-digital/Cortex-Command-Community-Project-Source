@@ -58,8 +58,8 @@ namespace RTE {
 		g_SettingsMan.Initialize();
 
 		g_LuaMan.Initialize();
-		g_NetworkServer.Initialize();
-		g_NetworkClient.Initialize();
+		//g_NetworkServer.Initialize();
+		//g_NetworkClient.Initialize();
 		g_TimerMan.Initialize();
 		g_PerformanceMan.Initialize();
 		g_FrameMan.Initialize();
@@ -87,8 +87,8 @@ namespace RTE {
 	/// Destroys all the managers and frees all loaded data before termination.
 	/// </summary>
 	void DestroyManagers() {
-		g_NetworkClient.Destroy();
-		g_NetworkServer.Destroy();
+		//g_NetworkClient.Destroy();
+		//g_NetworkServer.Destroy();
 		g_MetaMan.Destroy();
 		g_MovableMan.Destroy();
 		g_SceneMan.Destroy();
@@ -223,10 +223,10 @@ namespace RTE {
 				g_UInputMan.Update();
 
 				// It is vital that server is updated after input manager but before activity because input manager will clear received pressed and released events on next update.
-				if (g_NetworkServer.IsServerModeEnabled()) {
-					g_NetworkServer.Update(true);
-					serverUpdated = true;
-				}
+				//if (g_NetworkServer.IsServerModeEnabled()) {
+				//	g_NetworkServer.Update(true);
+				//	serverUpdated = true;
+				//}
 				g_FrameMan.Update();
 				g_LuaMan.Update();
 				g_PerformanceMan.StartPerformanceMeasurement(PerformanceMan::ActivityUpdate);
@@ -264,6 +264,7 @@ namespace RTE {
 				}
 			}
 
+			/*
 			if (g_NetworkServer.IsServerModeEnabled()) {
 				// Pause sim while we're waiting for scene transmission or scene will start changing before clients receive them and those changes will be lost.
 				g_TimerMan.PauseSim(!(g_NetworkServer.ReadyForSimulation() && g_ActivityMan.IsInActivity()));
@@ -279,6 +280,7 @@ namespace RTE {
 					}
 				}
 			}
+			*/
 			g_FrameMan.Draw();
 			g_FrameMan.FlipFrameBuffers();
 		}
@@ -313,6 +315,9 @@ int main(int argc, char **argv) {
 	RTE::RefactorDebug* RteDbg;
 	RteDbg = new RefactorDebug();
 	RteDbg->StartGameWithoutGui("GAScripted", "Default Preset");
+	//Set Input for Player One
+	g_UInputMan.GetControlScheme(Players::PlayerOne)->SetDevice(InputDevice::DEVICE_MOUSE_KEYB);
+	g_UInputMan.GetControlScheme(Players::PlayerOne)->SetPreset(InputScheme::InputPreset::PresetMouseWASDKeys);
 
 #endif // _REFACTORDEBUG_
 
