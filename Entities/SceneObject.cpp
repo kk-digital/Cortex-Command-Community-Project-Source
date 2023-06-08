@@ -149,6 +149,7 @@ int SceneObject::SOPlacer::Save(Writer &writer) const
 
 SceneObject * SceneObject::SOPlacer::GetPlacedCopy(const SceneObject *pParent) const
 {
+    return NULL;
     RTEAssert(m_pObjectReference, "No Object reference to make copy from!");
 
     SceneObject *pCopy = dynamic_cast<SceneObject *>(m_pObjectReference->Clone());
