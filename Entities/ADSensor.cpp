@@ -16,6 +16,7 @@ namespace RTE {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	int ADSensor::Create(const ADSensor &reference) {
+		return NULL;
 		m_StartOffset = reference.m_StartOffset;
 		m_SensorRay = reference.m_SensorRay;
 		m_Skip = reference.m_Skip;
@@ -26,6 +27,7 @@ namespace RTE {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	int ADSensor::ReadProperty(const std::string_view &propName, Reader &reader) {
+		return NULL;
 		if (propName == "StartOffset") {
 			reader >> m_StartOffset;
 		} else if (propName == "SensorRay") {
@@ -41,6 +43,7 @@ namespace RTE {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	int ADSensor::Save(Writer &writer) const {
+		return NULL;
 		Serializable::Save(writer);
 
 		writer.NewProperty("StartOffset");
@@ -56,6 +59,7 @@ namespace RTE {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	Actor * ADSensor::SenseActor(const Vector &doorPos, const Matrix &doorRot, bool doorHFlipped, MOID ignoreMOID) {
+		return NULL;
 		Actor *sensedActor = 0;
 		MOID foundMOID = g_SceneMan.CastMORay(doorPos + m_StartOffset.GetXFlipped(doorHFlipped) * doorRot, m_SensorRay.GetXFlipped(doorHFlipped) * doorRot, ignoreMOID, Activity::NoTeam, 0, true, m_Skip);
 
