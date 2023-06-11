@@ -1399,6 +1399,11 @@ void GameActivity::Update()
             SwitchToActor(m_Brain[player], player, team);
             m_ViewState[player] = ViewState::Normal;
         }
+        //AI CONTROL
+        else if (m_PlayerController[player].IsState(AICONTROLSTATE) && m_ViewState[player] != ViewState::ActorSelect && !m_pBuyGUI[player]->IsVisible())
+        {
+            DisableAIs(true, Teams::TeamTwo);
+        }
         // Switch to next actor if the player wants to. Don't do it while the buy menu is open
         else if (m_PlayerController[player].IsState(ACTOR_NEXT) && m_ViewState[player] != ViewState::ActorSelect && !m_pBuyGUI[player]->IsVisible())
         {

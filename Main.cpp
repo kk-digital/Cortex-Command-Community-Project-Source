@@ -318,6 +318,7 @@ int main(int argc, char **argv) {
 	//Set Input for Player One
 	g_UInputMan.GetControlScheme(Players::PlayerOne)->SetDevice(InputDevice::DEVICE_MOUSE_KEYB);
 	g_UInputMan.GetControlScheme(Players::PlayerOne)->SetPreset(InputScheme::InputPreset::PresetMouseWASDKeys);
+	
 
 #endif // _REFACTORDEBUG_
 
