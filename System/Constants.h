@@ -140,6 +140,7 @@ namespace RTE {
 		INPUT_R_LEFT,
 		INPUT_R_RIGHT,
 		INPUT_AICONTROL,
+		INPUT_AICONTROL_SHOW,
 		INPUT_COUNT
 	};
 
@@ -171,6 +172,7 @@ namespace RTE {
 		"Analog Aim Left",	// INPUT_R_LEFT
 		"Analog Aim Right"	// INPUT_R_RIGHT
 		"Ai Control"	// INPUT_AICONTROL
+		"Ai Control Show"	// INPUT_AICONTROL_SHOW
 	};
 
 	/// <summary>
