@@ -1400,10 +1400,6 @@ void GameActivity::Update()
             m_ViewState[player] = ViewState::Normal;
         }
         //AI CONTROL
-        else if (m_PlayerController[player].IsState(AICONTROLSHOWSTATE) && m_ViewState[player] != ViewState::ActorSelect && !m_pBuyGUI[player]->IsVisible())
-        {
-            DisableAIs(false, Teams::TeamTwo);
-        }
         else if (m_PlayerController[player].IsState(AICONTROLSTATE) && m_ViewState[player] != ViewState::ActorSelect && !m_pBuyGUI[player]->IsVisible())
         {
             DisableAIs(true, Teams::TeamTwo);

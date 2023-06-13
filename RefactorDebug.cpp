@@ -28,8 +28,8 @@ namespace RTE {
 		// Add PlayerTwo and isHuman is false(CPU)
 		pTestGame->AddPlayer(Players::PlayerTwo, false, Activity::Teams::TeamOne, 0);
 
-		pTestGame->SetTeamOfPlayer(0, 0);
-		pTestGame->SetCPUTeam(1);
+		//pTestGame->SetTeamOfPlayer(0, 0);
+		//pTestGame->SetCPUTeam(1);
 		pTestGame->SetStartingGold(10000);
 		pTestGame->SetFogOfWarEnabled(false);
 		pTestGame->SetDifficulty(Activity::DifficultySetting::MediumDifficulty);

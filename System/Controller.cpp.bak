@@ -199,8 +199,6 @@ namespace RTE {
 			}
 			m_NextIgnore = false;
 		// PREV ACTOR
-		}else if (g_UInputMan.ElementReleased(m_Player, INPUT_AICONTROL_SHOW)) {
-			m_ControlStates.at(AICONTROLSHOWSTATE) = true;
 		}else if (g_UInputMan.ElementReleased(m_Player, INPUT_AICONTROL)) {
 			m_ControlStates.at(AICONTROLSTATE) = true;
 		} else if (g_UInputMan.ElementReleased(m_Player, INPUT_PREV)) {

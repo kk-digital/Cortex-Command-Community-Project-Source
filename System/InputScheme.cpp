@@ -79,6 +79,10 @@ namespace RTE {
 			reader >> m_InputMappings.at(InputElements::INPUT_WEAPON_PICKUP);
 		} else if (propName == "WeaponDrop") {
 			reader >> m_InputMappings.at(InputElements::INPUT_WEAPON_DROP);
+		} else if (propName == "AiControl") {
+			reader >> m_InputMappings.at(InputElements::INPUT_AICONTROL);
+		} else if (propName == "AiControlShow") {
+			reader >> m_InputMappings.at(InputElements::INPUT_AICONTROL_SHOW);
 		} else if (propName == "WeaponReload") {
 			reader >> m_InputMappings.at(InputElements::INPUT_WEAPON_RELOAD);
 		} else if (propName == "Start") {
@@ -133,6 +137,8 @@ namespace RTE {
 			writer.NewPropertyWithValue("WeaponChangePrev", m_InputMappings.at(InputElements::INPUT_WEAPON_CHANGE_PREV));
 			writer.NewPropertyWithValue("WeaponPickup", m_InputMappings.at(InputElements::INPUT_WEAPON_PICKUP));
 			writer.NewPropertyWithValue("WeaponDrop", m_InputMappings.at(InputElements::INPUT_WEAPON_DROP));
+			writer.NewPropertyWithValue("AiControl", m_InputMappings.at(InputElements::INPUT_AICONTROL));
+			writer.NewPropertyWithValue("AiControl", m_InputMappings.at(InputElements::INPUT_AICONTROL_SHOW));
 			writer.NewPropertyWithValue("WeaponReload", m_InputMappings.at(InputElements::INPUT_WEAPON_RELOAD));
 			writer.NewPropertyWithValue("Start", m_InputMappings.at(InputElements::INPUT_START));
 			writer.NewPropertyWithValue("Back", m_InputMappings.at(InputElements::INPUT_BACK));
@@ -255,6 +261,8 @@ namespace RTE {
 				m_InputMappings.at(InputElements::INPUT_WEAPON_DROP).SetKey(KEY_G);
 				m_InputMappings.at(InputElements::INPUT_WEAPON_CHANGE_PREV).SetKey(KEY_F);
 				m_InputMappings.at(InputElements::INPUT_WEAPON_CHANGE_NEXT).SetKey(KEY_T);
+				m_InputMappings.at(InputElements::INPUT_AICONTROL).SetKey(KEY_H);
+				m_InputMappings.at(InputElements::INPUT_AICONTROL_SHOW).SetKey(KEY_U);
 				break;
 			case InputPreset::PresetGenericDPad:
 				// TODO: Don't have any SNES style controllers to test with so no idea what would work or make sense here.

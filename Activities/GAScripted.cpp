@@ -317,6 +317,10 @@ int GAScripted::Start()
 		(*sItr)->Start();
 	}
 
+    // Disable all enemy AIs so they dont attack prematurely
+    //DisableAIs(true, Teams::TeamTwo);
+    //DisableAIs(false, Teams::TeamTwo);
+
     return error;
 }
 

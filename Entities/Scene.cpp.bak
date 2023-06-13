@@ -639,6 +639,7 @@ int Scene::LoadData(bool placeObjects, bool initPathfinding, bool placeUnits)
 		// Lists of found brain deployment locations used to place brain
 		std::vector<Vector> brainLocations[Activity::MaxTeamCount];
 
+        
 		//for (list<SceneObject *>::iterator oItr = m_PlacedObjects[AIPLAN].begin(); oItr != m_PlacedObjects[AIPLAN].end(); ++oItr) // I'm using this to dump AI plans with ctrl+w
         for (list<SceneObject *>::iterator oItr = m_PlacedObjects[PLACEONLOAD].begin(); oItr != m_PlacedObjects[PLACEONLOAD].end(); ++oItr)
 		{
@@ -652,9 +653,8 @@ int Scene::LoadData(bool placeObjects, bool initPathfinding, bool placeUnits)
 					// Skip playable actors if we're told to not place actors
 					if (!placeUnits)
 					{
-                        if (dynamic_cast<ADoor*>(pMO)) {
-                            g_MovableMan.AddActor(dynamic_cast<Actor *>(pMO));
-                        }
+						if (dynamic_cast<ADoor *>(pMO))
+							g_MovableMan.AddActor(dynamic_cast<Actor *>(pMO));
 						else
 						{
 							//Just delete the object
@@ -663,10 +663,7 @@ int Scene::LoadData(bool placeObjects, bool initPathfinding, bool placeUnits)
 						}
 					} else {
 						// Place units as usual if we're told to place units
-                        
-                        g_MovableMan.AddActor(dynamic_cast<Actor*>(pMO));
-                        // Change AI Actor to Player Team,Team 0
-                        //g_MovableMan.ChangeActorTeam(dynamic_cast<Actor*>(pMO),0);
+						g_MovableMan.AddActor(dynamic_cast<Actor *>(pMO));
 					}
 				}
                 else if (pMO->IsDevice())
@@ -1241,9 +1238,9 @@ int Scene::ReadProperty(const std::string_view &propName, Reader &reader)
     }
     else if (propName == "PlaceSceneObject" || propName == "PlaceMovableObject")
     {
-        SceneObject *pSO = dynamic_cast<SceneObject *>(g_PresetMan.ReadReflectedPreset(reader));
-        if (pSO)
-            m_PlacedObjects[PLACEONLOAD].push_back(pSO);
+        //SceneObject *pSO = dynamic_cast<SceneObject *>(g_PresetMan.ReadReflectedPreset(reader));
+        //if (pSO)
+            //m_PlacedObjects[PLACEONLOAD].push_back(pSO);
     }
     else if (propName == "BlueprintObject")
     {
