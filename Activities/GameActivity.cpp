@@ -908,24 +908,6 @@ int GameActivity::Start()
         m_pEditorGUI[player]->Create(&m_PlayerController[player]);
         m_ReadyToStart[player] = false;
 
-        // Allocate and (re)create the Buy GUIs
-        if (m_pBuyGUI[player])
-            m_pBuyGUI[player]->Destroy();
-        else
-            m_pBuyGUI[player] = new BuyMenuGUI;
-        m_pBuyGUI[player]->Create(&m_PlayerController[player]);
-
-		// Load correct loadouts into buy menu if we're starting a non meta-game activity
-		if (m_pBuyGUI[player]->GetMetaPlayer() == Players::NoPlayer)
-		{
-			m_pBuyGUI[player]->SetNativeTechModule(g_PresetMan.GetModuleID(GetTeamTech(GetTeamOfPlayer(player))));
-			m_pBuyGUI[player]->SetForeignCostMultiplier(1.0);
-			m_pBuyGUI[player]->LoadAllLoadoutsFromFile();
-
-			// Change Editor GUI native tech module so it could load and show correct deployment prices
-			m_pEditorGUI[player]->SetNativeTechModule(g_PresetMan.GetModuleID(GetTeamTech(GetTeamOfPlayer(player))));
-		}
-
         ////////////////////////////////////
         // GUI split screen setup
         // If there are split screens, set up the GUIs to draw and their mouses to point correctly
@@ -1780,14 +1762,6 @@ void GameActivity::Update()
 					lzOffsetY += m_AIReturnCraft[player] ? -32.0F : 32.0F;
 					m_LandingZone[player].m_Y = g_SceneMan.FindAltitude(m_LandingZone[player], g_SceneMan.GetSceneHeight(), 10) + lzOffsetY;
 				}
-
-				if (m_pBuyGUI[player]->GetTotalOrderCost() > GetTeamFunds(team)) {
-					g_GUISound.UserErrorSound()->Play(player);
-					m_FundsChanged[team] = true;
-				} else {
-					CreateDelivery(player);
-					m_Deliveries[team].rbegin()->multiOrderYOffset = lzOffsetY;
-				}
 				// Revert the Y offset so that the cursor doesn't flinch.
 				m_LandingZone[player].m_Y -= lzOffsetY;
 			}
@@ -1952,43 +1926,10 @@ void GameActivity::Update()
             }
 			
 			// TODO: More modes?
-
-            // If the actor couldn't handle it, then it's probably a game specific one
-            if (!m_ControlledActor[player]->HandlePieCommand(command))
-            {
-                if (command == PieSlice::PieSliceIndex::PSI_BUYMENU) {
-                    m_pPieMenu[player]->SetEnabled(false);
-                    m_pBuyGUI[player]->SetEnabled(true);
-                    skipBuyUpdate = true;
-                } else if (command == PieSlice::PieSliceIndex::PSI_FULLINVENTORY) {
-                    m_pPieMenu[player]->SetEnabled(false);
-                    m_InventoryMenuGUI[player]->SetEnabled(false);
-                    m_InventoryMenuGUI[player]->SetMenuMode(InventoryMenuGUI::MenuMode::Full);
-                    m_InventoryMenuGUI[player]->SetEnabled(true);
-                }
-/*
-                else if (command == PieMenuGUI::PSI_STATS)
-                    ;
-                else if (command == PieMenuGUI::PSI_MINIMAP)
-                    ;
-                else if (command == PieMenuGUI::PSI_CEASEFIRE)
-                    ;
-*/
-            }
         }
         
         // Update inventory guis
         m_InventoryMenuGUI[player]->Update();
-
-        ///////////////////////////////////////
-        // Update Buy Menu GUIs
-
-        // Enable or disable the Buy Menus if the brain is selected, Skip if an LZ selection button press was just performed
-        if (!skipBuyUpdate)
-        {
-//            m_pBuyGUI[player]->SetEnabled(m_ControlledActor[player] == m_Brain[player] && m_ViewState[player] != ViewState::LandingZoneSelect && m_ActivityState != ActivityState::Over);
-            m_pBuyGUI[player]->Update();
-        }
 
         // Trap the mouse if we're in gameplay and not in menus
 		g_UInputMan.TrapMousePos(!m_pBuyGUI[player]->IsEnabled() && !m_InventoryMenuGUI[player]->IsEnabledAndNotCarousel(), player);

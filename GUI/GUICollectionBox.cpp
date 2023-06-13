@@ -19,30 +19,7 @@ GUICollectionBox::GUICollectionBox(GUIManager *Manager, GUIControlManager *Contr
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void GUICollectionBox::Create(const std::string &Name, int X, int Y, int Width, int Height) {
-	GUIControl::Create(Name, X, Y, Width, Height);
-
-	// Minimum size of the control
-	m_MinWidth = 10;
-	m_MinHeight = 10;
-
-	// Default size of the control
-	m_DefWidth = 100;
-	m_DefHeight = 100;
-
-	// Setup the panel
-	m_X = X;
-	m_Y = Y;
-	m_Width = m_DefWidth;
-	m_Height = m_DefHeight;
-
-	if (Width != -1) { m_Width = Width; }
-	if (Height != -1) { m_Height = Height; }
-
-	// Make sure the box isn't too small
-	m_Width = std::max(m_Width, m_MinWidth);
-	m_Height = std::max(m_Height, m_MinHeight);
-}
+void GUICollectionBox::Create(const std::string &Name, int X, int Y, int Width, int Height){}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
