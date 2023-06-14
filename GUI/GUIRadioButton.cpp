@@ -18,159 +18,23 @@ GUIRadioButton::GUIRadioButton(GUIManager *Manager, GUIControlManager *ControlMa
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void GUIRadioButton::Create(const std::string &Name, int X, int Y, int Width, int Height) {
-	GUIControl::Create(Name, X, Y, Width, Height);
-
-	// Minimum size of the control
-	m_MinWidth = 40;
-	m_MinHeight = 10;
-
-	// Default size of the control
-	m_DefWidth = 60;
-	m_DefHeight = 16;
-
-	// Setup the panel
-	m_X = X;
-	m_Y = Y;
-	m_Width = m_DefWidth;
-	m_Height = m_DefHeight;
-
-	if (Width != -1) { m_Width = Width; }
-	if (Height != -1) { m_Height = Height; }
-
-	// Make sure the button isn't too small
-	m_Width = std::max(m_Width, m_MinWidth);
-	m_Height = std::max(m_Height, m_MinHeight);
-}
+void GUIRadioButton::Create(const std::string& Name, int X, int Y, int Width, int Height) {}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void GUIRadioButton::Create(GUIProperties *Props) {
-	GUIControl::Create(Props);
-
-	// Minimum size of the control
-	m_MinWidth = 40;
-	m_MinHeight = 10;
-
-	// Default size of the control
-	m_DefWidth = 60;
-	m_DefHeight = 16;
-
-	// Setup the panel
-	GUIPanel::LoadProperties(Props);
-
-	// Make sure the button isn't too small
-	m_Width = std::max(m_Width, m_MinWidth);
-	m_Height = std::max(m_Height, m_MinHeight);
-
-	// Get the values
-	Props->GetValue("Text", &m_Text);
-	Props->GetValue("Checked", &m_Checked);
-}
+void GUIRadioButton::Create(GUIProperties* Props) {}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void GUIRadioButton::ChangeSkin(GUISkin *Skin) {
-	GUIControl::ChangeSkin(Skin);
-
-	// Build the checkbox bitmap
-	BuildBitmap();
-}
+void GUIRadioButton::ChangeSkin(GUISkin* Skin) {}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void GUIRadioButton::BuildBitmap() {
-	std::string Filename;
-	unsigned long ColorIndex = 0;
-	int Values[4];
-
-	// Load the image
-	m_Skin->GetValue("RadioButton", "Filename", &Filename);
-	m_Image = m_Skin->CreateBitmap(Filename);
-	if (!m_Image) {
-		return;
-	}
-	// Load the font
-	m_Skin->GetValue("RadioButton", "Font", &Filename);
-	m_Font = m_Skin->GetFont(Filename);
-
-	m_Skin->GetValue("RadioButton", "FontColor", &m_FontColor);
-	m_Skin->GetValue("RadioButton", "FontShadow", &m_FontShadow);
-	m_Skin->GetValue("RadioButton", "FontKerning", &m_FontKerning);
-	m_FontColor = m_Skin->ConvertColor(m_FontColor, m_Image->GetColorDepth());
-	m_Font->CacheColor(m_FontColor);
-
-	// Set the color key
-	m_Skin->GetValue("RadioButton", "ColorKeyIndex", &ColorIndex);
-	ColorIndex = m_Skin->ConvertColor(ColorIndex, m_Image->GetColorDepth());
-	m_Image->SetColorKey(ColorIndex);
-
-	// Load the source image rectangles
-
-	// Base checkbox
-	m_Skin->GetValue("RadioButton", "Base", Values, 4);
-	SetRect(&m_ImageRects[0], Values[0], Values[1], Values[0] + Values[2], Values[1] + Values[3]);
-
-	// Mouse over checkbox
-	m_Skin->GetValue("RadioButton", "MouseOver", Values, 4);
-	SetRect(&m_ImageRects[1], Values[0], Values[1], Values[0] + Values[2], Values[1] + Values[3]);
-
-	// Normal check
-	m_Skin->GetValue("RadioButton", "Check", Values, 4);
-	SetRect(&m_ImageRects[2], Values[0], Values[1], Values[0] + Values[2], Values[1] + Values[3]);
-
-	// Grayed check (for disabled mode)
-	m_Skin->GetValue("RadioButton", "GreyCheck", Values, 4);
-	SetRect(&m_ImageRects[3], Values[0], Values[1], Values[0] + Values[2], Values[1] + Values[3]);
-}
+void GUIRadioButton::BuildBitmap() {}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void GUIRadioButton::Draw(GUIScreen *Screen) {
-	if (!m_Image) {
-		return;
-	}
-	// Setup the clipping
-	Screen->GetBitmap()->SetClipRect();
-
-	// Calculate the y position of the base
-	// Make it centered vertically
-	int YPos = m_Height / 2 - (m_ImageRects[0].bottom - m_ImageRects[0].top) / 2 + m_Y;
-
-	// Draw the base
-	if (m_Mouseover || m_GotFocus) {
-		m_Image->DrawTrans(Screen->GetBitmap(), m_X, YPos);
-	} else {
-		m_Image->DrawTrans(Screen->GetBitmap(), m_X, YPos);
-	}
-	// Draw the check
-	if (m_Checked) {
-		if (m_Enabled) {
-			m_Image->DrawTrans(Screen->GetBitmap(), m_X, YPos);
-		} //else {
-			//m_Image->DrawTrans(Screen->GetBitmap(), m_X, YPos, &m_ImageRects[3]);
-		//}
-	}
-
-	// Should show as grayed out and disabled when it is, regardless of checked or not
-	if (!m_Enabled) { m_Image->DrawTrans(Screen->GetBitmap(), m_X, YPos); }
-
-	// Draw the text
-
-	// Add a space to make a gap between checkbox & text
-	std::string Text;
-	std::string space = " ";
-	Text = space.append(m_Text);
-
-	if (m_Font) {
-		m_Font->SetColor(m_FontColor);
-		m_Font->SetKerning(m_FontKerning);
-		m_Font->Draw(Screen->GetBitmap(), m_X + (m_ImageRects[0].right - m_ImageRects[0].left), m_Y + (m_Height / 2) - (m_Font->GetFontHeight() / 2) - 1, Text, m_FontShadow);
-	}
-	Screen->GetBitmap()->SetClipRect();
-
-	GUIPanel::Draw(Screen);
-}
+void GUIRadioButton::Draw(GUIScreen* Screen) {}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
