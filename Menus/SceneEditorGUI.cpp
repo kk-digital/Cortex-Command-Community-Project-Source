@@ -111,7 +111,7 @@ int SceneEditorGUI::Create(Controller *pController, FeatureSets featureSet, int 
 
     // Update the brain path
     UpdateBrainPath();
-
+    
     // Allocate and (re)create the Editor GUIs
     if (!m_pPicker)
         m_pPicker = new ObjectPickerGUI();
