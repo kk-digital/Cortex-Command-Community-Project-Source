@@ -9,12 +9,14 @@
 #include "MetaMan.h"
 #include "NetworkServer.h"
 #include "Scene.h"
-
+#include "ActivityMan.h"
+#include "SceneMan.h"
 using namespace RTE;
 
 namespace RTE {
 	void RefactorDebug::StartGameWithoutGui(string DefaultScenario_type, string DefaultScenario_preset) {
 		bool LoadDefaultScenario = true;
+		g_SceneMan.SetSceneToLoad("Ketanot Hills");
 
 		const Activity* pActivityPreset = dynamic_cast<const Activity*>(g_PresetMan.GetEntityPreset(DefaultScenario_type, DefaultScenario_preset)->Clone());
 		Activity* pActivity = dynamic_cast<Activity*>(pActivityPreset->Clone());
@@ -33,6 +35,8 @@ namespace RTE {
 		pTestGame->SetStartingGold(10000);
 		pTestGame->SetFogOfWarEnabled(false);
 		pTestGame->SetDifficulty(Activity::DifficultySetting::MediumDifficulty);
+
+		//g_SceneMan.SetSceneToLoad("Editor Scene");
 		g_ActivityMan.SetStartActivity(pTestGame);
 		g_ActivityMan.SetRestartActivity();
 	}
