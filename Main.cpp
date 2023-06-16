@@ -314,7 +314,7 @@ int main(int argc, char **argv) {
 	//Load Activity and get RefactorDebug params
 	RTE::RefactorDebug* RteDbg;
 	RteDbg = new RefactorDebug();
-	RteDbg->StartGameWithoutGui("GAScripted", "Default Preset");
+	RteDbg->StartGameWithoutGui("GAScripted", "One-Man Army");
 	//Set Input for Player One
 	g_UInputMan.GetControlScheme(Players::PlayerOne)->SetDevice(InputDevice::DEVICE_MOUSE_KEYB);
 	g_UInputMan.GetControlScheme(Players::PlayerOne)->SetPreset(InputScheme::InputPreset::PresetMouseWASDKeys);

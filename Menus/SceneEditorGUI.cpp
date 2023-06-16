@@ -1518,11 +1518,11 @@ void SceneEditorGUI::Draw(BITMAP *pTargetBitmap, const Vector &targetPos) const
     if (!m_DrawCurrentObject)
     {
         Vector center = m_CursorPos - targetPos;
-        putpixel(pTargetBitmap, center.m_X, center.m_Y, g_YellowGlowColor);
-        hline(pTargetBitmap, center.m_X - 5, center.m_Y, center.m_X - 2, g_YellowGlowColor);
-        hline(pTargetBitmap, center.m_X + 5, center.m_Y, center.m_X + 2, g_YellowGlowColor);
-        vline(pTargetBitmap, center.m_X, center.m_Y - 5, center.m_Y - 2, g_YellowGlowColor);
-        vline(pTargetBitmap, center.m_X, center.m_Y + 5, center.m_Y + 2, g_YellowGlowColor);
+        putpixel(pTargetBitmap, center.m_X, center.m_Y, g_WhiteColor);
+        hline(pTargetBitmap, center.m_X - 5, center.m_Y, center.m_X - 2, g_WhiteColor);
+        hline(pTargetBitmap, center.m_X + 5, center.m_Y, center.m_X + 2, g_WhiteColor);
+        vline(pTargetBitmap, center.m_X, center.m_Y - 5, center.m_Y - 2, g_WhiteColor);
+        vline(pTargetBitmap, center.m_X, center.m_Y + 5, center.m_Y + 2, g_WhiteColor);
     }
     // If the held object will be placed at the end of the list, draw it last to the scene, transperent blinking
 	else if (m_pCurrentObject && (m_ObjectListOrder < 0 || (pSceneObjectList &&  m_ObjectListOrder == pSceneObjectList->size())))

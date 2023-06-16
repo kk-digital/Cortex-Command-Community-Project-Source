@@ -1151,7 +1151,7 @@ void HDFirearm::DrawHUD(BITMAP *pTargetBitmap, const Vector &targetPos, int whic
 		g_PostProcessMan.RegisterGlowDotEffect(aimPoint, YellowDot, glowStrength);
 		aimPoint -= targetPos;
 		g_SceneMan.WrapPosition(aimPoint);
-		putpixel(pTargetBitmap, aimPoint.GetFloorIntX(), aimPoint.GetFloorIntY(), g_YellowGlowColor);
+		putpixel(pTargetBitmap, aimPoint.GetFloorIntX(), aimPoint.GetFloorIntY(), g_WhiteColor);
 	}
 	//release_bitmap(pTargetBitmap);
 }
