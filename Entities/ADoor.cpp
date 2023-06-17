@@ -412,7 +412,6 @@ namespace RTE {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void ADoor::UpdateSensors() {	
-		return;
 		const Actor *foundActor = nullptr;
 		bool anySensorInput = false;
 
@@ -426,7 +425,8 @@ namespace RTE {
 					break;
 				// If a sensor has found an enemy Actor, close the door and stop looking, so we don't accidentally open it for a friendly Actor.
 				} else if (foundActor->GetTeam() != m_Team) {
-					CloseDoor();
+					//CloseDoor();
+					OpenDoor();
 					break;
 				} else if (foundActor->GetTeam() == m_Team) {					
 					OpenDoor();
@@ -435,7 +435,8 @@ namespace RTE {
 		}
 		if (!anySensorInput && m_ResetToDefaultStateTimer.IsPastSimMS(m_ResetToDefaultStateDelay)) {
 			if (m_ClosedByDefault && m_DoorState == OPEN) {
-				CloseDoor();
+				//CloseDoor();
+				OpenDoor();
 			} else if (!m_ClosedByDefault && m_DoorState == CLOSED) {
 				OpenDoor();
 			}

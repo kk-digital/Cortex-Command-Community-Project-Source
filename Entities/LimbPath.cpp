@@ -667,7 +667,7 @@ void LimbPath::Draw(BITMAP *pTargetBitmap,
     for (deque<Vector>::const_iterator itr = m_Segments.begin(); itr != m_Segments.end(); ++itr)
     {
         nextPoint += (*itr) * m_Rotation;
-        line(pTargetBitmap, prevPoint.m_X, prevPoint.m_Y, nextPoint.m_X, nextPoint.m_Y, color);
+        //line(pTargetBitmap, prevPoint.m_X, prevPoint.m_Y, nextPoint.m_X, nextPoint.m_Y, color);
         prevPoint += (*itr) * m_Rotation;
     }
 

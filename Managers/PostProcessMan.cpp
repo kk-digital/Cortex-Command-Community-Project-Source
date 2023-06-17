@@ -320,7 +320,7 @@ namespace RTE {
 
 #ifdef DEBUG_BUILD
 			// Draw a rectangle around the glow box so we see it's position and size
-			rect(g_FrameMan.GetBackBuffer32(), startX, startY, endX, endY, g_RedColor);
+			rect(g_FrameMan.GetBackBuffer32(), startX, startY, endX, endY, g_WhiteColor);
 #endif
 
 			for (int y = startY; y < endY; ++y) {
@@ -328,7 +328,7 @@ namespace RTE {
 					testpixel = _getpixel(g_FrameMan.GetBackBuffer8(), x, y);
 
 					// YELLOW
-					if ((testpixel == g_YellowGlowColor && RandomNum() < 0.9F) || testpixel == 98 || (testpixel == 120 && RandomNum() < 0.7F)) {
+					if ((testpixel == g_WhiteColor && RandomNum() < 0.9F) || testpixel == 98 || (testpixel == 120 && RandomNum() < 0.7F)) {
 						draw_trans_sprite(g_FrameMan.GetBackBuffer32(), m_YellowGlow, x - 2, y - 2);
 					}
 					// TODO: Enable and add more colors once we actually have something that needs these.

@@ -2687,18 +2687,18 @@ void ACrab::DrawHUD(BITMAP *pTargetBitmap, const Vector &targetPos, int whichScr
     {
         lastPoint = (*last) - targetPos;
         waypoint = lastPoint + g_SceneMan.ShortestDistance(lastPoint, (*lItr) - targetPos);
-        line(pTargetBitmap, lastPoint.m_X, lastPoint.m_Y, waypoint.m_X, waypoint.m_Y, g_RedColor);
+        line(pTargetBitmap, lastPoint.m_X, lastPoint.m_Y, waypoint.m_X, waypoint.m_Y, g_WhiteColor);
         last = lItr;
     }
     waypoint = m_MoveTarget - targetPos;
-    circlefill(pTargetBitmap, waypoint.m_X, waypoint.m_Y, 3, g_RedColor);
+    circlefill(pTargetBitmap, waypoint.m_X, waypoint.m_Y, 3, g_WhiteColor);
     lastPoint = m_PrevPathTarget - targetPos;
-    circlefill(pTargetBitmap, lastPoint.m_X, lastPoint.m_Y, 2, g_YellowGlowColor);
+    circlefill(pTargetBitmap, lastPoint.m_X, lastPoint.m_Y, 2, g_WhiteColor);
     lastPoint = m_DigTunnelEndPos - targetPos;
-    circlefill(pTargetBitmap, lastPoint.m_X, lastPoint.m_Y, 2, g_YellowGlowColor);
+    circlefill(pTargetBitmap, lastPoint.m_X, lastPoint.m_Y, 2, g_WhiteColor);
     // Raidus
 //    waypoint = m_Pos - targetPos;
-//    circle(pTargetBitmap, waypoint.m_X, waypoint.m_Y, m_MoveProximityLimit, g_RedColor);  
+//    circle(pTargetBitmap, waypoint.m_X, waypoint.m_Y, m_MoveProximityLimit, g_WhiteColor);  
 // TODO: REMOVE THIS IS TEMP
 */
 

@@ -3643,7 +3643,7 @@ void AHuman::Update()
 				// Reset the stride timer if the path is about to restart.
 				if (m_Paths[FGROUND][WALK].PathEnded() || m_Paths[FGROUND][WALK].PathIsAtStart()) { m_StrideTimer.Reset(); }
 				m_ArmClimbing[BGROUND] = !(m_pFGFootGroup->PushAsLimb(m_Pos + RotateOffset(m_pFGLeg->GetParentOffset()), m_Vel, m_WalkAngle[FGROUND], m_Paths[FGROUND][WALK], deltaTime, &restarted, false));
-				if (restarted) { UpdateWalkAngle(FGROUND); }
+				//if (restarted) { UpdateWalkAngle(FGROUND); }
 			} else {
 				m_ArmClimbing[BGROUND] = false;
 			}
@@ -3652,7 +3652,7 @@ void AHuman::Update()
 				// Reset the stride timer if the path is about to restart.
 				if (m_Paths[BGROUND][WALK].PathEnded() || m_Paths[BGROUND][WALK].PathIsAtStart()) { m_StrideTimer.Reset(); }
 				m_ArmClimbing[FGROUND] = !m_pBGFootGroup->PushAsLimb(m_Pos + RotateOffset(m_pBGLeg->GetParentOffset()), m_Vel, m_WalkAngle[BGROUND], m_Paths[BGROUND][WALK], deltaTime, &restarted, false);
-				if (restarted) { UpdateWalkAngle(BGROUND); }
+				//if (restarted) { UpdateWalkAngle(BGROUND); }
 			} else {
 				if (m_pBGLeg) { m_pBGFootGroup->FlailAsLimb(m_Pos, RotateOffset(m_pBGLeg->GetParentOffset()), m_pBGLeg->GetMaxLength(), m_PrevVel, m_AngularVel, m_pBGLeg->GetMass(), deltaTime); }
 				m_ArmClimbing[FGROUND] = false;
@@ -4122,8 +4122,8 @@ void AHuman::DrawThrowingReticle(BITMAP *targetBitmap, const Vector &targetPos, 
 		points[i].RadRotate(adjustedAimAngle);
 		points[i] += m_pFGArm->GetJointPos();
 
-		g_PostProcessMan.RegisterGlowDotEffect(points[i], YellowDot, RandomNum(63, 127));
-		putpixel(targetBitmap, points[i].GetFloorIntX() - targetPos.GetFloorIntX(), points[i].GetFloorIntY() - targetPos.GetFloorIntY(), g_YellowGlowColor);
+		g_PostProcessMan.RegisterGlowDotEffect(points[i], BlueDot, RandomNum(63, 127));
+		putpixel(targetBitmap, points[i].GetFloorIntX() - targetPos.GetFloorIntX(), points[i].GetFloorIntY() - targetPos.GetFloorIntY(), g_WhiteColor);
 	}
 
 	release_bitmap(targetBitmap);
@@ -4208,18 +4208,18 @@ void AHuman::DrawHUD(BITMAP *pTargetBitmap, const Vector &targetPos, int whichSc
     {
         lastPoint = (*last) - targetPos;
         waypoint = lastPoint + g_SceneMan.ShortestDistance(lastPoint, (*lItr) - targetPos);
-        line(pTargetBitmap, lastPoint.m_X, lastPoint.m_Y, waypoint.m_X, waypoint.m_Y, g_RedColor);
+        line(pTargetBitmap, lastPoint.m_X, lastPoint.m_Y, waypoint.m_X, waypoint.m_Y, g_WhiteColor);
         last = lItr;
     }
     waypoint = m_MoveTarget - targetPos;
-    circlefill(pTargetBitmap, waypoint.m_X, waypoint.m_Y, 3, g_RedColor);
+    circlefill(pTargetBitmap, waypoint.m_X, waypoint.m_Y, 3, g_WhiteColor);
     lastPoint = m_PrevPathTarget - targetPos;
-    circlefill(pTargetBitmap, lastPoint.m_X, lastPoint.m_Y, 2, g_YellowGlowColor);
+    circlefill(pTargetBitmap, lastPoint.m_X, lastPoint.m_Y, 2, g_WhiteColor);
     lastPoint = m_DigTunnelEndPos - targetPos;
-    circlefill(pTargetBitmap, lastPoint.m_X, lastPoint.m_Y, 2, g_YellowGlowColor);
+    circlefill(pTargetBitmap, lastPoint.m_X, lastPoint.m_Y, 2, g_WhiteColor);
     // Raidus
 //    waypoint = m_Pos - targetPos;
-//    circle(pTargetBitmap, waypoint.m_X, waypoint.m_Y, m_MoveProximityLimit, g_RedColor);  
+//    circle(pTargetBitmap, waypoint.m_X, waypoint.m_Y, m_MoveProximityLimit, g_WhiteColor);  
 #endif
 
     // Player AI drawing
