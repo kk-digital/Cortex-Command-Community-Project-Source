@@ -134,36 +134,6 @@ int ACrab::Create()
     return 0;
 }
 
-/*
-//////////////////////////////////////////////////////////////////////////////////////////
-// Method:          Create
-//////////////////////////////////////////////////////////////////////////////////////////
-// Description:     Makes the ACrab object ready for use.
-
-int ACrab::Create(BITMAP *pSprite,
-                   Controller *pController,
-                   const float mass,
-                   const Vector &position,
-                   const Vector &velocity,
-                   AtomGroup *hitBody,
-                   const unsigned long lifetime,
-                   Status status,
-                   const int health)
-{
-    
-
-    return Actor::Create(pSprite,
-                         pController,
-                         mass,
-                         position,
-                         velocity,
-                         hitBody,
-                         lifetime,
-                         status,
-                         health);
-}
-*/
-
 //////////////////////////////////////////////////////////////////////////////////////////
 // Method:          Create
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -252,72 +222,6 @@ int ACrab::Create(const ACrab &reference) {
 
 int ACrab::ReadProperty(const std::string_view &propName, Reader &reader)
 {
-    if (propName == "Turret") {
-        SetTurret(dynamic_cast<Turret *>(g_PresetMan.ReadReflectedPreset(reader)));
-    } else if (propName == "Jetpack") {
-        SetJetpack(dynamic_cast<AEmitter *>(g_PresetMan.ReadReflectedPreset(reader)));
-	} else if (propName == "JumpTime" || propName == "JetTime") {
-        reader >> m_JetTimeTotal;
-        m_JetTimeTotal *= 1000;
-	} else if (propName == "JumpReplenishRate" || propName == "JetReplenishRate") {
-		reader >> m_JetReplenishRate;
-	} else if (propName == "JumpAngleRange" || propName == "JetAngleRange") {
-		reader >> m_JetAngleRange;
-    } else if (propName == "LFGLeg" || propName == "LeftFGLeg") {
-        SetLeftFGLeg(dynamic_cast<Leg *>(g_PresetMan.ReadReflectedPreset(reader)));
-    } else if (propName == "LBGLeg" || propName == "LeftBGLeg") {
-        SetLeftBGLeg(dynamic_cast<Leg *>(g_PresetMan.ReadReflectedPreset(reader)));
-    } else if (propName == "RFGLeg" || propName == "RightFGLeg") {
-        SetRightFGLeg(dynamic_cast<Leg *>(g_PresetMan.ReadReflectedPreset(reader)));
-    } else if (propName == "RBGLeg" || propName == "RightBGLeg") {
-        SetRightBGLeg(dynamic_cast<Leg *>(g_PresetMan.ReadReflectedPreset(reader)));
-    } else if (propName == "LFootGroup" || propName == "LeftFootGroup") {
-        delete m_pLFGFootGroup;
-        delete m_pLBGFootGroup;
-        m_pLFGFootGroup = new AtomGroup();
-        m_pLBGFootGroup = new AtomGroup();
-        reader >> m_pLFGFootGroup;
-        m_pLBGFootGroup->Create(*m_pLFGFootGroup);
-        m_pLFGFootGroup->SetOwner(this);
-        m_pLBGFootGroup->SetOwner(this);
-        m_BackupLFGFootGroup = new AtomGroup(*m_pLFGFootGroup);
-        m_BackupLFGFootGroup->RemoveAllAtoms();
-        m_BackupLBGFootGroup = new AtomGroup(*m_BackupLFGFootGroup);
-    } else if (propName == "RFootGroup" || propName == "RightFootGroup") {
-        delete m_pRFGFootGroup;
-        delete m_pRBGFootGroup;
-        m_pRFGFootGroup = new AtomGroup();
-        m_pRBGFootGroup = new AtomGroup();
-        reader >> m_pRFGFootGroup;
-        m_pRBGFootGroup->Create(*m_pRFGFootGroup);
-        m_pRFGFootGroup->SetOwner(this);
-        m_pRBGFootGroup->SetOwner(this);
-        m_BackupRFGFootGroup = new AtomGroup(*m_pRFGFootGroup);
-        m_BackupRFGFootGroup->RemoveAllAtoms();
-        m_BackupRBGFootGroup = new AtomGroup(*m_BackupRFGFootGroup);
-    } else if (propName == "StrideSound") {
-		m_StrideSound = new SoundContainer;
-        reader >> m_StrideSound;
-    } else if (propName == "LStandLimbPath" || propName == "LeftStandLimbPath") {
-        reader >> m_Paths[LEFTSIDE][FGROUND][STAND];
-    } else if (propName == "LWalkLimbPath" || propName == "LeftWalkLimbPath") {
-        reader >> m_Paths[LEFTSIDE][FGROUND][WALK];
-    } else if (propName == "LDislodgeLimbPath" || propName == "LeftDislodgeLimbPath") {
-        reader >> m_Paths[LEFTSIDE][FGROUND][DISLODGE];
-    } else if (propName == "RStandLimbPath" || propName == "RightStandLimbPath") {
-        reader >> m_Paths[RIGHTSIDE][FGROUND][STAND];
-    } else if (propName == "RWalkLimbPath" || propName == "RightWalkLimbPath") {
-        reader >> m_Paths[RIGHTSIDE][FGROUND][WALK];
-    } else if (propName == "RDislodgeLimbPath" || propName == "RightDislodgeLimbPath") {
-        reader >> m_Paths[RIGHTSIDE][FGROUND][DISLODGE];
-    } else if (propName == "AimRangeUpperLimit") {
-        reader >> m_AimRangeUpperLimit;
-    } else if (propName == "AimRangeLowerLimit") {
-        reader >> m_AimRangeLowerLimit;
-    } else {
-        return Actor::ReadProperty(propName, reader);
-    }
-
     return 0;
 }
 
@@ -330,56 +234,6 @@ int ACrab::ReadProperty(const std::string_view &propName, Reader &reader)
 
 int ACrab::Save(Writer &writer) const
 {
-    Actor::Save(writer);
-
-    writer.NewProperty("Turret");
-    writer << m_pTurret;
-    writer.NewProperty("Jetpack");
-    writer << m_pJetpack;
-    writer.NewProperty("JumpTime");
-    // Convert to seconds
-    writer << m_JetTimeTotal / 1000;
-	writer.NewProperty("JumpReplenishRate");
-	writer << m_JetReplenishRate;
-	writer.NewProperty("JumpAngleRange");
-	writer << m_JetAngleRange;
-    writer.NewProperty("LFGLeg");
-    writer << m_pLFGLeg;
-    writer.NewProperty("LBGLeg");
-    writer << m_pLBGLeg;
-    writer.NewProperty("RFGLeg");
-    writer << m_pRFGLeg;
-    writer.NewProperty("RBGLeg");
-    writer << m_pRBGLeg;
-    writer.NewProperty("LFGFootGroup");
-    writer << m_pLFGFootGroup;
-    writer.NewProperty("LBGFootGroup");
-    writer << m_pLBGFootGroup;
-    writer.NewProperty("RFGFootGroup");
-    writer << m_pRFGFootGroup;
-    writer.NewProperty("RBGFootGroup");
-    writer << m_pRBGFootGroup;
-    writer.NewProperty("StrideSound");
-    writer << m_StrideSound;
-
-    writer.NewProperty("LStandLimbPath");
-    writer << m_Paths[LEFTSIDE][FGROUND][STAND];
-    writer.NewProperty("LWalkLimbPath");
-    writer << m_Paths[LEFTSIDE][FGROUND][WALK];
-    writer.NewProperty("LDislodgeLimbPath");
-    writer << m_Paths[LEFTSIDE][FGROUND][DISLODGE];
-    writer.NewProperty("RStandLimbPath");
-    writer << m_Paths[RIGHTSIDE][FGROUND][STAND];
-    writer.NewProperty("RWalkLimbPath");
-    writer << m_Paths[RIGHTSIDE][FGROUND][WALK];
-    writer.NewProperty("RDislodgeLimbPath");
-    writer << m_Paths[RIGHTSIDE][FGROUND][DISLODGE];
-
-    writer.NewProperty("AimRangeUpperLimit");
-    writer << m_AimRangeUpperLimit;
-    writer.NewProperty("AimRangeLowerLimit");
-    writer << m_AimRangeLowerLimit;
-
     return 0;
 }
 
@@ -451,45 +305,11 @@ Vector ACrab::GetEyePos() const
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void ACrab::SetTurret(Turret *newTurret) {
-    if (m_pTurret && m_pTurret->IsAttached()) { RemoveAndDeleteAttachable(m_pTurret); }
-    if (newTurret == nullptr) {
-        m_pTurret = nullptr;
-    } else {
-        m_pTurret = newTurret;
-        AddAttachable(newTurret);
-
-        m_HardcodedAttachableUniqueIDsAndSetters.insert({newTurret->GetUniqueID(), [](MOSRotating *parent, Attachable *attachable) {
-            Turret *castedAttachable = dynamic_cast<Turret *>(attachable);
-            RTEAssert(!attachable || castedAttachable, "Tried to pass incorrect Attachable subtype " + (attachable ? attachable->GetClassName() : "") + " to SetTurret");
-            dynamic_cast<ACrab *>(parent)->SetTurret(castedAttachable);
-        }});
-
-        if (m_pTurret->HasNoSetDamageMultiplier()) { m_pTurret->SetDamageMultiplier(5.0F); }
-    }
-}
+void ACrab::SetTurret(Turret* newTurret) {}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void ACrab::SetJetpack(AEmitter *newJetpack) {
-    if (m_pJetpack && m_pJetpack->IsAttached()) { RemoveAndDeleteAttachable(m_pJetpack); }
-    if (newJetpack == nullptr) {
-        m_pJetpack = nullptr;
-    } else {
-        m_pJetpack = newJetpack;
-        AddAttachable(newJetpack);
-
-        m_HardcodedAttachableUniqueIDsAndSetters.insert({newJetpack->GetUniqueID(), [](MOSRotating *parent, Attachable *attachable) {
-            AEmitter *castedAttachable = dynamic_cast<AEmitter *>(attachable);
-            RTEAssert(!attachable || castedAttachable, "Tried to pass incorrect Attachable subtype " + (attachable ? attachable->GetClassName() : "") + " to SetJetpack");
-            dynamic_cast<ACrab *>(parent)->SetJetpack(castedAttachable);
-        }});
-
-        if (m_pJetpack->HasNoSetDamageMultiplier()) { m_pJetpack->SetDamageMultiplier(0.0F); }
-        m_pJetpack->SetApplyTransferredForcesAtOffset(false);
-        m_pJetpack->SetDeleteWhenRemovedFromParent(true);
-    }
-}
+void ACrab::SetJetpack(AEmitter* newJetpack) {}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
