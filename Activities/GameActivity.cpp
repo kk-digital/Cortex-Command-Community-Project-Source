@@ -2351,30 +2351,30 @@ void GameActivity::DrawGUI(BITMAP *pTargetBitmap, const Vector &targetPos, int w
     if (m_ViewState[PoS] == ViewState::ActorSelect && m_IsActive[PoS] && m_IsHuman[PoS])
     {
         Vector center = m_ActorCursor[PoS] - targetPos;
-        circle(pTargetBitmap, center.m_X, center.m_Y, m_CursorTimer.AlternateReal(150) ? 6 : 8, g_WhiteColor);
+        circle(pTargetBitmap, center.m_X, center.m_Y, m_CursorTimer.AlternateReal(150) ? 6 : 8, g_YellowGlowColor);
         // Add pixel glow area around it, in scene coordinates
 		g_PostProcessMan.RegisterGlowArea(m_ActorCursor[PoS], 10);
 /* Crosshairs
         putpixel(pTargetBitmap, center.m_X, center.m_Y, g_WhiteColor);
-        hline(pTargetBitmap, center.m_X - 5, center.m_Y, center.m_X - 2, g_WhiteColor);
-        hline(pTargetBitmap, center.m_X + 5, center.m_Y, center.m_X + 2, g_WhiteColor);
-        vline(pTargetBitmap, center.m_X, center.m_Y - 5, center.m_Y - 2, g_WhiteColor);
-        vline(pTargetBitmap, center.m_X, center.m_Y + 5, center.m_Y + 2, g_WhiteColor);
+        hline(pTargetBitmap, center.m_X - 5, center.m_Y, center.m_X - 2, g_YellowGlowColor);
+        hline(pTargetBitmap, center.m_X + 5, center.m_Y, center.m_X + 2, g_YellowGlowColor);
+        vline(pTargetBitmap, center.m_X, center.m_Y - 5, center.m_Y - 2, g_YellowGlowColor);
+        vline(pTargetBitmap, center.m_X, center.m_Y + 5, center.m_Y + 2, g_YellowGlowColor);
 */
     }
     // AI point commands cursor
     else if (m_ViewState[PoS] == ViewState::AIGoToPoint)
     {
         Vector center = m_ActorCursor[PoS] - targetPos;
-        circle(pTargetBitmap, center.m_X, center.m_Y, m_CursorTimer.AlternateReal(150) ? 6 : 8, g_WhiteColor);
-        circlefill(pTargetBitmap, center.m_X, center.m_Y, 2, g_WhiteColor);
-//            putpixel(pTargetBitmap, center.m_X, center.m_Y, g_WhiteColor);
+        circle(pTargetBitmap, center.m_X, center.m_Y, m_CursorTimer.AlternateReal(150) ? 6 : 8, g_YellowGlowColor);
+        circlefill(pTargetBitmap, center.m_X, center.m_Y, 2, g_YellowGlowColor);
+//            putpixel(pTargetBitmap, center.m_X, center.m_Y, g_YellowGlowColor);
         // Add pixel glow area around it, in scene coordinates
 		g_PostProcessMan.RegisterGlowArea(m_ActorCursor[PoS], 10);
 
         // Draw a line from the last set waypoint to the cursor
         if (m_ControlledActor[PoS] && g_MovableMan.IsActor(m_ControlledActor[PoS]))
-            g_FrameMan.DrawLine(pTargetBitmap, m_ControlledActor[PoS]->GetLastAIWaypoint() - targetPos, m_ActorCursor[PoS] - targetPos, g_WhiteColor, 0, AILINEDOTSPACING, 0, true);
+            g_FrameMan.DrawLine(pTargetBitmap, m_ControlledActor[PoS]->GetLastAIWaypoint() - targetPos, m_ActorCursor[PoS] - targetPos, g_YellowGlowColor, 0, AILINEDOTSPACING, 0, true);
     }
 	// Group selection circle
 	else if (m_ViewState[PoS] == ViewState::UnitSelectCircle)
@@ -2434,8 +2434,8 @@ void GameActivity::DrawGUI(BITMAP *pTargetBitmap, const Vector &targetPos, int w
 
 			float radius = g_SceneMan.ShortestDistance(m_ActorCursor[PoS], m_ControlledActor[PoS]->GetPos(), true).GetMagnitude();
 
-			circle(pTargetBitmap, cursorDrawPos.m_X, cursorDrawPos.m_Y, m_CursorTimer.AlternateReal(150) ? 6 : 8, g_WhiteColor);
-			circlefill(pTargetBitmap, cursorDrawPos.m_X, cursorDrawPos.m_Y, 2, g_WhiteColor);
+			circle(pTargetBitmap, cursorDrawPos.m_X, cursorDrawPos.m_Y, m_CursorTimer.AlternateReal(150) ? 6 : 8, g_YellowGlowColor);
+			circlefill(pTargetBitmap, cursorDrawPos.m_X, cursorDrawPos.m_Y, 2, g_YellowGlowColor);
 
 			Vector unwrappedPos;
 
@@ -2497,7 +2497,7 @@ void GameActivity::DrawGUI(BITMAP *pTargetBitmap, const Vector &targetPos, int w
 						}
 					}
 
-					circlefill(pTargetBitmap, dotDrawPos.m_X, dotDrawPos.m_Y, 1, g_WhiteColor);
+					circlefill(pTargetBitmap, dotDrawPos.m_X, dotDrawPos.m_Y, 1, g_YellowGlowColor);
 					g_PostProcessMan.RegisterGlowArea(dotPos, 3);
 				}
 			}
