@@ -4123,7 +4123,7 @@ void AHuman::DrawThrowingReticle(BITMAP *targetBitmap, const Vector &targetPos, 
 		points[i] += m_pFGArm->GetJointPos();
 
 		g_PostProcessMan.RegisterGlowDotEffect(points[i], BlueDot, RandomNum(63, 127));
-		putpixel(targetBitmap, points[i].GetFloorIntX() - targetPos.GetFloorIntX(), points[i].GetFloorIntY() - targetPos.GetFloorIntY(), g_WhiteColor);
+		putpixel(targetBitmap, points[i].GetFloorIntX() - targetPos.GetFloorIntX(), points[i].GetFloorIntY() - targetPos.GetFloorIntY(), g_YellowGlowColor);
 	}
 
 	release_bitmap(targetBitmap);
@@ -4208,15 +4208,15 @@ void AHuman::DrawHUD(BITMAP *pTargetBitmap, const Vector &targetPos, int whichSc
     {
         lastPoint = (*last) - targetPos;
         waypoint = lastPoint + g_SceneMan.ShortestDistance(lastPoint, (*lItr) - targetPos);
-        line(pTargetBitmap, lastPoint.m_X, lastPoint.m_Y, waypoint.m_X, waypoint.m_Y, g_WhiteColor);
+        line(pTargetBitmap, lastPoint.m_X, lastPoint.m_Y, waypoint.m_X, waypoint.m_Y, g_RedColor);
         last = lItr;
     }
     waypoint = m_MoveTarget - targetPos;
-    circlefill(pTargetBitmap, waypoint.m_X, waypoint.m_Y, 3, g_WhiteColor);
+    circlefill(pTargetBitmap, waypoint.m_X, waypoint.m_Y, 3, g_RedColor);
     lastPoint = m_PrevPathTarget - targetPos;
-    circlefill(pTargetBitmap, lastPoint.m_X, lastPoint.m_Y, 2, g_WhiteColor);
+    circlefill(pTargetBitmap, lastPoint.m_X, lastPoint.m_Y, 2, g_YellowGlowColor);
     lastPoint = m_DigTunnelEndPos - targetPos;
-    circlefill(pTargetBitmap, lastPoint.m_X, lastPoint.m_Y, 2, g_WhiteColor);
+    circlefill(pTargetBitmap, lastPoint.m_X, lastPoint.m_Y, 2, g_YellowGlowColor);
     // Raidus
 //    waypoint = m_Pos - targetPos;
 //    circle(pTargetBitmap, waypoint.m_X, waypoint.m_Y, m_MoveProximityLimit, g_WhiteColor);  
